@@ -10,6 +10,7 @@ export class ExerciseService {
     private lessonService: LessonService,
   ) {}
 
+  
 //1- Creation d'une lesson
   create(dto: CreateExerciseDto) {
     return this.prisma.exercise.create({

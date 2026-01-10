@@ -1,14 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ExerciseService } from './exercise.service';
 import { ExerciseController } from './exercise.controller';
-import { PrismaService } from '../../auth/prisma/prisma.service';
 import { LessonModule } from '../lesson/lesson.module';
 
-
 @Module({
-  imports: [LessonModule],
+  imports: [LessonModule], // ✅ OBLIGATOIRE
   controllers: [ExerciseController],
-  providers: [ExerciseService, PrismaService],
-
+  providers: [ExerciseService],
 })
 export class ExerciseModule {}

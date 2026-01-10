@@ -3,7 +3,8 @@ import { LessonService } from './lesson.service';
 import { LessonController } from './lesson.controller';
 
 @Module({
+  controllers: [LessonController],
   providers: [LessonService],
-  controllers: [LessonController]
+  exports: [LessonService], // ✅ OBLIGATOIRE
 })
 export class LessonModule {}

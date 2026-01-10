@@ -12,7 +12,11 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  
+}
 
+generator client {
+  provider = "prisma-client-js"
 }
 
 //////////////////////////////////////////////////
@@ -58,6 +62,7 @@ model User {
   communities   Community[]
  officialLanguageId String?
  officialLanguage   OfficialLanguage? @relation(fields: [officialLanguageId], references: [id])
+ 
 
 
   createdAt     DateTime     @default(now())

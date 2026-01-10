@@ -1,18 +1,31 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+
 import { PrismaModule } from './auth/prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
-import { ScheduleModule  } from '@nestjs/schedule';
 
 import { LanguageModule } from './language/language.module';
 import { LearningModule } from './learning/learning.module';
 
 @Module({
   imports: [
-    ScheduleModule .forRoot(),
+    // 🔑 Variables d’environnement disponibles partout
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+
+    // ⏱️ Tâches planifiées
+    ScheduleModule.forRoot(),
+
+    // 🔐 Auth & DB
     PrismaModule,
     AuthModule,
+
+    // 📚 Modules métier
     LanguageModule,
     LearningModule,
   ],
