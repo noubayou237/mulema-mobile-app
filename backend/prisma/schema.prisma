@@ -12,16 +12,10 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
 
-//////////////////////////////////////////////////
 // ENUMS
-//////////////////////////////////////////////////
 
 enum QuestionType {
   MATCHING
@@ -35,9 +29,7 @@ enum Role {
   USER
 }
 
-//////////////////////////////////////////////////
 // USER & PROFIL
-//////////////////////////////////////////////////
 
 model User {
   id            String       @id @default(uuid())
@@ -116,9 +108,7 @@ model Avatar {
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-//////////////////////////////////////////////////
 // LANGUAGES
-//////////////////////////////////////////////////
 
 model OfficialLanguage {
   id          String       @id @default(uuid())
@@ -149,9 +139,7 @@ model UserLanguage {
   patrimonialLanguage    PatrimonialLanguage?  @relation(fields: [patrimonialLanguageId], references: [id])
 }
 
-//////////////////////////////////////////////////
 // COMMUNITY
-//////////////////////////////////////////////////
 
 model Community {
   id                  String            @id @default(uuid())
@@ -163,9 +151,7 @@ model Community {
   users               User[]
 }
 
-//////////////////////////////////////////////////
 // LEARNING CONTENT
-//////////////////////////////////////////////////
 
 model Story {
   id                    String                @id @default(uuid())
@@ -214,9 +200,7 @@ model UserProgress {
   @@unique([userId, lessonId])
 }
 
-//////////////////////////////////////////////////
 // EXERCISES & SCORES
-//////////////////////////////////////////////////
 
 model Exercise {
   id            String        @id @default(uuid())
@@ -252,9 +236,7 @@ model Score {
   exercise     Exercise @relation(fields: [exerciseId], references: [id])
 }
 
-//////////////////////////////////////////////////
 // GAME ECONOMY
-//////////////////////////////////////////////////
 
 model Cowry {
   id              String   @id @default(uuid())
