@@ -1,9 +1,14 @@
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import { seedLanguages } from './seeders/languages.seeder';
 import { seedUsers } from './seeders/users.seeder';
 import { seedOfficialLanguages } from './seeders/official-languages.seeder';
 
-const prisma = new PrismaClient();
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log(`Start seeding ...`);
@@ -19,7 +24,7 @@ async function main() {
   await prisma.level.deleteMany();
   await prisma.story.deleteMany();
   await prisma.patrimonialLanguage.deleteMany();
-  
+
   // Nettoyage des langues officielles et leurs dépendances
   await prisma.userLanguage.deleteMany();
   await prisma.community.deleteMany();

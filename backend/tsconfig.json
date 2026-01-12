@@ -20,10 +20,11 @@
     "skipLibCheck": true,
     "strictNullChecks": false,
     "forceConsistentCasingInFileNames": true,
-    "noImplicitAny": false, "strictBindCallApply": false,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "lib": ["es2021"],
     "typeRoots": ["./node_modules/@types", "./src/types"],
-    "types": ["node"]
+    "types": ["node", "jest"]
   }
 }
