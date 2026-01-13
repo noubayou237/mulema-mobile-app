@@ -6,12 +6,14 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { Role } from '@prisma/client';
+import { MailService } from './email/email.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private mailService: MailService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -42,6 +44,7 @@ export class AuthService {
       },
     });
 
+
     if (!user) throw new UnauthorizedException('Identifiants invalides');
 
     const isValid = await bcrypt.compare(dto.password, user.password);
@@ -49,7 +52,10 @@ export class AuthService {
 
     // Générer les tokens
     const tokens = await this.getTokens(user.id, user.email, user.role);
-    return tokens;
+    return {
+    accessToken: tokens.access_token,
+    refreshToken: tokens.refresh_token,
+  };
   }
 
   async logout(refreshToken: string) {
@@ -77,6 +83,7 @@ export class AuthService {
     });
 
     // TODO: Envoyer l'OTP par email/SMS ici (implémentation à ajouter)
+    await this.mailService.sendOtp(email, otpCode);
     console.log(`OTP généré pour ${email}: ${otpCode}`);
     return otpCode; // Retourner l'OTP non hashé pour le développement (à supprimer en production)
   }

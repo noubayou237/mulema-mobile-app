@@ -22,6 +22,7 @@ export class PrismaService
       adapter,
     });
     this.pool = pool;
+  
   }
 
   async onModuleInit() {
