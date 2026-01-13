@@ -16,7 +16,7 @@ describe('App (e2e)', () => {
     await app.init();
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await app.close();
   });
 
@@ -43,10 +43,10 @@ describe('App (e2e)', () => {
     return request(app.getHttpServer())
       .post('/auth/login')
       .send({
-        email: 'user@mulema.com',
+        identifier: 'user@mulema.com',
         password: 'password123',
       })
-      .expect(200)
+      .expect(201)
       .expect((res) => {
         expect(res.body).toHaveProperty('accessToken');
         expect(res.body).toHaveProperty('refreshToken');
@@ -57,10 +57,10 @@ describe('App (e2e)', () => {
     return request(app.getHttpServer())
       .post('/auth/login')
       .send({
-        email: 'admin@mulema.com',
+        identifier: 'admin@mulema.com',
         password: 'password123',
       })
-      .expect(200)
+      .expect(201)
       .expect((res) => {
         expect(res.body).toHaveProperty('accessToken');
         expect(res.body).toHaveProperty('refreshToken');
