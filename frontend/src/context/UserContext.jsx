@@ -3,98 +3,103 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import api from "../../services/api"; // ou ../api/api selon ton projet
 
-const USER_SESSION_KEY = "userSession";
+const STORAGE_KEYS = {
+  ACCESS_TOKEN: "accessToken",
+  REFRESH_TOKEN: "refreshToken",
+  USER: "user",
+};
 
-// Structure par défaut du contexte
 const UserContext = createContext({
   user: null,
   isLoading: true,
   login: async () => {},
   logout: async () => {},
-  updateUser: async () => {},
 });
 
-/**
- * Provider principal
- */
 export default function UserProvider({ children }) {
   const router = useRouter();
 
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  /**
-   * 🔄 Au démarrage, on essaie de recharger une session si elle existe
-   */
+  // 🔄 Bootstrap session
   useEffect(() => {
     (async () => {
       try {
-        const stored = await AsyncStorage.getItem(USER_SESSION_KEY);
-        if (stored) {
-          setUser(JSON.parse(stored));
+        const token = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        if (token) {
+          const res = await api.get("/auth/me");
+          setUser(res.data);
         }
-      } catch (e) {
-        console.warn("UserProvider: error reading session", e);
+      } catch {
+        await AsyncStorage.multiRemove([
+          STORAGE_KEYS.ACCESS_TOKEN,
+          STORAGE_KEYS.REFRESH_TOKEN,
+        ]);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
     })();
   }, []);
 
-  /**
-   * 👉  Login user (session saved)
-   *  - userData = { id, email, token, ... }
-   */
-  const login = async (userData) => {
-    try {
-      await AsyncStorage.setItem(USER_SESSION_KEY, JSON.stringify(userData));
-      setUser(userData);
-    } catch (e) {
-      console.warn("UserProvider: login error", e);
-    }
+  // 🔐 LOGIN
+  const login = async (email, password) => {
+    const res = await api.post("/auth/login", { email, password });
+
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.ACCESS_TOKEN,
+      res.data.accessToken
+    );
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.REFRESH_TOKEN,
+      res.data.refreshToken
+    );
+
+    const me = await api.get("/auth/me");
+    setUser(me.data);
+
+    router.replace("/(tabs)");
   };
 
-  /**
-   * 👉  Mise à jour partielle de l'utilisateur
-   */
-  const updateUser = async (data) => {
-    try {
-      const newUser = { ...user, ...data };
-      await AsyncStorage.setItem(USER_SESSION_KEY, JSON.stringify(newUser));
-      setUser(newUser);
-    } catch (e) {
-      console.warn("UserProvider: updateUser error", e);
-    }
-  };
-
-  /**
-   * ❌ Déconnexion
-   */
+  // ❌ LOGOUT
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem(USER_SESSION_KEY);
-      setUser(null);
-      router.replace("/auth/login"); // ou autre route
+      const refreshToken = await AsyncStorage.getItem(
+        STORAGE_KEYS.REFRESH_TOKEN
+      );
+
+      if (refreshToken) {
+        await api.post("/auth/logout", { refreshToken });
+      }
     } catch (e) {
-      console.warn("UserProvider: logout error", e);
+      // silencieux
+    } finally {
+      await AsyncStorage.multiRemove([
+        STORAGE_KEYS.ACCESS_TOKEN,
+        STORAGE_KEYS.REFRESH_TOKEN,
+      ]);
+      setUser(null);
+      router.replace("/(auth)/sign-in");
     }
   };
 
-  const value = {
-    user,
-    isLoading,
-    login,
-    logout,
-    updateUser,
-  };
-
-  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
+  return (
+    <UserContext.Provider
+      value={{
+        user,
+        isLoading,
+        login,
+        logout,
+      }}
+    >
+      {children}
+    </UserContext.Provider>
+  );
 }
 
-/**
- * Hook personnalisé pour accéder facilement au contexte utilisateur
- */
 export function useUser() {
   return useContext(UserContext);
 }
