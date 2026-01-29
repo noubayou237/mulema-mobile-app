@@ -1,13 +1,12 @@
 // app/(tabs)/_layout.jsx
-import React from "react";
-import { View, Alert, TouchableOpacity } from "react-native";
-import { Tabs, Redirect, useSegments } from "expo-router";
-import { useAuth } from "@clerk/clerk-expo";
+import React, { useEffect } from "react";
+import { View, Alert, TouchableOpacity, ActivityIndicator } from "react-native";
+import { Tabs, useRouter, useSegments } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Header from "../components/header";
 import BottomNav from "../components/bottom";
 import { COLORS } from "../../constants/colors";
-// import Statistiques fro../standalone/statstandalone/stats";
+import { useUser } from "../../src/context/UserContext";
 
 /**
  * Tabs layout centralisé :
@@ -17,12 +16,34 @@ import { COLORS } from "../../constants/colors";
  */
 
 export default function TabsLayout() {
-  const { isSignedIn, signOut } = useAuth();
+  const router = useRouter();
+  const segments = useSegments();
+  const { user, isLoading, logout } = useUser();
 
-  // si non connecté => redirect vers auth
-  if (!isSignedIn) return <Redirect href={"/(auth)/sign-in"} />;
+  // 🔐 Protection des tabs
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace("/(auth)/sign-in");
+    }
+  }, [isLoading, user]);
 
-  // logout handler with confirmation
+  // ⏳ Pendant le chargement du contexte
+  if (isLoading || !user) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: COLORS.background ?? "#fff",
+        }}
+      >
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  // logout handler avec confirmation (backend)
   const handleLogout = () => {
     Alert.alert(
       "Logout",
@@ -34,7 +55,7 @@ export default function TabsLayout() {
           style: "destructive",
           onPress: async () => {
             try {
-              await signOut();
+              await logout();
             } catch (err) {
               console.error("Logout error:", err);
             }
@@ -45,11 +66,9 @@ export default function TabsLayout() {
     );
   };
 
-  // compute active route segment to pass to BottomNav
-  const segments = useSegments();
+  // segment actif pour Header + BottomNav
   const activeSegment = segments[segments.length - 1] || "home";
 
-  // prepare a right element for header (logout button + optional extras)
   const headerRight = (
     <TouchableOpacity
       onPress={handleLogout}
@@ -67,42 +86,40 @@ export default function TabsLayout() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background ?? "#fff" }}>
-      {/* Header commun — tu peux remplacer title dynamic via segments if needed */}
+      {/* Header commun */}
       <Header title={titleForSegment(activeSegment)} right={headerRight} />
 
-      {/* Tabs: we hide native tabBar (display:none) because we use BottomNav */}
+      {/* Tabs (tabBar native cachée) */}
       <Tabs
         screenOptions={{
           headerShown: false,
           tabBarStyle: { display: "none" },
         }}
       >
-        <Tabs.Screen name="home" options={{ title: "Home"}} />
+        <Tabs.Screen name="home" options={{ title: "Home" }} />
         <Tabs.Screen name="lessons" options={{ title: "Lessons" }} />
         <Tabs.Screen name="exercices" options={{ title: "Exercices" }} />
         <Tabs.Screen name="community" options={{ title: "Community" }} />
-        {/* <Tabs.Screen name="Statistiques" component={Statistiques} /> */}
       </Tabs>
 
-      {/* Custom BottomNav positioned absolute inside its component */}
+      {/* Bottom navigation custom */}
       <BottomNav activeKey={activeSegment} />
     </View>
   );
 }
 
-/* small helper to show nicer header titles based on segment */
+/* Helper pour le titre du Header */
 function titleForSegment(seg) {
   switch (seg) {
     case "home":
       return "Home";
     case "lessons":
       return "Lessons";
-    case "exercises":
-      return "Exercises";
+    case "exercices":
+      return "Exercices";
     case "community":
       return "Community";
     default:
-      // if route is dynamic like 'exercise' or nested, you can refine here
-      return "Exercises";
+      return "Home";
   }
 }
