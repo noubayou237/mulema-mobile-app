@@ -1,24 +1,29 @@
 // app/splash.jsx
 import React, { useEffect, useRef } from "react";
-import { View, StyleSheet, Animated, Text, Easing, Dimensions } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Animated,
+  Easing,
+  Dimensions,
+} from "react-native";
 import { Svg, G, Path } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import { STORAGE_KEYS } from "../src/constants/storageKeys";
 
-const HAS_SELECTED_LANGUAGE = "hasSelectedLanguage";
-const HAS_SEEN_INTRO = "hasSeenIntro";
 const SPLASH_DURATION_MS = 5000;
 
 // animation timing
-const BASE_DELAY_MS = 800; // 0.8s
-const STEP_DELAY_MS = 100; // 0.1s between elements
-const ANIM_DURATION = 500; // 0.5s
+const BASE_DELAY_MS = 800;
+const STEP_DELAY_MS = 100;
+const ANIM_DURATION = 500;
 const BEZIER = Easing.bezier(0.95, 0.05, 0.795, 0.035);
 
-// --- paths from your svg (order preserved) ---
+// --- SVG PATHS (INCHANGÉS) ---
 const PATHS = [
   {
-    d: "M4144 6136 c-66 -37 -90 -104 -104 -291 -6 -77 -14 -180 -20 -230 -8 -84 -13 -105 -41 -187 -6 -18 -14 -45 -16 -60 -3 -15 -11 -33 -19 -39 -8 -6 -14 -21 -14 -33 0 -12 -6 -30 -13 -41 -8 -11 -20 -55 -27 -98 -18 -106 -8 -209 26 -277 28 -56 99 -134 136 -150 13 -6 30 -14 38 -18 44 -26 65 -33 132 -47 125 -26 218 -18 333 28 211 84 326 261 324 501 0 55 -5 124 -10 151 -5 28 -15 77 -20 110 -6 33 -14 65 -19 70 -4 6 -10 24 -14 40 -6 28 -28 81 -47 115 -5 8 -14 24 -19 35 -6 11 -19 34 -30 50 -11 17 -23 37 -27 45 -18 41 -130 173 -179 211 -31 24 -62 50 -69 57 -8 6 -18 12 -24 12 -5 0 -14 8 -20 17 -16 29 -26 5 -12 -32 6 -19 16 -87 22 -152 5 -65 12 -126 15 -135 5 -17 -3 -49 -31 -128 -7 -19 -18 -54 -24 -76 -12 -45 -37 -73 -50 -58 -4 5 -14 45 -20 89 -22 144 -40 249 -57 320 -8 39 -21 98 -28 133 -6 35 -18 67 -26 72 -18 11 -19 11 -46 -4z m-47 -592 c-7 -89 -34 -217 -68 -319 -6 -16 -13 -79 -16 -138 -6 -115 -17 -137 -51 -103 -21 21 -21 136 1 199 8 23 23 69 32 102 10 33 24 74 32 92 7 17 13 43 13 57 0 15 7 43 15 63 8 19 15 54 15 78 0 23 3 45 7 48 16 17 24 -16 20 -79z",
+    d: "M4144 6136 c-66 -37 -90 -104 -104 -291 -6 -77 -14 -180 -20 -230 -8 -84 -13 -105 -41 -187 -6 -18 -14 -45 -16 -60 -3 -15 -11 -33 -19 -39 -8 -6 -14 -21 -14 -33 0 -12 -6 -30 -13 -41 -8 -11 -20 -55 -27 -98 -18 -106 -8 -209 26 -277 28 -56 99 -134 136 -150 13 -6 30 -14 38 -18 44 -26 65 -33 132 -47 125 -26 218 -18 333 28 211 84 326 261 324 501 0 55 -5 124 -10 151 -5 28 -15 77 -20 110 -6 33 -14 65 -19 70 -4 6 -10 24 -14 40 -6 28 -28 81 -47 115 -5 8 -14 24 -19 35 -6 11 -19 34 -30 50 -11 17 -23 37 -27 45 -18 41 -130 173 -179 211 -31 24 -62 50 -69 57 -8 6 -18 12 -24 12 -5 0 -14 8 -20 17 -16 29 -26 5 -12 -32 6 -19 16 -87 22 -152 5 -65 12 -126 15 -135 5 -17 -3 -49 -31 -128 -7 -19 -18 -54 -24 -76 -12 -45 -37 -73 -50 -58 -4 5 -14 45 -20 89 -22 144 -40 249 -57 320 -8 39 -21 98 -28 133 -6 35 -18 67 -26 72 -18 11 -19 11 -46 -4z",
     fill: "#ff0000",
   },
   {
@@ -38,7 +43,7 @@ const PATHS = [
     fill: "#ff0000",
   },
   {
-    d: "M4628 4047 c-145 -41 -220 -176 -204 -367 12 -135 64 -218 169 -269 57 -28 73 -31 153 -31 59 0 99 5 118 15 15 8 32 15 38 15 5 0 22 10 38 22 24 17 30 29 30 58 0 44 -15 61 -44 50 -150 -59 -280 -48 -314 25 -5 11 -15 32 -22 46 -6 14 -10 37 -8 50 l3 24 186 5 c201 5 219 10 219 59 0 41 -32 164 -47 182 -7 8 -13 20 -13 26 0 15 -41 49 -88 72 -54 27 -151 35 -214 18z m170 -115 c45 -45 67 -111 45 -141 -13 -19 -24 -21 -126 -21 -62 0 -118 4 -126 9 -36 23 12 138 69 169 36 19 112 10 138 -16z",
+    d: "M4628 4047 c-145 -41 -220 -176 -204 -367 12 -135 64 -218 169 -269 57 -28 73 -31 153 -31 59 0 99 5 118 15 15 8 32 15 38 15 5 0 22 10 38 22 24 17 30 29 30 58 0 44 -15 61 -44 50 -150 -59 -280 -48 -314 25 -5 11 -15 32 -22 46 -6 14 -10 37 -8 50 l3 24 186 5 c201 5 219 10 219 59 0 41 -32 164 -47 182 -7 8 -13 20 -13 26 0 15 -41 49 -88 72 -54 27 -151 35 -214 18z",
     fill: "#ff0000",
   },
   {
@@ -46,79 +51,60 @@ const PATHS = [
     fill: "#ff0000",
   },
   {
-    d: "M6345 4050 c-141 -32 -151 -39 -143 -105 5 -48 28 -53 115 -22 94 32 135 34 178 7 26 -16 34 -30 42 -71 15 -74 3 -84 -127 -98 -177 -19 -217 -38 -243 -114 -14 -40 -14 -57 -5 -100 23 -104 102 -167 209 -167 62 0 90 12 136 57 28 29 39 29 47 -1 9 -37 34 -56 71 -56 26 0 39 7 54 29 20 27 21 43 21 241 0 279 -16 332 -113 382 -44 22 -178 32 -242 18z m183 -362 c7 -7 12 -33 12 -58 0 -75 -66 -150 -132 -150 -55 0 -104 70 -91 131 9 49 35 67 105 78 89 12 93 12 106 -1z",
+    d: "M6345 4050 c-141 -32 -151 -39 -143 -105 5 -48 28 -53 115 -22 94 32 135 34 178 7 26 -16 34 -30 42 -71 15 -74 3 -84 -127 -98 -177 -19 -217 -38 -243 -114 -14 -40 -14 -57 -5 -100 23 -104 102 -167 209 -167 62 0 90 12 136 57 28 29 39 29 47 -1 9 -37 34 -56 71 -56 26 0 39 7 54 29 20 27 21 43 21 241 0 279 -16 332 -113 382 -44 22 -178 32 -242 18z",
     fill: "#ff0000",
   },
 ];
 
-// Animated Path component
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 export default function Splash() {
   const router = useRouter();
-
-  // animated values per path
   const animValuesRef = useRef(PATHS.map(() => new Animated.Value(0)));
   const animValues = animValuesRef.current;
 
   useEffect(() => {
-    // create animations with delays
-    const animations = animValues.map((v, i) =>
-      Animated.timing(v, {
-        toValue: 1,
-        duration: ANIM_DURATION,
-        delay: BASE_DELAY_MS + STEP_DELAY_MS * i,
-        easing: BEZIER,
-        useNativeDriver: false,
-      })
-    );
+    Animated.parallel(
+      animValues.map((v, i) =>
+        Animated.timing(v, {
+          toValue: 1,
+          duration: ANIM_DURATION,
+          delay: BASE_DELAY_MS + STEP_DELAY_MS * i,
+          easing: BEZIER,
+          useNativeDriver: false,
+        })
+      )
+    ).start();
 
-    Animated.parallel(animations).start();
-
-   // Redirection après le splash (5 secondes)
     const timer = setTimeout(async () => {
-  try {
-    const hasLang = await AsyncStorage.getItem(HAS_SELECTED_LANGUAGE);
+      const token = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
 
-    // 🧪 Phase de test : on redirige TOUJOURS vers la page de choix de langue
-    router.replace("/ChoiceLanguage");
+      if (!token) {
+        router.replace("/(auth)/sign-in");
+        return;
+      }
 
-    // -------------------------------------------
-    // 🟢 Quand tu voudras activer la vraie logique :
-    // -------------------------------------------
-    // if (!hasLang) {
-    //   // Première fois → aller sur la page de choix de langue
-    //   router.replace("/ChoiceLanguage");
-    //   return;
-    // } else {
-    //   // L'utilisateur a déjà choisi une langue → aller à la page d'accueil
-    //   router.replace("/home");
-    //   return;
-    // }
-    // -------------------------------------------
-
-  } catch (err) {
-    console.warn("Splash: erreur flags", err);
-    // En cas d'erreur on redirige par sécurité vers la page de langue (test)
-    router.replace("/ChoiceLanguage");
-  }
+      router.replace("/(tabs)/home");
     }, SPLASH_DURATION_MS);
 
-
     return () => clearTimeout(timer);
-  }, [router]);
+  }, []);
 
-  // size control: max 70% width, max 420px
   const screenW = Dimensions.get("window").width;
   const svgSize = Math.min(420, screenW * 0.7);
 
   return (
     <View style={styles.outer}>
       <View style={[styles.card, { width: svgSize, height: svgSize }]}>
-        <Svg width={svgSize} height={svgSize} viewBox="0 0 900 900" preserveAspectRatio="xMidYMid meet" accessible accessibilityLabel="Logo animé">
-          <G transform="translate(0,900) scale(0.1,-0.1)" fill="none" stroke="none">
+        <Svg width={svgSize} height={svgSize} viewBox="0 0 900 900">
+          <G transform="translate(0,900) scale(0.1,-0.1)">
             {PATHS.map((p, i) => (
-              <AnimatedPath key={i} d={p.d} fill={p.fill} opacity={animValues[i]} />
+              <AnimatedPath
+                key={i}
+                d={p.d}
+                fill={p.fill}
+                opacity={animValues[i]}
+              />
             ))}
           </G>
         </Svg>
@@ -128,12 +114,14 @@ export default function Splash() {
 }
 
 const styles = StyleSheet.create({
-  outer: { flex: 1, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", padding: 20 },
-  card: {
-    // keeps svg centered and not full width
+  outer: {
+    flex: 1,
+    backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
   },
-  appName: { marginTop: 18, fontSize: 18, fontWeight: "700", color: "#111" },
+  card: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });
