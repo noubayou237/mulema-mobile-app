@@ -5,17 +5,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import api from "../../services/api"; // ou ../api/api selon ton projet
 
-const STORAGE_KEYS = {
-  ACCESS_TOKEN: "accessToken",
-  REFRESH_TOKEN: "refreshToken",
-  USER: "user",
-};
+const STORAGE_KEY = "userSession"; // Single key for session storage
 
 const UserContext = createContext({
   user: null,
   isLoading: true,
   login: async () => {},
-  logout: async () => {},
+  logout: async () => {}
 });
 
 export default function UserProvider({ children }) {
@@ -28,16 +24,18 @@ export default function UserProvider({ children }) {
   useEffect(() => {
     (async () => {
       try {
-        const token = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-        if (token) {
-          const res = await api.get("/auth/me");
-          setUser(res.data);
+        const session = await AsyncStorage.getItem(STORAGE_KEY);
+        if (session) {
+          const parsed = JSON.parse(session);
+          if (parsed?.accessToken) {
+            // Validate token with backend
+            const res = await api.get("/auth/me");
+            setUser(res.data);
+          }
         }
       } catch {
-        await AsyncStorage.multiRemove([
-          STORAGE_KEYS.ACCESS_TOKEN,
-          STORAGE_KEYS.REFRESH_TOKEN,
-        ]);
+        // Token invalid or expired - clear storage
+        await AsyncStorage.removeItem(STORAGE_KEY);
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -49,38 +47,44 @@ export default function UserProvider({ children }) {
   const login = async (email, password) => {
     const res = await api.post("/auth/login", { email, password });
 
+    // Store session as single object
     await AsyncStorage.setItem(
-      STORAGE_KEYS.ACCESS_TOKEN,
-      res.data.accessToken
-    );
-    await AsyncStorage.setItem(
-      STORAGE_KEYS.REFRESH_TOKEN,
-      res.data.refreshToken
+      STORAGE_KEY,
+      JSON.stringify({
+        accessToken: res.data.accessToken,
+        refreshToken: res.data.refreshToken
+      })
     );
 
+    // Get user data
     const me = await api.get("/auth/me");
     setUser(me.data);
 
-    router.replace("/(tabs)");
+    // Redirect to home
+    router.replace("/(tabs)/home");
   };
 
   // ❌ LOGOUT
   const logout = async () => {
+    console.log("UserContext: Logout started");
     try {
-      const refreshToken = await AsyncStorage.getItem(
-        STORAGE_KEYS.REFRESH_TOKEN
-      );
-
-      if (refreshToken) {
-        await api.post("/auth/logout", { refreshToken });
+      const session = await AsyncStorage.getItem(STORAGE_KEY);
+      console.log("UserContext: Session found:", !!session);
+      if (session) {
+        const parsed = JSON.parse(session);
+        if (parsed?.refreshToken) {
+          console.log("UserContext: Calling /auth/logout");
+          await api.post("/auth/logout", { refreshToken: parsed.refreshToken });
+        }
       }
     } catch (e) {
-      // silencieux
+      console.warn(
+        "UserContext: Logout API error (continuing anyway):",
+        e.message
+      );
     } finally {
-      await AsyncStorage.multiRemove([
-        STORAGE_KEYS.ACCESS_TOKEN,
-        STORAGE_KEYS.REFRESH_TOKEN,
-      ]);
+      console.log("UserContext: Clearing storage and redirecting");
+      await AsyncStorage.removeItem(STORAGE_KEY);
       setUser(null);
       router.replace("/(auth)/sign-in");
     }
@@ -92,7 +96,7 @@ export default function UserProvider({ children }) {
         user,
         isLoading,
         login,
-        logout,
+        logout
       }}
     >
       {children}

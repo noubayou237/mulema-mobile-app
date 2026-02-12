@@ -8,7 +8,7 @@ import {
   Platform,
   ScrollView,
   TextInput,
-  TouchableOpacity,
+  TouchableOpacity
 } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -34,7 +34,7 @@ const SignInScreen = () => {
     setLoading(true);
     try {
       await login(email, password);
-      router.replace("/splash");
+      // Login function handles redirect to home
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
@@ -46,7 +46,6 @@ const SignInScreen = () => {
     }
   };
 
-  // 👉 Forgot password (backend)
   const onForgotPassword = () => {
     if (!email || !email.includes("@")) {
       Alert.alert("Invalid Email", "Please enter a valid email first.");
@@ -55,7 +54,7 @@ const SignInScreen = () => {
 
     router.push({
       pathname: "/verify-email",
-      params: { email, flow: "reset" },
+      params: { email, flow: "reset" }
     });
   };
 
@@ -74,7 +73,7 @@ const SignInScreen = () => {
             <Image
               source={require("../../assets/images/logo.png")}
               style={authStyles.image}
-              contentFit="contain"
+              contentFit='contain'
             />
           </View>
 
@@ -84,24 +83,24 @@ const SignInScreen = () => {
             <View style={authStyles.inputContainer}>
               <TextInput
                 style={authStyles.textInput}
-                placeholder="Enter email"
+                placeholder='Enter email'
                 placeholderTextColor={COLORS.textLight}
                 value={email}
                 onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
+                keyboardType='email-address'
+                autoCapitalize='none'
               />
             </View>
 
             <View style={authStyles.inputContainer}>
               <TextInput
                 style={authStyles.textInput}
-                placeholder="Enter password"
+                placeholder='Enter password'
                 placeholderTextColor={COLORS.textLight}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
-                autoCapitalize="none"
+                autoCapitalize='none'
               />
               <TouchableOpacity
                 style={authStyles.eyeButton}
@@ -127,7 +126,7 @@ const SignInScreen = () => {
             <TouchableOpacity
               style={[
                 authStyles.authButton,
-                loading && authStyles.buttonDisabled,
+                loading && authStyles.buttonDisabled
               ]}
               onPress={handleSignIn}
               disabled={loading}
@@ -142,7 +141,7 @@ const SignInScreen = () => {
               onPress={() => router.push("/sign-up")}
             >
               <Text style={authStyles.linkText}>
-                Don't have an account?{" "}
+                Don&apos;t have an account?{" "}
                 <Text style={authStyles.link}>Sign up</Text>
               </Text>
             </TouchableOpacity>
