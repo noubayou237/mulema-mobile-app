@@ -6,19 +6,34 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Activer la validation globale pour les DTOs
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
+  // Enable CORS for mobile apps
+  app.enableCors({
+    origin: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
 
-  // Configurer Swagger
+  // Global validation for DTOs
+  app.useGlobalPipes(
+    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
+  );
+
+  // Swagger documentation
   const config = new DocumentBuilder()
     .setTitle('Mulema API')
     .setDescription("Documentation de l'API pour l'application Mulema")
     .setVersion('1.0')
-    .addBearerAuth() // Pour l'authentification JWT
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(process.env.PORT ?? 3000);
+  // Listen on port 5001, bind to all interfaces
+  const port = process.env.PORT ?? 5001;
+  const host = process.env.HOST ?? '0.0.0.0';
+  await app.listen(port, host);
+
+  console.log(`🚀 Backend running on http://${host}:${port}`);
+  console.log(`📚 API docs: http://${host}:${port}/api`);
 }
 bootstrap();

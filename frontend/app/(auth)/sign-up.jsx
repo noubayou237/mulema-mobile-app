@@ -7,7 +7,7 @@ import {
   Platform,
   ScrollView,
   TextInput,
-  TouchableOpacity,
+  TouchableOpacity
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -25,17 +25,16 @@ const SignUpScreen = () => {
     username: "",
     email: "",
     password: "",
-    confirm: "",
+    confirm: ""
   });
 
   const [ui, setUi] = useState({
     showPassword: false,
     showConfirm: false,
-    loading: false,
+    loading: false
   });
 
-  const onChange = (key) => (val) =>
-    setForm((s) => ({ ...s, [key]: val }));
+  const onChange = (key) => (val) => setForm((s) => ({ ...s, [key]: val }));
 
   const validate = () => {
     if (
@@ -62,23 +61,36 @@ const SignUpScreen = () => {
     setUi((s) => ({ ...s, loading: true }));
 
     try {
-      await api.post("/auth/register", {
+      // console.log("Starting signup request...");
+      // console.log("API URL:", api.defaults.baseURL);
+
+      const response = await api.post("/auth/register", {
         email: form.email,
         username: form.username,
         name: form.username,
-        password: form.password,
+        password: form.password
       });
 
+      console.log("Signup response:", response.data);
+
       // 👉 après inscription → vérification email / OTP
-      router.push({
+      Alert.alert(
+        "Inscription réussie!",
+        "Un code de vérification a été envoyé à votre email. Veuillez le vérifier pour activer votre compte."
+      );
+      router.replace({
         pathname: "/verify-email",
-        params: { email: form.email, flow: "verify" },
+        params: { email: form.email, flow: "verify" }
       });
     } catch (err) {
+      console.error("Signup error:", err);
+      console.error("Error response:", err.response?.data);
       const message =
         err?.response?.data?.message ||
         err?.message ||
-        "Erreur lors de la création du compte.";
+        (err.code === "ECONNABORTED"
+          ? "La requête a expiré. Vérifie que le backend est en cours d'exécution."
+          : "Erreur lors de la création du compte.");
       Alert.alert("Erreur", message);
     } finally {
       setUi((s) => ({ ...s, loading: false }));
@@ -90,7 +102,7 @@ const SignUpScreen = () => {
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={authStyles.keyboardView}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+        keyboardVerticalOffset={64}
       >
         <ScrollView
           contentContainerStyle={authStyles.scrollContent}
@@ -100,7 +112,7 @@ const SignUpScreen = () => {
             <Image
               source={require("../../assets/images/sign-up.png")}
               style={authStyles.image}
-              contentFit="contain"
+              contentFit='contain'
             />
           </View>
 
@@ -110,35 +122,35 @@ const SignUpScreen = () => {
             <View style={authStyles.inputContainer}>
               <TextInput
                 style={authStyles.textInput}
-                placeholder="Username"
+                placeholder='Username'
                 placeholderTextColor={COLORS.textLight}
                 value={form.username}
                 onChangeText={onChange("username")}
-                autoCapitalize="none"
+                autoCapitalize='none'
               />
             </View>
 
             <View style={authStyles.inputContainer}>
               <TextInput
                 style={authStyles.textInput}
-                placeholder="Email"
+                placeholder='Email'
                 placeholderTextColor={COLORS.textLight}
                 value={form.email}
                 onChangeText={onChange("email")}
-                keyboardType="email-address"
-                autoCapitalize="none"
+                keyboardType='email-address'
+                autoCapitalize='none'
               />
             </View>
 
             <View style={authStyles.inputContainer}>
               <TextInput
                 style={authStyles.textInput}
-                placeholder="Password"
+                placeholder='Password'
                 placeholderTextColor={COLORS.textLight}
                 value={form.password}
                 onChangeText={onChange("password")}
                 secureTextEntry={!ui.showPassword}
-                autoCapitalize="none"
+                autoCapitalize='none'
               />
               <TouchableOpacity
                 style={authStyles.eyeButton}
@@ -157,12 +169,12 @@ const SignUpScreen = () => {
             <View style={authStyles.inputContainer}>
               <TextInput
                 style={authStyles.textInput}
-                placeholder="Confirm password"
+                placeholder='Confirm password'
                 placeholderTextColor={COLORS.textLight}
                 value={form.confirm}
                 onChangeText={onChange("confirm")}
                 secureTextEntry={!ui.showConfirm}
-                autoCapitalize="none"
+                autoCapitalize='none'
               />
               <TouchableOpacity
                 style={authStyles.eyeButton}
@@ -181,7 +193,7 @@ const SignUpScreen = () => {
             <TouchableOpacity
               style={[
                 authStyles.authButton,
-                ui.loading && authStyles.buttonDisabled,
+                ui.loading && authStyles.buttonDisabled
               ]}
               onPress={handleSignUp}
               disabled={ui.loading}
