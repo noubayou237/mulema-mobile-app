@@ -1,109 +1,114 @@
-import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus, Get, Patch, Request, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  Req,
+  Logger,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
+import { EmailService } from './email/email.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { RolesGuard } from './guards/roles.guard';
-import { Roles } from './decorators/roles.decorator';
-import { Role } from '@prisma/client';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
-@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  private readonly logger = new Logger(AuthController.name);
 
-  @ApiOperation({ summary: "Enregistrer un nouvel utilisateur" })
-  @ApiResponse({ status: 201, description: "L'utilisateur a été créé avec succès et un token est retourné." })
-  @ApiResponse({ status: 400, description: 'Données invalides.' })
+  constructor(
+    private authService: AuthService,
+    private emailService: EmailService,
+  ) {}
+
   @Post('register')
-  register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+  async register(@Body() body: any) {
+    this.logger.log(`Register request for email: ${body.email}`);
+    return this.authService.register(body);
   }
 
-  @ApiOperation({ summary: "Connecter un utilisateur" })
-  @ApiResponse({ status: 200, description: "Connexion réussie, un token est retourné." })
-  @ApiResponse({ status: 401, description: 'Identifiants invalides.' })
   @Post('login')
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(@Body() body: any) {
+    this.logger.log(`Login request for email: ${body.email}`);
+    return this.authService.login(body);
   }
 
-  @ApiOperation({ summary: "Générer un OTP pour l'authentification" })
-  @ApiResponse({ status: 201, description: "OTP généré avec succès." })
-  @Post('otp/generate')
-  async generateOtp(@Body('email') email: string) {
-    return this.authService.generateOtp(email);
+  // ✅ ROUTE PROTÉGÉE
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  me(@Req() req: any) {
+    return req.user;
   }
 
-  @ApiOperation({ summary: "Vérifier l'OTP et connecter l'utilisateur" })
-  @ApiResponse({ status: 200, description: "Vérification réussie, tokens retournés." })
-  @ApiResponse({ status: 401, description: "OTP invalide ou expiré." })
-  @HttpCode(HttpStatus.OK)
-  @Post('otp/verify')
-  async verifyOtp(@Body() body: { email: string; otpCode: string }) {
-    return this.authService.verifyOtp(body.email, body.otpCode);
-  }
-
-  @ApiOperation({ summary: "Rafraîchir les tokens d'accès" })
-  @ApiResponse({ status: 200, description: "Nouveaux tokens générés." })
-  @ApiResponse({ status: 401, description: "Refresh token invalide ou expiré." })
-  @HttpCode(HttpStatus.OK)
   @Post('refresh')
-  async refreshTokens(@Body('refreshToken') refreshToken: string) {
-    return this.authService.refreshTokens(refreshToken);
+  refresh(@Body('refreshToken') refreshToken: string) {
+    return this.authService.refresh(refreshToken);
   }
 
-  @ApiOperation({ summary: "Déconnecter l'utilisateur" })
-  @ApiResponse({ status: 200, description: "Déconnexion réussie." })
-  @HttpCode(HttpStatus.OK)
   @Post('logout')
-  async logout(@Body('refreshToken') refreshToken: string) {
+  logout(@Body('refreshToken') refreshToken: string) {
     return this.authService.logout(refreshToken);
   }
 
-  @ApiBearerAuth()
-  @ApiOperation({ summary: "Route protégée accessible uniquement par les administrateurs" })
-  @ApiResponse({ status: 200, description: 'Accessible.' })
-  @ApiResponse({ status: 401, description: 'Non autorisé (token manquant ou invalide).' })
-  @ApiResponse({ status: 403, description: "Accès refusé (rôle insuffisant)." })
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Post('admin-only')
-  adminRoute() {
-    return 'Accessible uniquement aux admins';
+  @Post('request-password-reset')
+  async requestPasswordReset(@Body('email') email: string) {
+    this.logger.log(`Password reset request for email: ${email}`);
+    return this.authService.requestPasswordReset(email);
   }
 
-  @ApiBearerAuth()
-  @ApiOperation({ summary: "Récupérer le profil de l'utilisateur connecté" })
-  @UseGuards(JwtAuthGuard)
-  @Get('profile')
-  getProfile(@Request() req) {
-    return this.authService.getProfile(req.user.userId);
+  @Post('reset-password')
+  async resetPassword(
+    @Body()
+    body: {
+      email: string;
+      otpCode: string;
+      newPassword: string;
+    },
+  ) {
+    this.logger.log(`Reset password request for email: ${body.email}`);
+    return this.authService.resetPassword(body);
   }
 
-  @ApiBearerAuth()
-  @ApiOperation({ summary: "Mettre à jour le profil de l'utilisateur connecté" })
-  @UseGuards(JwtAuthGuard)
-  @Patch('profile')
-  updateProfile(@Request() req, @Body() body: { name?: string; email?: string; username?: string; password?: string }) {
-    return this.authService.updateProfile(req.user.userId, body);
+  @Post('request-otp')
+  async requestOtp(@Body('email') email: string) {
+    this.logger.log(`OTP request for email: ${email}`);
+    return this.authService.requestOtp(email);
   }
 
-  @ApiBearerAuth()
-  @ApiOperation({ summary: "Récupérer tous les utilisateurs (Admin uniquement)" })
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN as any)
-  @Get('users')
-  getAllUsers() {
-    return this.authService.getAllUsers();
+  @Post('verify-email')
+  async verifyEmail(
+    @Body()
+    body: {
+      email: string;
+      otpCode: string;
+    },
+  ) {
+    this.logger.log(`Email verification request for email: ${body.email}`);
+    return this.authService.verifyEmail(body);
   }
 
-  @ApiBearerAuth()
-  @ApiOperation({ summary: "Récupérer un utilisateur par ID (Admin uniquement)" })
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN as any)
-  @Get('users/:id')
-  getUserById(@Param('id') id: string) {
-    return this.authService.getUserById(id);
+  // Auto-login after email verification
+  @Post('verify-email-and-login')
+  async verifyEmailAndLogin(
+    @Body()
+    body: {
+      email: string;
+      otpCode: string;
+    },
+  ) {
+    this.logger.log(`Verify and login request for email: ${body.email}`);
+    return this.authService.verifyEmailAndLogin(body);
+  }
+
+  // Debug endpoint - remove in production
+  @Post('test-email')
+  async testEmail(@Body('email') email: string) {
+    this.logger.log(`Test email request for: ${email}`);
+    try {
+      await this.emailService.sendTestEmail(email);
+      return { success: true, message: 'Test email sent' };
+    } catch (error) {
+      this.logger.error('Test email failed', error);
+      return { success: false, message: error.message };
+    }
   }
 }

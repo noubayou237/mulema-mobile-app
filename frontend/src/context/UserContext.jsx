@@ -3,98 +3,107 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import api from "../../services/api"; // ou ../api/api selon ton projet
 
-const USER_SESSION_KEY = "userSession";
+const STORAGE_KEY = "userSession"; // Single key for session storage
 
-// Structure par défaut du contexte
 const UserContext = createContext({
   user: null,
   isLoading: true,
   login: async () => {},
-  logout: async () => {},
-  updateUser: async () => {},
+  logout: async () => {}
 });
 
-/**
- * Provider principal
- */
 export default function UserProvider({ children }) {
   const router = useRouter();
 
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  /**
-   * 🔄 Au démarrage, on essaie de recharger une session si elle existe
-   */
+  // 🔄 Bootstrap session
   useEffect(() => {
     (async () => {
       try {
-        const stored = await AsyncStorage.getItem(USER_SESSION_KEY);
-        if (stored) {
-          setUser(JSON.parse(stored));
+        const session = await AsyncStorage.getItem(STORAGE_KEY);
+        if (session) {
+          const parsed = JSON.parse(session);
+          if (parsed?.accessToken) {
+            // Validate token with backend
+            const res = await api.get("/auth/me");
+            setUser(res.data);
+          }
         }
-      } catch (e) {
-        console.warn("UserProvider: error reading session", e);
+      } catch {
+        // Token invalid or expired - clear storage
+        await AsyncStorage.removeItem(STORAGE_KEY);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
     })();
   }, []);
 
-  /**
-   * 👉  Login user (session saved)
-   *  - userData = { id, email, token, ... }
-   */
-  const login = async (userData) => {
-    try {
-      await AsyncStorage.setItem(USER_SESSION_KEY, JSON.stringify(userData));
-      setUser(userData);
-    } catch (e) {
-      console.warn("UserProvider: login error", e);
-    }
+  // 🔐 LOGIN
+  const login = async (email, password) => {
+    const res = await api.post("/auth/login", { email, password });
+
+    // Store session as single object
+    await AsyncStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        accessToken: res.data.accessToken,
+        refreshToken: res.data.refreshToken
+      })
+    );
+
+    // Get user data
+    const me = await api.get("/auth/me");
+    setUser(me.data);
+
+    // Redirect to home
+    router.replace("/(tabs)/home");
   };
 
-  /**
-   * 👉  Mise à jour partielle de l'utilisateur
-   */
-  const updateUser = async (data) => {
-    try {
-      const newUser = { ...user, ...data };
-      await AsyncStorage.setItem(USER_SESSION_KEY, JSON.stringify(newUser));
-      setUser(newUser);
-    } catch (e) {
-      console.warn("UserProvider: updateUser error", e);
-    }
-  };
-
-  /**
-   * ❌ Déconnexion
-   */
+  // ❌ LOGOUT
   const logout = async () => {
+    console.log("UserContext: Logout started");
     try {
-      await AsyncStorage.removeItem(USER_SESSION_KEY);
-      setUser(null);
-      router.replace("/auth/login"); // ou autre route
+      const session = await AsyncStorage.getItem(STORAGE_KEY);
+      console.log("UserContext: Session found:", !!session);
+      if (session) {
+        const parsed = JSON.parse(session);
+        if (parsed?.refreshToken) {
+          console.log("UserContext: Calling /auth/logout");
+          await api.post("/auth/logout", { refreshToken: parsed.refreshToken });
+        }
+      }
     } catch (e) {
-      console.warn("UserProvider: logout error", e);
+      console.warn(
+        "UserContext: Logout API error (continuing anyway):",
+        e.message
+      );
+    } finally {
+      console.log("UserContext: Clearing storage and redirecting");
+      await AsyncStorage.removeItem(STORAGE_KEY);
+      setUser(null);
+      router.replace("/(auth)/sign-in");
     }
   };
 
-  const value = {
-    user,
-    isLoading,
-    login,
-    logout,
-    updateUser,
-  };
-
-  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
+  return (
+    <UserContext.Provider
+      value={{
+        user,
+        isLoading,
+        login,
+        logout
+      }}
+    >
+      {children}
+    </UserContext.Provider>
+  );
 }
 
-/**
- * Hook personnalisé pour accéder facilement au contexte utilisateur
- */
 export function useUser() {
   return useContext(UserContext);
 }

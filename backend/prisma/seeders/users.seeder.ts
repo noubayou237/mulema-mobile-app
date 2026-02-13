@@ -1,40 +1,29 @@
-import { PrismaClient, Role } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import { PrismaClient } from "@prisma/client";
+import * as bcrypt from "bcrypt";
 
-/**
- * Crée des utilisateurs de test (un admin et un utilisateur standard).
- */
-export async function seedUsers(prisma: PrismaClient) {
-  console.log('Seeding users...');
+const prisma = new PrismaClient();
 
-  const saltRounds = 10;
-  const defaultPassword = 'password123';
-  const hashedPassword = await bcrypt.hash(defaultPassword, saltRounds);
+export async function seedUsers() {
+  const hashedPassword = await bcrypt.hash("password123", 10);
 
-  // Upsert permet d'éviter les erreurs si l'utilisateur existe déjà,
-  // il le mettra à jour au lieu de planter.
-  await prisma.user.upsert({
-    where: { email: 'admin@mulema.com' },
-    update: {},
-    create: {
-      name: 'Admin User',
-      email: 'admin@mulema.com',
-      username: 'admin',
-      password: hashedPassword,
-      role: Role.ADMIN,
-    },
+  await prisma.user.createMany({
+    data: [
+      {
+        email: "admin@test.com",
+        username: "admin",
+        name: "Admin",
+        passwordHash: hashedPassword,
+        role: "ADMIN",
+        isVerified: true,
+      },
+      {
+        email: "user@test.com",
+        username: "user",
+        name: "User",
+        passwordHash: hashedPassword,
+        role: "USER",
+        isVerified: true,
+      },
+    ],
   });
-
-  await prisma.user.upsert({
-    where: { email: 'user@mulema.com' },
-    update: {},
-    create: {
-      name: 'Test User',
-      email: 'user@mulema.com',
-      username: 'testuser',
-      password: hashedPassword,
-    },
-  });
-
-  console.log('✅ Users seeded.');
 }

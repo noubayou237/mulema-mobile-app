@@ -1,233 +1,391 @@
-import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
-import { JwtService } from '@nestjs/jwt';
+import { EmailService } from './email/email.service';
 import * as bcrypt from 'bcrypt';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
-import { v4 as uuidv4 } from 'uuid';
-import { Role } from '@prisma/client';
+import * as jwt from 'jsonwebtoken';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
-    private jwtService: JwtService,
+    private emailService: EmailService,
   ) {}
 
-  async register(dto: RegisterDto) {
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-    const user = await this.prisma.user.create({
-      data: {
-        name: dto.name,
-        email: dto.email,
-        username: dto.username,
-        password: hashedPassword,
-        role: Role.USER,
-      },
-      // Sélectionner les champs à retourner pour ne pas exposer le mot de passe
-      select: { id: true, name: true, email: true, username: true, role: true, createdAt: true, totalPrawns: true },
-    });
-
-    return user;
-  }
-
-  async login(dto: LoginDto) {
-    const user = await this.prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: dto.identifier },
-          { username: dto.identifier },
-        ],
-      },
-    });
-
-    if (!user) throw new UnauthorizedException('Identifiants invalides');
-
-    const isValid = await bcrypt.compare(dto.password, user.password);
-    if (!isValid) throw new UnauthorizedException('Mot de passe incorrect');
-
-    // Générer les tokens
-    const tokens = await this.getTokens(user.id, user.email, user.role);
-    return tokens;
-  }
-
-  async logout(refreshToken: string) {
-    await this.prisma.refreshToken.delete({
-      where: {
-        token: refreshToken,
-      },
-    });
-  }
-
-  async generateOtp(email: string) {
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString(); // Génère un code à 6 chiffres
-    const otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // Expire dans 5 minutes
-
-    // Hash the OTP before storing it
-    const saltRounds = 10;
-    const hashedOtpCode = await bcrypt.hash(otpCode, saltRounds);
-
-    await this.prisma.user.update({
-      where: { email: email },
-      data: {
-        otpCode: hashedOtpCode,
-        otpExpiresAt: otpExpiresAt,
-      },
-    });
-
-    // TODO: Envoyer l'OTP par email/SMS ici (implémentation à ajouter)
-    console.log(`OTP généré pour ${email}: ${otpCode}`);
-    return otpCode; // Retourner l'OTP non hashé pour le développement (à supprimer en production)
-  }
-
-  async verifyOtp(email: string, otpCode: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { email: email },
-    });
-
-    if (!user || !user.otpCode || !user.otpExpiresAt) {
-      throw new UnauthorizedException('Code OTP invalide ou expiré');
+  // =====================
+  // REGISTER
+  // =====================
+  async register(body: {
+    email: string;
+    username: string;
+    name: string;
+    password: string;
+  }) {
+    if (!body?.email || !body?.password || !body?.username || !body?.name) {
+      throw new BadRequestException('Missing fields');
     }
 
-    const isOtpValid = await bcrypt.compare(otpCode, user.otpCode);
+    try {
+      const passwordHash = await bcrypt.hash(body.password, 10);
 
-    if (!isOtpValid) {
-      throw new UnauthorizedException('Code OTP incorrect');
-    }
-
-    if (user.otpExpiresAt < new Date()) {
-      throw new UnauthorizedException('Code OTP expiré');
-    }
-
-    // Clear OTP after successful verification
-    await this.prisma.user.update({
-      where: { email: email },
-      data: {
-        otpCode: null,
-        otpExpiresAt: null,
-      },
-    });
-
-    // Générer les tokens après la vérification OTP
-    const tokens = await this.getTokens(user.id, user.email, user.role);
-    return tokens;
-  }
-
-  async refreshTokens(refreshToken: string) {
-    const storedRefreshToken = await this.prisma.refreshToken.findUnique({
-      where: {
-        token: refreshToken,
-      },
-    });
-    if (!storedRefreshToken) throw new UnauthorizedException('Accès refusé');
-    if (storedRefreshToken.expiresAt < new Date()) {
-      await this.prisma.refreshToken.delete({
-        where: {
-          token: refreshToken,
+      const user = await this.prisma.user.create({
+        data: {
+          email: body.email,
+          username: body.username,
+          name: body.name,
+          passwordHash,
         },
       });
-      throw new UnauthorizedException('Accès refusé');
+
+      // Generate and send OTP for email verification
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+      await this.prisma.otp.create({
+        data: {
+          code: otpCode,
+          purpose: 'VERIFY_EMAIL',
+          userId: user.id,
+          expiresAt: new Date(Date.now() + 1000 * 60 * 10), // 10 min
+        },
+      });
+
+      // Send OTP email
+      try {
+        await this.emailService.sendOtp(user.email, otpCode, 'verification');
+        this.logger.log(`OTP sent to ${user.email} for registration`);
+      } catch (emailError) {
+        this.logger.error(`Failed to send OTP to ${user.email}:`, emailError);
+        // Don't fail registration if email fails
+      }
+
+      return {
+        id: user.id,
+        email: user.email,
+        message:
+          'Registration successful. Please check your email for verification code.',
+      };
+    } catch (error) {
+      // Handle Prisma P2002 error (unique constraint violation)
+      if (error.code === 'P2002') {
+        throw new ConflictException('Un compte avec cet email existe déjà');
+      }
+      throw error;
+    }
+  }
+
+  // =====================
+  // LOGIN
+  // =====================
+  async login(body: { email: string; password: string }) {
+    if (!body?.email || !body?.password) {
+      throw new BadRequestException('Email or password missing');
     }
 
     const user = await this.prisma.user.findUnique({
-      where: {
-        id: storedRefreshToken.userId,
-      },
-    });
-    if (!user) throw new UnauthorizedException('Accès refusé');
-
-    const tokens = await this.getTokens(user.id, user.email, user.role);
-    return tokens;
-  }
-
-  async getProfile(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        username: true,
-        role: true,
-        createdAt: true,
-        totalPrawns: true,
-      },
+      where: { email: body.email },
     });
 
-    if (!user) throw new NotFoundException('Utilisateur non trouvé');
-
-    return user;
-  }
-
-  async updateProfile(userId: string, data: { name?: string; email?: string; username?: string; password?: string }) {
-    if (data.password) {
-      data.password = await bcrypt.hash(data.password, 10);
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
     }
 
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: data,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        username: true,
-        role: true,
-        createdAt: true,
-        totalPrawns: true,
-      },
-    });
-  }
+    const valid = await bcrypt.compare(body.password, user.passwordHash);
+    if (!valid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
 
-  async getAllUsers() {
-    return this.prisma.user.findMany({
-      select: { id: true, name: true, email: true, username: true, role: true, createdAt: true, totalPrawns: true },
-    });
-  }
+    const accessToken = (jwt as any).sign(
+      { sub: user.id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: 60 * 15 }, // 15 min
+    );
 
-  async getUserById(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        username: true,
-        role: true,
-        createdAt: true,
-        totalPrawns: true,
-      },
-    });
+    const refreshToken = randomBytes(64).toString('hex');
 
-    if (!user) throw new NotFoundException('Utilisateur non trouvé');
-
-    return user;
-  }
-
-  async getTokens(userId: string, email: string, role: Role) {
-    const jwtPayload = {
-      sub: userId,
-      email: email,
-      role: role,
-    };
-    return {
-      access_token: await this.jwtService.signAsync(jwtPayload, {
-        secret: 'at-secret', //process.env.ACCESS_TOKEN_SECRET,
-        expiresIn: '15m',
-      }),
-      refresh_token: await this.generateRefreshToken(userId, email, role),
-    };
-  }
-
-  async generateRefreshToken(userId: string, email: string, role: Role) {
-    const refreshToken = await this.prisma.refreshToken.create({
+    await this.prisma.refreshToken.create({
       data: {
-        userId: userId,
-        token: uuidv4(),
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 jours
+        tokenHash: refreshToken,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
       },
     });
-    return refreshToken.token;
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  // =====================
+  // REFRESH TOKEN
+  // =====================
+  async refresh(refreshToken: string) {
+    if (!refreshToken) {
+      throw new BadRequestException('Refresh token missing');
+    }
+
+    const storedToken = await this.prisma.refreshToken.findUnique({
+      where: { tokenHash: refreshToken },
+      include: { user: true },
+    });
+
+    if (!storedToken || storedToken.expiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const newAccessToken = (jwt as any).sign(
+      { sub: storedToken.user.id, role: storedToken.user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: 60 * 15 },
+    );
+
+    return { accessToken: newAccessToken };
+  }
+
+  // =====================
+  // LOGOUT
+  // =====================
+  async logout(refreshToken: string) {
+    if (!refreshToken) {
+      throw new BadRequestException('Refresh token missing');
+    }
+
+    await this.prisma.refreshToken.deleteMany({
+      where: { tokenHash: refreshToken },
+    });
+
+    return { success: true };
+  }
+
+  // =====================
+  // REQUEST PASSWORD RESET (OTP)
+  // =====================
+  async requestPasswordReset(email: string) {
+    if (!email) {
+      throw new BadRequestException('Email missing');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    // Sécurité : réponse neutre même si user inexistant
+    if (!user) {
+      return { success: true };
+    }
+
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await this.prisma.otp.create({
+      data: {
+        code: otpCode,
+        purpose: 'RESET_PASSWORD',
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 10), // 10 min
+      },
+    });
+
+    await this.emailService.sendOtp(user.email, otpCode);
+
+    return { success: true };
+  }
+
+  // =====================
+  // RESET PASSWORD
+  // =====================
+  async resetPassword(body: {
+    email: string;
+    otpCode: string;
+    newPassword: string;
+  }) {
+    const { email, otpCode, newPassword } = body;
+
+    if (!email || !otpCode || !newPassword) {
+      throw new BadRequestException('Missing fields');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid request');
+    }
+
+    const otp = await this.prisma.otp.findFirst({
+      where: {
+        userId: user.id,
+        code: otpCode,
+        purpose: 'RESET_PASSWORD',
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    if (!otp) {
+      throw new UnauthorizedException('Invalid or expired OTP');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash },
+    });
+
+    await this.prisma.otp.delete({
+      where: { id: otp.id },
+    });
+
+    return { success: true };
+  }
+
+  // =====================
+  // REQUEST OTP (for email verification)
+  // =====================
+  async requestOtp(email: string) {
+    if (!email) {
+      throw new BadRequestException('Email missing');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return { success: true };
+    }
+
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await this.prisma.otp.create({
+      data: {
+        code: otpCode,
+        purpose: 'VERIFY_EMAIL',
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 10), // 10 min
+      },
+    });
+
+    await this.emailService.sendOtp(user.email, otpCode);
+
+    return { success: true };
+  }
+
+  // =====================
+  // VERIFY EMAIL (OTP)
+  // =====================
+  async verifyEmail(body: { email: string; otpCode: string }) {
+    const { email, otpCode } = body;
+
+    if (!email || !otpCode) {
+      throw new BadRequestException('Missing fields');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid request');
+    }
+
+    const otp = await this.prisma.otp.findFirst({
+      where: {
+        userId: user.id,
+        code: otpCode,
+        purpose: 'VERIFY_EMAIL',
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    if (!otp) {
+      throw new UnauthorizedException('Invalid or expired OTP');
+    }
+
+    // Mark user as verified
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { isVerified: true },
+    });
+
+    await this.prisma.otp.delete({
+      where: { id: otp.id },
+    });
+
+    return { success: true };
+  }
+
+  // =====================
+  // VERIFY EMAIL AND LOGIN (auto-login after email verification)
+  // =====================
+  async verifyEmailAndLogin(body: { email: string; otpCode: string }) {
+    const { email, otpCode } = body;
+
+    if (!email || !otpCode) {
+      throw new BadRequestException('Missing fields');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid request');
+    }
+
+    const otp = await this.prisma.otp.findFirst({
+      where: {
+        userId: user.id,
+        code: otpCode,
+        purpose: 'VERIFY_EMAIL',
+        expiresAt: { gt: new Date() },
+      },
+    });
+
+    if (!otp) {
+      throw new UnauthorizedException('Invalid or expired OTP');
+    }
+
+    // Mark user as verified
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { isVerified: true },
+    });
+
+    // Delete used OTP
+    await this.prisma.otp.delete({
+      where: { id: otp.id },
+    });
+
+    // Generate tokens (auto-login)
+    const accessToken = (jwt as any).sign(
+      { sub: user.id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: 60 * 15 }, // 15 min
+    );
+
+    const refreshToken = randomBytes(64).toString('hex');
+
+    await this.prisma.refreshToken.create({
+      data: {
+        tokenHash: refreshToken,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+      },
+    });
+
+    return {
+      accessToken,
+      refreshToken,
+      user: { id: user.id, email: user.email, username: user.username },
+    };
   }
 }

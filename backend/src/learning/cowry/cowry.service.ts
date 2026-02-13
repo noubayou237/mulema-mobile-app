@@ -30,20 +30,21 @@ export class CowryService {
     return this.prisma.cowry.findUnique({ where: { userId } });
   }
 
+  @Cron('*/9 * * * *')
+  async rechargeCowries() {
+    if (process.env.NODE_ENV === 'test') return;
 
-@Cron('*/9 * * * *')
-async rechargeCowries() {
-  const cowries = await this.prisma.cowry.findMany();
+    const cowries = await this.prisma.cowry.findMany();
 
-  for (const cowry of cowries) {
-    if (cowry.currentCowries < cowry.maxCowries) {
-      await this.prisma.cowry.update({
-        where: { id: cowry.id },
-        data: {
-          currentCowries: cowry.currentCowries + 1,
-        },
-      });
+    for (const cowry of cowries) {
+      if (cowry.currentCowries < cowry.maxCowries) {
+        await this.prisma.cowry.update({
+          where: { id: cowry.id },
+          data: {
+            currentCowries: cowry.currentCowries + 1,
+          },
+        });
+      }
     }
   }
-}
 }
