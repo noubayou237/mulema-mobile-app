@@ -11,7 +11,8 @@ const UserContext = createContext({
   user: null,
   isLoading: true,
   login: async () => {},
-  logout: async () => {}
+  logout: async () => {},
+  refreshUser: async () => {}
 });
 
 export default function UserProvider({ children }) {
@@ -90,13 +91,26 @@ export default function UserProvider({ children }) {
     }
   };
 
+  // 🔄 REFRESH USER
+  const refreshUser = async () => {
+    try {
+      const response = await api.get("/user/profile");
+      setUser(response.data);
+      return response.data;
+    } catch (e) {
+      console.warn("UserContext: Refresh user error:", e.message);
+      throw e;
+    }
+  };
+
   return (
     <UserContext.Provider
       value={{
         user,
         isLoading,
         login,
-        logout
+        logout,
+        refreshUser
       }}
     >
       {children}

@@ -20,8 +20,15 @@ export class PatrimonialLanguageController {
     return this.service.create(dto.name);
   }
 
-  @ApiOperation({ summary: "Sélectionner une langue patrimoniale pour l'utilisateur" })
-  @ApiBody({ schema: { type: 'object', properties: { patrimonialLanguageId: { type: 'string' } } } })
+  @ApiOperation({
+    summary: "Sélectionner une langue patrimoniale pour l'utilisateur",
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { patrimonialLanguageId: { type: 'string' } },
+    },
+  })
   @Post('select')
   @UseGuards(JwtAuthGuard)
   select(@Req() req, @Body() dto: any) {

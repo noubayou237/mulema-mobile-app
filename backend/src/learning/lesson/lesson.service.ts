@@ -25,35 +25,35 @@ export class LessonService {
   }
 
   //5-Debloquer la prochaine lecon unefois la precedente terminee
-async unlockNextLesson(userId: string, currentLessonId: string) {
-  const currentLesson = await this.prisma.lesson.findUnique({
-    where: { id: currentLessonId },
-  });
+  async unlockNextLesson(userId: string, currentLessonId: string) {
+    const currentLesson = await this.prisma.lesson.findUnique({
+      where: { id: currentLessonId },
+    });
 
-  if (!currentLesson) return;
+    if (!currentLesson) return;
 
-  const nextLesson = await this.prisma.lesson.findFirst({
-    where: {
-      levelId: currentLesson.levelId,
-      order: currentLesson.order + 1,
-    },
-  });
+    const nextLesson = await this.prisma.lesson.findFirst({
+      where: {
+        levelId: currentLesson.levelId,
+        order: currentLesson.order + 1,
+      },
+    });
 
-  if (!nextLesson) return;
+    if (!nextLesson) return;
 
-  await this.prisma.userProgress.upsert({
-    where: {
-      userId_lessonId: {
+    await this.prisma.userProgress.upsert({
+      where: {
+        userId_lessonId: {
+          userId,
+          lessonId: nextLesson.id,
+        },
+      },
+      update: { isUnlocked: true },
+      create: {
         userId,
         lessonId: nextLesson.id,
+        isUnlocked: true,
       },
-    },
-    update: { isUnlocked: true },
-    create: {
-      userId,
-      lessonId: nextLesson.id,
-      isUnlocked: true,
-    },
-  });
-}
+    });
+  }
 }

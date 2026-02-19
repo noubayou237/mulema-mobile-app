@@ -4,6 +4,6 @@ import { LevelController } from './level.controller';
 
 @Module({
   providers: [LevelService],
-  controllers: [LevelController]
+  controllers: [LevelController],
 })
 export class LevelModule {}

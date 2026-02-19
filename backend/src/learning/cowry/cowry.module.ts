@@ -4,6 +4,6 @@ import { CowryController } from './cowry.controller';
 
 @Module({
   providers: [CowryService],
-  controllers: [CowryController]
+  controllers: [CowryController],
 })
 export class CowryModule {}
