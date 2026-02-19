@@ -28,8 +28,7 @@ export class PatrimonialLanguageService {
       },
     });
 
-    if (exists)
-      throw new BadRequestException('Language already selected');
+    if (exists) throw new BadRequestException('Language already selected');
 
     // Lier l'utilisateur à la langue
     return this.prisma.userLanguage.create({

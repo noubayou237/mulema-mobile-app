@@ -31,10 +31,7 @@ export class LessonController {
    */
   @UseGuards(JwtAuthGuard)
   @Get('level/:levelId')
-  async getLessonsByLevel(
-    @Param('levelId') levelId: string,
-    @Req() req: any,
-  ) {
+  async getLessonsByLevel(@Param('levelId') levelId: string, @Req() req: any) {
     const userId = req.user.id;
     return this.lessonService.getLessonsWithProgress(levelId, userId);
   }

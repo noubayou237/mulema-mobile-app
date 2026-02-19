@@ -8,6 +8,14 @@ import { StoryModule } from './story/story.module';
 import { CowryModule } from './cowry/cowry.module';
 
 @Module({
-  imports: [LevelModule, LessonModule, ProgressModule, ExerciseModule, QuestionModule, StoryModule, CowryModule]
+  imports: [
+    LevelModule,
+    LessonModule,
+    ProgressModule,
+    ExerciseModule,
+    QuestionModule,
+    StoryModule,
+    CowryModule,
+  ],
 })
 export class LearningModule {}

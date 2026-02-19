@@ -22,16 +22,15 @@ export class ExerciseController {
   }
 
   @Patch(':id/complete')
-completeExercise(
-  @Param('id') id: string,
-  @Body() body: { userId: string; accuracy: number; timeSpent: number },
-) {
-  return this.exerciseService.completeExercise(
-    id,
-    body.userId,
-    body.accuracy,
-    body.timeSpent,
-  );
-}
-
+  completeExercise(
+    @Param('id') id: string,
+    @Body() body: { userId: string; accuracy: number; timeSpent: number },
+  ) {
+    return this.exerciseService.completeExercise(
+      id,
+      body.userId,
+      body.accuracy,
+      body.timeSpent,
+    );
+  }
 }

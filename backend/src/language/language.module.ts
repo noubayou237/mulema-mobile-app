@@ -3,6 +3,6 @@ import { OfficialLanguageModule } from './official-language/official-language.mo
 import { PatrimonialLanguageModule } from './patrimonial-language/patrimonial-language.module';
 
 @Module({
-  imports: [OfficialLanguageModule, PatrimonialLanguageModule]
+  imports: [OfficialLanguageModule, PatrimonialLanguageModule],
 })
 export class LanguageModule {}

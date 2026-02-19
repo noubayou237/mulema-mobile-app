@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 
 import { PrismaModule } from './auth/prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { UserModule } from './user/user.module';
 
 import { LanguageModule } from './language/language.module';
 import { LearningModule } from './learning/learning.module';
@@ -24,6 +25,7 @@ import { LearningModule } from './learning/learning.module';
     // 🔐 Auth & DB
     PrismaModule,
     AuthModule,
+    UserModule,
 
     // 📚 Modules métier
     LanguageModule,

@@ -1,13 +1,6 @@
 // src/learning/progress/progress.controller.ts
 
-import {
-  Body,
-  Controller,
-  Post,
-  Param,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Post, Param, Req, UseGuards } from '@nestjs/common';
 import { ProgressService } from './progress.service';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -24,7 +17,7 @@ export class ProgressController {
    * (appelé une seule fois)
    */
   @Post('init/:levelId')
-  @ApiOperation({ summary: "Initialiser la progression pour un niveau" })
+  @ApiOperation({ summary: 'Initialiser la progression pour un niveau' })
   async initProgress(@Req() req: any, @Param('levelId') levelId: string) {
     const userId = req.user.userId;
     return this.progressService.initializeProgress(userId, levelId);
@@ -35,8 +28,16 @@ export class ProgressController {
    * stars = 1 | 2 | 3
    */
   @Post('complete')
-  @ApiOperation({ summary: "Marquer une leçon comme complétée" })
-  @ApiBody({ schema: { type: 'object', properties: { lessonId: { type: 'string' }, stars: { type: 'number', enum: [1, 2, 3] } } } })
+  @ApiOperation({ summary: 'Marquer une leçon comme complétée' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        lessonId: { type: 'string' },
+        stars: { type: 'number', enum: [1, 2, 3] },
+      },
+    },
+  })
   async completeLesson(
     @Req() req: any,
     @Body()

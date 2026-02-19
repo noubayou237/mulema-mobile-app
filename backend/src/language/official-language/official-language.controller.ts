@@ -19,14 +19,18 @@ export class OfficialLanguageController {
     return this.service.create(dto.name);
   }
 
-  @ApiOperation({ summary: "Sélectionner une langue officielle pour l'utilisateur" })
-  @ApiBody({ schema: { type: 'object', properties: { officialLanguageId: { type: 'string' } } } })
+  @ApiOperation({
+    summary: "Sélectionner une langue officielle pour l'utilisateur",
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { officialLanguageId: { type: 'string' } },
+    },
+  })
   @Post('select')
   @UseGuards(JwtAuthGuard)
   select(@Req() req, @Body() dto: any) {
-    return this.service.assignToUser(
-      req.user.userId,
-      dto.officialLanguageId,
-    );
+    return this.service.assignToUser(req.user.userId, dto.officialLanguageId);
   }
 }
