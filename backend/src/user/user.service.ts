@@ -30,6 +30,7 @@ export class UserService {
         role: true,
         isVerified: true,
         totalPrawns: true,
+        language: true,
         avatar: {
           select: {
             id: true,
@@ -211,5 +212,28 @@ export class UserService {
     });
 
     return { success: true };
+  }
+
+  // =====================
+  // UPDATE LANGUAGE
+  // =====================
+  async updateLanguage(userId: string, language: string) {
+    // Validate language
+    const validLanguages = ['en', 'fr'];
+    if (!validLanguages.includes(language)) {
+      throw new BadRequestException('Invalid language. Must be "en" or "fr".');
+    }
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { language },
+      select: {
+        id: true,
+        language: true,
+      },
+    });
+
+    this.logger.log(`Language updated to ${language} for user ${userId}`);
+    return user;
   }
 }
