@@ -1,6 +1,9 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { Upload } from '@aws-sdk/lib-storage';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 
 export interface UploadedFile {
@@ -73,18 +76,15 @@ export class R2StorageService {
       const ext = file.originalname.split('.').pop() || 'jpg';
       const key = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
 
-      // Upload using multipart upload for better performance
-      const upload = new Upload({
-        client: this.s3Client,
-        params: {
-          Bucket: this.bucketName,
-          Key: key,
-          Body: file.buffer,
-          ContentType: file.mimetype,
-        },
+      // Upload using simple PutObjectCommand (works better with buffers)
+      const command = new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        Body: file.buffer,
+        ContentType: file.mimetype,
       });
 
-      await upload.done();
+      await this.s3Client.send(command);
 
       const url = this.publicUrl
         ? `${this.publicUrl}/${key}`

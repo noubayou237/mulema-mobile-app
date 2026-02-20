@@ -100,4 +100,18 @@ export class UserController {
     this.logger.log(`Delete profile picture request for user: ${user.userId}`);
     return this.userService.deleteProfilePicture(user.userId);
   }
+
+  // =====================
+  // UPDATE LANGUAGE
+  // =====================
+  @Put('language')
+  async updateLanguage(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { language: string },
+  ) {
+    this.logger.log(
+      `Update language request for user: ${user.userId}, language: ${body.language}`,
+    );
+    return this.userService.updateLanguage(user.userId, body.language);
+  }
 }
