@@ -1,0 +1,134 @@
+{
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "back": "Retour",
+    "next": "Suivant",
+    "done": "Terminé"
+  },
+  "auth": {
+    "signIn": "Connexion",
+    "signUp": "Inscription",
+    "signOut": "Déconnexion",
+    "email": "Email",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "dontHaveAccount": "Vous n'avez pas de compte ?",
+    "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "createAccount": "Créer un compte",
+    "verifyEmail": "Vérifier l'email",
+    "verifyCode": "Vérifier le code",
+    "enterOtp": "Entrer le code OTP",
+    "resendOtp": "Renvoyer le code OTP",
+    "welcomeBack": "Bon retour",
+    "loginSubtitle": "Connectez-vous pour continuer votre parcours d'apprentissage",
+    "codeSentTo": "Code envoyé à:"
+  },
+  "profile": {
+    "title": "Profil",
+    "editProfile": "Modifier le profil",
+    "name": "Nom",
+    "username": "Nom d'utilisateur",
+    "email": "Email",
+    "changeProfilePicture": "Changer la photo de profil",
+    "takePhoto": "Prendre une photo",
+    "chooseFromGallery": "Choisir dans la galerie",
+    "points": "Points",
+    "completed": "Terminé",
+    "rank": "Rang",
+    "logout": "Déconnexion",
+    "logoutConfirm": "Êtes-vous sûr de vouloir vous déconnecter ?",
+    "profileUpdated": "Profil mis à jour avec succès",
+    "profilePictureUpdated": "Photo de profil mise à jour avec succès"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "language": "Langue",
+    "selectLanguage": "Sélectionner la langue",
+    "english": "Anglais",
+    "french": "Français",
+    "notifications": "Notifications",
+    "sound": "Son",
+    "darkMode": "Mode sombre",
+    "helpSupport": "Aide et support",
+    "about": "À propos",
+    "privacy": "Politique de confidentialité",
+    "terms": "Conditions d'utilisation"
+  },
+  "home": {
+    "title": "Accueil",
+    "welcome": "Bienvenue",
+    "continueLearning": "Continuer l'apprentissage",
+    "startLearning": "Commencer l'apprentissage",
+    "yourProgress": "Votre progression",
+    "lessons": "Leçons",
+    "exercises": "Exercices",
+    "community": "Communauté"
+  },
+  "lessons": {
+    "title": "Leçons",
+    "lesson": "Leçon",
+    "exercise": "Exercice",
+    "startLesson": "Commencer la leçon",
+    "continueLesson": "Continuer la leçon",
+    "completeLesson": "Terminer la leçon",
+    "lessonCompleted": "Leçon terminée !",
+    "tryAgain": "Réessayer",
+    "stepByStep": "Étape par étape, vous construisez vos connaissances",
+    "completeToUnlock": "Complétez cette leçon pour débloquer la suivante",
+    "locked": "Verrouillé",
+    "unlocked": "Déverrouillé"
+  },
+  "exercises": {
+    "title": "Exercices",
+    "startExercise": "Commencer l'exercice",
+    "checkAnswer": "Vérifier la réponse",
+    "correct": "Correct !",
+    "incorrect": "Incorrect",
+    "exerciseCompleted": "Exercice terminé !",
+    "score": "Score",
+    "nextQuestion": "Question suivante"
+  },
+  "errors": {
+    "networkError": "Erreur réseau. Veuillez vérifier votre connexion.",
+    "serverError": "Erreur serveur. Veuillez réessayer plus tard.",
+    "invalidCredentials": "Email ou mot de passe invalide.",
+    "emailAlreadyExists": "L'email existe déjà.",
+    "passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "requiredField": "Ce champ est obligatoire.",
+    "invalidEmail": "Veuillez entrer une adresse email valide.",
+    "uploadFailed": "Échec du téléchargement. Veuillez réessayer.",
+    "somethingWentWrong": "Une erreur s'est produite. Veuillez réessayer.",
+    "codeRequired": "Code requis",
+    "enterCode": "Veuillez entrer votre code de vérification."
+  },
+  "messages": {
+    "accountCreated": "Compte créé avec succès !",
+    "emailVerified": "Email vérifié avec succès !",
+    "passwordReset": "Mot de passe réinitialisé avec succès !",
+    "languageChanged": "Langue modifiée avec succès !",
+    "profileSaved": "Profil enregistré avec succès !"
+  },
+  "stats": {
+    "title": "Statistiques",
+    "myStats": "Mes statistiques",
+    "weeklyGoal": "des objectifs atteints cette semaine"
+  },
+  "nav": {
+    "home": "Accueil",
+    "lessons": "Leçons",
+    "exercises": "Exercices",
+    "community": "Communauté"
+  },
+  "header": {
+    "welcome": "Bienvenue"
+  }
+}

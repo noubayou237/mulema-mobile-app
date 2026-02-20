@@ -1,14 +1,17 @@
 // src/context/LanguageContext.jsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import i18n from "../i18n";
 
-const HAS_SELECTED_LANGUAGE = "hasSelectedLanguage"; // clé utilisée ailleurs dans ton app
+// Separate keys for UI language vs learning language
+const UI_LANGUAGE_KEY = "app_language"; // For English/French (app UI)
+const LEARNING_LANGUAGE_KEY = "hasSelectedLanguage"; // For Duala/Bassa/Ghomala (learning)
 
 const LanguageContext = createContext({
   language: null,
   setLanguage: async () => {},
   clearLanguage: async () => {},
-  isLoading: true,
+  isLoading: true
 });
 
 export function LanguageProvider({ children }) {
@@ -19,9 +22,17 @@ export function LanguageProvider({ children }) {
     let mounted = true;
     (async () => {
       try {
-        const stored = await AsyncStorage.getItem(HAS_SELECTED_LANGUAGE);
+        // Check for UI language preference (English/French)
+        const stored = await AsyncStorage.getItem(UI_LANGUAGE_KEY);
         if (stored && mounted) {
-          setLanguageState(String(stored).toLowerCase());
+          const normalized = String(stored).toLowerCase();
+          setLanguageState(normalized);
+          // Initialize i18n with saved UI language
+          await i18n.changeLanguage(normalized);
+        } else {
+          // Default to French if no language is selected
+          await i18n.changeLanguage("fr");
+          setLanguageState("fr");
         }
       } catch (e) {
         console.warn("LanguageProvider: erreur lecture langue", e);
@@ -36,31 +47,43 @@ export function LanguageProvider({ children }) {
   }, []);
 
   /**
-   * setLanguage: persiste la langue (normalisée) ou supprime si value falsy
-   * @param {string|null} lang
+   * setLanguage: set the UI language (English/French)
+   * This is different from the learning language (Duala/Bassa/Ghomala)
+   * @param {string|null} lang - "en" or "fr"
    */
   const setLanguage = async (lang) => {
     try {
       if (!lang) {
-        await AsyncStorage.removeItem(HAS_SELECTED_LANGUAGE);
+        await AsyncStorage.removeItem(UI_LANGUAGE_KEY);
         setLanguageState(null);
+        await i18n.changeLanguage("fr");
         return;
       }
       const normalized = String(lang).toLowerCase();
-      await AsyncStorage.setItem(HAS_SELECTED_LANGUAGE, normalized);
+      // Only accept en or fr for UI language
+      if (normalized !== "en" && normalized !== "fr") {
+        console.warn("Invalid UI language, defaulting to French");
+        await i18n.changeLanguage("fr");
+        setLanguageState("fr");
+        return;
+      }
+      await AsyncStorage.setItem(UI_LANGUAGE_KEY, normalized);
       setLanguageState(normalized);
+      // Update i18n language
+      await i18n.changeLanguage(normalized);
     } catch (e) {
       console.warn("LanguageProvider: erreur sauvegarde langue", e);
     }
   };
 
   /**
-   * clearLanguage: utilitaire pour effacer la langue (utile après inscription)
+   * clearLanguage: clear the UI language preference
    */
   const clearLanguage = async () => {
     try {
-      await AsyncStorage.removeItem(HAS_SELECTED_LANGUAGE);
+      await AsyncStorage.removeItem(UI_LANGUAGE_KEY);
       setLanguageState(null);
+      await i18n.changeLanguage("en");
     } catch (e) {
       console.warn("LanguageProvider: erreur clearLanguage", e);
     }

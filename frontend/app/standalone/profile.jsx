@@ -19,11 +19,30 @@ import { useUser } from "@/src/context/UserContext";
 import { useState, useEffect } from "react";
 import * as ImagePicker from "expo-image-picker";
 import api from "../../services/api";
-import { Platform as PlatformEnv } from "react-native";
+import { useTranslation } from "react-i18next";
+import "../../src/i18n";
+
+// Language options with flags
+const LANGUAGES = [
+  {
+    code: "en",
+    name: "English",
+    flag: "🇺🇸"
+  },
+  {
+    code: "fr",
+    name: "Français",
+    flag: "🇫🇷"
+  }
+];
 
 const Profile = () => {
   const router = useRouter();
-  const { user, logout, refreshUser } = useUser();
+  const { user, logout, refreshUser, setLanguage } = useUser();
+  const { t, i18n } = useTranslation();
+
+  // Get current language from i18n for display
+  const currentLanguage = i18n.language || "fr";
 
   // Profile picture state
   const [profileImage, setProfileImage] = useState(null);
@@ -38,6 +57,10 @@ const Profile = () => {
   const [editEmail, setEditEmail] = useState(user?.email || "");
   const [isSaving, setIsSaving] = useState(false);
 
+  // Language modal state
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [isChangingLanguage, setIsChangingLanguage] = useState(false);
+
   // Load user profile data on mount
   useEffect(() => {
     loadUserProfile();
@@ -49,10 +72,24 @@ const Profile = () => {
       if (response.data.avatar?.imageUrl) {
         // Get the API base URL for the image
         const imageUrl = response.data.avatar.imageUrl;
-        // Prepend the API URL if it's a relative path
-        const fullImageUrl = imageUrl.startsWith("http")
-          ? imageUrl
-          : `http://192.168.43.125:5001${imageUrl}`;
+
+        // Handle different URL formats
+        let fullImageUrl;
+        if (imageUrl.startsWith("http")) {
+          // Already a full URL (R2 or other CDN)
+          fullImageUrl = imageUrl;
+        } else if (imageUrl.startsWith("/")) {
+          // Relative path - prepend API URL
+          fullImageUrl = `http://192.168.43.125:5001${imageUrl}`;
+        } else {
+          // Just filename - construct full path
+          fullImageUrl = `http://192.168.43.125:5001/uploads/avatars/${imageUrl}`;
+        }
+
+        // Add cache busting parameter
+        const separator = fullImageUrl.includes("?") ? "&" : "?";
+        fullImageUrl = `${fullImageUrl}${separator}t=${Date.now()}`;
+
         setProfileImage(fullImageUrl);
       }
     } catch (error) {
@@ -70,6 +107,29 @@ const Profile = () => {
       console.error("Profile logout error:", err);
       Alert.alert("Error", "Failed to logout. Please try again.");
     }
+  };
+
+  // =====================
+  // LANGUAGE FUNCTIONS
+  // =====================
+  const handleLanguageChange = async (langCode) => {
+    setIsChangingLanguage(true);
+    try {
+      await setLanguage(langCode);
+      setShowLanguageModal(false);
+      Alert.alert(t("messages.languageChanged"), "");
+    } catch (error) {
+      console.error("Error changing language:", error);
+      Alert.alert(t("errors.somethingWentWrong"), "");
+    } finally {
+      setIsChangingLanguage(false);
+    }
+  };
+
+  const getCurrentLanguageInfo = () => {
+    return (
+      LANGUAGES.find((lang) => lang.code === currentLanguage) || LANGUAGES[0]
+    );
   };
 
   // =====================
@@ -95,7 +155,22 @@ const Profile = () => {
     const hasPermissions = await requestPermissions();
     if (!hasPermissions) return;
 
-    setShowImagePicker(true);
+    setShowImagePicker(false);
+
+    Alert.alert("Select Profile Picture", "Choose an option", [
+      {
+        text: "Take Photo",
+        onPress: () => launchCamera()
+      },
+      {
+        text: "Choose from Gallery",
+        onPress: () => launchImageLibrary()
+      },
+      {
+        text: "Cancel",
+        style: "cancel"
+      }
+    ]);
   };
 
   const launchCamera = async () => {
@@ -179,12 +254,23 @@ const Profile = () => {
 
       if (response.data.imageUrl) {
         // Update local state with the new image URL
-        const fullImageUrl = response.data.imageUrl.startsWith("http")
-          ? response.data.imageUrl
-          : `http://192.168.43.125:5001${response.data.imageUrl}`;
+        let uploadedUrl = response.data.imageUrl;
+        if (uploadedUrl.startsWith("http")) {
+          // Already a full URL (R2 or other CDN)
+        } else if (uploadedUrl.startsWith("/")) {
+          // Relative path - prepend API URL
+          uploadedUrl = `http://192.168.43.125:5001${uploadedUrl}`;
+        } else {
+          // Just filename - construct full path
+          uploadedUrl = `http://192.168.43.125:5001/uploads/avatars/${uploadedUrl}`;
+        }
+
+        // Add cache busting parameter
+        const separator = uploadedUrl.includes("?") ? "&" : "?";
+        const fullImageUrl = `${uploadedUrl}${separator}t=${Date.now()}`;
         setProfileImage(fullImageUrl);
 
-        Alert.alert("Success", "Profile picture updated successfully!");
+        Alert.alert(t("profile.profilePictureUpdated"), "");
       }
 
       setShowPreview(false);
@@ -195,7 +281,7 @@ const Profile = () => {
         error.response?.data?.message ||
         error.message ||
         "Failed to upload image";
-      Alert.alert("Upload Failed", errorMessage);
+      Alert.alert(t("errors.uploadFailed"), errorMessage);
     } finally {
       setIsUploading(false);
     }
@@ -238,7 +324,7 @@ const Profile = () => {
       await refreshUser();
 
       setShowEditModal(false);
-      Alert.alert("Success", "Profile updated successfully!");
+      Alert.alert(t("profile.profileUpdated"), "");
     } catch (error) {
       console.error("Update profile error:", error);
       const errorMessage =
@@ -267,7 +353,7 @@ const Profile = () => {
       >
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>Profile</Text>
+            <Text style={styles.headerTitle}>{t("profile.title")}</Text>
           </View>
 
           {/* Profile Picture Section */}
@@ -294,15 +380,15 @@ const Profile = () => {
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
               <Text style={styles.statNumber}>{user?.totalPrawns || 0}</Text>
-              <Text style={styles.statLabel}>Points</Text>
+              <Text style={styles.statLabel}>{t("profile.points")}</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Completed</Text>
+              <Text style={styles.statLabel}>{t("profile.completed")}</Text>
             </View>
             <View style={styles.statBox}>
               <Text style={styles.statNumber}>-</Text>
-              <Text style={styles.statLabel}>Rank</Text>
+              <Text style={styles.statLabel}>{t("profile.rank")}</Text>
             </View>
           </View>
 
@@ -310,15 +396,43 @@ const Profile = () => {
             <TouchableOpacity style={styles.menuItem} onPress={openEditModal}>
               <View style={styles.menuItemLeft}>
                 <Ionicons name='person-outline' size={24} color='#333' />
-                <Text style={styles.menuItemText}>Edit Profile</Text>
+                <Text style={styles.menuItemText}>
+                  {t("profile.editProfile")}
+                </Text>
               </View>
               <Ionicons name='chevron-forward-outline' size={20} color='#ccc' />
+            </TouchableOpacity>
+
+            {/* Language Selector */}
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => setShowLanguageModal(true)}
+            >
+              <View style={styles.menuItemLeft}>
+                <Ionicons name='language-outline' size={24} color='#333' />
+                <Text style={styles.menuItemText}>
+                  {t("settings.language")}
+                </Text>
+              </View>
+              <View style={styles.languageSelector}>
+                <Text style={styles.currentLanguageText}>
+                  {getCurrentLanguageInfo().flag}{" "}
+                  {getCurrentLanguageInfo().name}
+                </Text>
+                <Ionicons
+                  name='chevron-forward-outline'
+                  size={20}
+                  color='#ccc'
+                />
+              </View>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.menuItem} onPress={() => {}}>
               <View style={styles.menuItemLeft}>
                 <Ionicons name='notifications-outline' size={24} color='#333' />
-                <Text style={styles.menuItemText}>Notifications</Text>
+                <Text style={styles.menuItemText}>
+                  {t("settings.notifications")}
+                </Text>
               </View>
               <Ionicons name='chevron-forward-outline' size={20} color='#ccc' />
             </TouchableOpacity>
@@ -326,7 +440,7 @@ const Profile = () => {
             <TouchableOpacity style={styles.menuItem} onPress={() => {}}>
               <View style={styles.menuItemLeft}>
                 <Ionicons name='settings-outline' size={24} color='#333' />
-                <Text style={styles.menuItemText}>Settings</Text>
+                <Text style={styles.menuItemText}>{t("settings.title")}</Text>
               </View>
               <Ionicons name='chevron-forward-outline' size={20} color='#ccc' />
             </TouchableOpacity>
@@ -334,7 +448,9 @@ const Profile = () => {
             <TouchableOpacity style={styles.menuItem} onPress={() => {}}>
               <View style={styles.menuItemLeft}>
                 <Ionicons name='help-circle-outline' size={24} color='#333' />
-                <Text style={styles.menuItemText}>Help & Support</Text>
+                <Text style={styles.menuItemText}>
+                  {t("settings.helpSupport")}
+                </Text>
               </View>
               <Ionicons name='chevron-forward-outline' size={20} color='#ccc' />
             </TouchableOpacity>
@@ -343,7 +459,7 @@ const Profile = () => {
               <View style={styles.menuItemLeft}>
                 <Ionicons name='log-out-outline' size={24} color='#d9534f' />
                 <Text style={[styles.menuItemText, { color: "#d9534f" }]}>
-                  Logout
+                  {t("profile.logout")}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -375,7 +491,9 @@ const Profile = () => {
                 style={[styles.previewButton, styles.cancelButton]}
                 onPress={cancelUpload}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={styles.cancelButtonText}>
+                  {t("common.cancel")}
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -404,14 +522,16 @@ const Profile = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.editModalContent}>
             <View style={styles.editModalHeader}>
-              <Text style={styles.editModalTitle}>Edit Profile</Text>
+              <Text style={styles.editModalTitle}>
+                {t("profile.editProfile")}
+              </Text>
               <TouchableOpacity onPress={() => setShowEditModal(false)}>
                 <Ionicons name='close' size={24} color='#333' />
               </TouchableOpacity>
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Name</Text>
+              <Text style={styles.inputLabel}>{t("profile.name")}</Text>
               <TextInput
                 style={styles.input}
                 value={editName}
@@ -422,7 +542,7 @@ const Profile = () => {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Email</Text>
+              <Text style={styles.inputLabel}>{t("profile.email")}</Text>
               <TextInput
                 style={styles.input}
                 value={editEmail}
@@ -442,54 +562,66 @@ const Profile = () => {
               {isSaving ? (
                 <ActivityIndicator color='#fff' size='small' />
               ) : (
-                <Text style={styles.saveButtonText}>Save Changes</Text>
+                <Text style={styles.saveButtonText}>{t("common.save")}</Text>
               )}
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      {/* Image Picker Modal */}
+      {/* Language Selection Modal */}
       <Modal
-        visible={showImagePicker}
+        visible={showLanguageModal}
         transparent
         animationType='slide'
-        onRequestClose={() => setShowImagePicker(false)}
+        onRequestClose={() => setShowLanguageModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.imagePickerModalContent}>
-            <Text style={styles.imagePickerTitle}>Select Profile Picture</Text>
-
-            <TouchableOpacity
-              style={styles.imagePickerOption}
-              onPress={() => {
-                setShowImagePicker(false);
-                launchCamera();
-              }}
-            >
-              <Ionicons name='camera' size={24} color='#007AFF' />
-              <Text style={styles.imagePickerOptionText}>Take Photo</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.imagePickerOption}
-              onPress={() => {
-                setShowImagePicker(false);
-                launchImageLibrary();
-              }}
-            >
-              <Ionicons name='images' size={24} color='#007AFF' />
-              <Text style={styles.imagePickerOptionText}>
-                Choose from Gallery
+          <View style={styles.languageModalContent}>
+            <View style={styles.languageModalHeader}>
+              <Text style={styles.languageModalTitle}>
+                {t("settings.selectLanguage")}
               </Text>
-            </TouchableOpacity>
+              <TouchableOpacity onPress={() => setShowLanguageModal(false)}>
+                <Ionicons name='close' size={24} color='#333' />
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity
-              style={[styles.imagePickerOption, styles.imagePickerCancel]}
-              onPress={() => setShowImagePicker(false)}
-            >
-              <Text style={styles.imagePickerCancelText}>Cancel</Text>
-            </TouchableOpacity>
+            {LANGUAGES.map((lang) => (
+              <TouchableOpacity
+                key={lang.code}
+                style={[
+                  styles.languageOption,
+                  currentLanguage === lang.code && styles.languageOptionSelected
+                ]}
+                onPress={() => handleLanguageChange(lang.code)}
+                disabled={isChangingLanguage}
+              >
+                <View style={styles.languageOptionContent}>
+                  <Text style={styles.languageFlag}>{lang.flag}</Text>
+                  <Text
+                    style={[
+                      styles.languageName,
+                      currentLanguage === lang.code &&
+                        styles.languageNameSelected
+                    ]}
+                  >
+                    {lang.name}
+                  </Text>
+                </View>
+                {currentLanguage === lang.code && (
+                  <Ionicons name='checkmark-circle' size={24} color='#4CAF50' />
+                )}
+              </TouchableOpacity>
+            ))}
+
+            {isChangingLanguage && (
+              <ActivityIndicator
+                color='#4CAF50'
+                size='small'
+                style={styles.languageLoader}
+              />
+            )}
           </View>
         </View>
       </Modal>
@@ -616,6 +748,15 @@ const styles = StyleSheet.create({
     color: "#333",
     marginLeft: 15
   },
+  languageSelector: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  currentLanguageText: {
+    fontSize: 14,
+    color: "#666",
+    marginRight: 5
+  },
 
   // Modal Styles
   modalOverlay: {
@@ -723,42 +864,58 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 16
   },
-  // Image Picker Modal Styles
-  imagePickerModalContent: {
+
+  // Language Modal
+  languageModalContent: {
     backgroundColor: "#fff",
     borderRadius: 20,
     padding: 20,
-    width: "80%",
-    alignItems: "center"
+    width: "90%",
+    maxWidth: 400
   },
-  imagePickerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
+  languageModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 20
   },
-  imagePickerOption: {
+  languageModalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333"
+  },
+  languageOption: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    width: "100%",
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee"
+    justifyContent: "space-between",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    backgroundColor: "#f5f5f5"
   },
-  imagePickerOptionText: {
+  languageOptionSelected: {
+    backgroundColor: "#e8f5e9",
+    borderWidth: 1,
+    borderColor: "#4CAF50"
+  },
+  languageOptionContent: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  languageFlag: {
+    fontSize: 28,
+    marginRight: 15
+  },
+  languageName: {
     fontSize: 16,
-    color: "#007AFF",
-    marginLeft: 15
+    color: "#333"
   },
-  imagePickerCancel: {
-    borderBottomWidth: 0,
-    marginTop: 10,
-    justifyContent: "center"
+  languageNameSelected: {
+    fontWeight: "600",
+    color: "#4CAF50"
   },
-  imagePickerCancelText: {
-    fontSize: 16,
-    color: "#999"
+  languageLoader: {
+    marginTop: 10
   }
 });
 

@@ -4,6 +4,9 @@ import { Slot } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS } from "../constants/colors";
 
+// Initialize i18n
+import "../src/i18n";
+
 // Contexts (ATTENTION : fichiers placés hors du dossier `app/`, par ex. src/context/)
 import { LanguageProvider } from "../src/context/LanguageContext"; // named export
 import UserProvider from "../src/context/UserContext"; // default export expected

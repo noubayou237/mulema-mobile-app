@@ -3,16 +3,19 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import api from "../../services/api"; // ou ../api/api selon ton projet
+import api from "../../services/api";
+import { changeLanguage, initializeLanguage } from "../i18n";
 
 const STORAGE_KEY = "userSession"; // Single key for session storage
 
 const UserContext = createContext({
   user: null,
   isLoading: true,
+  language: "en",
   login: async () => {},
   logout: async () => {},
-  refreshUser: async () => {}
+  refreshUser: async () => {},
+  setLanguage: async () => {}
 });
 
 export default function UserProvider({ children }) {
@@ -20,6 +23,22 @@ export default function UserProvider({ children }) {
 
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [language, setLanguageState] = useState("en");
+
+  // 🔄 Initialize language on mount
+  useEffect(() => {
+    initializeAppLanguage();
+  }, []);
+
+  // Initialize language from storage
+  const initializeAppLanguage = async () => {
+    try {
+      const savedLanguage = await initializeLanguage();
+      setLanguageState(savedLanguage);
+    } catch (error) {
+      console.log("Error initializing language:", error);
+    }
+  };
 
   // 🔄 Bootstrap session
   useEffect(() => {
@@ -103,14 +122,34 @@ export default function UserProvider({ children }) {
     }
   };
 
+  // 🌐 CHANGE LANGUAGE
+  const setLanguage = async (newLanguage) => {
+    try {
+      await changeLanguage(newLanguage);
+      setLanguageState(newLanguage);
+
+      // Optionally save to backend
+      try {
+        await api.put("/user/language", { language: newLanguage });
+      } catch (error) {
+        console.log("Error saving language to backend:", error.message);
+      }
+    } catch (error) {
+      console.error("Error changing language:", error);
+      throw error;
+    }
+  };
+
   return (
     <UserContext.Provider
       value={{
         user,
         isLoading,
+        language,
         login,
         logout,
-        refreshUser
+        refreshUser,
+        setLanguage
       }}
     >
       {children}

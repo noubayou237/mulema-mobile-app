@@ -8,6 +8,8 @@ import { useRouter } from "expo-router";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS } from "../../constants/colors";
 import { usePathname } from "expo-router";
+import { useTranslation } from "react-i18next";
+import "../../src/i18n";
 
 // Variables et logique inutilisées dans ce nouveau design fixe mais conservées pour l'exemple
 const WELCOME_KEY = "@app_welcome_shown_v1";
@@ -23,6 +25,7 @@ export default function Header({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useTranslation();
 
   // On utilise 'initialCoris' qui est désormais le "badge Coris"
   const [coris, setCoris] = useState(initialCoris);
@@ -55,7 +58,7 @@ export default function Header({
       {/* LEFT & CENTER: Remplacé par le bloc 'Welcome ,Tjega !' et le soulignement */}
       <View style={styles.leftContent}>
         <Text style={styles.welcomeTextCustom}>
-          Welcome ,<Text style={{ fontWeight: 'bold' }}>{username}</Text> !
+          {t('header.welcome')} ,<Text style={{ fontWeight: 'bold' }}>{username}</Text> !
         </Text>
         <View style={styles.redUnderline} />
       </View>

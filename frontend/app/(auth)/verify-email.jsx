@@ -15,6 +15,8 @@ import { Image } from "expo-image";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { authStyles } from "../../assets/styles/auth.styles";
 import api from "../../services/api";
+import { useTranslation } from "react-i18next";
+import "../../src/i18n";
 
 const RESEND_COOLDOWN = 60; // seconds
 const STORAGE_KEY = "userSession";
@@ -22,6 +24,7 @@ const STORAGE_KEY = "userSession";
 const VerifyEmail = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { t } = useTranslation();
 
   const email = params?.email || "";
   const flow = params?.flow || "reset";
@@ -79,10 +82,7 @@ const VerifyEmail = () => {
     // console.log("Flow:", flow);
 
     if (!code.trim()) {
-      return Alert.alert(
-        "Code required",
-        "Please enter your verification code."
-      );
+      return Alert.alert(t("errors.codeRequired"), t("errors.enterCode"));
     }
 
     setLoading(true);
@@ -159,10 +159,12 @@ const VerifyEmail = () => {
             </View>
 
             <Text style={authStyles.title}>
-              {flow === "verify" ? "Vérifier l'email" : "Vérifier le code"}
+              {flow === "verify" ? t("auth.verifyEmail") : t("auth.verifyCode")}
             </Text>
 
-            <Text style={styles.subtitle}>Code envoyé à: {email}</Text>
+            <Text style={styles.subtitle}>
+              {t("auth.codeSentTo")} {email}
+            </Text>
 
             <TextInput
               style={authStyles.textInput}

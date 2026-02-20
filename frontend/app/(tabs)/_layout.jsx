@@ -7,6 +7,8 @@ import Header from "../components/header";
 import BottomNav from "../components/bottom";
 import { COLORS } from "../../constants/colors";
 import { useUser } from "../../src/context/UserContext";
+import { useTranslation } from "react-i18next";
+import "../../src/i18n";
 
 /**
  * Tabs layout centralisé :
@@ -19,6 +21,7 @@ export default function TabsLayout() {
   const router = useRouter();
   const segments = useSegments();
   const { user, isLoading, logout } = useUser();
+  const { t } = useTranslation();
 
   // 🔐 Protection des tabs
   useEffect(() => {
@@ -35,10 +38,10 @@ export default function TabsLayout() {
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: COLORS.background ?? "#fff",
+          backgroundColor: COLORS.background ?? "#fff"
         }}
       >
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size='large' />
       </View>
     );
   }
@@ -46,12 +49,12 @@ export default function TabsLayout() {
   // logout handler avec confirmation (backend)
   const handleLogout = () => {
     Alert.alert(
-      "Logout",
-      "Are you sure you want to sign out?",
+      t("profile.logout"),
+      t("profile.logoutConfirm"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Yes, Logout",
+          text: t("common.confirm"),
           style: "destructive",
           onPress: async () => {
             try {
@@ -59,8 +62,8 @@ export default function TabsLayout() {
             } catch (err) {
               console.error("Logout error:", err);
             }
-          },
-        },
+          }
+        }
       ],
       { cancelable: true }
     );
@@ -69,6 +72,22 @@ export default function TabsLayout() {
   // segment actif pour Header + BottomNav
   const activeSegment = segments[segments.length - 1] || "home";
 
+  // Get translated title for the header
+  const getTitle = () => {
+    switch (activeSegment) {
+      case "home":
+        return t("nav.home");
+      case "lessons":
+        return t("nav.lessons");
+      case "exercices":
+        return t("nav.exercises");
+      case "community":
+        return t("nav.community");
+      default:
+        return t("nav.home");
+    }
+  };
+
   const headerRight = (
     <TouchableOpacity
       onPress={handleLogout}
@@ -76,50 +95,34 @@ export default function TabsLayout() {
         marginRight: 6,
         backgroundColor: COLORS.primary,
         padding: 8,
-        borderRadius: 20,
+        borderRadius: 20
       }}
       activeOpacity={0.8}
     >
-      <Ionicons name="log-out-outline" size={18} color="#fff" />
+      <Ionicons name='log-out-outline' size={18} color='#fff' />
     </TouchableOpacity>
   );
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background ?? "#fff" }}>
       {/* Header commun */}
-      <Header title={titleForSegment(activeSegment)} right={headerRight} />
+      <Header title={getTitle()} right={headerRight} />
 
       {/* Tabs (tabBar native cachée) */}
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarStyle: { display: "none" },
+          tabBarStyle: { display: "none" }
         }}
       >
-        <Tabs.Screen name="home" options={{ title: "Home" }} />
-        <Tabs.Screen name="lessons" options={{ title: "Lessons" }} />
-        <Tabs.Screen name="exercices" options={{ title: "Exercices" }} />
-        <Tabs.Screen name="community" options={{ title: "Community" }} />
+        <Tabs.Screen name='home' options={{ title: "Home" }} />
+        <Tabs.Screen name='lessons' options={{ title: "Lessons" }} />
+        <Tabs.Screen name='exercices' options={{ title: "Exercices" }} />
+        <Tabs.Screen name='community' options={{ title: "Community" }} />
       </Tabs>
 
       {/* Bottom navigation custom */}
       <BottomNav activeKey={activeSegment} />
     </View>
   );
-}
-
-/* Helper pour le titre du Header */
-function titleForSegment(seg) {
-  switch (seg) {
-    case "home":
-      return "Home";
-    case "lessons":
-      return "Lessons";
-    case "exercices":
-      return "Exercices";
-    case "community":
-      return "Community";
-    default:
-      return "Home";
-  }
 }
