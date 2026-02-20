@@ -70,12 +70,19 @@ const Profile = () => {
     try {
       const response = await api.get("/user/profile");
       if (response.data.avatar?.imageUrl) {
-        // Get the API base URL for the image
-        const imageUrl = response.data.avatar.imageUrl;
+        // Get the image URL
+        let imageUrl = response.data.avatar.imageUrl;
 
-        // Handle different URL formats
+        // Handle different URL formats - use proxy endpoint for R2 images
         let fullImageUrl;
-        if (imageUrl.startsWith("http")) {
+        if (
+          imageUrl.includes("r2.cloudflarestorage.com") ||
+          imageUrl.includes("public.r2")
+        ) {
+          // Extract the key from R2 URL and use proxy endpoint
+          const key = imageUrl.split("/").pop().split("?")[0];
+          fullImageUrl = `http://192.168.43.125:5001/image/avatars/${key}`;
+        } else if (imageUrl.startsWith("http")) {
           // Already a full URL (R2 or other CDN)
           fullImageUrl = imageUrl;
         } else if (imageUrl.startsWith("/")) {
@@ -255,7 +262,16 @@ const Profile = () => {
       if (response.data.imageUrl) {
         // Update local state with the new image URL
         let uploadedUrl = response.data.imageUrl;
-        if (uploadedUrl.startsWith("http")) {
+
+        // Use proxy endpoint for R2 images
+        if (
+          uploadedUrl.includes("r2.cloudflarestorage.com") ||
+          uploadedUrl.includes("public.r2")
+        ) {
+          // Extract the key from R2 URL and use proxy endpoint
+          const key = uploadedUrl.split("/").pop().split("?")[0];
+          uploadedUrl = `http://192.168.43.125:5001/image/avatars/${key}`;
+        } else if (uploadedUrl.startsWith("http")) {
           // Already a full URL (R2 or other CDN)
         } else if (uploadedUrl.startsWith("/")) {
           // Relative path - prepend API URL
