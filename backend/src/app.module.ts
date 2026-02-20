@@ -11,6 +11,7 @@ import { UserModule } from './user/user.module';
 
 import { LanguageModule } from './language/language.module';
 import { LearningModule } from './learning/learning.module';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -30,6 +31,9 @@ import { LearningModule } from './learning/learning.module';
     // 📚 Modules métier
     LanguageModule,
     LearningModule,
+
+    // 📦 Storage
+    StorageModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { R2StorageService } from './r2-storage.service';
+import { ImageProxyController } from './image-proxy.controller';
 
 @Module({
   imports: [ConfigModule],
+  controllers: [ImageProxyController],
   providers: [R2StorageService],
   exports: [R2StorageService],
 })

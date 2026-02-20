@@ -3,7 +3,9 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ConfigService } from '@nestjs/config';
 
 export interface UploadedFile {
@@ -122,14 +124,68 @@ export class R2StorageService {
   }
 
   /**
-   * Get a signed URL for private files (if needed)
+   * Get a file from R2 and return as buffer
    */
+  async getFile(key: string): Promise<{ buffer: Buffer; contentType: string }> {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      });
 
-  getSignedUrl(key: string): string {
-    // Note: Cloudflare R2 doesn't support signed URLs in the same way as S3
-    // You would need to use R2's custom domain or Workers for this
-    // For now, we'll return the public URL
-    return this.publicUrl ? `${this.publicUrl}/${key}` : `/uploads/${key}`;
+      const response = await this.s3Client.send(command);
+
+      if (!response.Body) {
+        throw new Error('Empty response body');
+      }
+
+      // Convert the stream to buffer
+      const chunks: Uint8Array[] = [];
+      for await (const chunk of response.Body as AsyncIterable<Uint8Array>) {
+        chunks.push(chunk);
+      }
+      const buffer = Buffer.concat(chunks);
+
+      return {
+        buffer,
+        contentType: response.ContentType || 'image/jpeg',
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to get file: ${errorMessage}`);
+      throw new BadRequestException(`Failed to get file: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Get a signed URL for private files
+   * Signed URLs expire after the specified duration
+   */
+  async getSignedUrl(
+    key: string,
+    expiresInSeconds: number = 3600,
+  ): Promise<string> {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      });
+
+      const signedUrl = await getSignedUrl(this.s3Client, command, {
+        expiresIn: expiresInSeconds,
+      });
+
+      this.logger.log(`Generated signed URL for: ${key}`);
+      return signedUrl;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to generate signed URL: ${errorMessage}`);
+      throw new BadRequestException(
+        `Failed to generate signed URL: ${errorMessage}`,
+      );
+    }
   }
 
   /**
