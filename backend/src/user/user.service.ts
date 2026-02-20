@@ -46,7 +46,26 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    // Generate signed URL for avatar if it exists
+    let avatarWithSignedUrl = user.avatar;
+    if (user.avatar?.imageUrl) {
+      try {
+        const key = this.r2Storage.extractKey(user.avatar.imageUrl);
+        const signedUrl = await this.r2Storage.getSignedUrl(key, 3600); // 1 hour expiry
+        avatarWithSignedUrl = {
+          id: user.avatar.id,
+          imageUrl: signedUrl,
+        };
+      } catch (error) {
+        this.logger.warn(`Failed to generate signed URL for avatar: ${error}`);
+        // Keep original URL if signed URL fails
+      }
+    }
+
+    return {
+      ...user,
+      avatar: avatarWithSignedUrl,
+    };
   }
 
   // =====================
@@ -173,7 +192,10 @@ export class UserService {
     }
 
     this.logger.log(`Profile picture updated for user ${userId}`);
-    return { imageUrl: result.url };
+
+    // Return signed URL for immediate display
+    const signedUrl = await this.r2Storage.getSignedUrl(result.key, 3600);
+    return { imageUrl: signedUrl };
   }
 
   // =====================
