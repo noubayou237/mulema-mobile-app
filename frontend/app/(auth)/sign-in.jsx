@@ -15,10 +15,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { authStyles } from "../../assets/styles/auth.styles";
 import { COLORS } from "../../constants/colors";
 import { useUser } from "../../src/context/UserContext";
+import { useTranslation } from "react-i18next";
 
 const SignInScreen = () => {
   const router = useRouter();
   const { login } = useUser();
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,7 +29,7 @@ const SignInScreen = () => {
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+      Alert.alert(t("common.error"), t("errors.requiredField"));
       return;
     }
 
@@ -39,8 +41,8 @@ const SignInScreen = () => {
       const msg =
         err?.response?.data?.message ||
         err?.message ||
-        "Invalid email or password";
-      Alert.alert("Error", msg);
+        t("errors.invalidCredentials");
+      Alert.alert(t("common.error"), msg);
     } finally {
       setLoading(false);
     }
@@ -48,7 +50,7 @@ const SignInScreen = () => {
 
   const onForgotPassword = () => {
     if (!email || !email.includes("@")) {
-      Alert.alert("Invalid Email", "Please enter a valid email first.");
+      Alert.alert(t("errors.invalidEmail"), t("errors.invalidEmail"));
       return;
     }
 
@@ -77,13 +79,13 @@ const SignInScreen = () => {
             />
           </View>
 
-          <Text style={authStyles.title}>Welcome</Text>
+          <Text style={authStyles.title}>{t("auth.welcomeBack")}</Text>
 
           <View style={authStyles.formContainer}>
             <View style={authStyles.inputContainer}>
               <TextInput
                 style={authStyles.textInput}
-                placeholder='Enter email'
+                placeholder={t("auth.email")}
                 placeholderTextColor={COLORS.textLight}
                 value={email}
                 onChangeText={setEmail}
@@ -95,7 +97,7 @@ const SignInScreen = () => {
             <View style={authStyles.inputContainer}>
               <TextInput
                 style={authStyles.textInput}
-                placeholder='Enter password'
+                placeholder={t("auth.password")}
                 placeholderTextColor={COLORS.textLight}
                 value={password}
                 onChangeText={setPassword}
@@ -119,7 +121,7 @@ const SignInScreen = () => {
               style={{ alignSelf: "flex-end", marginBottom: 12 }}
             >
               <Text style={[authStyles.link, { fontSize: 13 }]}>
-                Forgot password?
+                {t("auth.forgotPassword")}
               </Text>
             </TouchableOpacity>
 
@@ -132,7 +134,7 @@ const SignInScreen = () => {
               disabled={loading}
             >
               <Text style={authStyles.buttonText}>
-                {loading ? "Sign In..." : "Sign In"}
+                {loading ? t("common.loading") : t("auth.signIn")}
               </Text>
             </TouchableOpacity>
 
@@ -141,8 +143,8 @@ const SignInScreen = () => {
               onPress={() => router.push("/sign-up")}
             >
               <Text style={authStyles.linkText}>
-                Don&apos;t have an account?{" "}
-                <Text style={authStyles.link}>Sign up</Text>
+                {t("auth.dontHaveAccount")}{" "}
+                <Text style={authStyles.link}>{t("auth.signUp")}</Text>
               </Text>
             </TouchableOpacity>
           </View>

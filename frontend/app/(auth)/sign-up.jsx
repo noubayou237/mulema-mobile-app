@@ -15,11 +15,13 @@ import { Image } from "expo-image";
 import { authStyles } from "../../assets/styles/auth.styles";
 import { COLORS } from "../../constants/colors";
 import api from "../../services/api";
+import { useTranslation } from "react-i18next";
 
 const MIN_PASSWORD = 6;
 
 const SignUpScreen = () => {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [form, setForm] = useState({
     username: "",

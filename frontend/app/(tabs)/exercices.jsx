@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef } from "react";
 import {
   View,
   Text,
@@ -6,45 +6,46 @@ import {
   TouchableOpacity,
   Animated,
   SafeAreaView,
-  StatusBar,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons'; // Assurez-vous d'avoir installé @expo/vector-icons
+  StatusBar
+} from "react-native";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons"; // Assurez-vous d'avoir installé @expo/vector-icons
+import { useTranslation } from "react-i18next";
+import "../../src/i18n";
 
 // --- Données pour les cartes d'exercice ---
 const exerciseData = [
   {
-    id: '1',
-    title: 'VIE SOCALE & FAMILLE',
+    id: "1",
+    title: "VIE SOCALE & FAMILLE",
     description:
-      'Apprends à nommer les membres de la famille et à parler de tes proches avec les bons mots',
+      "Apprends à nommer les membres de la famille et à parler de tes proches avec les bons mots",
     locked: false,
-    route: '/exercices/famille/exos1', // Exemple de route
+    route: "/exercices/famille/exos1" // Exemple de route
   },
   {
-    id: '2',
-    title: 'CUISINE',
+    id: "2",
+    title: "CUISINE",
     description:
-      'Découvre le vocabulaire de la cuisine, des repas et des aliments pour parler comme un vrai gourmet',
+      "Découvre le vocabulaire de la cuisine, des repas et des aliments pour parler comme un vrai gourmet",
     locked: true,
-    route: '/exercices/cuisine',
+    route: "/exercices/cuisine"
   },
   {
-    id: '3',
-    title: 'VÊTEMENTS',
+    id: "3",
+    title: "VÊTEMENTS",
     description:
-      'Entraîne-toi à reconnaître et utiliser le vocabulaire des habits et accessoires du quotidien',
+      "Entraîne-toi à reconnaître et utiliser le vocabulaire des habits et accessoires du quotidien",
     locked: true,
-    route: '/exercices/vetements',
+    route: "/exercices/vetements"
   },
   {
-    id: '4',
-    title: 'FAUNE & FLORE',
-    description:
-      'Entraîne-toi à reconnaître et utiliser le vocabulaire des...',
+    id: "4",
+    title: "FAUNE & FLORE",
+    description: "Entraîne-toi à reconnaître et utiliser le vocabulaire des...",
     locked: true,
-    route: '/exercices/faune',
-  },
+    route: "/exercices/faune"
+  }
 ];
 
 // --- Hauteur de l'en-tête fixe ---
@@ -65,7 +66,7 @@ const ExerciseCard = ({ title, description, locked, onPress }) => {
     >
       {/* Icône de verrouillage */}
       {locked && (
-        <Ionicons name="lock-closed" size={20} style={styles.lockIcon} />
+        <Ionicons name='lock-closed' size={20} style={styles.lockIcon} />
       )}
 
       {/* Contenu texte */}
@@ -83,6 +84,7 @@ const ExerciseCard = ({ title, description, locked, onPress }) => {
  */
 export default function ExercicesScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const scrollY = useRef(new Animated.Value(0)).current;
 
   // Gère la navigation
@@ -98,14 +100,14 @@ export default function ExercicesScreen() {
   const smallHeaderOpacity = scrollY.interpolate({
     inputRange: [HEADER_SCROLL_FADE_END / 2, HEADER_SCROLL_FADE_END],
     outputRange: [0, 1],
-    extrapolate: 'clamp',
+    extrapolate: "clamp"
   });
 
   // Opacité du grand titre (à gauche)
   const largeTitleOpacity = scrollY.interpolate({
     inputRange: [0, HEADER_SCROLL_FADE_END / 2],
     outputRange: [1, 0],
-    extrapolate: 'clamp',
+    extrapolate: "clamp"
   });
 
   // --- Composants de Rendu ---
@@ -113,8 +115,10 @@ export default function ExercicesScreen() {
   // Affiche le grand titre et l'intro en haut de la liste
   const renderListHeader = () => (
     <View style={styles.listHeaderContainer}>
-      <Animated.Text style={[styles.largeTitle, { opacity: largeTitleOpacity }]}>
-        Exercises
+      <Animated.Text
+        style={[styles.largeTitle, { opacity: largeTitleOpacity }]}
+      >
+        {t("nav.exercises")}
       </Animated.Text>
       <Text style={styles.introText}>
         Choisis un thème et entraîne-toi à apprendre de nouveaux mots et
@@ -135,7 +139,7 @@ export default function ExercicesScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle='light-content' />
 
       {/* EN-TÊTE FIXE (Petit & Centré)
         Apparaît au défilement 
@@ -143,7 +147,7 @@ export default function ExercicesScreen() {
       <Animated.View
         style={[styles.smallHeader, { opacity: smallHeaderOpacity }]}
       >
-        <Text style={styles.smallHeaderText}>Exercises</Text>
+        <Text style={styles.smallHeaderText}>{t("nav.exercises")}</Text>
       </Animated.View>
 
       {/* LISTE SCROLLABLE
@@ -171,83 +175,81 @@ export default function ExercicesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffffff',// Fond sombre
-    
+    backgroundColor: "#ffffffff" // Fond sombre
   },
   // --- En-tête (petit, centré) ---
   smallHeader: {
     height: HEADER_MIN_HEIGHT,
-    width: '100%',
-    position: 'absolute',
+    width: "100%",
+    position: "absolute",
     top: 0,
     left: 0,
-    backgroundColor: '#ffffffff', // Un peu plus clair que le fond
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#ffffffff", // Un peu plus clair que le fond
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 10, // Pour être au-dessus de la liste
     borderBottomWidth: 2,
-    borderColor: '#ffffffff',
-    
+    borderColor: "#ffffffff"
   },
   smallHeaderText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#f30707ff',
+    fontWeight: "bold",
+    color: "#f30707ff"
   },
   // --- Contenu de la liste ---
   listContentContainer: {
     paddingHorizontal: 16,
-    paddingBottom: 30, // Espace en bas
+    paddingBottom: 30 // Espace en bas
   },
   listHeaderContainer: {
     paddingTop: HEADER_MIN_HEIGHT + 10, // Démarrer le contenu SOUS l'en-tête fixe
-    marginBottom: 10,
+    marginBottom: 10
   },
   largeTitle: {
     fontSize: 34,
-    fontWeight: 'bold',
-    color: '#FF3B30',
-    marginBottom: 16,
+    fontWeight: "bold",
+    color: "#FF3B30",
+    marginBottom: 16
   },
   introText: {
     fontSize: 16,
-    color: '#000000ff', // Gris clair
+    color: "#000000ff", // Gris clair
     lineHeight: 22,
-    marginBottom: 20,
+    marginBottom: 20
   },
   // --- Carte d'exercice ---
   cardContainer: {
-    backgroundColor: '#C83A44', // Rouge de l'image
+    backgroundColor: "#C83A44", // Rouge de l'image
     borderRadius: 12,
     padding: 20,
     marginBottom: 16,
-    overflow: 'hidden', // Pour les coins arrondis
+    overflow: "hidden" // Pour les coins arrondis
   },
   cardLocked: {
-    opacity: 0.6, // Griser la carte si verrouillée
+    opacity: 0.6 // Griser la carte si verrouillée
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: 'white',
-    textTransform: 'uppercase',
-    marginBottom: 8,
+    fontWeight: "bold",
+    color: "white",
+    textTransform: "uppercase",
+    marginBottom: 8
   },
   cardDescription: {
     fontSize: 14,
-    color: 'white',
+    color: "white",
     marginBottom: 16,
-    lineHeight: 20,
+    lineHeight: 20
   },
   cardButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: 'white',
+    fontWeight: "bold",
+    color: "white"
   },
   lockIcon: {
-    position: 'absolute',
+    position: "absolute",
     top: 16,
     right: 16,
-    color: 'white',
-  },
+    color: "white"
+  }
 });
