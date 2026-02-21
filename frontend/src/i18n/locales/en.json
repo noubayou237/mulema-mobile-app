@@ -108,7 +108,9 @@
     "uploadFailed": "Failed to upload. Please try again.",
     "somethingWentWrong": "Something went wrong. Please try again.",
     "codeRequired": "Code required",
-    "enterCode": "Please enter your verification code."
+    "enterCode": "Please enter your verification code.",
+    "audioError": "Audio Error",
+    "audioNotAvailable": "Audio is not available. Please try again."
   },
   "messages": {
     "accountCreated": "Account created successfully!",

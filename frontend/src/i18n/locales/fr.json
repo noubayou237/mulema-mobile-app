@@ -108,7 +108,9 @@
     "uploadFailed": "Échec du téléchargement. Veuillez réessayer.",
     "somethingWentWrong": "Une erreur s'est produite. Veuillez réessayer.",
     "codeRequired": "Code requis",
-    "enterCode": "Veuillez entrer votre code de vérification."
+    "enterCode": "Veuillez entrer votre code de vérification.",
+    "audioError": "Erreur audio",
+    "audioNotAvailable": "L'audio n'est pas disponible. Veuillez réessayer."
   },
   "messages": {
     "accountCreated": "Compte créé avec succès !",
