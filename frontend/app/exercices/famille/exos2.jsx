@@ -20,8 +20,25 @@ import { useTranslation } from "react-i18next";
 
 const { width } = Dimensions.get("window");
 
+// Audio state flags
+let audioInitialized = false;
+let audioDisabled = false;
+
+/**
+ * Check if error is keep-awake related
+ */
+const isKeepAwakeError = (error) => {
+  if (!error) return false;
+  const message = error.message || String(error);
+  return (
+    message.includes("keep awake") || message.includes("Unable to activate")
+  );
+};
+
 // Audio initialization with error handling for keep-awake issues
 const initializeAudio = async () => {
+  if (audioInitialized || audioDisabled) return !audioDisabled;
+
   try {
     await Audio.setAudioModeAsync({
       allowsRecordingIOS: false,
@@ -29,9 +46,11 @@ const initializeAudio = async () => {
       staysActiveInBackground: false,
       shouldDuckAndroid: true
     });
+    audioInitialized = true;
+    return true;
   } catch (error) {
     // Handle keep awake error gracefully
-    if (error.message && error.message.includes("keep awake")) {
+    if (isKeepAwakeError(error)) {
       console.warn("Keep awake not available:", error.message);
       try {
         await Audio.setAudioModeAsync({
@@ -40,10 +59,16 @@ const initializeAudio = async () => {
           staysActiveInBackground: false,
           shouldDuckAndroid: false
         });
+        audioInitialized = true;
+        return true;
       } catch (fallbackError) {
         console.warn("Audio fallback also failed:", fallbackError.message);
+        audioDisabled = true;
+        return false;
       }
     }
+    audioDisabled = true;
+    return false;
   }
 };
 
@@ -52,6 +77,11 @@ initializeAudio().catch(() => {});
 
 // Audio playback function with error handling
 const playWordAudio = async (wordKey) => {
+  // Skip if audio is disabled
+  if (audioDisabled) {
+    return false;
+  }
+
   try {
     // Map words to their audio files based on available assets
     const audioMap = {
@@ -66,7 +96,10 @@ const playWordAudio = async (wordKey) => {
     }
 
     // Ensure audio is initialized
-    await initializeAudio();
+    const initResult = await initializeAudio();
+    if (!initResult) {
+      return false;
+    }
 
     const { sound } = await Audio.Sound.createAsync(audioSource);
     await sound.playAsync();
@@ -80,24 +113,10 @@ const playWordAudio = async (wordKey) => {
     return true;
   } catch (error) {
     // Handle keep awake error gracefully
-    if (error.message && error.message.includes("keep awake")) {
+    if (isKeepAwakeError(error)) {
       console.warn("Keep awake error during playback:", error.message);
-      // Try with fallback settings
-      try {
-        const audioMap = {
-          papa: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/l'oncle en douala.wav"),
-          maman: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Le bebe en duala.wav")
-        };
-        const audioSource = audioMap[wordKey];
-        if (audioSource) {
-          const { sound } = await Audio.Sound.createAsync(audioSource, {
-            shouldPlay: true
-          });
-          return true;
-        }
-      } catch (retryError) {
-        console.error("Retry also failed:", retryError.message);
-      }
+      audioDisabled = true;
+      return false;
     }
     console.error("Error playing audio:", error.message);
     return false;

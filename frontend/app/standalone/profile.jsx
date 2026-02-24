@@ -67,6 +67,11 @@ const Profile = () => {
   }, []);
 
   const loadUserProfile = async () => {
+    // Skip if no user is logged in
+    if (!user) {
+      return;
+    }
+
     try {
       const response = await api.get("/user/profile");
       if (response.data.avatar?.imageUrl) {

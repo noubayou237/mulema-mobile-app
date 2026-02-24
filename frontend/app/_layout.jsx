@@ -11,6 +11,11 @@ import "../src/i18n";
 import { LanguageProvider } from "../src/context/LanguageContext"; // named export
 import UserProvider from "../src/context/UserContext"; // default export expected
 
+// Error handling note:
+// - expo-av is deprecated; migrate to expo-audio for audio functionality
+// - Global ErrorUtils is not available in newer Expo/React Native versions
+// - If you need error boundaries, use React's ErrorBoundary component pattern
+
 export default function RootLayout() {
   // Children wrapper common to both branches
   const AppChildren = (

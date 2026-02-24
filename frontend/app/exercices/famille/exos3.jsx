@@ -16,8 +16,25 @@ import { Audio } from "expo-av";
 
 const { width } = Dimensions.get("window");
 
+// Audio state flags
+let audioInitialized = false;
+let audioDisabled = false;
+
+/**
+ * Check if error is keep-awake related
+ */
+const isKeepAwakeError = (error) => {
+  if (!error) return false;
+  const message = error.message || String(error);
+  return (
+    message.includes("keep awake") || message.includes("Unable to activate")
+  );
+};
+
 // Audio initialization with error handling for keep-awake issues
 const initializeAudio = async () => {
+  if (audioInitialized || audioDisabled) return !audioDisabled;
+
   try {
     await Audio.setAudioModeAsync({
       allowsRecordingIOS: false,
@@ -25,9 +42,11 @@ const initializeAudio = async () => {
       staysActiveInBackground: false,
       shouldDuckAndroid: true
     });
+    audioInitialized = true;
+    return true;
   } catch (error) {
     // Handle keep awake error gracefully
-    if (error.message && error.message.includes("keep awake")) {
+    if (isKeepAwakeError(error)) {
       console.warn("Keep awake not available:", error.message);
       try {
         await Audio.setAudioModeAsync({
@@ -36,10 +55,16 @@ const initializeAudio = async () => {
           staysActiveInBackground: false,
           shouldDuckAndroid: false
         });
+        audioInitialized = true;
+        return true;
       } catch (fallbackError) {
         console.warn("Audio fallback also failed:", fallbackError.message);
+        audioDisabled = true;
+        return false;
       }
     }
+    audioDisabled = true;
+    return false;
   }
 };
 

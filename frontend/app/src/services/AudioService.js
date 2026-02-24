@@ -9,12 +9,28 @@ let wordSounds = {};
 // Flag to track if audio is properly initialized
 let audioInitialized = false;
 
+// Flag to track if audio is disabled due to keep-awake error
+let audioDisabled = false;
+
+/**
+ * Check if error is the keep-awake related error
+ */
+const isKeepAwakeError = (error) => {
+  if (!error) return false;
+  const message = error.message || String(error);
+  return (
+    message.includes("keep awake") ||
+    message.includes("Unable to activate") ||
+    message.includes("CodedError")
+  );
+};
+
 /**
  * Initialize audio with error handling for keep-awake issues
  * This function handles the "Unable to activate keep awake" error gracefully
  */
 const initializeAudio = async () => {
-  if (audioInitialized) return true;
+  if (audioInitialized || audioDisabled) return !audioDisabled;
 
   try {
     await Audio.setAudioModeAsync({
@@ -28,7 +44,7 @@ const initializeAudio = async () => {
     return true;
   } catch (error) {
     // Handle the "Unable to activate keep awake" error
-    if (error.message && error.message.includes("keep awake")) {
+    if (isKeepAwakeError(error)) {
       console.warn(
         "Keep awake not available, continuing with limited audio functionality:",
         error.message
@@ -45,6 +61,8 @@ const initializeAudio = async () => {
         return true;
       } catch (fallbackError) {
         console.warn("Audio fallback also failed:", fallbackError.message);
+        // Disable audio to prevent further errors
+        audioDisabled = true;
         return false;
       }
     }
@@ -79,9 +97,19 @@ const playSound = async (soundObject) => {
  * @returns {Promise<object>}
  */
 const loadSound = async (asset) => {
+  // Return null if audio is disabled
+  if (audioDisabled) {
+    console.warn("Audio disabled due to previous errors");
+    return null;
+  }
+
   try {
     // Ensure audio is initialized before loading
-    await initializeAudio();
+    const initResult = await initializeAudio();
+    if (!initResult) {
+      console.warn("Audio initialization failed, skipping load");
+      return null;
+    }
 
     const { sound } = await Audio.Sound.createAsync(asset, {
       shouldPlay: false,
@@ -90,16 +118,13 @@ const loadSound = async (asset) => {
     return sound;
   } catch (error) {
     // Handle keep awake error during sound loading
-    if (error.message && error.message.includes("keep awake")) {
-      console.warn("Keep awake error during load, attempting workaround:");
-      try {
-        // Try with minimal settings
-        const { sound } = await Audio.Sound.createAsync(asset);
-        return sound;
-      } catch (fallbackError) {
-        console.error("Fallback sound loading also failed:", fallbackError);
-        throw new Error("Audio not available on this device");
-      }
+    if (isKeepAwakeError(error)) {
+      console.warn(
+        "Keep awake error during load, disabling audio:",
+        error.message
+      );
+      audioDisabled = true;
+      return null;
     }
     console.error("Error loading sound:", error);
     throw error;

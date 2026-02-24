@@ -90,36 +90,38 @@ const activityFeedData = [
   {
     id: "a1",
     name: "Sophie",
-    action: "a terminé le thème Famille",
+    actionKey: "community.actions.completedTheme",
     icon: "🏠",
     avatar: require("../../assets/images/avatar-sophie.png")
   },
   {
     id: "a2",
     name: "Paul",
-    action: "a atteint 10 jours consécutifs",
+    actionKey: "community.actions.streak10",
     icon: "🔥",
     avatar: require("../../assets/images/avatar-paul.png")
   },
   {
     id: "a3",
     name: "Amina",
-    action: "a appris 5 nouveaux mots aujourd'hui",
+    actionKey: "community.actions.learnedWords",
     icon: "📖",
+    params: { count: 5 },
     avatar: null
   },
   {
     id: "a4",
     name: "Tjega",
-    action: "a terminé l'exercice 'Les Verbes'",
+    actionKey: "community.actions.completedExercise",
     icon: "💪",
     avatar: require("../../assets/images/avatar-tjega.png")
   },
   {
     id: "a5",
     name: "Kandem",
-    action: "a gagné 10 points de défi",
+    actionKey: "community.actions.earnedPoints",
     icon: "🏆",
+    params: { count: 10 },
     avatar: require("../../assets/images/avatar-kandem.png")
   }
 ];
@@ -152,7 +154,7 @@ const UserAvatar = ({
 
 // --- Composants réutilisables (Inchangés) ---
 
-const PodiumCard = ({ name, points, avatar, color }) => {
+const PodiumCard = ({ name, points, avatar, color, t }) => {
   const avatarSize = 60;
   return (
     <View
@@ -169,7 +171,9 @@ const PodiumCard = ({ name, points, avatar, color }) => {
         iconColor='#fff'
       />
       <Text style={styles.podiumName}>{name}</Text>
-      <Text style={styles.podiumPoints}>{points} points</Text>
+      <Text style={styles.podiumPoints}>
+        {points} {t("community.points")}
+      </Text>
     </View>
   );
 };
@@ -201,7 +205,7 @@ const LeaderboardItem = ({ name, points, avatar }) => {
   );
 };
 
-const ActivityItem = ({ name, action, icon, avatar }) => {
+const ActivityItem = ({ name, actionKey, icon, avatar, t, params }) => {
   const avatarSize = 40;
 
   return (
@@ -215,7 +219,7 @@ const ActivityItem = ({ name, action, icon, avatar }) => {
       />
       <Text style={styles.activityText}>
         <Text style={styles.activityName}>{name}</Text>
-        <Text> {action}</Text>
+        <Text> {t(actionKey, params)}</Text>
         <Text> {icon}</Text>
       </Text>
     </View>
@@ -257,9 +261,9 @@ export default function Community() {
 
     return (
       <View style={styles.podiumContainer}>
-        <PodiumCard {...third} />
-        <PodiumCard {...first} />
-        <PodiumCard {...second} />
+        <PodiumCard {...third} t={t} />
+        <PodiumCard {...first} t={t} />
+        <PodiumCard {...second} t={t} />
       </View>
     );
   };
@@ -294,7 +298,7 @@ export default function Community() {
             <Text style={styles.headerTitle}>{t("nav.community")}</Text>
           </View>
           <Text style={styles.headerSubtitleScrollable}>
-            Apprends ensemble, progresse ensemble
+            {t("community.subtitle")}
           </Text>
         </Animated.View>
 
@@ -309,17 +313,17 @@ export default function Community() {
 
         <View style={styles.hr} />
 
-        <Text style={styles.sectionTitle}>Fil d&apos;activité</Text>
+        <Text style={styles.sectionTitle}>{t("community.activityFeed")}</Text>
         <FlatList
           data={activityFeedData}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <ActivityItem {...item} />}
+          renderItem={({ item }) => <ActivityItem {...item} t={t} />}
           scrollEnabled={false}
           contentContainerStyle={styles.activityFeedList}
         />
 
         <TouchableOpacity style={styles.statsButton} onPress={goToStatistics}>
-          <Text style={styles.statsButtonText}>📊 Voir mes statistiques</Text>
+          <Text style={styles.statsButtonText}>{t("community.viewStats")}</Text>
         </TouchableOpacity>
 
         <View style={{ height: 40 }} />
