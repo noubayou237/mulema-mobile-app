@@ -1,6 +1,7 @@
 // app/(tabs)/_layout.jsx
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Alert, TouchableOpacity, ActivityIndicator } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Tabs, useRouter, useSegments } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Header from "../components/header";
@@ -19,19 +20,65 @@ import "../../src/i18n";
 
 export default function TabsLayout() {
   const router = useRouter();
+  // ⏳ Pendant le chargement du contexte - mais autoriser si session + langue
+  const [hasSessionAndLang, setHasSessionAndLang] = useState(false);
   const segments = useSegments();
   const { user, isLoading, logout } = useUser();
   const { t } = useTranslation();
 
-  // 🔐 Protection des tabs
+  // 🔐 Protection des tabs - Wait for auth validation before checking
   useEffect(() => {
-    if (!isLoading && !user) {
-      router.replace("/(auth)/sign-in");
-    }
+    const checkAuth = async () => {
+      if (isLoading) return; // Wait for auth to finish loading
+
+      // Check if user has a session in storage even if not validated yet
+      const hasSession = await AsyncStorage.getItem("userSession");
+      const hasLanguage = await AsyncStorage.getItem("selectedLanguage");
+
+      // If no user after loading, but has session with language, allow access
+      // The user will be validated later
+      if (!user && hasSession && hasLanguage) {
+        // User has completed initial setup, allow access
+        return;
+      }
+
+      // Normal auth check
+      if (!user) {
+        router.replace("/(auth)/sign-in");
+      }
+    };
+
+    checkAuth();
   }, [isLoading, user]);
 
-  // ⏳ Pendant le chargement du contexte
-  if (isLoading || !user) {
+  useEffect(() => {
+    const checkSession = async () => {
+      const session = await AsyncStorage.getItem("userSession");
+      const lang = await AsyncStorage.getItem("selectedLanguage");
+      if (session && lang) {
+        setHasSessionAndLang(true);
+      }
+    };
+    checkSession();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: COLORS.background ?? "#fff"
+        }}
+      >
+        <ActivityIndicator size='large' />
+      </View>
+    );
+  }
+
+  // Allow access if user is logged in OR if there's a session with language (initial setup complete)
+  if (!user && !hasSessionAndLang) {
     return (
       <View
         style={{

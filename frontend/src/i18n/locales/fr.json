@@ -71,7 +71,15 @@
     "yourProgress": "Votre progression",
     "lessons": "Leçons",
     "exercises": "Exercices",
-    "community": "Communauté"
+    "community": "Communauté",
+    "level": "Niveau",
+    "levelI": "NIVEAU I",
+    "levelII": "NIVEAU II",
+    "levelIII": "NIVEAU III",
+    "levelIV": "NIVEAU IV",
+    "start": "COMMENCER",
+    "unlockMessage": "Debloquez les niveaux suivant en resolvant les exercices de ceux précédent",
+    "niveau": "Niveau"
   },
   "lessons": {
     "title": "Leçons",
@@ -115,7 +123,8 @@
     "codeRequired": "Code requis",
     "enterCode": "Veuillez entrer votre code de vérification.",
     "audioError": "Erreur audio",
-    "audioNotAvailable": "L'audio n'est pas disponible. Veuillez réessayer."
+    "audioNotAvailable": "L'audio n'est pas disponible. Veuillez réessayer.",
+    "languageNotSelected": "Langue non définie. Veuillez sélectionner une langue depuis les paramètres."
   },
   "messages": {
     "accountCreated": "Compte créé avec succès !",

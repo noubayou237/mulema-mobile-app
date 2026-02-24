@@ -49,14 +49,21 @@ export default function UserProvider({ children }) {
           const parsed = JSON.parse(session);
           if (parsed?.accessToken) {
             // Validate token with backend
-            const res = await api.get("/auth/me");
-            setUser(res.data);
+            try {
+              const res = await api.get("/auth/me");
+              setUser(res.data);
+            } catch (authError) {
+              // Only clear session on 401 (unauthorized) - not on network errors
+              if (authError.response?.status === 401) {
+                await AsyncStorage.removeItem(STORAGE_KEY);
+                setUser(null);
+              }
+              // For other errors, keep the session and user will be null but we don't clear storage
+            }
           }
         }
       } catch {
-        // Token invalid or expired - clear storage
-        await AsyncStorage.removeItem(STORAGE_KEY);
-        setUser(null);
+        // Parse error or other issues - keep session as is
       } finally {
         setIsLoading(false);
       }
