@@ -72,7 +72,8 @@ const VerifyEmail = () => {
       JSON.stringify({ accessToken, refreshToken })
     );
 
-    router.replace("/splash");
+    // 🔥 FLOW APK : OTP → CHOIX DE LANGUE
+    router.replace("/ChoiceLanguage");
   };
 
   const handleVerification = async () => {

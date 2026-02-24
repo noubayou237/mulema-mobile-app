@@ -5,7 +5,7 @@ import i18n from "../i18n";
 
 // Separate keys for UI language vs learning language
 const UI_LANGUAGE_KEY = "app_language"; // For English/French (app UI)
-const LEARNING_LANGUAGE_KEY = "hasSelectedLanguage"; // For Duala/Bassa/Ghomala (learning)
+const LEARNING_LANGUAGE_KEY = "selectedLanguage"; // For Duala/Bassa/Ghomala (learning)
 
 const LanguageContext = createContext({
   language: null,
