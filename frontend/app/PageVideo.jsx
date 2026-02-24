@@ -114,7 +114,7 @@ export default function PageVideo() {
   const navigateHomeWithLang = async (replace = true) => {
     const langToUse = langResolved ?? "default";
     await persistLangAndSeen(langToUse);
-    const target = `/home?lang=${encodeURIComponent(langToUse)}`;
+    const target = `/(tabs)/home?lang=${encodeURIComponent(langToUse)}`;
     if (replace) router.replace(target);
     else router.push(target);
   };

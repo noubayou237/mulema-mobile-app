@@ -4,16 +4,16 @@ import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams } from "expo-router";
+import { useTranslation } from "react-i18next";
 
 import HomeDouala from "../homedouala";
 import HomeBassa from "../homebassa";
 import HomeGhomala from "../homeghomala";
-import { useLanguage } from "../../src/context/LanguageContext";
 
 const HAS_SELECTED_LANGUAGE = "selectedLanguage";
 
 export default function HomeRouter() {
-  const { language: ctxLanguage, isLoading: ctxLoading } = useLanguage();
+  const { t } = useTranslation();
   const params = useLocalSearchParams(); // ← correction ici
   const paramLang = params?.lang ?? null;
 
@@ -36,15 +36,8 @@ export default function HomeRouter() {
           return;
         }
 
-        // 2️⃣ Si pas de param, utiliser le contexte
-        if (ctxLanguage && !ctxLoading) {
-          const normalized = String(ctxLanguage).toLowerCase();
-          setLangToRender(normalized);
-          setLoading(false);
-          return;
-        }
-
-        // 3️⃣ Fallback: AsyncStorage
+        // 2️⃣ Fallback: AsyncStorage - utiliser uniquement selectedLanguage (learning language)
+        // Ne pas utiliser ctxLanguage car c'est la langue UI (en/fr), pas la langue d'apprentissage
         const stored = await AsyncStorage.getItem(HAS_SELECTED_LANGUAGE);
 
         if (stored) {
@@ -63,7 +56,7 @@ export default function HomeRouter() {
     return () => {
       mounted = false;
     };
-  }, [paramLang, ctxLanguage, ctxLoading]);
+  }, [paramLang]);
 
   // Loader pendant la résolution
   if (loading) {
@@ -91,8 +84,8 @@ export default function HomeRouter() {
       return (
         <View style={styles.loadingContainer}>
           <Text>
-            Erreur : Langue non définie. Veuillez sélectionner une langue depuis
-            les paramètres.
+            {t("errors.languageNotSelected") ||
+              "Erreur : Langue non définie. Veuillez sélectionner une langue depuis les paramètres."}
           </Text>
         </View>
       );
