@@ -1,5 +1,4 @@
-import { useRouter } from "expo-router";
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   Text,
   View,
@@ -8,8 +7,9 @@ import {
   Platform,
   ScrollView,
   TextInput,
-  TouchableOpacity
+  TouchableOpacity,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { authStyles } from "../../assets/styles/auth.styles";
@@ -35,28 +35,28 @@ const SignInScreen = () => {
 
     setLoading(true);
     try {
+      // Use the login function from UserContext which calls the backend API
       await login(email, password);
-      // Login function handles redirect to home
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
         err?.message ||
-        t("errors.invalidCredentials");
-      Alert.alert(t("common.error"), msg);
+        "Sign in failed.";
+      Alert.alert("Error", msg);
     } finally {
       setLoading(false);
     }
   };
 
-  const onForgotPassword = () => {
+  const onForgotPassword = async () => {
     if (!email || !email.includes("@")) {
-      Alert.alert(t("errors.invalidEmail"), t("errors.invalidEmail"));
+      Alert.alert("Invalid Email", "Please enter a valid email first.");
       return;
     }
 
     router.push({
-      pathname: "/verify-email",
-      params: { email, flow: "reset" }
+      pathname: "/(auth)/ResetPasswordScreen",
+      params: { email },
     });
   };
 
@@ -75,7 +75,7 @@ const SignInScreen = () => {
             <Image
               source={require("../../assets/images/logo.png")}
               style={authStyles.image}
-              contentFit='contain'
+              contentFit="contain"
             />
           </View>
 
@@ -85,24 +85,24 @@ const SignInScreen = () => {
             <View style={authStyles.inputContainer}>
               <TextInput
                 style={authStyles.textInput}
-                placeholder={t("auth.email")}
+                placeholder="Enter email"
                 placeholderTextColor={COLORS.textLight}
                 value={email}
                 onChangeText={setEmail}
-                keyboardType='email-address'
-                autoCapitalize='none'
+                keyboardType="email-address"
+                autoCapitalize="none"
               />
             </View>
 
             <View style={authStyles.inputContainer}>
               <TextInput
                 style={authStyles.textInput}
-                placeholder={t("auth.password")}
+                placeholder="Enter password"
                 placeholderTextColor={COLORS.textLight}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
-                autoCapitalize='none'
+                autoCapitalize="none"
               />
               <TouchableOpacity
                 style={authStyles.eyeButton}
@@ -121,20 +121,20 @@ const SignInScreen = () => {
               style={{ alignSelf: "flex-end", marginBottom: 12 }}
             >
               <Text style={[authStyles.link, { fontSize: 13 }]}>
-                {t("auth.forgotPassword")}
+                Forgot password?
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
                 authStyles.authButton,
-                loading && authStyles.buttonDisabled
+                loading && authStyles.buttonDisabled,
               ]}
               onPress={handleSignIn}
               disabled={loading}
             >
               <Text style={authStyles.buttonText}>
-                {loading ? t("common.loading") : t("auth.signIn")}
+                {loading ? "Sign In..." : "Sign In"}
               </Text>
             </TouchableOpacity>
 
@@ -143,8 +143,8 @@ const SignInScreen = () => {
               onPress={() => router.push("/sign-up")}
             >
               <Text style={authStyles.linkText}>
-                {t("auth.dontHaveAccount")}{" "}
-                <Text style={authStyles.link}>{t("auth.signUp")}</Text>
+                Don&apos;t have an account?{" "}
+                <Text style={authStyles.link}>Sign up</Text>
               </Text>
             </TouchableOpacity>
           </View>
