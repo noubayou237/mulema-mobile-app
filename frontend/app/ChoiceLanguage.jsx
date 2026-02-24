@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Modal,
   FlatList,
-  Platform,
   Alert,
   ActivityIndicator,
   SafeAreaView,
@@ -15,24 +14,11 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 
-// Définition de styles d'authentification minimalistes si authStyles n'est pas fourni
-const authStyles = {
-  container: { flex: 1, backgroundColor: "#fff" },
-  scrollContent: { flexGrow: 1, padding: 24, justifyContent: "center" },
-  title: { fontSize: 28, fontWeight: "800", color: "#B22222", marginBottom: 10, textAlign: "center" },
-  subtitle: { fontSize: 16, color: "#666", marginBottom: 40, textAlign: "center" },
-  formContainer: { width: "100%", alignItems: "center" },
-  authButton: { backgroundColor: "#B22222", padding: 18, borderRadius: 12, width: "100%" },
-  buttonText: { color: "#fff", fontWeight: "700", fontSize: 18, textAlign: "center" },
-  buttonDisabled: { opacity: 0.6 },
-};
-
-const HAS_SELECTED_LANGUAGE = "hasSelectedLanguage"; // contiendra la chaîne de langue (ex: "duala")
 const SELECTED_LANGUAGE_KEY = "selectedLanguage";
 
 const LANGS = [
   { code: "bassa", label: "Le Bassa" },
-  { code: "duala", label: "Le Duala" }, // corrigé en "duala"
+  { code: "duala", label: "Le Duala" },
   { code: "ghomala", label: "Le Ghomala" },
 ];
 
@@ -47,7 +33,9 @@ function LangModalPicker({ selected, setSelected }) {
         activeOpacity={0.85}
       >
         <Text style={[styles.selectorText, !selected && { color: "#888" }]}>
-          {selected ? LANGS.find((l) => l.code === selected)?.label : "-- Choisir une langue --"}
+          {selected
+            ? LANGS.find((l) => l.code === selected)?.label
+            : "-- Choisir une langue --"}
         </Text>
       </TouchableOpacity>
 
@@ -59,29 +47,37 @@ function LangModalPicker({ selected, setSelected }) {
             <FlatList
               data={LANGS}
               keyExtractor={(item) => item.code}
-              contentContainerStyle={{ paddingBottom: 8 }}
               renderItem={({ item }) => {
-                const isSel = selected === item.code;
+                const isSelected = selected === item.code;
                 return (
                   <TouchableOpacity
                     onPress={() => {
                       setSelected(item.code);
                       setOpen(false);
                     }}
-                    activeOpacity={0.8}
-                    style={[styles.langItem, isSel && styles.langItemSelected]}
+                    style={[
+                      styles.langItem,
+                      isSelected && styles.langItemSelected,
+                    ]}
                   >
-                    <Text style={[styles.langText, isSel && { fontWeight: "700", color: "#B22222" }]}>
+                    <Text
+                      style={[
+                        styles.langText,
+                        isSelected && styles.langTextSelected,
+                      ]}
+                    >
                       {item.label}
                     </Text>
                   </TouchableOpacity>
                 );
               }}
-              ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
             />
 
-            <TouchableOpacity onPress={() => setOpen(false)} style={styles.closeBtn} activeOpacity={0.8}>
-              <Text style={{ color: "#333" }}>Annuler</Text>
+            <TouchableOpacity
+              onPress={() => setOpen(false)}
+              style={styles.closeBtn}
+            >
+              <Text>Annuler</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -97,98 +93,124 @@ export default function ChoiceLanguage() {
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
-    // préremplir si l'utilisateur a déjà choisi une langue
     (async () => {
       try {
-        const prev = await AsyncStorage.getItem(SELECTED_LANGUAGE_KEY);
-        if (prev) setSelected(String(prev).toLowerCase());
+        const stored = await AsyncStorage.getItem(SELECTED_LANGUAGE_KEY);
+        if (stored) setSelected(stored);
       } catch (e) {
-        console.warn("Erreur récupération langue:", e);
+        console.warn("Erreur lecture langue:", e);
       } finally {
         setInitializing(false);
       }
     })();
   }, []);
 
-  async function handleContinue() {
+  const handleContinue = async () => {
     if (!selected) {
-      Alert.alert("Choix requis", "Veuillez sélectionner une langue pour continuer.");
+      Alert.alert("Choix requis", "Veuillez sélectionner une langue.");
       return;
     }
 
     setLoading(true);
     try {
-      const normalized = String(selected).toLowerCase();
-
-      // Stocke la langue choisie comme valeur (pas seulement "true")
-      await AsyncStorage.setItem(SELECTED_LANGUAGE_KEY, normalized);
-      await AsyncStorage.setItem(HAS_SELECTED_LANGUAGE, normalized);
-
-      // Redirection vers la page vidéo avec param lang (nom de route: intro-video)
-      router.replace(`/PageVideo?lang=${encodeURIComponent(normalized)}`);
-    } catch (err) {
-      console.warn("Erreur sauvegarde langue:", err);
-      Alert.alert("Erreur", "Impossible d'enregistrer la langue. Réessaie.");
+      await AsyncStorage.setItem(SELECTED_LANGUAGE_KEY, selected);
+      router.replace(`/PageVideo?lang=${encodeURIComponent(selected)}`);
+    } catch (e) {
+      Alert.alert("Erreur", "Impossible d'enregistrer la langue.");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   if (initializing) {
     return (
-      <SafeAreaView style={authStyles.container}>
-        <View style={[authStyles.scrollContent, { justifyContent: "center", alignItems: "center" }]}>
-          <ActivityIndicator size="large" color="#B22222" />
-        </View>
+      <SafeAreaView style={styles.center}>
+        <ActivityIndicator size="large" color="#B22222" />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={authStyles.container}>
-      <View style={authStyles.scrollContent}>
-        <Text style={authStyles.title}>Choisis la langue que tu souhaites apprendre</Text>
-        <Text style={authStyles.subtitle}>Découvre l'histoire de cette langue maternelle</Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.title}>
+          Choisis la langue que tu souhaites apprendre
+        </Text>
+        <Text style={styles.subtitle}>
+          Découvre l’histoire de cette langue maternelle
+        </Text>
 
-        <View style={authStyles.formContainer}>
-          <View style={styles.pickerWrap}>
-            <LangModalPicker selected={selected} setSelected={setSelected} />
-          </View>
-
-          <TouchableOpacity
-            style={[authStyles.authButton, (!selected || loading) && authStyles.buttonDisabled]}
-            onPress={handleContinue}
-            activeOpacity={0.85}
-            disabled={!selected || loading}
-          >
-            <Text style={authStyles.buttonText}>{loading ? "Patiente..." : "Continuer"}</Text>
-          </TouchableOpacity>
+        <View style={styles.pickerWrap}>
+          <LangModalPicker selected={selected} setSelected={setSelected} />
         </View>
+
+        <TouchableOpacity
+          style={[
+            styles.button,
+            (!selected || loading) && styles.buttonDisabled,
+          ]}
+          onPress={handleContinue}
+          disabled={!selected || loading}
+        >
+          <Text style={styles.buttonText}>
+            {loading ? "Patiente..." : "Continuer"}
+          </Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
 
-/* ----- styles locaux ----- */
+/* ---------------- STYLES ---------------- */
+
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#fff" },
+  content: {
+    flex: 1,
+    padding: 24,
+    justifyContent: "center",
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: "#B22222",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 40,
+  },
   pickerWrap: {
-    marginBottom: 24,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#ddd",
-    overflow: "hidden",
-    backgroundColor: "#fff",
+    marginBottom: 24,
   },
   selectorButton: {
     paddingVertical: 16,
     paddingHorizontal: 14,
-    justifyContent: "center",
   },
   selectorText: {
     fontSize: 16,
     color: "#111",
   },
-
+  button: {
+    backgroundColor: "#B22222",
+    padding: 18,
+    borderRadius: 12,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 18,
+    textAlign: "center",
+  },
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.45)",
@@ -199,12 +221,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 12,
     padding: 14,
-    maxHeight: "70%",
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: "700",
-    marginBottom: 8,
+    marginBottom: 12,
     textAlign: "center",
   },
   langItem: {
@@ -219,9 +240,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#111",
   },
+  langTextSelected: {
+    fontWeight: "700",
+    color: "#B22222",
+  },
   closeBtn: {
-    marginTop: 10,
+    marginTop: 12,
     alignItems: "center",
-    paddingVertical: 12,
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
