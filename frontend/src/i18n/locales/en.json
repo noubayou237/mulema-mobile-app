@@ -89,13 +89,18 @@
   },
   "exercises": {
     "title": "Exercises",
-    "startExercise": "Start Exercise",
-    "checkAnswer": "Check Answer",
-    "correct": "Correct!",
-    "incorrect": "Incorrect",
-    "exerciseCompleted": "Exercise Completed!",
-    "score": "Score",
-    "nextQuestion": "Next Question"
+    "introText": "Choose a theme and train yourself to learn new words and expressions. The more you practice, the more you progress!",
+    "start": "Start",
+    "categories": {
+      "socialFamily": "SOCIAL LIFE & FAMILY",
+      "socialFamilyDesc": "Learn to name family members and talk about your loved ones with the right words",
+      "cooking": "COOKING",
+      "cookingDesc": "Discover the vocabulary of cooking, meals and foods to speak like a real gourmet",
+      "clothing": "CLOTHING",
+      "clothingDesc": "Train yourself to recognize and use the vocabulary of clothes and everyday accessories",
+      "faunaFlora": "FAUNA & FLORA",
+      "faunaFloraDesc": "Train yourself to recognize and use the vocabulary of..."
+    }
   },
   "errors": {
     "networkError": "Network error. Please check your connection.",
@@ -122,13 +127,34 @@
   "stats": {
     "title": "Statistics",
     "myStats": "My Statistics",
-    "weeklyGoal": "of weekly goals achieved"
+    "weeklyGoal": "of weekly goals achieved",
+    "dayStreak": "Day streak",
+    "daysMin": "7 days",
+    "daysMax": "30 days",
+    "detailedProgress": "Detailed Progress",
+    "dailyGoal": "Your daily goal",
+    "learnWords": "Learn {{count}} words",
+    "completedCount": "{{completed}}/{{goal}} completed"
   },
   "nav": {
     "home": "Home",
     "lessons": "Lessons",
     "exercises": "Exercises",
     "community": "Community"
+  },
+  "community": {
+    "title": "Community",
+    "subtitle": "Learn together, progress together",
+    "activityFeed": "Activity Feed",
+    "viewStats": "📊 View my statistics",
+    "points": "points",
+    "actions": {
+      "completedTheme": "completed the Family theme",
+      "streak10": "reached 10 consecutive days",
+      "learnedWords": "learned {{count}} new words today",
+      "completedExercise": "completed the 'Verbs' exercise",
+      "earnedPoints": "won {{count}} challenge points"
+    }
   },
   "header": {
     "welcome": "Welcome"

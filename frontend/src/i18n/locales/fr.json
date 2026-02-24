@@ -89,13 +89,18 @@
   },
   "exercises": {
     "title": "Exercices",
-    "startExercise": "Commencer l'exercice",
-    "checkAnswer": "Vérifier la réponse",
-    "correct": "Correct !",
-    "incorrect": "Incorrect",
-    "exerciseCompleted": "Exercice terminé !",
-    "score": "Score",
-    "nextQuestion": "Question suivante"
+    "introText": "Choisis un thème et entraîne-toi à apprendre de nouveaux mots et expressions. Plus tu pratiques, plus tu progresses !",
+    "start": "Commencer",
+    "categories": {
+      "socialFamily": "VIE SOCIALE & FAMILLE",
+      "socialFamilyDesc": "Apprends à nommer les membres de la famille et à parler de tes proches avec les bons mots",
+      "cooking": "CUISINE",
+      "cookingDesc": "Découvre le vocabulaire de la cuisine, des repas et des aliments pour parler comme un vrai gourmet",
+      "clothing": "VÊTEMENTS",
+      "clothingDesc": "Entraîne-toi à reconnaître et utiliser le vocabulaire des habits et accessoires du quotidien",
+      "faunaFlora": "FAUNE & FLORE",
+      "faunaFloraDesc": "Entraîne-toi à reconnaître et utiliser le vocabulaire des..."
+    }
   },
   "errors": {
     "networkError": "Erreur réseau. Veuillez vérifier votre connexion.",
@@ -122,13 +127,34 @@
   "stats": {
     "title": "Statistiques",
     "myStats": "Mes statistiques",
-    "weeklyGoal": "des objectifs atteints cette semaine"
+    "weeklyGoal": "des objectifs atteints cette semaine",
+    "dayStreak": "Série de jours",
+    "daysMin": "7 jours",
+    "daysMax": "30 jours",
+    "detailedProgress": "Progression détaillée",
+    "dailyGoal": "Ton objectif du jour",
+    "learnWords": "Apprends {{count}} mots",
+    "completedCount": "déjà {{completed}}/{{goal}} faits"
   },
   "nav": {
     "home": "Accueil",
     "lessons": "Leçons",
     "exercises": "Exercices",
     "community": "Communauté"
+  },
+  "community": {
+    "title": "Communauté",
+    "subtitle": "Apprends ensemble, progresse ensemble",
+    "activityFeed": "Fil d'activité",
+    "viewStats": "📊 Voir mes statistiques",
+    "points": "points",
+    "actions": {
+      "completedTheme": "a terminé le thème Famille",
+      "streak10": "a atteint 10 jours consécutifs",
+      "learnedWords": "a appris {{count}} nouveaux mots aujourd'hui",
+      "completedExercise": "a terminé l'exercice 'Les Verbes'",
+      "earnedPoints": "a gagné {{count}} points de défi"
+    }
   },
   "header": {
     "welcome": "Bienvenue"

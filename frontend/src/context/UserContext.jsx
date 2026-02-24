@@ -128,11 +128,13 @@ export default function UserProvider({ children }) {
       await changeLanguage(newLanguage);
       setLanguageState(newLanguage);
 
-      // Optionally save to backend
-      try {
-        await api.put("/user/language", { language: newLanguage });
-      } catch (error) {
-        console.log("Error saving language to backend:", error.message);
+      // Only save to backend if user is logged in (has valid token)
+      if (user) {
+        try {
+          await api.put("/user/language", { language: newLanguage });
+        } catch (error) {
+          console.log("Error saving language to backend:", error.message);
+        }
       }
     } catch (error) {
       console.error("Error changing language:", error);

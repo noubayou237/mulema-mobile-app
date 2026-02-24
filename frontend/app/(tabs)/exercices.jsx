@@ -17,32 +17,29 @@ import "../../src/i18n";
 const exerciseData = [
   {
     id: "1",
-    title: "VIE SOCALE & FAMILLE",
-    description:
-      "Apprends à nommer les membres de la famille et à parler de tes proches avec les bons mots",
+    titleKey: "exercises.categories.socialFamily",
+    descriptionKey: "exercises.categories.socialFamilyDesc",
     locked: false,
     route: "/exercices/famille/exos1" // Exemple de route
   },
   {
     id: "2",
-    title: "CUISINE",
-    description:
-      "Découvre le vocabulaire de la cuisine, des repas et des aliments pour parler comme un vrai gourmet",
+    titleKey: "exercises.categories.cooking",
+    descriptionKey: "exercises.categories.cookingDesc",
     locked: true,
     route: "/exercices/cuisine"
   },
   {
     id: "3",
-    title: "VÊTEMENTS",
-    description:
-      "Entraîne-toi à reconnaître et utiliser le vocabulaire des habits et accessoires du quotidien",
+    titleKey: "exercises.categories.clothing",
+    descriptionKey: "exercises.categories.clothingDesc",
     locked: true,
     route: "/exercices/vetements"
   },
   {
     id: "4",
-    title: "FAUNE & FLORE",
-    description: "Entraîne-toi à reconnaître et utiliser le vocabulaire des...",
+    titleKey: "exercises.categories.faunaFlora",
+    descriptionKey: "exercises.categories.faunaFloraDesc",
     locked: true,
     route: "/exercices/faune"
   }
@@ -56,7 +53,7 @@ const HEADER_SCROLL_FADE_END = 80;
 /**
  * Composant de carte réutilisable
  */
-const ExerciseCard = ({ title, description, locked, onPress }) => {
+const ExerciseCard = ({ titleKey, descriptionKey, locked, onPress, t }) => {
   return (
     <TouchableOpacity
       style={[styles.cardContainer, locked && styles.cardLocked]}
@@ -71,9 +68,9 @@ const ExerciseCard = ({ title, description, locked, onPress }) => {
 
       {/* Contenu texte */}
       <View>
-        <Text style={styles.cardTitle}>{title}</Text>
-        <Text style={styles.cardDescription}>{description}</Text>
-        <Text style={styles.cardButtonText}>Commencer</Text>
+        <Text style={styles.cardTitle}>{t(titleKey)}</Text>
+        <Text style={styles.cardDescription}>{t(descriptionKey)}</Text>
+        <Text style={styles.cardButtonText}>{t("exercises.start")}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -120,20 +117,18 @@ export default function ExercicesScreen() {
       >
         {t("nav.exercises")}
       </Animated.Text>
-      <Text style={styles.introText}>
-        Choisis un thème et entraîne-toi à apprendre de nouveaux mots et
-        expressions. Plus tu pratiques, plus tu progresses !
-      </Text>
+      <Text style={styles.introText}>{t("exercises.introText")}</Text>
     </View>
   );
 
   // Affiche une carte d'exercice
   const renderCardItem = ({ item }) => (
     <ExerciseCard
-      title={item.title}
-      description={item.description}
+      titleKey={item.titleKey}
+      descriptionKey={item.descriptionKey}
       locked={item.locked}
       onPress={() => handleCardPress(item)}
+      t={t}
     />
   );
 

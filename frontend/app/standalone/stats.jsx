@@ -65,20 +65,22 @@ const GoalCard = ({ percentage, t }) => {
 /**
  * 2. Carte Série de Jours (Barre de progression)
  */
-const StreakCard = ({ current, total }) => {
+const StreakCard = ({ current, total, t }) => {
   const progress = (current / total) * 100;
   return (
     <View style={styles.card}>
       <View style={styles.streakHeader}>
         <Icon name='fire' size={20} color='#FF3B30' style={styles.iconMargin} />
-        <Text style={styles.cardTitle}>Série de jours : {current}</Text>
+        <Text style={styles.cardTitle}>
+          {t("stats.dayStreak")} : {current}
+        </Text>
       </View>
       <View style={styles.progressBarContainer}>
         <View style={[styles.progressBar, { width: `${progress}%` }]} />
       </View>
       <View style={styles.streakFooter}>
-        <Text style={styles.streakCountMin}>7 jours</Text>
-        <Text style={styles.streakCountMax}>30 jours</Text>
+        <Text style={styles.streakCountMin}>{t("stats.daysMin")}</Text>
+        <Text style={styles.streakCountMax}>{t("stats.daysMax")}</Text>
       </View>
     </View>
   );
@@ -87,7 +89,7 @@ const StreakCard = ({ current, total }) => {
 /**
  * 3. Carte Progression Détaillée (Graphique Linéaire Simulé)
  */
-const DetailedProgressCard = ({ data }) => {
+const DetailedProgressCard = ({ data, t }) => {
   // Calcul pour la simulation des points
   const allValues = data.map((item) => item.value);
   const maxValue = Math.max(...allValues);
@@ -104,7 +106,7 @@ const DetailedProgressCard = ({ data }) => {
 
   return (
     <View style={[styles.card, { paddingBottom: 0 }]}>
-      <Text style={styles.cardTitle}>Progression détaillée</Text>
+      <Text style={styles.cardTitle}>{t("stats.detailedProgress")}</Text>
 
       {/* Zone du graphique */}
       <View style={styles.chartArea}>
@@ -146,16 +148,18 @@ const DetailedProgressCard = ({ data }) => {
 /**
  * 4. Carte Objectif Quotidien
  */
-const DailyGoalCard = ({ goal, completed }) => {
+const DailyGoalCard = ({ goal, completed, t }) => {
   return (
     <View style={[styles.card, styles.dailyGoalCardBackground]}>
       <View style={styles.dailyGoalContent}>
         <View>
-          <Text style={styles.cardTitle}>Ton objectif du jour</Text>
+          <Text style={styles.cardTitle}>{t("stats.dailyGoal")}</Text>
           {/* Le texte Apprends **10 mots** est affiché dans l'image comme un seul bloc */}
-          <Text style={styles.dailyGoalText}>Apprends {goal} mots</Text>
+          <Text style={styles.dailyGoalText}>
+            {t("stats.learnWords", { count: goal })}
+          </Text>
           <Text style={styles.dailyGoalCompleted}>
-            déjà {completed}/{goal} faits
+            {t("stats.completedCount", { completed, goal })}
           </Text>
         </View>
         <Icon name='trophy' size={100} color='#ffcc00ff' />
@@ -189,9 +193,9 @@ export default function Statistiques() {
         showsVerticalScrollIndicator={false}
       >
         <GoalCard percentage={78} t={t} />
-        <StreakCard current={currentStreak} total={totalProgress} />
-        <DetailedProgressCard data={progressionData} />
-        <DailyGoalCard goal={10} completed={7} />
+        <StreakCard current={currentStreak} total={totalProgress} t={t} />
+        <DetailedProgressCard data={progressionData} t={t} />
+        <DailyGoalCard goal={10} completed={7} t={t} />
 
         {/* Bouton Retour */}
         <TouchableOpacity style={styles.returnButton} onPress={goToCommunity}>
