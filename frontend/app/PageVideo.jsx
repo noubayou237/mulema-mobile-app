@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Dimensions,
   Platform,
-  ActivityIndicator,
+  ActivityIndicator
 } from "react-native";
 import { Video } from "expo-av";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -18,14 +18,14 @@ import { LinearGradient } from "expo-linear-gradient";
 import { authStyles } from "../assets/styles/auth.styles"; // adapte le chemin si besoin
 
 const HAS_SEEN_INTRO = "hasSeenIntro";
-const HAS_SELECTED_LANGUAGE = "hasSelectedLanguage";
+const HAS_SELECTED_LANGUAGE = "selectedLanguage";
 
 // mapping langue -> url de la vidéo (ici exemples ; remplace par tes URLs réelles)
 const VIDEO_BY_LANG = {
   bassa: "https://example.com/videos/bassa/intro.m3u8",
   duala: "https://example.com/videos/duala/intro.m3u8",
   ghomala: "https://example.com/videos/ghomala/intro.m3u8",
-  default: "https://example.com/videos/default/intro.m3u8",
+  default: "https://example.com/videos/default/intro.m3u8"
 };
 
 export default function PageVideo() {
@@ -167,7 +167,7 @@ export default function PageVideo() {
     return (
       <SafeAreaView style={[authStyles.container]}>
         <View style={styles.resolvingContainer}>
-          <ActivityIndicator size="large" />
+          <ActivityIndicator size='large' />
           <Text style={{ marginTop: 12, color: "#444" }}>Chargement...</Text>
         </View>
       </SafeAreaView>
@@ -189,7 +189,7 @@ export default function PageVideo() {
             ref={videoRef}
             source={{ uri: videoUri }}
             style={styles.video}
-            resizeMode="cover"
+            resizeMode='cover'
             useNativeControls={false}
             shouldPlay={false}
             onPlaybackStatusUpdate={onPlaybackStatusUpdate}
@@ -205,7 +205,11 @@ export default function PageVideo() {
 
           {/* Skip button top-right */}
           <View style={styles.topRight}>
-            <TouchableOpacity activeOpacity={0.8} onPress={handleSkip} style={styles.skipBtn}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={handleSkip}
+              style={styles.skipBtn}
+            >
               <Text style={styles.skipText}>Skip</Text>
             </TouchableOpacity>
           </View>
@@ -213,10 +217,14 @@ export default function PageVideo() {
           {/* Center play button overlay */}
           <View style={styles.centerOverlay}>
             {videoLoading ? (
-              <ActivityIndicator size="large" color="#fff" />
+              <ActivityIndicator size='large' color='#fff' />
             ) : (
               <>
-                <TouchableOpacity activeOpacity={0.8} onPress={handlePlayPress} style={styles.playBtn}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={handlePlayPress}
+                  style={styles.playBtn}
+                >
                   <View style={styles.playTriangle} />
                 </TouchableOpacity>
 
@@ -228,9 +236,15 @@ export default function PageVideo() {
 
         {/* Bottom content + Continue button */}
         <View style={styles.bottom}>
-          <Text style={styles.description}>{getDescriptionForLang(langResolved)}</Text>
+          <Text style={styles.description}>
+            {getDescriptionForLang(langResolved)}
+          </Text>
 
-          <TouchableOpacity style={[authStyles.authButton, styles.continueBtn]} activeOpacity={0.85} onPress={handleContinue}>
+          <TouchableOpacity
+            style={[authStyles.authButton, styles.continueBtn]}
+            activeOpacity={0.85}
+            onPress={handleContinue}
+          >
             <Text style={authStyles.buttonText}>Continue</Text>
           </TouchableOpacity>
         </View>
@@ -258,45 +272,45 @@ const styles = StyleSheet.create({
   resolvingContainer: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "center"
   },
   videoWrapper: {
     width: "100%",
     backgroundColor: "#000",
     position: "relative",
-    overflow: "hidden",
+    overflow: "hidden"
   },
   video: {
     ...StyleSheet.absoluteFillObject, // fill the wrapper
     width: "100%",
-    height: "100%",
+    height: "100%"
   },
   gradient: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFillObject
   },
   topRight: {
     position: "absolute",
     right: 16,
     top: Platform.OS === "ios" ? 54 : 20,
-    zIndex: 30,
+    zIndex: 30
   },
   skipBtn: {
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "rgba(255,255,255,0.12)"
   },
   skipText: {
     color: "#fff",
     fontWeight: "600",
-    fontSize: 14,
+    fontSize: 14
   },
   centerOverlay: {
     position: "absolute",
     alignSelf: "center",
     top: "34%", // visually centered toward upper half
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "center"
   },
   playBtn: {
     width: 84,
@@ -308,7 +322,7 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.25,
     shadowRadius: 8,
-    elevation: 6,
+    elevation: 6
   },
   playTriangle: {
     width: 0,
@@ -319,31 +333,31 @@ const styles = StyleSheet.create({
     borderTopWidth: 12,
     borderTopColor: "transparent",
     borderBottomWidth: 12,
-    borderBottomColor: "transparent",
+    borderBottomColor: "transparent"
   },
   playLabel: {
     marginTop: 12,
     color: "#fff",
     fontSize: 22,
-    fontWeight: "700",
+    fontWeight: "700"
   },
   bottom: {
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 20,
     justifyContent: "flex-end",
-    paddingBottom: Platform.OS === "ios" ? 34 : 20,
+    paddingBottom: Platform.OS === "ios" ? 34 : 20
   },
   description: {
     color: "#444",
     fontSize: 15,
     textAlign: "center",
-    marginBottom: 18,
+    marginBottom: 18
   },
   continueBtn: {
     // override to make button larger & rounded like example
     borderRadius: 28,
     paddingVertical: 18,
-    backgroundColor: "#B22222", // same red as playBtn
-  },
+    backgroundColor: "#B22222" // same red as playBtn
+  }
 });

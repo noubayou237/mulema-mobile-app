@@ -10,11 +10,11 @@ import HomeBassa from "../homebassa";
 import HomeGhomala from "../homeghomala";
 import { useLanguage } from "../../src/context/LanguageContext";
 
-const HAS_SELECTED_LANGUAGE = "hasSelectedLanguage";
+const HAS_SELECTED_LANGUAGE = "selectedLanguage";
 
 export default function HomeRouter() {
   const { language: ctxLanguage, isLoading: ctxLoading } = useLanguage();
-  const params = useLocalSearchParams();               // ← correction ici
+  const params = useLocalSearchParams(); // ← correction ici
   const paramLang = params?.lang ?? null;
 
   const [langToRender, setLangToRender] = useState(null);
@@ -69,7 +69,7 @@ export default function HomeRouter() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#D9534F" />
+        <ActivityIndicator size='large' color='#D9534F' />
       </View>
     );
   }
@@ -90,7 +90,10 @@ export default function HomeRouter() {
     default:
       return (
         <View style={styles.loadingContainer}>
-          <Text>Erreur : Langue non définie. Veuillez sélectionner une langue depuis les paramètres.</Text>
+          <Text>
+            Erreur : Langue non définie. Veuillez sélectionner une langue depuis
+            les paramètres.
+          </Text>
         </View>
       );
   }
@@ -101,6 +104,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F5F5F7",
-  },
+    backgroundColor: "#F5F5F7"
+  }
 });
