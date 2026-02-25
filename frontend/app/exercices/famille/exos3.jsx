@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   View,
@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Audio } from "expo-av";
+import * as Haptics from "expo-haptics";
 
 const { width } = Dimensions.get("window");
 
@@ -74,14 +75,20 @@ initializeAudio().catch(() => {});
 // Play correct/incorrect feedback sound
 const playFeedbackSound = async (isCorrect, language = "fr") => {
   try {
-    const { Haptics } = await import("expo-haptics");
-    if (isCorrect) {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } else {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    // Try haptic feedback with proper error handling
+    try {
+      if (isCorrect) {
+        await Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success
+        );
+      } else {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    } catch (hapticsError) {
+      console.log("Haptics not available:", hapticsError.message);
     }
   } catch (error) {
-    console.log("Haptics not available:", error.message);
+    console.log("Feedback error:", error);
   }
 };
 
@@ -120,6 +127,32 @@ const ExerciseThreeScreen = () => {
   const [isAnswered, setIsAnswered] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
 
+  // Timer state - Track time taken to complete exercise
+  const [startTime] = useState(() => Date.now());
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const timerRef = useRef(null);
+
+  // Initialize timer when component mounts
+  useEffect(() => {
+    // Start timer interval
+    timerRef.current = setInterval(() => {
+      setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [startTime]);
+
+  // Format time as MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
   // --- LOGIQUE DU JEU ---
   const handleOptionSelect = async (optionText) => {
     if (isAnswered) return; // On bloque après la 1ère réponse
@@ -143,13 +176,24 @@ const ExerciseThreeScreen = () => {
   };
 
   const handleNext = () => {
+    // Stop timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    const exerciseTime = elapsedTime;
+    const cumulativeTime = (parseInt(params?.totalTime) || 0) + exerciseTime;
+    const totalErrors = parseInt(params?.errorCount) || 0;
+
     // Navigation vers la page de fin avec les résultats
     router.push({
       pathname: "/exercices/famille/endexos",
       params: {
         finalLives: lives,
-        finalProgress: progress
-        // Ajoutez d'autres stats nécessaires ici
+        finalProgress: progress,
+        totalTime: cumulativeTime,
+        errorCount: totalErrors,
+        completedExercises: 3,
+        totalExercises: 3
       }
     });
   };
@@ -213,8 +257,9 @@ const ExerciseThreeScreen = () => {
           <View style={styles.progressBarContainer}>
             <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
           </View>
-          {/* Compteur de Coris */}
-          <View style={styles.livesContainer}>
+          {/* Timer and lives */}
+          <View style={styles.headerRight}>
+            <Text style={styles.timerText}>🕒 {formatTime(elapsedTime)}</Text>
             <Text style={styles.livesText}>🐚 {lives}</Text>
           </View>
         </View>
@@ -331,6 +376,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: "#C81E2F"
+  },
+  headerRight: {
+    alignItems: "flex-end"
+  },
+  timerText: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 4
   },
 
   // --- INSTRUCTIONS ---

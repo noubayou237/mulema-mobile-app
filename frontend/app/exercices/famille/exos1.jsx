@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -11,10 +11,11 @@ import {
   Alert,
   ScrollView
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Audio } from "expo-av";
 import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 
 // Audio state flags
 let audioInitialized = false;
@@ -81,8 +82,14 @@ const playWordAudio = async (wordKey) => {
   try {
     // Map words to their audio files based on available assets
     const audioMap = {
-      papa: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/l'oncle en douala.wav"),
-      maman: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Le bebe en duala.wav")
+      // Exercise 1 pairs
+      p1: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Mon Frère en duala.wav"),
+      p2: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/les grands parents en duala.wav"),
+      p3: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Le bebe en duala.wav"),
+      p4: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/l'oncle en douala.wav"),
+      // Exercise 2 pairs
+      p5: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Mon Frère en duala.wav"),
+      p6: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Le bebe en duala.wav")
     };
 
     const audioSource = audioMap[wordKey];
@@ -122,14 +129,20 @@ const playWordAudio = async (wordKey) => {
 // Play correct/incorrect feedback sound
 const playFeedbackSound = async (isCorrect, language = "fr") => {
   try {
-    const { Haptics } = await import("expo-haptics");
-    if (isCorrect) {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } else {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    // Try haptic feedback with proper error handling
+    try {
+      if (isCorrect) {
+        await Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success
+        );
+      } else {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    } catch (hapticsError) {
+      console.log("Haptics not available:", hapticsError.message);
     }
   } catch (error) {
-    console.log("Haptics not available:", error.message);
+    console.log("Feedback error:", error);
   }
 };
 
@@ -161,6 +174,7 @@ const ExerciseScreen = ({ navigation }) => {
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language || "fr";
   const { width } = Dimensions.get("window");
+  const params = useLocalSearchParams();
 
   // --- ÉTATS (STATE) ---
   const router = useRouter();
@@ -172,6 +186,32 @@ const ExerciseScreen = ({ navigation }) => {
   const [errorIds, setErrorIds] = useState([]);
   const [errorCount, setErrorCount] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
+
+  // Timer state - Track time taken to complete exercise
+  const [startTime, setStartTime] = useState(() => Date.now());
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const timerRef = useRef(null);
+
+  // Initialize timer when component mounts
+  useEffect(() => {
+    // Start timer interval
+    timerRef.current = setInterval(() => {
+      setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [startTime]);
+
+  // Format time as MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
 
   // NOUVEAUX ÉTATS pour stocker les colonnes mélangées de manière statique
   const [shuffledLeftColumn, setShuffledLeftColumn] = useState([]);
@@ -263,23 +303,39 @@ const ExerciseScreen = ({ navigation }) => {
   };
 
   const handleNextExercise = () => {
+    // Stop timer and calculate final time for this exercise
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    // Use elapsedTime which is already tracked by the interval
+    const exerciseTime = elapsedTime;
+
     if (currentExIndex < exercisesData.length - 1) {
-      // Passer à l'exercice suivant
-      setCurrentExIndex((prev) => prev + 1);
-      // Reset des états pour le nouveau jeu (le useEffect gère le nouveau mélange)
-      setMatchedPairs([]);
-      setSelectedLeft(null);
-      setSelectedRight(null);
-      setIsCompleted(false);
-      setErrorCount(0);
-    } else {
-      // Fin du thème ou page suivante
+      // Pass to next exercise with cumulative time data
+      const newTotalTime = (parseInt(params?.totalTime) || 0) + exerciseTime;
+
+      // Navigate to exos2
       router.push({
         pathname: "/exercices/famille/exos2",
         params: {
           currentLives: lives,
-          currentTimer: 0,
-          totalProgress: 33
+          totalTime: newTotalTime,
+          totalProgress: 33,
+          errorCount: errorCount
+        }
+      });
+    } else {
+      // Fin du thème - navigate to end page with all data
+      const totalTime = (parseInt(params?.totalTime) || 0) + exerciseTime;
+      router.push({
+        pathname: "/exercices/famille/endexos",
+        params: {
+          currentLives: lives,
+          totalTime: totalTime,
+          totalProgress: 100,
+          errorCount: errorCount,
+          completedExercises: exercisesData.length,
+          totalExercises: exercisesData.length
         }
       });
     }
@@ -384,7 +440,9 @@ const ExerciseScreen = ({ navigation }) => {
 
         {/* --- TIMER --- */}
         <View style={styles.timerContainer}>
-          <Text style={styles.timerText}>🕒 Temps : 1 min 20 s</Text>
+          <Text style={styles.timerText}>
+            🕒 Temps : {formatTime(elapsedTime)}
+          </Text>
         </View>
 
         {/* --- CONSIGNE --- */}
