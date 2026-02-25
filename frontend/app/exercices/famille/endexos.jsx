@@ -1,6 +1,6 @@
-import React from 'react';
-import { useRouter } from 'expo-router';
-import { useEffect } from 'react'; // Garde uniquement cette ligne
+import React from "react";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { useEffect } from "react";
 import {
   View,
   Text,
@@ -10,19 +10,38 @@ import {
   TouchableOpacity,
   Dimensions,
   Image
-} from 'react-native';
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const { width, height } = Dimensions.get('window');
-
+const { width, height } = Dimensions.get("window");
 
 const EndScreen = ({ navigation, route }) => {
-    const router = useRouter();
+  const router = useRouter();
+  const params = useLocalSearchParams();
+
+  // Extract data from params
+  const totalTime = parseInt(params?.totalTime) || 0;
+  const errorCount = parseInt(params?.errorCount) || 0;
+  const lives = parseInt(params?.currentLives) || 5;
+  const completedExercises = parseInt(params?.completedExercises) || 0;
+  const totalExercises = parseInt(params?.totalExercises) || 3;
+  const finalProgress = parseInt(params?.totalProgress) || 0;
+
+  // Format time as MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // Calculate score based on lives remaining
+  const score = lives * 20;
 
   // Fonction pour sauvegarder le déblocage
   const unlockNextTheme = async () => {
     try {
       // On enregistre que le thème 2 est débloqué
-      await AsyncStorage.setItem('theme2_unlocked', 'true');
+      await AsyncStorage.setItem("theme2_unlocked", "true");
       console.log("Theme 2 débloqué !");
     } catch (e) {
       console.error("Erreur lors du déblocage", e);
@@ -45,21 +64,28 @@ const EndScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor="#CD4C58" />
-      
+      <StatusBar barStyle='light-content' backgroundColor='#CD4C58' />
+
       <View style={styles.container}>
-        
         {/* --- SECTION HAUTE : MÉDAILLE --- */}
         <View style={styles.topSection}>
           {/* Décorations (Étoiles/Étincelles) - Positionnement absolu simulé */}
-          <Text style={[styles.sparkle, { top: 40, left: 60, fontSize: 30 }]}>✨</Text>
-          <Text style={[styles.sparkle, { top: 80, right: 60, fontSize: 25 }]}>✨</Text>
-          <Text style={[styles.sparkle, { bottom: 20, left: 80, fontSize: 20 }]}>✨</Text>
+          <Text style={[styles.sparkle, { top: 40, left: 60, fontSize: 30 }]}>
+            ✨
+          </Text>
+          <Text style={[styles.sparkle, { top: 80, right: 60, fontSize: 25 }]}>
+            ✨
+          </Text>
+          <Text
+            style={[styles.sparkle, { bottom: 20, left: 80, fontSize: 20 }]}
+          >
+            ✨
+          </Text>
 
           {/* Image de la médaille */}
           <View style={styles.medalContainer}>
-             {/* Remplacer par <Image source={require('./medal.png')} /> */}
-             <Text style={{ fontSize: 120 }}>🏅</Text>
+            {/* Remplacer par <Image source={require('./medal.png')} /> */}
+            <Text style={{ fontSize: 120 }}>🏅</Text>
           </View>
 
           <Text style={styles.congratsText}>félicitations</Text>
@@ -67,12 +93,31 @@ const EndScreen = ({ navigation, route }) => {
 
         {/* --- SECTION CARTE : RÉSULTATS --- */}
         <View style={styles.cardContainer}>
-          
           <Text style={styles.sectionTitle}>Section 1 :</Text>
-          
+
           <Text style={styles.themeTitle}>Vie sociale & famille</Text>
-          
-          <Text style={styles.scoreText}>6 / 6 exercices</Text>
+
+          <Text style={styles.scoreText}>
+            {completedExercises} / {totalExercises} exercices
+          </Text>
+
+          {/* Time display */}
+          <View style={styles.timeRow}>
+            <Text style={styles.timeLabel}>⏱️ Temps total:</Text>
+            <Text style={styles.timeValue}>{formatTime(totalTime)}</Text>
+          </View>
+
+          {/* Errors display */}
+          <View style={styles.timeRow}>
+            <Text style={styles.timeLabel}>❌ Erreurs:</Text>
+            <Text style={styles.timeValue}>{errorCount}</Text>
+          </View>
+
+          {/* Score display */}
+          <View style={styles.timeRow}>
+            <Text style={styles.timeLabel}>⭐ Score:</Text>
+            <Text style={styles.timeValue}>{score} pts</Text>
+          </View>
 
           {/* Ligne "Terminées" avec icône */}
           <View style={styles.statusRow}>
@@ -83,21 +128,24 @@ const EndScreen = ({ navigation, route }) => {
           </View>
 
           <Text style={styles.descriptionText}>
-            Tu connais maintenant les mots essentiels pour parler de tes proches.
+            Tu connais maintenant les mots essentiels pour parler de tes
+            proches.
           </Text>
 
           {/* --- BOUTONS D'ACTION --- */}
           <View style={styles.buttonsContainer}>
-        <TouchableOpacity style={styles.restartButton} onPress={handleRestart}>
-           <Text style={styles.restartButtonText}>Recommencer</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.restartButton}
+              onPress={handleRestart}
+            >
+              <Text style={styles.restartButtonText}>Recommencer</Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-           <Text style={styles.nextButtonText}>Suivant</Text>
-        </TouchableOpacity>
-      </View>
+            <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+              <Text style={styles.nextButtonText}>Suivant</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-
       </View>
     </SafeAreaView>
   );
@@ -106,144 +154,160 @@ const EndScreen = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#CD4C58', // Rouge clair du fond (pipette sur l'image)
+    backgroundColor: "#CD4C58" // Rouge clair du fond (pipette sur l'image)
   },
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'space-between', // Répartit l'espace entre le haut et la carte
-    paddingVertical: 20,
+    alignItems: "center",
+    justifyContent: "space-between", // Répartit l'espace entre le haut et la carte
+    paddingVertical: 20
   },
   // --- Top Section ---
   topSection: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    marginBottom: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    marginBottom: 20
   },
   sparkle: {
-    position: 'absolute',
-    color: '#FAD02C', // Jaune doré
-    opacity: 0.8,
+    position: "absolute",
+    color: "#FAD02C", // Jaune doré
+    opacity: 0.8
   },
   medalContainer: {
     marginBottom: 10,
     // Ajoutez ici une ombre ou un style spécifique si vous utilisez une vraie image
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 5,
+    shadowRadius: 5
   },
   congratsText: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#FAD02C', // Jaune du texte
+    fontWeight: "bold",
+    color: "#FAD02C", // Jaune du texte
     marginTop: 10,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowColor: "rgba(0, 0, 0, 0.2)",
     textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    textShadowRadius: 3
   },
   // --- Card Section ---
   cardContainer: {
-    backgroundColor: '#9E2A36', // Rouge foncé de la carte
+    backgroundColor: "#9E2A36", // Rouge foncé de la carte
     width: width * 0.9, // 90% de la largeur de l'écran
     borderRadius: 25,
     paddingVertical: 30,
     paddingHorizontal: 20,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 20, // Marge par rapport au bas
     // Ombre de la carte
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
-    elevation: 8,
+    elevation: 8
   },
   sectionTitle: {
-    color: '#E0E0E0',
+    color: "#E0E0E0",
     fontSize: 16,
-    marginBottom: 5,
+    marginBottom: 5
   },
   themeTitle: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 26,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 10,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 10
   },
   scoreText: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 18,
-    fontWeight: '500',
-    marginBottom: 15,
+    fontWeight: "500",
+    marginBottom: 15
+  },
+  timeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginBottom: 8,
+    paddingHorizontal: 20
+  },
+  timeLabel: {
+    color: "#E0E0E0",
+    fontSize: 16
+  },
+  timeValue: {
+    color: "#FFF",
+    fontSize: 16,
+    fontWeight: "bold"
   },
   statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20
   },
   checkCircle: {
     width: 24,
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#FFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
+    borderColor: "#FFF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8
   },
   checkIcon: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: "bold"
   },
   statusText: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold"
   },
   descriptionText: {
-    color: '#E0E0E0',
+    color: "#E0E0E0",
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 30,
     lineHeight: 22,
-    paddingHorizontal: 10,
+    paddingHorizontal: 10
   },
   // --- Buttons ---
   buttonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    gap: 15,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    gap: 15
   },
   restartButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 25,
     borderWidth: 2,
-    borderColor: '#FFF',
-    alignItems: 'center',
-    backgroundColor: 'transparent',
+    borderColor: "#FFF",
+    alignItems: "center",
+    backgroundColor: "transparent"
   },
   restartButtonText: {
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold"
   },
   nextButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 25,
-    backgroundColor: '#FFF',
-    alignItems: 'center',
+    backgroundColor: "#FFF",
+    alignItems: "center"
   },
   nextButtonText: {
-    color: '#9E2A36', // Couleur texte rouge foncé pour le contraste
+    color: "#9E2A36", // Couleur texte rouge foncé pour le contraste
     fontSize: 16,
-    fontWeight: 'bold',
-  },
+    fontWeight: "bold"
+  }
 });
 
 export default EndScreen;

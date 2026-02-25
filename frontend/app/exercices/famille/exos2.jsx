@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   View,
@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { Audio } from "expo-av";
 import { useTranslation } from "react-i18next";
+import * as Haptics from "expo-haptics";
 
 const { width } = Dimensions.get("window");
 
@@ -83,10 +84,11 @@ const playWordAudio = async (wordKey) => {
   }
 
   try {
-    // Map words to their audio files based on available assets
+    // Map words to their audio files based on available assets for Exercise 2
     const audioMap = {
-      papa: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/l'oncle en douala.wav"),
-      maman: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Le bebe en duala.wav")
+      // Using Exercise 2 audio files
+      audio1: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 2 du theme 0 en duala/Theme 0 exer 2 (les grands parents en duala).wav"),
+      audio2: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 2 du theme 0 en duala/Theme 0 exer 2 Rpsne N1 (les amis en duala).wav")
     };
 
     const audioSource = audioMap[wordKey];
@@ -126,14 +128,20 @@ const playWordAudio = async (wordKey) => {
 // Play correct/incorrect feedback sound
 const playFeedbackSound = async (isCorrect, language = "fr") => {
   try {
-    const { Haptics } = await import("expo-haptics");
-    if (isCorrect) {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } else {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    // Try haptic feedback with proper error handling
+    try {
+      if (isCorrect) {
+        await Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success
+        );
+      } else {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    } catch (hapticsError) {
+      console.log("Haptics not available:", hapticsError.message);
     }
   } catch (error) {
-    console.log("Haptics not available:", error.message);
+    console.log("Feedback error:", error);
   }
 };
 
@@ -162,6 +170,32 @@ const ExerciseTwoScreen = () => {
   const [inputText, setInputText] = useState("");
   const [lives, setLives] = useState(initialLives);
   const [timer] = useState(initialTimer); // Timer n'est pas utilisé pour l'instant
+
+  // Timer state - Track time taken to complete exercise
+  const [startTime] = useState(() => Date.now());
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const timerRef = useRef(null);
+
+  // Initialize timer when component mounts
+  useEffect(() => {
+    // Start timer interval
+    timerRef.current = setInterval(() => {
+      setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [startTime]);
+
+  // Format time as MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
 
   // États de l'exercice
   const [status, setStatus] = useState("idle"); // 'idle', 'success', 'error'
@@ -205,23 +239,40 @@ const ExerciseTwoScreen = () => {
 
   // --- LOGIQUE DE NAVIGATION (UNIFIÉE) ---
   const handleNextStep = () => {
+    // Stop timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    const exerciseTime = elapsedTime;
+
     const isSuccess = status === "success";
     const progressBonus = isSuccess ? 33 : 0;
 
     // Si l'utilisateur est Game Over, naviguer vers la fin du thème
     if (lives === 0) {
       Alert.alert("Game Over", "Vous avez épuisé toutes vos vies !");
-      router.push("/exercices/famille/endexos");
+      const totalTime = (parseInt(params?.totalTime) || 0) + exerciseTime;
+      router.push({
+        pathname: "/exercices/famille/endexos",
+        params: {
+          currentLives: 0,
+          totalTime: totalTime,
+          totalProgress: totalProgress,
+          errorCount: parseInt(params?.errorCount) || 0
+        }
+      });
       return;
     }
 
-    // Naviguer vers l'exercice 3
+    // Navigate to exercise 3 with cumulative time
+    const cumulativeTime = (parseInt(params?.totalTime) || 0) + exerciseTime;
     router.push({
       pathname: "/exercices/famille/exos3",
       params: {
-        currentLives: lives, // Utilise la valeur mise à jour
-        currentTimer: timer,
-        totalProgress: totalProgress + progressBonus
+        currentLives: lives,
+        totalTime: cumulativeTime,
+        totalProgress: totalProgress + progressBonus,
+        errorCount: parseInt(params?.errorCount) || 0
       }
     });
   };
@@ -240,9 +291,14 @@ const ExerciseTwoScreen = () => {
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           {/* --- HEADER SIMULÉ (VIES & PROGRESSION) --- */}
           <View style={styles.header}>
-            <Text style={styles.headerText}>
-              Progression : {totalProgress}%
-            </Text>
+            <View>
+              <Text style={styles.headerText}>
+                Progression : {totalProgress}%
+              </Text>
+              <Text style={styles.timerText}>
+                🕒 Temps : {formatTime(elapsedTime)}
+              </Text>
+            </View>
             <Text style={styles.livesText}>🐚 {lives} vies restantes</Text>
           </View>
 
@@ -364,6 +420,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
     color: "#C81E2F"
+  },
+  timerText: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 4
   },
   instructionContainer: {
     width: "100%",

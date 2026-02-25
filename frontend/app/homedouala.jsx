@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
+import * as Haptics from "expo-haptics";
 import "../src/i18n";
 
 // --- Importez vos images locales ---
@@ -24,6 +25,26 @@ const { width } = Dimensions.get("window");
 export default function HomeDouala() {
   const router = useRouter();
   const { t } = useTranslation();
+
+  // Initialize on mount
+  useEffect(() => {
+    // Component mounted
+  }, []);
+
+  // Play welcome audio when pressing the start button
+  const playWelcomeAudio = async () => {
+    try {
+      // Try haptic feedback with proper error handling
+      // Wrap in try-catch as haptics may not be available on all devices
+      try {
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } catch (hapticsError) {
+        console.log("Haptics not available:", hapticsError.message);
+      }
+    } catch (error) {
+      console.log("Feedback error:", error);
+    }
+  };
 
   // --- DONNÉES DES NIVEAUX ---
   const LEVELS_DATA = [
@@ -54,7 +75,10 @@ export default function HomeDouala() {
   ];
 
   // Fonction de navigation unique (utilisée par le TouchableOpacity)
-  const handleStartLevel = (level) => {
+  const handleStartLevel = async (level) => {
+    // Play audio feedback when starting
+    await playWelcomeAudio();
+
     if (level.unlocked) {
       console.log(`Démarrage du niveau : ${level.title} -> ${level.path}`);
       router.push(level.path);
