@@ -10,6 +10,9 @@
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx"
-, "app/_layout.jsx", "app/standalone/profile_page.jsx"  ]
+    "**/*.tsx",
+    "app/_layout.jsx",
+    "app/standalone/profile_page.jsx",
+    "nativewind-env.d.ts"
+  ]
 }
