@@ -38,10 +38,20 @@ const SignInScreen = () => {
       // Use the login function from UserContext which calls the backend API
       await login(email, password);
     } catch (err) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Sign in failed.";
+      console.error("Sign in error:", err);
+      console.error("Error response:", err.response?.data);
+      console.error("Error code:", err.code);
+      console.error("Error status:", err.response?.status);
+      
+      let msg;
+      if (err.code === "ECONNREFUSED" || err.code === "ERR_NETWORK") {
+        msg = `Cannot connect to server. Make sure:\n- Backend is running (npm run start:dev)\n- IP is correct: 192.168.195.108:5001`;
+      } else {
+        msg =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Sign in failed.";
+      }
       Alert.alert("Error", msg);
     } finally {
       setLoading(false);
