@@ -87,12 +87,21 @@ const SignUpScreen = () => {
     } catch (err) {
       console.error("Signup error:", err);
       console.error("Error response:", err.response?.data);
-      const message =
-        err?.response?.data?.message ||
-        err?.message ||
-        (err.code === "ECONNABORTED"
-          ? "La requête a expiré. Vérifie que le backend est en cours d'exécution."
-          : "Erreur lors de la création du compte.");
+      console.error("Error code:", err.code);
+      console.error("Error status:", err.response?.status);
+      console.error("Full error:", JSON.stringify(err, null, 2));
+      
+      let message;
+      if (err.code === "ECONNABORTED") {
+        message = "La requête a expiré. Vérifie que le backend est en cours d'exécution.";
+      } else if (err.code === "ECONNREFUSED" || err.code === "ERR_NETWORK") {
+        message = `Impossible de se connecter au serveur. Vérifie que:\n- Le backend s'exécute (npm run start:dev)\n- L'IP est correcte: 192.168.195.108:5001`;
+      } else {
+        message =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Erreur lors de la création du compte.";
+      }
       Alert.alert("Erreur", message);
     } finally {
       setUi((s) => ({ ...s, loading: false }));
