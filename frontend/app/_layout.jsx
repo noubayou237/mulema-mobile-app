@@ -3,6 +3,7 @@ import React from "react";
 import { Slot } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS } from "../constants/colors";
+import "../global.css";
 
 // Initialize i18n
 import "../src/i18n";
