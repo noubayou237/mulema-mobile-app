@@ -1,19 +1,15 @@
-// homebassa.jsx
-
-import React, { useEffect } from "react";
+import React from "react";
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   Image,
   TouchableOpacity,
-  Dimensions
+  Dimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 
-// --- Importez vos images locales ---
 const smallPyramid = require("../assets/images/pyramid-small.png");
 const largePyramid = require("../assets/images/pyramid-large.png");
 const sphinx = require("../assets/images/sphinx.png");
@@ -22,111 +18,113 @@ const lockIcon = require("../assets/images/lock.png");
 
 const { width } = Dimensions.get("window");
 
-// --- DONNÉES DES NIVEAUX ---
 const LEVELS_DATA = [
-  // J'assume que la navigation pour le Niveau I est vers /exercices/exos1.jsx (ou le chemin exact)
   { id: 1, title: "NIVEAU I", unlocked: true, path: "/exercices/exos1" },
   { id: 2, title: "NIVEAU II", unlocked: false, path: "/levels/bassa/level2" },
   { id: 3, title: "NIVEAU III", unlocked: false, path: "/levels/bassa/level3" },
   { id: 4, title: "NIVEAU IV", unlocked: false, path: "/levels/bassa/level4" }
 ];
 
-// --- Composant Principal Home Bassa ---
 export default function HomeBassa() {
   const router = useRouter();
 
-  // Initialize on mount
-  useEffect(() => {
-    // Component mounted
-  }, []);
-
-  // Play audio feedback
-  const playAudioFeedback = async () => {
+  const triggerFeedback = async () => {
     try {
-      // Try haptic feedback with proper error handling
-      try {
-        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      } catch (hapticsError) {
-        console.log("Haptics not available:", hapticsError.message);
-      }
-    } catch (error) {
-      console.log("Feedback error:", error);
-    }
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch {}
   };
 
-  // Fonction de navigation unique (utilisée par le TouchableOpacity)
   const handleStartLevel = async (level) => {
-    await playAudioFeedback();
-
+    await triggerFeedback();
     if (level.unlocked) {
-      console.log(`Démarrage du niveau : ${level.title} -> ${level.path}`);
       router.push(level.path);
-    } else {
-      console.log(`Le niveau ${level.id} est verrouillé.`);
     }
   };
 
-  // Rendu de la carte de niveau
   const renderLevelCard = (level, index) => {
-    const opacityStyle = level.unlocked ? null : styles.lockedContent;
-    const isFirstLevel = index === 0;
+    const isFirst = index === 0;
 
     return (
-      <View key={level.id} style={styles.levelContainer}>
-        {/* 💡 CONTENEUR CLICQUABLE (remplace la View standardLevelCard) */}
+      <View key={level.id} className="w-full min-h-[250px] items-center">
         <TouchableOpacity
-          style={[
-            styles.levelCardButton,
-            opacityStyle,
-            { marginTop: isFirstLevel ? 0 : -50 }
-          ]}
           onPress={() => handleStartLevel(level)}
           disabled={!level.unlocked}
-          activeOpacity={0.8} // Rétroaction visuelle
+          activeOpacity={0.85}
+          className={`
+            w-full min-h-[250px] items-center relative 
+            bg-card rounded-3xl py-6 shadow-md
+            ${!level.unlocked ? "opacity-40" : ""}
+            ${!isFirst ? "-mt-12" : ""}
+          `}
         >
-          {/* --- CONTENU VISUEL INTÉRIEUR --- */}
-
-          {/* Titre du niveau (pour le Niveau I) */}
-          {isFirstLevel && (
-            <View style={styles.levelHeader}>
-              <Text style={styles.levelTitle}>{level.title}</Text>
-              <Text style={styles.levelSubtitle}>
-                Debloquez les niveaux suivant en resolvant les exercices de ceux
-                précédent
+          {/* HEADER NIVEAU 1 */}
+          {isFirst && (
+            <View className="items-center mb-4 z-10 px-6">
+              <Text className="text-2xl font-bold text-primary mb-2">
+                {level.title}
+              </Text>
+              <Text className="text-sm text-muted-foreground text-center">
+                Débloquez les niveaux suivants en résolvant les exercices
+                précédents
               </Text>
             </View>
           )}
 
-          {/* Éléments visuels spécifiques au thème (Pyramides, Sphinx, etc.) */}
-          <View style={styles.mapElement}>
-            {/* Pyramides de fond */}
+          {/* MAP ELEMENT */}
+          <View className="relative w-[90%] h-[120px] items-center justify-center mb-2">
+
             <Image
               source={smallPyramid}
-              style={[styles.pyramidImage, styles.smallPyramidLeft]}
-            />
-            <Image
-              source={largePyramid}
-              style={[styles.pyramidImage, styles.largePyramidRight]}
+              className="absolute w-20 h-20 left-5 top-3"
+              resizeMode="contain"
             />
 
-            {/* Éléments spécifiques à chaque niveau si besoin */}
-            {isFirstLevel && (
+            <Image
+              source={largePyramid}
+              className="absolute w-32 h-32 right-3 bottom-0"
+              resizeMode="contain"
+            />
+
+            {isFirst && (
               <>
-                <Image source={sphinx} style={styles.sphinxImage} />
-                <Image source={camel} style={styles.camelImage} />
+                <Image
+                  source={sphinx}
+                  style={{
+                    width: 100,
+                    height: 60,
+                    position: "absolute",
+                    left: width * 0.15,
+                    bottom: 0,
+                  }}
+                  resizeMode="contain"
+                />
+                <Image
+                  source={camel}
+                  style={{
+                    width: 80,
+                    height: 50,
+                    position: "absolute",
+                    right: width * 0.1,
+                    top: 20,
+                  }}
+                  resizeMode="contain"
+                />
               </>
             )}
 
-            {/* Cadenas si le niveau est verrouillé */}
             {!level.unlocked && (
-              <Image source={lockIcon} style={styles.lockIcon} />
+              <Image
+                source={lockIcon}
+                className="absolute w-10 h-10 z-20"
+                resizeMode="contain"
+              />
             )}
           </View>
 
-          {/* Nom du Niveau (affiché comme un indicateur au centre) */}
-          <View style={styles.levelIndicator}>
-            <Text style={styles.levelIndicatorText}>
-              {isFirstLevel ? "START" : `Niveau ${level.id}`}
+          {/* LEVEL INDICATOR */}
+          <View className="bg-primary px-6 py-2 rounded-full mt-3">
+            <Text className="text-white font-bold text-base">
+              {isFirst ? "START" : `Niveau ${level.id}`}
             </Text>
           </View>
         </TouchableOpacity>
@@ -136,161 +134,22 @@ export default function HomeBassa() {
 
   return (
     <ScrollView
-      style={styles.scrollView}
-      contentContainerStyle={styles.scrollContent}
+      className="flex-1 bg-background"
+      contentContainerStyle={{
+        paddingTop: 20,
+        paddingHorizontal: 20,
+        alignItems: "center"
+      }}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.mapContainer}>
-        {/* La ligne de carte (chemin marron du désert) */}
-        <View style={styles.mapPath} />
+      {/* MAP PATH */}
+      <View className="absolute top-0 bottom-0 w-full bg-secondary/30" />
 
-        {/* --- Rendu des Niveaux --- */}
+      <View className="w-full items-center relative">
         {LEVELS_DATA.map(renderLevelCard)}
       </View>
 
-      <View style={{ height: 100 }} />
+      <View className="h-24" />
     </ScrollView>
   );
 }
-
-// --- Stylesheet ---
-const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
-    backgroundColor: "#F5F5F7"
-  },
-  scrollContent: {
-    paddingTop: 20,
-    alignItems: "center",
-    paddingHorizontal: 20
-  },
-  mapContainer: {
-    width: "100%",
-    alignItems: "center",
-    position: "relative"
-  },
-
-  // --- LIGNE DE CARTE (Chemin marron du désert) ---
-  mapPath: {
-    position: "absolute",
-    width: "100%",
-    top: 0,
-    bottom: 0,
-    backgroundColor: "#D2B48C", // Couleur sable/désert
-    zIndex: -1
-  },
-
-  // --- CONTENEUR DE NIVEAU ---
-  levelContainer: {
-    width: "100%",
-    minHeight: 250,
-    justifyContent: "flex-start",
-    alignItems: "center"
-  },
-
-  // 💡 NOUVEAU STYLE: La carte clicquable
-  levelCardButton: {
-    width: "100%",
-    minHeight: 250,
-    alignItems: "center",
-    position: "relative",
-    backgroundColor: "#C19A6B", // Couleur sable plus foncée pour les plateformes
-    borderRadius: 20,
-    marginVertical: -10,
-    paddingVertical: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3
-  },
-  lockedContent: {
-    opacity: 0.3 // Effet flou/verrouillé
-  },
-
-  // --- NIVEAU 1 (HEADER) ---
-  levelHeader: {
-    width: "100%",
-    alignItems: "center",
-    paddingVertical: 10,
-    marginBottom: 0,
-    zIndex: 2
-  },
-  levelTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#D9534F",
-    marginBottom: 5
-  },
-  levelSubtitle: {
-    textAlign: "center",
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 20,
-    paddingHorizontal: 30
-  },
-
-  // --- ÉLÉMENTS DE LA CARTE ---
-  mapElement: {
-    position: "relative",
-    width: "90%",
-    height: 120,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10
-  },
-  pyramidImage: {
-    position: "absolute",
-    resizeMode: "contain"
-  },
-  smallPyramidLeft: {
-    width: 80,
-    height: 80,
-    left: 20,
-    top: 10
-  },
-  largePyramidRight: {
-    width: 120,
-    height: 120,
-    right: 10,
-    bottom: 0
-  },
-  sphinxImage: {
-    width: 100,
-    height: 60,
-    position: "absolute",
-    left: width * 0.15,
-    bottom: 0,
-    resizeMode: "contain"
-  },
-  camelImage: {
-    width: 80,
-    height: 50,
-    position: "absolute",
-    right: width * 0.1,
-    top: 20,
-    resizeMode: "contain"
-  },
-  lockIcon: {
-    width: 40,
-    height: 40,
-    position: "absolute",
-    zIndex: 10,
-    resizeMode: "contain"
-  },
-
-  // 💡 NOUVEAU STYLE: Indicateur de niveau (simule le bouton START/Niveau)
-  levelIndicator: {
-    backgroundColor: "#D9534F",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    marginTop: 10,
-    zIndex: 3
-  },
-  levelIndicatorText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "bold"
-  }
-});

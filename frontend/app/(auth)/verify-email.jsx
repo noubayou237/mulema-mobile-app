@@ -4,24 +4,25 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Text,
   View,
   TextInput,
   TouchableOpacity,
-  StyleSheet
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { authStyles } from "../../assets/styles/auth.styles";
 import api from "../../services/api";
 import { useTranslation } from "react-i18next";
-import "../../src/i18n";
 
-const RESEND_COOLDOWN = 60; // seconds
+import ScreenWrapper from "../components/ui/ScreenWrapper";
+import AppTitle from "../components/ui/AppTitle";
+import AppText from "../components/ui/AppText";
+import Button from "../components/ui/Button";
+
+const RESEND_COOLDOWN = 60;
 const STORAGE_KEY = "userSession";
 
-const VerifyEmail = () => {
+export default function VerifyEmail() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { t } = useTranslation();
@@ -39,24 +40,20 @@ const VerifyEmail = () => {
   useEffect(() => {
     startCountdown();
     return () => {
-      if (countdownRef.current) {
-        clearInterval(countdownRef.current);
-      }
+      if (countdownRef.current) clearInterval(countdownRef.current);
     };
   }, []);
 
   const startCountdown = () => {
     setResendCooldown(RESEND_COOLDOWN);
-    if (countdownRef.current) {
-      clearInterval(countdownRef.current);
-    }
+
+    if (countdownRef.current) clearInterval(countdownRef.current);
+
     countdownRef.current = setInterval(() => {
       setResendCooldown((prev) => {
         if (prev <= 1) {
-          if (countdownRef.current) {
-            clearInterval(countdownRef.current);
-            countdownRef.current = null;
-          }
+          clearInterval(countdownRef.current);
+          countdownRef.current = null;
           return 0;
         }
         return prev - 1;
@@ -72,44 +69,38 @@ const VerifyEmail = () => {
       JSON.stringify({ accessToken, refreshToken })
     );
 
-    // 🔥 FLOW APK : OTP → CHOIX DE LANGUE
     router.replace("/ChoiceLanguage");
   };
 
   const handleVerification = async () => {
-    // console.log("=== HANDLE VERIFICATION ===");
-    // console.log("Email:", email);
-    // console.log("Code:", code);
-    // console.log("Flow:", flow);
-
     if (!code.trim()) {
-      return Alert.alert(t("errors.codeRequired"), t("errors.enterCode"));
+      return Alert.alert(
+        t("errors.codeRequired"),
+        t("errors.enterCode")
+      );
     }
 
     setLoading(true);
     try {
       if (flow === "reset") {
         router.push({
-          pathname: "/ResetPasswordScreen",
-          params: { email, otpCode: code.trim() }
+          pathname: "/(auth)/ResetPasswordScreen",
+          params: { email, otpCode: code.trim() },
         });
       } else {
-        // Signup verification - verify OTP and auto-login
-        const response = await api.post("/auth/verify-email-and-login", {
-          email,
-          otpCode: code.trim()
-        });
+        const response = await api.post(
+          "/auth/verify-email-and-login",
+          { email, otpCode: code.trim() }
+        );
 
-        Alert.alert("Succès", "Email vérifié! Connexion en cours...");
+        Alert.alert("Succès", "Email vérifié!");
         await autoLogin(response.data);
       }
     } catch (err) {
-      console.error("Verify error:", err);
-      console.error("Error response:", err.response?.data);
       const msg =
         err?.response?.data?.message ||
         err?.message ||
-        "Échec de la vérification. Vérifiez le code et réessayez.";
+        "Échec de la vérification.";
       Alert.alert("Erreur", msg);
     } finally {
       setLoading(false);
@@ -122,10 +113,9 @@ const VerifyEmail = () => {
     setResendLoading(true);
     try {
       await api.post("/auth/request-otp", { email });
-      Alert.alert("Envoyé", `Un nouveau code a été envoyé à ${email}`);
+      Alert.alert("Envoyé", `Nouveau code envoyé à ${email}`);
       startCountdown();
     } catch (err) {
-      console.error("Resend error:", err);
       const msg =
         err?.response?.data?.message ||
         err?.message ||
@@ -143,125 +133,97 @@ const VerifyEmail = () => {
   };
 
   return (
-    <View style={authStyles.container}>
+    <ScreenWrapper>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={authStyles.keyboardView}
-        keyboardVerticalOffset={64}
+        className="flex-1"
       >
-        <ScrollView contentContainerStyle={authStyles.scrollContent}>
-          <View style={authStyles.container}>
-            <View style={authStyles.imageContainer}>
-              <Image
-                source={require("../../assets/images/otp.png")}
-                style={authStyles.image}
-                contentFit='contain'
-              />
-            </View>
-
-            <Text style={authStyles.title}>
-              {flow === "verify" ? t("auth.verifyEmail") : t("auth.verifyCode")}
-            </Text>
-
-            <Text style={styles.subtitle}>
-              {t("auth.codeSentTo")} {email}
-            </Text>
-
-            <TextInput
-              style={authStyles.textInput}
-              placeholder='Entrez le code'
-              value={code}
-              onChangeText={setCode}
-              keyboardType='number-pad'
-              maxLength={6}
-              textAlign='center'
-              letterSpacing={8}
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+        >
+          {/* Image */}
+          <View className="items-center mb-6">
+            <Image
+              source={require("../../assets/images/otp.png")}
+              style={{ width: 120, height: 120 }}
+              contentFit="contain"
             />
+          </View>
+
+          {/* Title */}
+          <AppTitle className="mb-2 text-center">
+            {flow === "verify"
+              ? t("auth.verifyEmail")
+              : t("auth.verifyCode")}
+          </AppTitle>
+
+          <AppText
+            variant="muted"
+            className="text-center mb-6"
+          >
+            {t("auth.codeSentTo")} {email}
+          </AppText>
+
+          {/* OTP Input */}
+          <TextInput
+            className="bg-card border border-border rounded-xl py-4 text-center text-xl tracking-[8px] text-foreground mb-6"
+            placeholder="------"
+            value={code}
+            onChangeText={setCode}
+            keyboardType="number-pad"
+            maxLength={6}
+          />
+
+          {/* Verify Button */}
+          <Button
+            title="Vérifier"
+            onPress={handleVerification}
+            loading={loading}
+          />
+
+          {/* Resend Section */}
+          <View className="mt-6 items-center">
+            <AppText variant="muted" className="mb-2">
+              {resendCooldown > 0
+                ? `Renvoyer dans ${formatTime(resendCooldown)}`
+                : "Vous n'avez pas reçu le code ?"}
+            </AppText>
 
             <TouchableOpacity
-              style={authStyles.authButton}
-              onPress={handleVerification}
-              disabled={loading || code.length < 4}
+              onPress={handleResend}
+              disabled={
+                resendLoading || resendCooldown > 0
+              }
+              className={`px-4 py-2 ${
+                resendCooldown > 0
+                  ? "opacity-50"
+                  : ""
+              }`}
             >
-              <Text style={authStyles.buttonText}>
-                {loading ? "Vérification..." : "Vérifier"}
-              </Text>
-            </TouchableOpacity>
-
-            <View style={styles.resendContainer}>
-              <Text style={styles.timerText}>
-                {resendCooldown > 0
-                  ? `Renvoyer dans ${formatTime(resendCooldown)}`
-                  : "Vous n'avez pas reçu le code ?"}
-              </Text>
-
-              <TouchableOpacity
-                onPress={handleResend}
-                disabled={resendLoading || resendCooldown > 0}
-                style={[
-                  styles.resendButton,
-                  (resendLoading || resendCooldown > 0) &&
-                    styles.resendButtonDisabled
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.resendText,
-                    (resendLoading || resendCooldown > 0) &&
-                      styles.resendTextDisabled
-                  ]}
-                >
-                  {resendLoading ? "Envoi..." : "Renvoyer le code"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              style={authStyles.linkContainer}
-              onPress={() => router.push("/sign-up")}
-            >
-              <Text style={authStyles.linkText}>
-                Retour à <Text style={authStyles.link}>Inscription</Text>
-              </Text>
+              <AppText className="text-primary font-semibold">
+                {resendLoading
+                  ? "Envoi..."
+                  : "Renvoyer le code"}
+              </AppText>
             </TouchableOpacity>
           </View>
+
+          {/* Back */}
+          <TouchableOpacity
+            onPress={() =>
+              router.replace("/(auth)/sign-up")
+            }
+            className="mt-8 items-center"
+          >
+            <AppText variant="muted">
+              Retour à{" "}
+              <AppText className="text-primary">
+                Inscription
+              </AppText>
+            </AppText>
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </ScreenWrapper>
   );
-};
-
-const styles = StyleSheet.create({
-  subtitle: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 20,
-    textAlign: "center"
-  },
-  resendContainer: {
-    marginTop: 20,
-    alignItems: "center"
-  },
-  timerText: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 10
-  },
-  resendButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20
-  },
-  resendButtonDisabled: {
-    opacity: 0.6
-  },
-  resendText: {
-    fontSize: 16,
-    color: "#4CAF50",
-    fontWeight: "600"
-  },
-  resendTextDisabled: {
-    color: "#999"
-  }
-});
-
-export default VerifyEmail;
+}

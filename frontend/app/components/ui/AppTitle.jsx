@@ -1,8 +1,9 @@
+import React from "react";
 import { Text } from "react-native";
 
-export default function AppTitle({ children }) {
+export default function AppTitle({ children, className = "" }) {
   return (
-    <Text className="text-3xl font-bold text-foreground">
+    <Text className={`text-2xl font-semibold text-foreground ${className}`}>
       {children}
     </Text>
   );
