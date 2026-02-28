@@ -93,29 +93,23 @@ export default function UserProvider({ children }) {
 
   // ❌ LOGOUT
   const logout = async () => {
-    console.log("UserContext: Logout started");
-    try {
-      const session = await AsyncStorage.getItem(STORAGE_KEY);
-      console.log("UserContext: Session found:", !!session);
-      if (session) {
-        const parsed = JSON.parse(session);
-        if (parsed?.refreshToken) {
-          console.log("UserContext: Calling /auth/logout");
-          await api.post("/auth/logout", { refreshToken: parsed.refreshToken });
-        }
+  try {
+    const session = await AsyncStorage.getItem(STORAGE_KEY);
+    if (session) {
+      const parsed = JSON.parse(session);
+      if (parsed?.refreshToken) {
+        await api.post("/auth/logout", {
+          refreshToken: parsed.refreshToken,
+        });
       }
-    } catch (e) {
-      console.warn(
-        "UserContext: Logout API error (continuing anyway):",
-        e.message
-      );
-    } finally {
-      console.log("UserContext: Clearing storage and redirecting");
-      await AsyncStorage.removeItem(STORAGE_KEY);
-      setUser(null);
-      router.replace("/(auth)/sign-in");
     }
-  };
+  } catch (e) {
+    console.warn("Logout API error:", e.message);
+  } finally {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+    setUser(null); // 🔥 PLUS DE router.replace
+  }
+};
 
   // 🔄 REFRESH USER
   const refreshUser = async () => {

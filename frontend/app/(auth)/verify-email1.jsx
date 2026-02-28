@@ -1,20 +1,23 @@
 import React, { useState } from "react";
 import {
   View,
-  Text,
-  TextInput,
-  TouchableOpacity,
   Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Image,
+  TextInput,
+  TouchableOpacity,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useSignUp } from "@clerk/clerk-expo";
-import { authStyles } from "../../assets/styles/auth.styles";
+import { Image } from "expo-image";
 
-const VerifyEmailScreen = () => {
+import ScreenWrapper from "../components/ui/ScreenWrapper";
+import AppTitle from "../components/ui/AppTitle";
+import AppText from "../components/ui/AppText";
+import Button from "../components/ui/Button";
+
+export default function VerifyEmailScreen() {
   const { isLoaded, signUp } = useSignUp();
   const params = useLocalSearchParams();
   const router = useRouter();
@@ -24,25 +27,26 @@ const VerifyEmailScreen = () => {
 
   const handleVerify = async () => {
     if (!code.trim()) {
-      Alert.alert("Erreur", "Entre le code reçu par email.");
-      return;
+      return Alert.alert("Erreur", "Entre le code reçu par email.");
     }
 
     if (!isLoaded || !signUp) {
-      Alert.alert("Erreur", "Service d'authentification non prêt.");
-      return;
+      return Alert.alert(
+        "Erreur",
+        "Service d'authentification non prêt."
+      );
     }
 
     try {
       await signUp.attemptEmailAddressVerification({ code });
 
       Alert.alert("Succès", "Email vérifié.");
-
-      // 🔥 FLOW APK : OTP → CHOIX DE LANGUE
       router.replace("/ChoiceLanguage");
     } catch (err) {
-      console.error("Verify error:", err);
-      Alert.alert("Erreur", err?.message || "Échec de la vérification.");
+      Alert.alert(
+        "Erreur",
+        err?.message || "Échec de la vérification."
+      );
     }
   };
 
@@ -51,66 +55,90 @@ const VerifyEmailScreen = () => {
       await signUp.prepareEmailAddressVerification({
         strategy: "email_code",
       });
-      Alert.alert("Envoyé", `Un nouveau code a été envoyé à ${email}`);
+
+      Alert.alert(
+        "Envoyé",
+        `Un nouveau code a été envoyé à ${email}`
+      );
     } catch (e) {
-      Alert.alert("Erreur", "Impossible de renvoyer le code.");
+      Alert.alert(
+        "Erreur",
+        "Impossible de renvoyer le code."
+      );
     }
   };
 
   return (
-    <View style={authStyles.container}>
+    <ScreenWrapper>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={authStyles.keyboardView}
-        keyboardVerticalOffset={64}
+        className="flex-1"
       >
-        <ScrollView contentContainerStyle={authStyles.scrollContent}>
-          <View style={authStyles.container}>
-            <View style={authStyles.imageContainer}>
-              <Image
-                source={require("../../assets/images/otp.png")}
-                style={authStyles.image}
-                contentFit="contain"
-              />
-            </View>
-
-            <Text style={authStyles.title}>Vérifier l'email</Text>
-            <Text style={{ marginBottom: 12 }}>
-              Code envoyé à : {email}
-            </Text>
-
-            <TextInput
-              style={authStyles.textInput}
-              placeholder="Entrez le code"
-              value={code}
-              onChangeText={setCode}
-              keyboardType="number-pad"
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: "center",
+          }}
+        >
+          {/* Image */}
+          <View className="items-center mb-6">
+            <Image
+              source={require("../../assets/images/otp.png")}
+              style={{ width: 120, height: 120 }}
+              contentFit="contain"
             />
-
-            <TouchableOpacity
-              style={authStyles.authButton}
-              onPress={handleVerify}
-            >
-              <Text style={authStyles.buttonText}>Vérifier</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={resend} style={{ marginTop: 10 }}>
-              <Text style={authStyles.link}>Renvoyer le code</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={authStyles.linkContainer}
-              onPress={() => router.replace("/(auth)/sign-up")}
-            >
-              <Text style={authStyles.linkText}>
-                Back to <Text style={authStyles.link}>Sign up</Text>
-              </Text>
-            </TouchableOpacity>
           </View>
+
+          <AppTitle className="mb-2 text-center">
+            Vérifier l'email
+          </AppTitle>
+
+          <AppText
+            variant="muted"
+            className="text-center mb-6"
+          >
+            Code envoyé à : {email}
+          </AppText>
+
+          {/* OTP Input */}
+          <TextInput
+            className="bg-card border border-border rounded-xl py-4 text-center text-xl tracking-[6px] text-foreground mb-6"
+            placeholder="------"
+            value={code}
+            onChangeText={setCode}
+            keyboardType="number-pad"
+            maxLength={6}
+          />
+
+          <Button
+            title="Vérifier"
+            onPress={handleVerify}
+          />
+
+          <TouchableOpacity
+            onPress={resend}
+            className="mt-4 items-center"
+          >
+            <AppText className="text-primary font-semibold">
+              Renvoyer le code
+            </AppText>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() =>
+              router.replace("/(auth)/sign-up")
+            }
+            className="mt-8 items-center"
+          >
+            <AppText variant="muted">
+              Back to{" "}
+              <AppText className="text-primary">
+                Sign up
+              </AppText>
+            </AppText>
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </ScreenWrapper>
   );
-};
-
-export default VerifyEmailScreen;
+}

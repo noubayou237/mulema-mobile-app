@@ -10,11 +10,9 @@ import {
   ScrollView,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { authStyles } from "../../assets/styles/auth.styles";
-import { COLORS } from "../../constants/colors";
 import api from "../../services/api";
 
-const ResetPasswordScreen = () => {
+export default function ResetPasswordScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
 
@@ -58,7 +56,7 @@ const ResetPasswordScreen = () => {
         "Mot de passe mis à jour. Tu peux maintenant te connecter."
       );
 
-      router.replace("/sign-in");
+      router.replace("/(auth)/sign-in");
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
@@ -71,53 +69,52 @@ const ResetPasswordScreen = () => {
   };
 
   return (
-    <View style={authStyles.container}>
+    <View className="flex-1 bg-background px-6">
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={authStyles.keyboardView}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+        className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={authStyles.scrollContent}
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={authStyles.title}>Réinitialiser le mot de passe</Text>
-          <Text style={{ marginBottom: 12 }}>Compte : {email || "—"}</Text>
+          <Text className="text-2xl font-semibold text-foreground mb-2">
+            Réinitialiser le mot de passe
+          </Text>
 
-          <View style={authStyles.formContainer}>
-            <View style={authStyles.inputContainer}>
-              <TextInput
-                style={authStyles.textInput}
-                placeholder="Nouveau mot de passe"
-                placeholderTextColor={COLORS.textLight}
-                secureTextEntry
-                value={newPassword}
-                onChangeText={setNewPassword}
-                autoCapitalize="none"
-              />
-            </View>
+          <Text className="text-muted-foreground mb-6">
+            Compte : {email || "—"}
+          </Text>
 
-            <View style={authStyles.inputContainer}>
-              <TextInput
-                style={authStyles.textInput}
-                placeholder="Confirmer le mot de passe"
-                placeholderTextColor={COLORS.textLight}
-                secureTextEntry
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                autoCapitalize="none"
-              />
-            </View>
+          <View className="space-y-4">
+            <TextInput
+              className="bg-card border border-border rounded-xl px-4 py-3 text-foreground"
+              placeholder="Nouveau mot de passe"
+              placeholderTextColor="#9CA3AF"
+              secureTextEntry
+              value={newPassword}
+              onChangeText={setNewPassword}
+              autoCapitalize="none"
+            />
+
+            <TextInput
+              className="bg-card border border-border rounded-xl px-4 py-3 text-foreground"
+              placeholder="Confirmer le mot de passe"
+              placeholderTextColor="#9CA3AF"
+              secureTextEntry
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              autoCapitalize="none"
+            />
 
             <TouchableOpacity
-              style={[
-                authStyles.authButton,
-                loading && authStyles.buttonDisabled,
-              ]}
+              className={`rounded-xl py-3 items-center ${
+                loading ? "bg-muted" : "bg-primary"
+              }`}
               onPress={handleSubmit}
               disabled={loading}
             >
-              <Text style={authStyles.buttonText}>
+              <Text className="text-primary-foreground font-semibold">
                 {loading ? "Enregistrement..." : "OK"}
               </Text>
             </TouchableOpacity>
@@ -126,6 +123,4 @@ const ResetPasswordScreen = () => {
       </KeyboardAvoidingView>
     </View>
   );
-};
-
-export default ResetPasswordScreen;
+}

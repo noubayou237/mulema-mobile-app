@@ -1,18 +1,20 @@
-// app/ChoiceLanguage.jsx
 import React, { useState, useEffect } from "react";
 import {
   View,
-  Text,
   TouchableOpacity,
-  StyleSheet,
   Modal,
   FlatList,
   Alert,
   ActivityIndicator,
-  SafeAreaView,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+
+import ScreenWrapper from "./components/ui/ScreenWrapper";
+import AppTitle from "./components/ui/AppTitle";
+import AppText from "./components/ui/AppText";
+import Button from "./components/ui/Button";
+import Card from "./components/ui/Card";
 
 const SELECTED_LANGUAGE_KEY = "selectedLanguage";
 
@@ -29,20 +31,22 @@ function LangModalPicker({ selected, setSelected }) {
     <>
       <TouchableOpacity
         onPress={() => setOpen(true)}
-        style={styles.selectorButton}
         activeOpacity={0.85}
+        className="border border-border rounded-xl py-4 px-4 bg-card"
       >
-        <Text style={[styles.selectorText, !selected && { color: "#888" }]}>
+        <AppText className={!selected ? "text-muted-foreground" : ""}>
           {selected
             ? LANGS.find((l) => l.code === selected)?.label
             : "-- Choisir une langue --"}
-        </Text>
+        </AppText>
       </TouchableOpacity>
 
-      <Modal visible={open} animationType="slide" transparent>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Sélectionner une langue</Text>
+      <Modal visible={open} animationType="fade" transparent>
+        <View className="flex-1 bg-black/50 justify-center px-6">
+          <View className="bg-card rounded-2xl p-6 border border-border">
+            <AppTitle className="text-lg mb-4 text-center">
+              Sélectionner une langue
+            </AppTitle>
 
             <FlatList
               data={LANGS}
@@ -55,19 +59,15 @@ function LangModalPicker({ selected, setSelected }) {
                       setSelected(item.code);
                       setOpen(false);
                     }}
-                    style={[
-                      styles.langItem,
-                      isSelected && styles.langItemSelected,
-                    ]}
+                    className={`py-4 px-4 rounded-xl mb-2 
+                      ${isSelected ? "bg-primary/10" : ""}`}
                   >
-                    <Text
-                      style={[
-                        styles.langText,
-                        isSelected && styles.langTextSelected,
-                      ]}
+                    <AppText
+                      className={`text-base 
+                      ${isSelected ? "text-primary font-semibold" : ""}`}
                     >
                       {item.label}
-                    </Text>
+                    </AppText>
                   </TouchableOpacity>
                 );
               }}
@@ -75,9 +75,11 @@ function LangModalPicker({ selected, setSelected }) {
 
             <TouchableOpacity
               onPress={() => setOpen(false)}
-              style={styles.closeBtn}
+              className="mt-4 items-center"
             >
-              <Text>Annuler</Text>
+              <AppText className="text-muted-foreground">
+                Annuler
+              </AppText>
             </TouchableOpacity>
           </View>
         </View>
@@ -107,8 +109,7 @@ export default function ChoiceLanguage() {
 
   const handleContinue = async () => {
     if (!selected) {
-      Alert.alert("Choix requis", "Veuillez sélectionner une langue.");
-      return;
+      return Alert.alert("Choix requis", "Veuillez sélectionner une langue.");
     }
 
     setLoading(true);
@@ -124,133 +125,33 @@ export default function ChoiceLanguage() {
 
   if (initializing) {
     return (
-      <SafeAreaView style={styles.center}>
-        <ActivityIndicator size="large" color="#B22222" />
-      </SafeAreaView>
+      <ScreenWrapper className="justify-center items-center">
+        <ActivityIndicator size="large" />
+      </ScreenWrapper>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>
+    <ScreenWrapper className="justify-center">
+      <View className="mb-10">
+        <AppTitle className="text-center mb-4">
           Choisis la langue que tu souhaites apprendre
-        </Text>
-        <Text style={styles.subtitle}>
+        </AppTitle>
+
+        <AppText className="text-center text-muted-foreground">
           Découvre l’histoire de cette langue maternelle
-        </Text>
-
-        <View style={styles.pickerWrap}>
-          <LangModalPicker selected={selected} setSelected={setSelected} />
-        </View>
-
-        <TouchableOpacity
-          style={[
-            styles.button,
-            (!selected || loading) && styles.buttonDisabled,
-          ]}
-          onPress={handleContinue}
-          disabled={!selected || loading}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? "Patiente..." : "Continuer"}
-          </Text>
-        </TouchableOpacity>
+        </AppText>
       </View>
-    </SafeAreaView>
+
+      <Card className="mb-6">
+        <LangModalPicker selected={selected} setSelected={setSelected} />
+      </Card>
+
+      <Button
+        title={loading ? "Patiente..." : "Continuer"}
+        onPress={handleContinue}
+        disabled={!selected || loading}
+      />
+    </ScreenWrapper>
   );
 }
-
-/* ---------------- STYLES ---------------- */
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  content: {
-    flex: 1,
-    padding: 24,
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#B22222",
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 40,
-  },
-  pickerWrap: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    marginBottom: 24,
-  },
-  selectorButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 14,
-  },
-  selectorText: {
-    fontSize: 16,
-    color: "#111",
-  },
-  button: {
-    backgroundColor: "#B22222",
-    padding: 18,
-    borderRadius: 12,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 18,
-    textAlign: "center",
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    justifyContent: "center",
-    padding: 20,
-  },
-  modalCard: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 14,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  langItem: {
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-  },
-  langItemSelected: {
-    backgroundColor: "#fff4f4",
-  },
-  langText: {
-    fontSize: 16,
-    color: "#111",
-  },
-  langTextSelected: {
-    fontWeight: "700",
-    color: "#B22222",
-  },
-  closeBtn: {
-    marginTop: 12,
-    alignItems: "center",
-  },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});
