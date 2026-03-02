@@ -15,6 +15,29 @@ import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import "../../src/i18n";
 
+
+const [userData, setUserData] = useState(null);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Exemple de fetch vers une API fictive
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch("https://api.example.com/user/123");
+        if (!response.ok) throw new Error("Erreur lors du fetch");
+        const data = await response.json();
+        setUserData(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
 // --- Configuration et Données ---
 const { width } = Dimensions.get("window");
 
