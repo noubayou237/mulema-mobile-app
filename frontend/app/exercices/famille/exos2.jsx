@@ -171,6 +171,16 @@ const ExerciseTwoScreen = () => {
   const [lives, setLives] = useState(initialLives);
   const [timer] = useState(initialTimer); // Timer n'est pas utilisé pour l'instant
 
+  // Store time per exercise for end screen
+  const getExerciseTimes = () => {
+    try {
+      return params?.exerciseTimes ? JSON.parse(params.exerciseTimes) : [];
+    } catch (e) {
+      return [];
+    }
+  };
+  const [exerciseTimes, setExerciseTimes] = useState(getExerciseTimes());
+
   // Timer state - Track time taken to complete exercise
   const [startTime] = useState(() => Date.now());
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -245,6 +255,9 @@ const ExerciseTwoScreen = () => {
     }
     const exerciseTime = elapsedTime;
 
+    // Store time for this exercise
+    const newExerciseTimes = [...exerciseTimes, exerciseTime];
+
     const isSuccess = status === "success";
     const progressBonus = isSuccess ? 33 : 0;
 
@@ -260,7 +273,8 @@ const ExerciseTwoScreen = () => {
           totalProgress: totalProgress,
           errorCount: parseInt(params?.errorCount) || 0,
           completedExercises: 2,
-          totalExercises: 3
+          totalExercises: 3,
+          exerciseTimes: JSON.stringify(newExerciseTimes)
         }
       });
       return;
@@ -274,7 +288,8 @@ const ExerciseTwoScreen = () => {
         currentLives: lives,
         totalTime: cumulativeTime,
         totalProgress: totalProgress + progressBonus,
-        errorCount: parseInt(params?.errorCount) || 0
+        errorCount: parseInt(params?.errorCount) || 0,
+        exerciseTimes: JSON.stringify(newExerciseTimes)
       }
     });
   };
@@ -306,6 +321,14 @@ const ExerciseTwoScreen = () => {
 
           {/* --- CONSIGNE --- */}
           <View style={styles.instructionContainer}>
+            {/* Image illustration */}
+            <View style={styles.imageContainer}>
+              <Image
+                source={require("../../../assets/images/avatar-famille.png")}
+                style={styles.illustrationImage}
+                resizeMode='contain'
+              />
+            </View>
             <Text style={styles.instruction}>
               Écoutez le mot et écrivez-le ci-dessous :
             </Text>
@@ -438,6 +461,17 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginBottom: 20,
     textAlign: "center"
+  },
+  imageContainer: {
+    width: "100%",
+    height: 100,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 15
+  },
+  illustrationImage: {
+    width: 80,
+    height: 80
   },
   audioButton: {
     backgroundColor: "#C81E2F",

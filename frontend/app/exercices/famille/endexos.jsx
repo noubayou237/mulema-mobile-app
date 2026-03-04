@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useEffect } from "react";
 import {
@@ -9,15 +9,29 @@ import {
   StatusBar,
   TouchableOpacity,
   Dimensions,
-  Image
+  Image,
+  Modal,
+  ScrollView
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import SmartRepetition from "../../components/SmartRepetition";
 
 const { width, height } = Dimensions.get("window");
+
+// Words for smart repetition
+const REPETITION_WORDS = [
+  { id: "p1", fr: "Le papa", local: "Papá" },
+  { id: "p2", fr: "La tante paternelle", local: "Ndómɛ á tetɛ́" },
+  { id: "p3", fr: "La maman", local: "Mamá" },
+  { id: "p4", fr: "L'oncle paternel", local: "Árí á tetɛ́" },
+  { id: "p5", fr: "Le frère", local: "Muna" },
+  { id: "p6", fr: "La sœur", local: "Sango" }
+];
 
 const EndScreen = ({ navigation, route }) => {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const [showRepetition, setShowRepetition] = useState(false);
 
   // Extract data from params
   const totalTime = parseInt(params?.totalTime) || 0;
@@ -27,6 +41,22 @@ const EndScreen = ({ navigation, route }) => {
   const totalExercises = parseInt(params?.totalExercises) || 3;
   const finalProgress = parseInt(params?.totalProgress) || 0;
 
+  // Parse exercise times
+  const getExerciseTimes = () => {
+    try {
+      return params?.exerciseTimes ? JSON.parse(params.exerciseTimes) : [];
+    } catch (e) {
+      return [];
+    }
+  };
+  const exerciseTimes = getExerciseTimes();
+
+  // Calculate success rate based on lives and errors
+  // Base success rate on lives remaining (out of 5) and errors
+  const maxLives = 5;
+  const successRate = Math.round((lives / maxLives) * 100 - errorCount * 5);
+  const finalSuccessRate = Math.max(0, Math.min(100, successRate));
+
   // Format time as MM:SS
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -34,8 +64,13 @@ const EndScreen = ({ navigation, route }) => {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Calculate score based on lives remaining
-  const score = lives * 20;
+  // Calculate score based on lives remaining and success rate
+  const baseScore = lives * 20;
+  const bonusScore = Math.floor((finalSuccessRate / 100) * 50);
+  const totalScore = baseScore + bonusScore;
+
+  // Exercise names for display
+  const exerciseNames = ["Exercice 1", "Exercice 2", "Exercice 3"];
 
   // Fonction pour sauvegarder le déblocage
   const unlockNextTheme = async () => {
@@ -107,6 +142,31 @@ const EndScreen = ({ navigation, route }) => {
             <Text style={styles.timeValue}>{formatTime(totalTime)}</Text>
           </View>
 
+          {/* Success Rate display */}
+          <View style={styles.timeRow}>
+            <Text style={styles.timeLabel}>🎯 Taux de réussite:</Text>
+            <Text style={styles.timeValue}>{finalSuccessRate}%</Text>
+          </View>
+
+          {/* Time per exercise display */}
+          {exerciseTimes.length > 0 && (
+            <View style={styles.timePerExerciseContainer}>
+              <Text style={styles.timePerExerciseTitle}>
+                ⏱️ Temps par exercice:
+              </Text>
+              {exerciseTimes.map((time, index) => (
+                <View key={index} style={styles.timePerExerciseRow}>
+                  <Text style={styles.timePerExerciseLabel}>
+                    {exerciseNames[index] || `Exercice ${index + 1}`}
+                  </Text>
+                  <Text style={styles.timePerExerciseValue}>
+                    {formatTime(time)}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+
           {/* Errors display */}
           <View style={styles.timeRow}>
             <Text style={styles.timeLabel}>❌ Erreurs:</Text>
@@ -115,8 +175,8 @@ const EndScreen = ({ navigation, route }) => {
 
           {/* Score display */}
           <View style={styles.timeRow}>
-            <Text style={styles.timeLabel}>⭐ Score:</Text>
-            <Text style={styles.timeValue}>{score} pts</Text>
+            <Text style={styles.timeLabel}>⭐ Points:</Text>
+            <Text style={styles.timeValue}>{totalScore} pts</Text>
           </View>
 
           {/* Progress display */}
@@ -151,8 +211,46 @@ const EndScreen = ({ navigation, route }) => {
               <Text style={styles.nextButtonText}>Suivant</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Smart Repetition Button */}
+          <TouchableOpacity
+            style={styles.repetitionButton}
+            onPress={() => setShowRepetition(true)}
+          >
+            <Text style={styles.repetitionButtonText}>🔄 Révision rapide</Text>
+          </TouchableOpacity>
         </View>
       </View>
+
+      {/* Smart Repetition Modal */}
+      <Modal
+        visible={showRepetition}
+        animationType='slide'
+        presentationStyle='pageSheet'
+        onRequestClose={() => setShowRepetition(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Révision rapide</Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowRepetition(false)}
+            >
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={styles.modalContent}>
+            <SmartRepetition
+              words={REPETITION_WORDS}
+              showWordCount={10}
+              autoPlayInterval={3000}
+              onComplete={() => {
+                console.log("Smart repetition completed!");
+              }}
+            />
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -248,6 +346,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold"
   },
+  timePerExerciseContainer: {
+    width: "100%",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 10
+  },
+  timePerExerciseTitle: {
+    color: "#E0E0E0",
+    fontSize: 14,
+    fontWeight: "bold",
+    marginBottom: 8
+  },
+  timePerExerciseRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 4
+  },
+  timePerExerciseLabel: {
+    color: "#E0E0E0",
+    fontSize: 13
+  },
+  timePerExerciseValue: {
+    color: "#FFF",
+    fontSize: 13,
+    fontWeight: "bold"
+  },
   statusRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -313,6 +438,56 @@ const styles = StyleSheet.create({
     color: "#9E2A36", // Couleur texte rouge foncé pour le contraste
     fontSize: 16,
     fontWeight: "bold"
+  },
+  // Smart Repetition Button Styles
+  repetitionButton: {
+    width: "100%",
+    paddingVertical: 15,
+    borderRadius: 25,
+    backgroundColor: "#4CAF50",
+    alignItems: "center",
+    marginTop: 15
+  },
+  repetitionButtonText: {
+    color: "#FFF",
+    fontSize: 16,
+    fontWeight: "bold"
+  },
+  // Modal Styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "#F5F5F5"
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 20,
+    backgroundColor: "#CD4C58",
+    borderBottomWidth: 1,
+    borderBottomColor: "#9E2A36"
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FFF"
+  },
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  closeButtonText: {
+    color: "#FFF",
+    fontSize: 20,
+    fontWeight: "bold"
+  },
+  modalContent: {
+    flexGrow: 1,
+    paddingBottom: 40
   }
 });
 
