@@ -16,6 +16,7 @@ import { Audio } from "expo-av";
 import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import useCowrie from "../../hooks/useCowrie";
 
 // Audio state flags
 let audioInitialized = false;
@@ -179,7 +180,17 @@ const ExerciseScreen = ({ navigation }) => {
   // --- ÉTATS (STATE) ---
   const router = useRouter();
   const [currentExIndex, setCurrentExIndex] = useState(0);
-  const [lives, setLives] = useState(5);
+
+  // Use cowrie hook for automatic recharging
+  const {
+    cowries,
+    setCowries,
+    useCowrie,
+    canPlay,
+    isRecharging,
+    formatRechargeTime
+  } = useCowrie(5);
+
   const [selectedLeft, setSelectedLeft] = useState(null);
   const [selectedRight, setSelectedRight] = useState(null);
   const [matchedPairs, setMatchedPairs] = useState([]);
@@ -284,7 +295,7 @@ const ExerciseScreen = ({ navigation }) => {
       }
     } else {
       // --- ÉCHEC ❌ ---
-      setLives((prev) => Math.max(0, prev - 1)); // Perdre une vie
+      setCowries((prev) => Math.max(0, prev - 1)); // Perdre une vie
       setErrorCount((prev) => prev + 1);
       setErrorIds([leftId, rightId]); // Marquer ces deux comme erreur
 
@@ -298,7 +309,7 @@ const ExerciseScreen = ({ navigation }) => {
         setSelectedRight(null);
       }, 1000);
 
-      if (lives <= 1) {
+      if (cowries <= 1) {
         Alert.alert("Oups !", "Vous n'avez plus de coris !");
         // Logique de "Game Over" ici
       }
@@ -324,7 +335,7 @@ const ExerciseScreen = ({ navigation }) => {
       router.push({
         pathname: "/exercices/famille/exos2",
         params: {
-          currentLives: lives,
+          currentLives: cowries,
           totalTime: newTotalTime,
           totalProgress: 33,
           errorCount: errorCount,
@@ -337,7 +348,7 @@ const ExerciseScreen = ({ navigation }) => {
       router.push({
         pathname: "/exercices/famille/endexos",
         params: {
-          currentLives: lives,
+          currentLives: cowries,
           totalTime: totalTime,
           totalProgress: 100,
           errorCount: errorCount,
@@ -446,7 +457,7 @@ const ExerciseScreen = ({ navigation }) => {
           </View>
           <View style={styles.livesContainer}>
             <Text style={styles.livesText}>
-              {String(lives).padStart(2, "0")}
+              {String(cowries).padStart(2, "0")}
             </Text>
             <Image
               source={require("../../../assets/images/colla.png")}
@@ -455,11 +466,16 @@ const ExerciseScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* --- TIMER --- */}
+        {/* --- TIMER & RECHARGE STATUS --- */}
         <View style={styles.timerContainer}>
           <Text style={styles.timerText}>
             🕒 Temps : {formatTime(elapsedTime)}
           </Text>
+          {isRecharging && (
+            <Text style={styles.rechargeText}>
+              ⚡ Recharge: {formatRechargeTime()}
+            </Text>
+          )}
         </View>
 
         {/* --- CONSIGNE --- */}
@@ -581,7 +597,14 @@ const styles = StyleSheet.create({
   },
   timerText: {
     color: "#C81E2F",
-    fontSize: 14
+    fontSize: 14,
+    fontWeight: "600"
+  },
+  rechargeText: {
+    color: "#4CAF50",
+    fontSize: 12,
+    fontWeight: "500",
+    marginTop: 4
   },
   instructionCard: {
     backgroundColor: "#FFF",
