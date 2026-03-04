@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { useEffect } from "react";
 import {
   View,
   Text,
@@ -15,6 +14,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import SmartRepetition from "../../components/SmartRepetition";
+import useFailedExercises from "../../hooks/useFailedExercises";
 
 const { width, height } = Dimensions.get("window");
 
@@ -32,6 +32,8 @@ const EndScreen = ({ navigation, route }) => {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [showRepetition, setShowRepetition] = useState(false);
+  const { failedExercises, hasFailedExercises, clearFailedExercises } =
+    useFailedExercises();
 
   // Extract data from params
   const totalTime = parseInt(params?.totalTime) || 0;
@@ -219,6 +221,25 @@ const EndScreen = ({ navigation, route }) => {
           >
             <Text style={styles.repetitionButtonText}>🔄 Révision rapide</Text>
           </TouchableOpacity>
+
+          {/* Retry Failed Exercises Button */}
+          {hasFailedExercises && (
+            <View style={styles.retryContainer}>
+              <Text style={styles.retryMessage}>Revenons à vos erreurs !</Text>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={async () => {
+                  // Clear failed exercises and go back to first exercise
+                  await clearFailedExercises();
+                  router.replace("/exercices/famille/exos1");
+                }}
+              >
+                <Text style={styles.retryButtonText}>
+                  Réessayer les exercices ratés
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </View>
 
@@ -449,6 +470,31 @@ const styles = StyleSheet.create({
     marginTop: 15
   },
   repetitionButtonText: {
+    color: "#FFF",
+    fontSize: 16,
+    fontWeight: "bold"
+  },
+  // Retry Button Styles
+  retryContainer: {
+    width: "100%",
+    marginTop: 15,
+    alignItems: "center"
+  },
+  retryMessage: {
+    color: "#FF9800",
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 10,
+    textAlign: "center"
+  },
+  retryButton: {
+    width: "100%",
+    paddingVertical: 15,
+    borderRadius: 25,
+    backgroundColor: "#FF9800",
+    alignItems: "center"
+  },
+  retryButtonText: {
     color: "#FFF",
     fontSize: 16,
     fontWeight: "bold"
