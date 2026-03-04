@@ -192,6 +192,9 @@ const ExerciseScreen = ({ navigation }) => {
   const [elapsedTime, setElapsedTime] = useState(0);
   const timerRef = useRef(null);
 
+  // Store time per exercise for end screen
+  const [exerciseTimes, setExerciseTimes] = useState([]);
+
   // Initialize timer when component mounts
   useEffect(() => {
     // Start timer interval
@@ -310,6 +313,9 @@ const ExerciseScreen = ({ navigation }) => {
     // Use elapsedTime which is already tracked by the interval
     const exerciseTime = elapsedTime;
 
+    // Store time for this exercise
+    const newExerciseTimes = [...exerciseTimes, exerciseTime];
+
     if (currentExIndex < exercisesData.length - 1) {
       // Pass to next exercise with cumulative time data
       const newTotalTime = (parseInt(params?.totalTime) || 0) + exerciseTime;
@@ -321,7 +327,8 @@ const ExerciseScreen = ({ navigation }) => {
           currentLives: lives,
           totalTime: newTotalTime,
           totalProgress: 33,
-          errorCount: errorCount
+          errorCount: errorCount,
+          exerciseTimes: JSON.stringify(newExerciseTimes)
         }
       });
     } else {
@@ -335,7 +342,8 @@ const ExerciseScreen = ({ navigation }) => {
           totalProgress: 100,
           errorCount: errorCount,
           completedExercises: exercisesData.length,
-          totalExercises: exercisesData.length
+          totalExercises: exercisesData.length,
+          exerciseTimes: JSON.stringify(newExerciseTimes)
         }
       });
     }
@@ -414,6 +422,15 @@ const ExerciseScreen = ({ navigation }) => {
       <View style={styles.container}>
         <Text style={styles.pageTitle}>Vie sociale & famille</Text>
         <View style={styles.headerLine} />
+
+        {/* --- IMAGE ILLUSTRATIVE --- */}
+        <View style={styles.imageContainer}>
+          <Image
+            source={require("../../../assets/images/avatar-famille.png")}
+            style={styles.illustrationImage}
+            resizeMode='contain'
+          />
+        </View>
 
         {/* --- STATS BAR --- */}
         <View style={styles.statsContainer}>
@@ -520,6 +537,17 @@ const styles = StyleSheet.create({
     width: "100%",
     marginTop: 5,
     marginBottom: 20
+  },
+  imageContainer: {
+    width: "100%",
+    height: 120,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10
+  },
+  illustrationImage: {
+    width: 100,
+    height: 100
   },
   statsContainer: {
     flexDirection: "row",

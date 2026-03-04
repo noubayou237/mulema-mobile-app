@@ -9,7 +9,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
-  Alert
+  Alert,
+  Image
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Audio } from "expo-av";
@@ -127,6 +128,16 @@ const ExerciseThreeScreen = () => {
   const [isAnswered, setIsAnswered] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
 
+  // Store time per exercise for end screen
+  const getExerciseTimes = () => {
+    try {
+      return params?.exerciseTimes ? JSON.parse(params.exerciseTimes) : [];
+    } catch (e) {
+      return [];
+    }
+  };
+  const [exerciseTimes, setExerciseTimes] = useState(getExerciseTimes());
+
   // Timer state - Track time taken to complete exercise
   const [startTime] = useState(() => Date.now());
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -184,6 +195,9 @@ const ExerciseThreeScreen = () => {
     const cumulativeTime = (parseInt(params?.totalTime) || 0) + exerciseTime;
     const totalErrors = parseInt(params?.errorCount) || 0;
 
+    // Store time for this exercise
+    const newExerciseTimes = [...exerciseTimes, exerciseTime];
+
     // Navigation vers la page de fin avec les résultats
     router.push({
       pathname: "/exercices/famille/endexos",
@@ -193,7 +207,8 @@ const ExerciseThreeScreen = () => {
         totalTime: cumulativeTime,
         errorCount: totalErrors,
         completedExercises: 3,
-        totalExercises: 3
+        totalExercises: 3,
+        exerciseTimes: JSON.stringify(newExerciseTimes)
       }
     });
   };
@@ -265,6 +280,15 @@ const ExerciseThreeScreen = () => {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* --- IMAGE ILLUSTRATIVE --- */}
+          <View style={styles.imageContainer}>
+            <Image
+              source={require("../../../assets/images/avatar-famille.png")}
+              style={styles.illustrationImage}
+              resizeMode='contain'
+            />
+          </View>
+
           {/* --- CONSIGNE --- */}
           <View style={styles.instructionContainer}>
             <Text style={styles.instructionTitle}>Question Finale</Text>
@@ -387,6 +411,17 @@ const styles = StyleSheet.create({
   },
 
   // --- INSTRUCTIONS ---
+  imageContainer: {
+    width: "100%",
+    height: 100,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 15
+  },
+  illustrationImage: {
+    width: 80,
+    height: 80
+  },
   instructionContainer: {
     width: "100%",
     backgroundColor: "#FFF",
