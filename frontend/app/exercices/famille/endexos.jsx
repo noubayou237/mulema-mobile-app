@@ -15,6 +15,11 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import SmartRepetition from "../../components/SmartRepetition";
 import useFailedExercises from "../../hooks/useFailedExercises";
+import {
+  calculateAccuracy,
+  calculateXP,
+  getScoringBreakdown
+} from "../../utils/scoring";
 
 const { width, height } = Dimensions.get("window");
 
@@ -53,11 +58,15 @@ const EndScreen = ({ navigation, route }) => {
   };
   const exerciseTimes = getExerciseTimes();
 
-  // Calculate success rate based on lives and errors
-  // Base success rate on lives remaining (out of 5) and errors
-  const maxLives = 5;
-  const successRate = Math.round((lives / maxLives) * 100 - errorCount * 5);
-  const finalSuccessRate = Math.max(0, Math.min(100, successRate));
+  // Calculate accuracy based on hearts lost (5 - current lives)
+  const heartsLost = 5 - lives;
+
+  // Use new XP scoring system
+  const scoringBreakdown = getScoringBreakdown(heartsLost, totalTime);
+  const totalScore = scoringBreakdown.totalXP;
+
+  // Display accuracy from the new system
+  const finalSuccessRate = scoringBreakdown.accuracy;
 
   // Format time as MM:SS
   const formatTime = (seconds) => {
@@ -65,11 +74,6 @@ const EndScreen = ({ navigation, route }) => {
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
-
-  // Calculate score based on lives remaining and success rate
-  const baseScore = lives * 20;
-  const bonusScore = Math.floor((finalSuccessRate / 100) * 50);
-  const totalScore = baseScore + bonusScore;
 
   // Exercise names for display
   const exerciseNames = ["Exercice 1", "Exercice 2", "Exercice 3"];
@@ -146,8 +150,22 @@ const EndScreen = ({ navigation, route }) => {
 
           {/* Success Rate display */}
           <View style={styles.timeRow}>
-            <Text style={styles.timeLabel}>🎯 Taux de réussite:</Text>
+            <Text style={styles.timeLabel}>🎯 Précision:</Text>
             <Text style={styles.timeValue}>{finalSuccessRate}%</Text>
+          </View>
+
+          {/* Time category display */}
+          <View style={styles.timeRow}>
+            <Text style={styles.timeLabel}>⏱️ Temps:</Text>
+            <Text style={styles.timeValue}>
+              {scoringBreakdown.isUnder2Min ? "< 2 min" : "> 2 min"}
+            </Text>
+          </View>
+
+          {/* Hearts lost display */}
+          <View style={styles.timeRow}>
+            <Text style={styles.timeLabel}>💔 Cœurs perdus:</Text>
+            <Text style={styles.timeValue}>{heartsLost}</Text>
           </View>
 
           {/* Time per exercise display */}

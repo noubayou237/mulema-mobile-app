@@ -182,14 +182,8 @@ const ExerciseScreen = ({ navigation }) => {
   const [currentExIndex, setCurrentExIndex] = useState(0);
 
   // Use cowrie hook for automatic recharging
-  const {
-    cowries,
-    setCowries,
-    useCowrie,
-    canPlay,
-    isRecharging,
-    formatRechargeTime
-  } = useCowrie(5);
+  const { cowries, setCowries, canPlay, isRecharging, formatRechargeTime } =
+    useCowrie(5);
 
   const [selectedLeft, setSelectedLeft] = useState(null);
   const [selectedRight, setSelectedRight] = useState(null);
