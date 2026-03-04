@@ -258,7 +258,9 @@ const ExerciseTwoScreen = () => {
           currentLives: 0,
           totalTime: totalTime,
           totalProgress: totalProgress,
-          errorCount: parseInt(params?.errorCount) || 0
+          errorCount: parseInt(params?.errorCount) || 0,
+          completedExercises: 2,
+          totalExercises: 3
         }
       });
       return;
