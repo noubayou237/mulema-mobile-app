@@ -7,24 +7,9 @@ const RECHARGE_TIME_MS = 9 * 60 * 1000; // 9 minutes in milliseconds
 const STORAGE_KEY = "cowrie_state";
 
 /**
- * Cowrie State Structure:
- * {
- *   cowries: number,        // Current number of cowries (0-5)
- *   lastRechargeTime: number, // Timestamp of last recharge
- *   rechargeQueue: number,   // Next recharge timestamp
- * }
- */
-
-/**
  * Custom hook for managing cowrie (life) system with automatic recharging
- *
- * Features:
- * - Automatic recharging every 9 minutes
- * - Progressive recharging (1 at a time)
- * - Maximum 5 cowries
- * - Persists state across app restarts
  */
-export const useCowrie = (initialCowries = 5) => {
+function useCowrie(initialCowries = 5) {
   const [cowries, setCowries] = useState(initialCowries);
   const [isRecharging, setIsRecharging] = useState(false);
   const [nextRechargeTime, setNextRechargeTime] = useState(null);
@@ -143,10 +128,10 @@ export const useCowrie = (initialCowries = 5) => {
     });
   }, [saveCowrieState]);
 
-  // Use cowrie callback that returns setter
-  const useCowrieFn = useCallback(async () => {
+  // Use cowrie callback
+  const consumeCowrie = useCallback(async () => {
     if (cowries <= 0) {
-      return false; // Cannot use cowrie if none available
+      return false;
     }
 
     setCowries((prev) => {
@@ -192,7 +177,7 @@ export const useCowrie = (initialCowries = 5) => {
     return `${seconds}s`;
   }, [timeUntilRecharge]);
 
-  // Check if can play (has cowries or is recharging)
+  // Check if can play
   const canPlay = cowries > 0 || isRecharging;
 
   return {
@@ -203,12 +188,12 @@ export const useCowrie = (initialCowries = 5) => {
     nextRechargeTime,
     timeUntilRecharge,
     canPlay,
-    useCowrie: useCowrieFn,
+    consumeCowrie,
     addCowrie,
     resetCowries,
     formatRechargeTime,
     rechargeTimeMs: RECHARGE_TIME_MS
   };
-};
+}
 
 export default useCowrie;
