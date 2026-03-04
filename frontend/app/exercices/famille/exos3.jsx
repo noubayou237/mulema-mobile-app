@@ -188,8 +188,8 @@ const ExerciseThreeScreen = () => {
     router.push({
       pathname: "/exercices/famille/endexos",
       params: {
-        finalLives: lives,
-        finalProgress: progress,
+        currentLives: lives,
+        totalProgress: progress,
         totalTime: cumulativeTime,
         errorCount: totalErrors,
         completedExercises: 3,

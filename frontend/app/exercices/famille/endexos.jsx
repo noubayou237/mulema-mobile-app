@@ -119,6 +119,12 @@ const EndScreen = ({ navigation, route }) => {
             <Text style={styles.timeValue}>{score} pts</Text>
           </View>
 
+          {/* Progress display */}
+          <View style={styles.timeRow}>
+            <Text style={styles.timeLabel}>📊 Progression:</Text>
+            <Text style={styles.timeValue}>{finalProgress}%</Text>
+          </View>
+
           {/* Ligne "Terminées" avec icône */}
           <View style={styles.statusRow}>
             <View style={styles.checkCircle}>
