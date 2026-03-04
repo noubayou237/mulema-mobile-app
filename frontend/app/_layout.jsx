@@ -54,7 +54,7 @@ export default function RootLayout() {
     if (loaded) SplashScreen.hideAsync();
   }, [loaded]);
 
-  if (!loaded) return null;
+if (!loaded) return null;
 
   return (
     <LanguageProvider>
