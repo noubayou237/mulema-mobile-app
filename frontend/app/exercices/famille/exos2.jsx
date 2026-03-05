@@ -18,6 +18,7 @@ import {
 import { Audio } from "expo-av";
 import { useTranslation } from "react-i18next";
 import * as Haptics from "expo-haptics";
+import { THEME_FAMILLE_WORDS, getRandomWords } from "../../data/themeData";
 
 const { width } = Dimensions.get("window");
 
@@ -145,9 +146,20 @@ const playFeedbackSound = async (isCorrect, language = "fr") => {
   }
 };
 
-// --- DONNÉES DE L'EXERCICE ACTUEL ---
-const CORRECT_ANSWER = "Papá"; // Utilisez la majuscule correcte pour l'affichage de la solution
-const AUDIO_URL = "URL_SIMULEE_AUDIO_PAPA";
+// --- DONNÉES DE L'EXERCICE (SHARED WORD POOL) ---
+// Uses words from the shared pool for pedagogical consistency
+
+// Get a random word from the pool for this exercise
+const getWriteWord = () => {
+  const words = THEME_FAMILLE_WORDS;
+  const randomIndex = Math.floor(Math.random() * words.length);
+  return words[randomIndex];
+};
+
+// Initialize with a random word
+const currentWord = getWriteWord();
+const CORRECT_ANSWER = currentWord.local;
+const QUESTION_WORD = currentWord.fr;
 
 const ExerciseTwoScreen = () => {
   const router = useRouter();

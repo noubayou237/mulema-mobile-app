@@ -15,6 +15,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { Audio } from "expo-av";
 import * as Haptics from "expo-haptics";
+import { THEME_FAMILLE_WORDS, getWrongOptions } from "../../data/themeData";
 
 const { width } = Dimensions.get("window");
 
@@ -93,15 +94,30 @@ const playFeedbackSound = async (isCorrect, language = "fr") => {
   }
 };
 
-// --- DONNÉES DE L'EXERCICE ---
-const QUESTION_TEXT = "Quel est le mot local pour dire 'Le frère' ?";
-const CORRECT_ANSWER = "Muna";
-const options = [
-  { id: "opt1", text: "Papá" },
-  { id: "opt2", text: "Ndómɛ" },
-  { id: "opt3", text: "Muna" }, // Bonne réponse
-  { id: "opt4", text: "Sango" }
-];
+// --- DONNÉES DE L'EXERCICE (SHARED WORD POOL) ---
+// Uses words from the shared pool for pedagogical consistency
+
+// Get a random word from the pool for this exercise
+const getSelectWord = () => {
+  const words = THEME_FAMILLE_WORDS;
+  const randomIndex = Math.floor(Math.random() * words.length);
+  return words[randomIndex];
+};
+
+// Initialize with a random word
+const currentWord = getSelectWord();
+const QUESTION_TEXT = `Quel est le mot local pour dire '${currentWord.fr}' ?`;
+const CORRECT_ANSWER = currentWord.local;
+
+// Generate options: correct answer + wrong options
+const wrongOptions = getWrongOptions(currentWord.id, 3);
+const allOptions = [currentWord, ...wrongOptions];
+// Shuffle options
+const shuffledOptions = allOptions.sort(() => Math.random() - 0.5);
+const options = shuffledOptions.map((opt, index) => ({
+  id: `opt${index + 1}`,
+  text: opt.local
+}));
 
 const ExerciseThreeScreen = () => {
   const router = useRouter();
