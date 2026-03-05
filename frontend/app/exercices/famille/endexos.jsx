@@ -20,18 +20,12 @@ import {
   calculateXP,
   getScoringBreakdown
 } from "../../utils/scoring";
+import { THEME_FAMILLE_WORDS } from "../../data/themeData";
 
 const { width, height } = Dimensions.get("window");
 
-// Words for smart repetition
-const REPETITION_WORDS = [
-  { id: "p1", fr: "Le papa", local: "Papá" },
-  { id: "p2", fr: "La tante paternelle", local: "Ndómɛ á tetɛ́" },
-  { id: "p3", fr: "La maman", local: "Mamá" },
-  { id: "p4", fr: "L'oncle paternel", local: "Árí á tetɛ́" },
-  { id: "p5", fr: "Le frère", local: "Muna" },
-  { id: "p6", fr: "La sœur", local: "Sango" }
-];
+// Use shared word pool for smart repetition
+const REPETITION_WORDS = THEME_FAMILLE_WORDS;
 
 const EndScreen = ({ navigation, route }) => {
   const router = useRouter();

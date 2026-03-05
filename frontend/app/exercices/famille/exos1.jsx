@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import useCowrie from "../../hooks/useCowrie";
+import { THEME_FAMILLE_WORDS } from "../../data/themeData";
 
 // Audio state flags
 let audioInitialized = false;
@@ -147,27 +148,22 @@ const playFeedbackSound = async (isCorrect, language = "fr") => {
   }
 };
 
-// --- DONNÉES SIMULÉES (THEME 1) ---
+// --- DONNÉES DU THÈME (SHARED WORD POOL) ---
+// Uses the same 6 words across ALL exercises for pedagogical repetition
+
+// Transform words into pairs for matching exercise
+const matchingPairs = THEME_FAMILLE_WORDS.map((word) => ({
+  id: word.id,
+  fr: word.fr,
+  local: word.local
+}));
+
 const exercisesData = [
   {
     id: 1,
     type: "matching",
     instruction: "Associe chaque mot avec sa bonne traduction !",
-    pairs: [
-      { id: "p1", fr: "Le papa", local: "Papá" },
-      { id: "p2", fr: "La tante paternelle", local: "Ndómɛ á tetɛ́" },
-      { id: "p3", fr: "La maman", local: "Mamá" },
-      { id: "p4", fr: "L'oncle paternel", local: "Árí á tetɛ́" }
-    ]
-  },
-  {
-    id: 2,
-    type: "matching",
-    instruction: "Associe les membres de la fratrie !",
-    pairs: [
-      { id: "p5", fr: "Le frère", local: "Muna" },
-      { id: "p6", fr: "La soeur", local: "Sango" }
-    ]
+    pairs: matchingPairs
   }
 ];
 
