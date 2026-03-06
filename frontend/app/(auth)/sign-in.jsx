@@ -1,23 +1,25 @@
 import React, { useState } from "react";
 import {
-  Text,
   View,
   Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  TextInput,
   TouchableOpacity,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
-import { authStyles } from "../../assets/styles/auth.styles";
-import { COLORS } from "../../constants/colors";
 import { useUser } from "../../src/context/UserContext";
 import { useTranslation } from "react-i18next";
 
-const SignInScreen = () => {
+import ScreenWrapper from "../components/ui/ScreenWrapper";
+import AppTitle from "../components/ui/AppTitle";
+import AppText from "../components/ui/AppText";
+import AuthInput from "../components/ui/AuthInput";
+import Button from "../components/ui/Button";
+
+export default function SignInScreen() {
   const router = useRouter();
   const { login } = useUser();
   const { t } = useTranslation();
@@ -29,13 +31,11 @@ const SignInScreen = () => {
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      Alert.alert(t("common.error"), t("errors.requiredField"));
-      return;
+      return Alert.alert(t("common.error"), t("errors.requiredField"));
     }
 
     setLoading(true);
     try {
-      // Use the login function from UserContext which calls the backend API
       await login(email, password);
     } catch (err) {
       const msg =
@@ -48,10 +48,9 @@ const SignInScreen = () => {
     }
   };
 
-  const onForgotPassword = async () => {
+  const onForgotPassword = () => {
     if (!email || !email.includes("@")) {
-      Alert.alert("Invalid Email", "Please enter a valid email first.");
-      return;
+      return Alert.alert("Invalid Email", "Enter a valid email first.");
     }
 
     router.push({
@@ -61,97 +60,96 @@ const SignInScreen = () => {
   };
 
   return (
-    <View style={authStyles.container}>
+    <ScreenWrapper>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={authStyles.keyboardView}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+        className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={authStyles.scrollContent}
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
           showsVerticalScrollIndicator={false}
         >
-          <View style={authStyles.imageContainer}>
+          {/* Logo */}
+          <View className="items-center mb-8">
             <Image
               source={require("../../assets/images/logo.png")}
-              style={authStyles.image}
+              style={{ width: 100, height: 100 }}
               contentFit="contain"
             />
           </View>
 
-          <Text style={authStyles.title}>{t("auth.welcomeBack")}</Text>
+          {/* Title */}
+          <AppTitle className="mb-6">
+            {t("auth.welcomeBack")}
+          </AppTitle>
 
-          <View style={authStyles.formContainer}>
-            <View style={authStyles.inputContainer}>
-              <TextInput
-                style={authStyles.textInput}
-                placeholder="Enter email"
-                placeholderTextColor={COLORS.textLight}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
+          {/* Form */}
+          <View>
+            <AuthInput
+              label="Email"
+              placeholder="Enter email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+            />
 
-            <View style={authStyles.inputContainer}>
-              <TextInput
-                style={authStyles.textInput}
+            <View className="relative">
+              <AuthInput
+                label="Password"
                 placeholder="Enter password"
-                placeholderTextColor={COLORS.textLight}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
-                autoCapitalize="none"
               />
+
               <TouchableOpacity
-                style={authStyles.eyeButton}
                 onPress={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-10"
               >
                 <Ionicons
-                  name={showPassword ? "eye-outline" : "eye-off-outline"}
+                  name={
+                    showPassword
+                      ? "eye-outline"
+                      : "eye-off-outline"
+                  }
                   size={20}
-                  color={COLORS.textLight}
+                  color="#6B7280"
                 />
               </TouchableOpacity>
             </View>
 
+            {/* Forgot Password */}
             <TouchableOpacity
               onPress={onForgotPassword}
-              style={{ alignSelf: "flex-end", marginBottom: 12 }}
+              className="items-end mb-4"
             >
-              <Text style={[authStyles.link, { fontSize: 13 }]}>
+              <AppText variant="muted" className="underline">
                 Forgot password?
-              </Text>
+              </AppText>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[
-                authStyles.authButton,
-                loading && authStyles.buttonDisabled,
-              ]}
+            {/* Button */}
+            <Button
+              title="Sign In"
               onPress={handleSignIn}
-              disabled={loading}
-            >
-              <Text style={authStyles.buttonText}>
-                {loading ? "Sign In..." : "Sign In"}
-              </Text>
-            </TouchableOpacity>
+              loading={loading}
+            />
 
+            {/* Sign Up */}
             <TouchableOpacity
-              style={authStyles.linkContainer}
-              onPress={() => router.push("/sign-up")}
+              onPress={() => router.push("/(auth)/sign-up")}
+              className="mt-6 items-center"
             >
-              <Text style={authStyles.linkText}>
-                Don&apos;t have an account?{" "}
-                <Text style={authStyles.link}>Sign up</Text>
-              </Text>
+              <AppText variant="muted">
+                Don’t have an account?{" "}
+                <AppText className="text-primary">
+                  Sign up
+                </AppText>
+              </AppText>
             </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </ScreenWrapper>
   );
-};
-
-export default SignInScreen;
+}

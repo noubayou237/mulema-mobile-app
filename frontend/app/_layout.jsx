@@ -1,31 +1,68 @@
 // app/_layout.jsx
-import React from "react";
-import { Slot } from "expo-router";
+import React, { useEffect } from "react";
+import { Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS } from "../constants/colors";
+import { useFonts } from "expo-font";
+import * as SplashScreen from "expo-splash-screen";
+import { View, ActivityIndicator } from "react-native";
 
-// Initialize i18n
+import "../global.css";
 import "../src/i18n";
 
-// Contexts (ATTENTION : fichiers placés hors du dossier `app/`, par ex. src/context/)
-import { LanguageProvider } from "../src/context/LanguageContext"; // named export
-import UserProvider from "../src/context/UserContext"; // default export expected
+import { LanguageProvider } from "../src/context/LanguageContext";
+import UserProvider, { useUser } from "../src/context/UserContext";
 
-// Error handling note:
-// - expo-av is deprecated; migrate to expo-audio for audio functionality
-// - Global ErrorUtils is not available in newer Expo/React Native versions
-// - If you need error boundaries, use React's ErrorBoundary component pattern
+SplashScreen.preventAutoHideAsync();
+
+// 🔹 Loading screen propre
+function LoadingScreen() {
+  return (
+    <View className="flex-1 justify-center items-center bg-background">
+      <ActivityIndicator size="large" />
+    </View>
+  );
+}
+
+// 🔹 AuthGate
+function AuthGate() {
+  const { user, isLoading } = useUser();
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      {user ? (
+        <Stack.Screen name="(tabs)" />
+      ) : (
+        <Stack.Screen name="(auth)" />
+      )}
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
-  // Children wrapper common to both branches
-  const AppChildren = (
-    <UserProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
-        {/* Slot doit être rendu immédiatement pour que le routeur fonctionne */}
-        <Slot />
-      </SafeAreaView>
-    </UserProvider>
-  );
+  const [loaded] = useFonts({
+    NunitoRegular: require("../assets/fonts/Nunito-Regular.ttf"),
+    NunitoMedium: require("../assets/fonts/Nunito-Medium.ttf"),
+    NunitoSemiBold: require("../assets/fonts/Nunito-SemiBold.ttf"),
+    NunitoBold: require("../assets/fonts/Nunito-Bold.ttf"),
+  });
 
-  return <LanguageProvider>{AppChildren}</LanguageProvider>;
+  useEffect(() => {
+    if (loaded) SplashScreen.hideAsync();
+  }, [loaded]);
+
+  if (!loaded) return null;
+
+  return (
+    <LanguageProvider>
+      <UserProvider>
+        <SafeAreaView className="flex-1 bg-background">
+          <AuthGate />
+        </SafeAreaView>
+      </UserProvider>
+    </LanguageProvider>
+  );
 }

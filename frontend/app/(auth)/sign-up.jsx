@@ -1,42 +1,43 @@
 import React, { useState, useCallback } from "react";
 import {
-  Alert,
-  Text,
   View,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  TextInput,
-  TouchableOpacity
+  TouchableOpacity,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { authStyles } from "../../assets/styles/auth.styles";
-import { COLORS } from "../../constants/colors";
 import api from "../../services/api";
-import { useTranslation } from "react-i18next";
+
+import ScreenWrapper from "../components/ui/ScreenWrapper";
+import AppTitle from "../components/ui/AppTitle";
+import AppText from "../components/ui/AppText";
+import AuthInput from "../components/ui/AuthInput";
+import Button from "../components/ui/Button";
 
 const MIN_PASSWORD = 6;
 
-const SignUpScreen = () => {
+export default function SignUpScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
 
   const [form, setForm] = useState({
     username: "",
     email: "",
     password: "",
-    confirm: ""
+    confirm: "",
   });
 
   const [ui, setUi] = useState({
     showPassword: false,
     showConfirm: false,
-    loading: false
+    loading: false,
   });
 
-  const onChange = (key) => (val) => setForm((s) => ({ ...s, [key]: val }));
+  const onChange = (key) => (val) =>
+    setForm((s) => ({ ...s, [key]: val }));
 
   const validate = () => {
     if (
@@ -47,12 +48,16 @@ const SignUpScreen = () => {
     ) {
       return "Remplis tous les champs obligatoires.";
     }
+
     if (/\s/.test(form.username))
       return "Le nom d'utilisateur ne doit pas contenir d'espaces.";
+
     if (form.password.length < MIN_PASSWORD)
       return `Le mot de passe doit contenir au moins ${MIN_PASSWORD} caractères.`;
+
     if (form.password !== form.confirm)
       return "Les mots de passe ne correspondent pas.";
+
     return null;
   };
 
@@ -63,36 +68,27 @@ const SignUpScreen = () => {
     setUi((s) => ({ ...s, loading: true }));
 
     try {
-      // console.log("Starting signup request...");
-      // console.log("API URL:", api.defaults.baseURL);
-
-      const response = await api.post("/auth/register", {
+      await api.post("/auth/register", {
         email: form.email,
         username: form.username,
         name: form.username,
-        password: form.password
+        password: form.password,
       });
 
-      console.log("Signup response:", response.data);
-
-      // 👉 après inscription → vérification email / OTP
       Alert.alert(
         "Inscription réussie!",
-        "Un code de vérification a été envoyé à votre email. Veuillez le vérifier pour activer votre compte."
+        "Un code de vérification a été envoyé à votre email."
       );
+
       router.replace({
-        pathname: "/verify-email",
-        params: { email: form.email, flow: "verify" }
+        pathname: "/(auth)/verify-email",
+        params: { email: form.email, flow: "verify" },
       });
     } catch (err) {
-      console.error("Signup error:", err);
-      console.error("Error response:", err.response?.data);
       const message =
         err?.response?.data?.message ||
         err?.message ||
-        (err.code === "ECONNABORTED"
-          ? "La requête a expiré. Vérifie que le backend est en cours d'exécution."
-          : "Erreur lors de la création du compte.");
+        "Erreur lors de la création du compte.";
       Alert.alert("Erreur", message);
     } finally {
       setUi((s) => ({ ...s, loading: false }));
@@ -100,124 +96,130 @@ const SignUpScreen = () => {
   }, [form, router]);
 
   return (
-    <View style={authStyles.container}>
+    <ScreenWrapper>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={authStyles.keyboardView}
-        keyboardVerticalOffset={64}
+        className="flex-1"
       >
         <ScrollView
-          contentContainerStyle={authStyles.scrollContent}
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
           showsVerticalScrollIndicator={false}
         >
-          <View style={authStyles.imageContainer}>
+          {/* Image */}
+          <View className="items-center mb-6">
             <Image
               source={require("../../assets/images/sign-up.png")}
-              style={authStyles.image}
-              contentFit='contain'
+              style={{ width: 110, height: 110 }}
+              contentFit="contain"
             />
           </View>
 
-          <Text style={authStyles.title}>Create Account</Text>
+          <AppTitle className="mb-6">
+            Create Account
+          </AppTitle>
 
-          <View style={authStyles.formContainer}>
-            <View style={authStyles.inputContainer}>
-              <TextInput
-                style={authStyles.textInput}
-                placeholder='Username'
-                placeholderTextColor={COLORS.textLight}
-                value={form.username}
-                onChangeText={onChange("username")}
-                autoCapitalize='none'
-              />
-            </View>
+          {/* Username */}
+          <AuthInput
+            label="Username"
+            placeholder="Choose a username"
+            value={form.username}
+            onChangeText={onChange("username")}
+          />
 
-            <View style={authStyles.inputContainer}>
-              <TextInput
-                style={authStyles.textInput}
-                placeholder='Email'
-                placeholderTextColor={COLORS.textLight}
-                value={form.email}
-                onChangeText={onChange("email")}
-                keyboardType='email-address'
-                autoCapitalize='none'
-              />
-            </View>
+          {/* Email */}
+          <AuthInput
+            label="Email"
+            placeholder="Enter your email"
+            value={form.email}
+            onChangeText={onChange("email")}
+            keyboardType="email-address"
+          />
 
-            <View style={authStyles.inputContainer}>
-              <TextInput
-                style={authStyles.textInput}
-                placeholder='Password'
-                placeholderTextColor={COLORS.textLight}
-                value={form.password}
-                onChangeText={onChange("password")}
-                secureTextEntry={!ui.showPassword}
-                autoCapitalize='none'
-              />
-              <TouchableOpacity
-                style={authStyles.eyeButton}
-                onPress={() =>
-                  setUi((s) => ({ ...s, showPassword: !s.showPassword }))
-                }
-              >
-                <Ionicons
-                  name={ui.showPassword ? "eye-outline" : "eye-off-outline"}
-                  size={20}
-                  color={COLORS.textLight}
-                />
-              </TouchableOpacity>
-            </View>
-
-            <View style={authStyles.inputContainer}>
-              <TextInput
-                style={authStyles.textInput}
-                placeholder='Confirm password'
-                placeholderTextColor={COLORS.textLight}
-                value={form.confirm}
-                onChangeText={onChange("confirm")}
-                secureTextEntry={!ui.showConfirm}
-                autoCapitalize='none'
-              />
-              <TouchableOpacity
-                style={authStyles.eyeButton}
-                onPress={() =>
-                  setUi((s) => ({ ...s, showConfirm: !s.showConfirm }))
-                }
-              >
-                <Ionicons
-                  name={ui.showConfirm ? "eye-outline" : "eye-off-outline"}
-                  size={20}
-                  color={COLORS.textLight}
-                />
-              </TouchableOpacity>
-            </View>
+          {/* Password */}
+          <View className="relative">
+            <AuthInput
+              label="Password"
+              placeholder="Enter password"
+              value={form.password}
+              onChangeText={onChange("password")}
+              secureTextEntry={!ui.showPassword}
+            />
 
             <TouchableOpacity
-              style={[
-                authStyles.authButton,
-                ui.loading && authStyles.buttonDisabled
-              ]}
-              onPress={handleSignUp}
-              disabled={ui.loading}
-              activeOpacity={0.8}
+              onPress={() =>
+                setUi((s) => ({
+                  ...s,
+                  showPassword: !s.showPassword,
+                }))
+              }
+              className="absolute right-4 top-10"
             >
-              <Text style={authStyles.buttonText}>
-                {ui.loading ? "Creating Account..." : "Sign Up"}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={authStyles.linkContainer} 
-                onPress={() => router.replace("/(auth)/sign-in")}>
-              <Text style={authStyles.linkText}>
-                Already have an account ?{" "}
-                <Text style={authStyles.link}>Sign In</Text>
-              </Text>
+              <Ionicons
+                name={
+                  ui.showPassword
+                    ? "eye-outline"
+                    : "eye-off-outline"
+                }
+                size={20}
+                color="#6B7280"
+              />
             </TouchableOpacity>
           </View>
+
+          {/* Confirm Password */}
+          <View className="relative">
+            <AuthInput
+              label="Confirm Password"
+              placeholder="Confirm password"
+              value={form.confirm}
+              onChangeText={onChange("confirm")}
+              secureTextEntry={!ui.showConfirm}
+            />
+
+            <TouchableOpacity
+              onPress={() =>
+                setUi((s) => ({
+                  ...s,
+                  showConfirm: !s.showConfirm,
+                }))
+              }
+              className="absolute right-4 top-10"
+            >
+              <Ionicons
+                name={
+                  ui.showConfirm
+                    ? "eye-outline"
+                    : "eye-off-outline"
+                }
+                size={20}
+                color="#6B7280"
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Button */}
+          <Button
+            title="Sign Up"
+            onPress={handleSignUp}
+            loading={ui.loading}
+          />
+
+          {/* Sign In */}
+          <TouchableOpacity
+            onPress={() =>
+              router.replace("/(auth)/sign-in")
+            }
+            className="mt-6 items-center"
+          >
+            <AppText variant="muted">
+              Already have an account?{" "}
+              <AppText className="text-primary">
+                Sign In
+              </AppText>
+            </AppText>
+          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </ScreenWrapper>
   );
-};
-
-export default SignUpScreen;
+}
