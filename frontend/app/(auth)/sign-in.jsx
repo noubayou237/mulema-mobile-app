@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Text,
   View,
@@ -8,15 +8,109 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  Animated,
+  Easing,
+  StyleSheet,
+  Dimensions,
+  StatusBar,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
-import { authStyles } from "../../assets/styles/auth.styles";
-import { COLORS } from "../../constants/colors";
+import { LinearGradient } from "expo-linear-gradient";
 import { useUser } from "../../src/context/UserContext";
 import { useTranslation } from "react-i18next";
 
+const { width, height } = Dimensions.get("window");
+
+// ── Floating bubble component ──────────────────────────────────────────────
+const FloatingBubble = ({ size, color, startX, delay, duration }) => {
+  const y = useRef(new Animated.Value(height + size)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.4)).current;
+
+  useEffect(() => {
+    const loop = () => {
+      y.setValue(height + size);
+      opacity.setValue(0);
+      scale.setValue(0.4);
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.parallel([
+          Animated.timing(y, {
+            toValue: -size * 2,
+            duration,
+            easing: Easing.linear,
+            useNativeDriver: true,
+          }),
+          Animated.sequence([
+            Animated.timing(opacity, { toValue: 0.25, duration: 600, useNativeDriver: true }),
+            Animated.delay(duration - 1200),
+            Animated.timing(opacity, { toValue: 0, duration: 600, useNativeDriver: true }),
+          ]),
+          Animated.sequence([
+            Animated.timing(scale, { toValue: 1, duration: 800, easing: Easing.out(Easing.back(1.5)), useNativeDriver: true }),
+          ]),
+        ]),
+      ]).start(loop);
+    };
+    loop();
+  }, []);
+
+  return (
+    <Animated.View
+      style={{
+        position: "absolute",
+        left: startX,
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: color,
+        transform: [{ translateY: y }, { scale }],
+        opacity,
+      }}
+    />
+  );
+};
+
+// ── Animated wave dots ─────────────────────────────────────────────────────
+const WaveDots = () => {
+  const dots = [0, 1, 2, 3, 4];
+  const anims = dots.map(() => useRef(new Animated.Value(0)).current);
+
+  useEffect(() => {
+    const animations = dots.map((_, i) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(i * 120),
+          Animated.timing(anims[i], { toValue: -8, duration: 400, useNativeDriver: true }),
+          Animated.timing(anims[i], { toValue: 0, duration: 400, useNativeDriver: true }),
+          Animated.delay((dots.length - i) * 120),
+        ])
+      )
+    );
+    Animated.stagger(0, animations).start();
+  }, []);
+
+  return (
+    <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
+      {dots.map((_, i) => (
+        <Animated.View
+          key={i}
+          style={{
+            width: 5,
+            height: 5,
+            borderRadius: 3,
+            backgroundColor: "#FFFFFF",
+            transform: [{ translateY: anims[i] }],
+          }}
+        />
+      ))}
+    </View>
+  );
+};
+
+// ── Main Screen ────────────────────────────────────────────────────────────
 const SignInScreen = () => {
   const router = useRouter();
   const { login } = useUser();
@@ -26,132 +120,455 @@ const SignInScreen = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passFocused, setPassFocused] = useState(false);
+
+  // Mount animations
+  const logoAnim = useRef(new Animated.Value(0)).current;
+  const titleAnim = useRef(new Animated.Value(0)).current;
+  const subtitleAnim = useRef(new Animated.Value(0)).current;
+  const formAnim = useRef(new Animated.Value(0)).current;
+  const logoScale = useRef(new Animated.Value(0.5)).current;
+  const buttonPulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.stagger(120, [
+      Animated.parallel([
+        Animated.spring(logoScale, { toValue: 1, tension: 60, friction: 8, useNativeDriver: true }),
+        Animated.timing(logoAnim, { toValue: 1, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ]),
+      Animated.timing(titleAnim, { toValue: 1, duration: 600, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(subtitleAnim, { toValue: 1, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(formAnim, { toValue: 1, duration: 600, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+    ]).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(buttonPulse, { toValue: 1.03, duration: 1200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(buttonPulse, { toValue: 1, duration: 1200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
 
   const handleSignIn = async () => {
     if (!email || !password) {
       Alert.alert(t("common.error"), t("errors.requiredField"));
       return;
     }
-
     setLoading(true);
     try {
-      // Use the login function from UserContext which calls the backend API
       await login(email, password);
     } catch (err) {
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Sign in failed.";
+      const msg = err?.response?.data?.message || err?.message || "Sign in failed.";
       Alert.alert("Error", msg);
     } finally {
       setLoading(false);
     }
   };
 
-  const onForgotPassword = async () => {
+  const onForgotPassword = () => {
     if (!email || !email.includes("@")) {
       Alert.alert("Invalid Email", "Please enter a valid email first.");
       return;
     }
-
-    router.push({
-      pathname: "/(auth)/ResetPasswordScreen",
-      params: { email },
-    });
+    router.push({ pathname: "/(auth)/ResetPasswordScreen", params: { email } });
   };
 
+  const bubbles = [
+    { size: 60, color: "#FFCDD2", startX: width * 0.05, delay: 0, duration: 7000 },
+    { size: 40, color: "#EF9A9A", startX: width * 0.25, delay: 1500, duration: 8500 },
+    { size: 80, color: "#FFCDD2", startX: width * 0.55, delay: 800, duration: 9000 },
+    { size: 30, color: "#EF9A9A", startX: width * 0.75, delay: 2500, duration: 7500 },
+    { size: 50, color: "#FFCDD2", startX: width * 0.88, delay: 400, duration: 8000 },
+    { size: 35, color: "#EF9A9A", startX: width * 0.42, delay: 3000, duration: 6500 },
+  ];
+
   return (
-    <View style={authStyles.container}>
+    <View style={s.root}>
+      <StatusBar barStyle="dark-content" />
+
+      {/* Off-white warm background */}
+      <LinearGradient
+        colors={["#FAF7F5", "#F5F0EC", "#F0E9E4"]}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
+
+      {/* Floating bubbles */}
+      {bubbles.map((b, i) => <FloatingBubble key={i} {...b} />)}
+
+      <View style={s.meshOverlay} pointerEvents="none" />
+
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={authStyles.keyboardView}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <ScrollView
-          contentContainerStyle={authStyles.scrollContent}
+          contentContainerStyle={s.scroll}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <View style={authStyles.imageContainer}>
-            <Image
-              source={require("../../assets/images/logo.png")}
-              style={authStyles.image}
-              contentFit="contain"
-            />
-          </View>
-
-          <Text style={authStyles.title}>{t("auth.welcomeBack")}</Text>
-
-          <View style={authStyles.formContainer}>
-            <View style={authStyles.inputContainer}>
-              <TextInput
-                style={authStyles.textInput}
-                placeholder="Enter email"
-                placeholderTextColor={COLORS.textLight}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-
-            <View style={authStyles.inputContainer}>
-              <TextInput
-                style={authStyles.textInput}
-                placeholder="Enter password"
-                placeholderTextColor={COLORS.textLight}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-              />
-              <TouchableOpacity
-                style={authStyles.eyeButton}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                <Ionicons
-                  name={showPassword ? "eye-outline" : "eye-off-outline"}
-                  size={20}
-                  color={COLORS.textLight}
+          {/* ── Logo ── */}
+          <Animated.View
+            style={[
+              s.logoWrap,
+              {
+                opacity: logoAnim,
+                transform: [
+                  { scale: logoScale },
+                  { translateY: logoAnim.interpolate({ inputRange: [0, 1], outputRange: [-30, 0] }) },
+                ],
+              },
+            ]}
+          >
+            <View style={s.logoRing}>
+              <View style={s.logoInner}>
+                <Image
+                  source={require("../../assets/images/logo.png")}
+                  style={s.logo}
+                  contentFit="contain"
                 />
-              </TouchableOpacity>
+              </View>
+            </View>
+            <OrbitingDot />
+          </Animated.View>
+
+          {/* ── Title ── */}
+          <Animated.View
+            style={{
+              opacity: titleAnim,
+              transform: [{ translateY: titleAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
+              alignItems: "center",
+              marginBottom: 6,
+            }}
+          >
+            <Text style={s.brand}>mulema</Text>
+          </Animated.View>
+
+          {/* ── Subtitle ── */}
+          <Animated.View
+            style={{
+              opacity: subtitleAnim,
+              transform: [{ translateY: subtitleAnim.interpolate({ inputRange: [0, 1], outputRange: [15, 0] }) }],
+              alignItems: "center",
+              marginBottom: 36,
+            }}
+          >
+            <View style={s.pillBadge}>
+              <Text style={s.pillText}>🌍 Langues camerounaises</Text>
+            </View>
+            <Text style={s.subtitle}>Connectez-vous pour continuer votre aventure</Text>
+          </Animated.View>
+
+          {/* ── Form card ── */}
+          <Animated.View
+            style={[
+              s.card,
+              {
+                opacity: formAnim,
+                transform: [{ translateY: formAnim.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) }],
+              },
+            ]}
+          >
+            {/* Email */}
+            <View style={s.fieldWrap}>
+              <Text style={s.label}>Adresse e-mail</Text>
+              <View style={[s.inputRow, emailFocused && s.inputFocused]}>
+                <Ionicons name="mail-outline" size={18} color={emailFocused ? "#D32F2F" : "#BDBDBD"} style={{ marginRight: 10 }} />
+                <TextInput
+                  style={s.input}
+                  placeholder="exemple@email.com"
+                  placeholderTextColor="#C0B8B8"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  onFocus={() => setEmailFocused(true)}
+                  onBlur={() => setEmailFocused(false)}
+                />
+              </View>
             </View>
 
-            <TouchableOpacity
-              onPress={onForgotPassword}
-              style={{ alignSelf: "flex-end", marginBottom: 12 }}
-            >
-              <Text style={[authStyles.link, { fontSize: 13 }]}>
-                Forgot password?
-              </Text>
+            {/* Password */}
+            <View style={s.fieldWrap}>
+              <Text style={s.label}>Mot de passe</Text>
+              <View style={[s.inputRow, passFocused && s.inputFocused]}>
+                <Ionicons name="lock-closed-outline" size={18} color={passFocused ? "#D32F2F" : "#BDBDBD"} style={{ marginRight: 10 }} />
+                <TextInput
+                  style={[s.input, { flex: 1 }]}
+                  placeholder="••••••••"
+                  placeholderTextColor="#C0B8B8"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  onFocus={() => setPassFocused(true)}
+                  onBlur={() => setPassFocused(false)}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                  <Ionicons
+                    name={showPassword ? "eye-outline" : "eye-off-outline"}
+                    size={20}
+                    color={passFocused ? "#D32F2F" : "#BDBDBD"}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Forgot password */}
+            <TouchableOpacity 
+             onPress={() => router.push("/forgotpass")}
+              activeOpacity={0.8}
+              style={s.signUpBtn}
+               style={{ alignSelf: "flex-end", marginBottom: 24 }}>
+              <Text style={s.forgot}>Mot de passe oublié ?</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[
-                authStyles.authButton,
-                loading && authStyles.buttonDisabled,
-              ]}
-              onPress={handleSignIn}
-              disabled={loading}
-            >
-              <Text style={authStyles.buttonText}>
-                {loading ? "Sign In..." : "Sign In"}
-              </Text>
-            </TouchableOpacity>
 
+
+            {/* Sign in button */}
+            <Animated.View style={{ transform: [{ scale: loading ? 1 : buttonPulse }] }}>
+              <TouchableOpacity
+                onPress={handleSignIn}
+                disabled={loading}
+                activeOpacity={0.85}
+                style={{ borderRadius: 16, overflow: "hidden" }}
+              >
+                <LinearGradient
+                  colors={loading ? ["#E0E0E0", "#E0E0E0"] : ["#E53935", "#B71C1C"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={s.btn}
+                >
+                  {loading ? (
+                    <WaveDots />
+                  ) : (
+                    <>
+                      <Text style={s.btnText}>Se connecter</Text>
+                      <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
+                    </>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated.View>
+
+            {/* Divider */}
+            <View style={s.dividerRow}>
+              <View style={s.dividerLine} />
+              <Text style={s.dividerText}>ou</Text>
+              <View style={s.dividerLine} />
+            </View>
+
+            {/* Sign up */}
             <TouchableOpacity
-              style={authStyles.linkContainer}
               onPress={() => router.push("/sign-up")}
+              activeOpacity={0.8}
+              style={s.signUpBtn}
             >
-              <Text style={authStyles.linkText}>
-                Don&apos;t have an account?{" "}
-                <Text style={authStyles.link}>Sign up</Text>
+              <Text style={s.signUpText}>
+                Pas encore de compte ?{" "}
+                <Text style={s.signUpLink}>S'inscrire gratuitement</Text>
               </Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
+
+          {/* Bottom languages strip */}
+          <Animated.View style={[s.langStrip, { opacity: formAnim }]}>
+            {["Ewondo", "Bassa", "Fulfulde", "Duala", "Ghomala"].map((lang, i) => (
+              <View key={i} style={s.langChip}>
+                <Text style={s.langChipText}>{lang}</Text>
+              </View>
+            ))}
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );
 };
+
+// ── Orbiting dot ──────────────────────────────────────────────────────────
+const OrbitingDot = () => {
+  const rot = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.timing(rot, { toValue: 1, duration: 3000, easing: Easing.linear, useNativeDriver: true })
+    ).start();
+  }, []);
+  const angle = rot.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] });
+  return (
+    <Animated.View style={[s.orbit, { transform: [{ rotate: angle }] }]}>
+      <View style={s.orbitDot} />
+    </Animated.View>
+  );
+};
+
+// ── Styles ────────────────────────────────────────────────────────────────
+const s = StyleSheet.create({
+  root: { flex: 1 },
+  meshOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "transparent",
+    opacity: 0.04,
+  },
+  scroll: {
+    flexGrow: 1,
+    alignItems: "center",
+    paddingTop: Platform.OS === "ios" ? 70 : 50,
+    paddingBottom: 40,
+    paddingHorizontal: 24,
+  },
+
+  // Logo
+  logoWrap: { alignItems: "center", justifyContent: "center", marginBottom: 20, position: "relative" },
+  logoRing: {
+    width: 108,
+    height: 108,
+    borderRadius: 54,
+    borderWidth: 2,
+    borderColor: "rgba(211,47,47,0.3)",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(211,47,47,0.07)",
+  },
+  logoInner: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: "rgba(255,255,255,0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  logo: { width: 68, height: 68 },
+  orbit: {
+    position: "absolute",
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    top: -6,
+    left: -6,
+    alignItems: "center",
+    justifyContent: "flex-start",
+  },
+  orbitDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#D32F2F",
+    marginTop: 2,
+    shadowColor: "#D32F2F",
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+
+  // Text
+  brand: {
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    fontSize: 42,
+    fontWeight: "700",
+    color: "#1A1A1A",
+    letterSpacing: 3,
+  },
+  pillBadge: {
+    backgroundColor: "rgba(211,47,47,0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(211,47,47,0.3)",
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    marginBottom: 10,
+  },
+  pillText: { color: "#C62828", fontSize: 12, fontWeight: "600", letterSpacing: 0.5 },
+  subtitle: { color: "#888", fontSize: 14, textAlign: "center", lineHeight: 20 },
+
+  // Card
+  card: {
+    width: "100%",
+    backgroundColor: "rgba(255,255,255,0.75)",
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "rgba(211,47,47,0.1)",
+    padding: 24,
+    marginBottom: 20,
+  },
+
+  // Fields
+  fieldWrap: { marginBottom: 16 },
+  label: { color: "#888", fontSize: 12, fontWeight: "600", letterSpacing: 1, marginBottom: 8, textTransform: "uppercase" },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(180,60,60,0.04)",
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "rgba(180,60,60,0.15)",
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  inputFocused: {
+    borderColor: "#D32F2F",
+    backgroundColor: "rgba(211,47,47,0.06)",
+    shadowColor: "#D32F2F",
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  input: { flex: 1, color: "#1A1A1A", fontSize: 15, fontWeight: "500" },
+
+  // Forgot
+  forgot: { color: "#D32F2F", fontSize: 13, fontWeight: "600" },
+
+  // Button
+  btn: {
+    paddingVertical: 16,
+    borderRadius: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#D32F2F",
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  btnText: { color: "#FFFFFF", fontSize: 17, fontWeight: "700", letterSpacing: 0.5 },
+
+  // Divider
+  dividerRow: { flexDirection: "row", alignItems: "center", marginVertical: 20 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: "rgba(180,60,60,0.12)" },
+  dividerText: { color: "#BDBDBD", fontSize: 13, marginHorizontal: 12 },
+
+  // Sign up
+  signUpBtn: {
+    alignItems: "center",
+    paddingVertical: 14,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: "rgba(211,47,47,0.15)",
+    backgroundColor: "rgba(211,47,47,0.04)",
+  },
+  signUpText: { color: "#888", fontSize: 14 },
+  signUpLink: { color: "#D32F2F", fontWeight: "700" },
+
+  // Lang strip
+  langStrip: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 10,
+  },
+  langChip: {
+    backgroundColor: "rgba(211,47,47,0.06)",
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: "rgba(211,47,47,0.12)",
+  },
+  langChipText: { color: "#888", fontSize: 11, fontWeight: "500" },
+});
 
 export default SignInScreen;
