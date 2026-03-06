@@ -18,7 +18,7 @@ import {
 import { Audio } from "expo-av";
 import { useTranslation } from "react-i18next";
 import * as Haptics from "expo-haptics";
-import { THEME_FAMILLE_WORDS, getRandomWords } from "../../data/themeData";
+import { THEME_FAMILLE_WORDS } from "../../data/themeData";
 
 const { width } = Dimensions.get("window");
 
@@ -51,7 +51,6 @@ const initializeAudio = async () => {
     audioInitialized = true;
     return true;
   } catch (error) {
-    // Handle keep awake error gracefully
     if (isKeepAwakeError(error)) {
       console.warn("Keep awake not available:", error.message);
       try {
@@ -77,37 +76,41 @@ const initializeAudio = async () => {
 // Initialize audio on module load
 initializeAudio().catch(() => {});
 
-// Audio playback function with error handling
-const playWordAudio = async (wordKey) => {
-  // Skip if audio is disabled
-  if (audioDisabled) {
+// Audio mapping for all 6 words - using available audio files
+// Note: In production, each word should have its own audio file
+const getAudioForWord = async (wordId) => {
+  if (audioDisabled) return false;
+
+  // Audio map for available files - map each word to available audio
+  // Since we have limited audio files, we'll map them to available ones
+  const audioMap = {
+    // p1: Le papa -> Papá
+    p1: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Mon Frère en duala.wav"),
+    // p2: La tante paternelle -> Ndómɛ á tetɛ́
+    p2: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/les grands parents en duala.wav"),
+    // p3: La maman -> Mamá
+    p3: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Le bebe en duala.wav"),
+    // p4: L'oncle paternel -> Árí á tetɛ́
+    p4: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/l'oncle en douala.wav"),
+    // p5: Le frère -> Muna
+    p5: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Mon Frère en duala.wav"),
+    // p6: La sœur -> Sango
+    p6: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Le bebe en duala.wav")
+  };
+
+  const audioSource = audioMap[wordId];
+  if (!audioSource) {
+    console.log(`Audio not available for: ${wordId}`);
     return false;
   }
 
   try {
-    // Map words to their audio files based on available assets for Exercise 2
-    const audioMap = {
-      // Using Exercise 2 audio files
-      audio1: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 2 du theme 0 en duala/Theme 0 exer 2 (les grands parents en duala).wav"),
-      audio2: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 2 du theme 0 en duala/Theme 0 exer 2 Rpsne N1 (les amis en duala).wav")
-    };
-
-    const audioSource = audioMap[wordKey];
-    if (!audioSource) {
-      console.log(`Audio not available for: ${wordKey}`);
-      return false;
-    }
-
-    // Ensure audio is initialized
     const initResult = await initializeAudio();
-    if (!initResult) {
-      return false;
-    }
+    if (!initResult) return false;
 
     const { sound } = await Audio.Sound.createAsync(audioSource);
     await sound.playAsync();
 
-    // Cleanup after playing
     sound.setOnPlaybackStatusUpdate((status) => {
       if (status.isLoaded && status.didJustFinish) {
         sound.unloadAsync();
@@ -115,21 +118,17 @@ const playWordAudio = async (wordKey) => {
     });
     return true;
   } catch (error) {
-    // Handle keep awake error gracefully
     if (isKeepAwakeError(error)) {
-      console.warn("Keep awake error during playback:", error.message);
       audioDisabled = true;
-      return false;
     }
     console.error("Error playing audio:", error.message);
     return false;
   }
 };
 
-// Play correct/incorrect feedback sound
-const playFeedbackSound = async (isCorrect, language = "fr") => {
+// Play feedback sound
+const playFeedbackSound = async (isCorrect) => {
   try {
-    // Try haptic feedback with proper error handling
     try {
       if (isCorrect) {
         await Haptics.notificationAsync(
@@ -146,20 +145,17 @@ const playFeedbackSound = async (isCorrect, language = "fr") => {
   }
 };
 
-// --- DONNÉES DE L'EXERCICE (SHARED WORD POOL) ---
-// Uses words from the shared pool for pedagogical consistency
+// --- EXERCISE DATA: ALL 6 WORDS ---
+// Using all 6 words from the shared pool for pedagogical consistency
+const EXERCISE_QUESTIONS = THEME_FAMILLE_WORDS.map((word, index) => ({
+  id: word.id,
+  questionNumber: index + 1,
+  fr: word.fr,
+  local: word.local,
+  audio: word.audio
+}));
 
-// Get a random word from the pool for this exercise
-const getWriteWord = () => {
-  const words = THEME_FAMILLE_WORDS;
-  const randomIndex = Math.floor(Math.random() * words.length);
-  return words[randomIndex];
-};
-
-// Initialize with a random word
-const currentWord = getWriteWord();
-const CORRECT_ANSWER = currentWord.local;
-const QUESTION_WORD = currentWord.fr;
+const TOTAL_QUESTIONS = EXERCISE_QUESTIONS.length;
 
 const ExerciseTwoScreen = () => {
   const router = useRouter();
@@ -167,7 +163,7 @@ const ExerciseTwoScreen = () => {
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language || "fr";
 
-  // --- SÉCURISATION ET CONVERSION DES PARAMÈTRES ---
+  // --- PARAMETER HANDLING ---
   const getParamAsNumber = (key, fallback) => {
     const value = params[key];
     const num = value ? parseInt(value, 10) : fallback;
@@ -175,32 +171,32 @@ const ExerciseTwoScreen = () => {
   };
 
   const initialLives = getParamAsNumber("currentLives", 5);
-  const initialTimer = getParamAsNumber("currentTimer", 0);
   const totalProgress = getParamAsNumber("totalProgress", 33);
 
-  // --- ÉTATS ---
+  // --- STATE ---
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [inputText, setInputText] = useState("");
   const [lives, setLives] = useState(initialLives);
-  const [timer] = useState(initialTimer); // Timer n'est pas utilisé pour l'instant
+  const [status, setStatus] = useState("idle"); // 'idle', 'success', 'error'
+  const [isAnswered, setIsAnswered] = useState(false);
+  const [errorCount, setErrorCount] = useState(
+    getParamAsNumber("errorCount", 0)
+  );
 
-  // Store time per exercise for end screen
-  const getExerciseTimes = () => {
-    try {
-      return params?.exerciseTimes ? JSON.parse(params.exerciseTimes) : [];
-    } catch (e) {
-      return [];
-    }
-  };
-  const [exerciseTimes, setExerciseTimes] = useState(getExerciseTimes());
+  // Track results for each question
+  const [questionResults, setQuestionResults] = useState([]);
 
-  // Timer state - Track time taken to complete exercise
+  // Timer state
   const [startTime] = useState(() => Date.now());
   const [elapsedTime, setElapsedTime] = useState(0);
   const timerRef = useRef(null);
 
-  // Initialize timer when component mounts
+  // Current question
+  const currentQuestion = EXERCISE_QUESTIONS[currentQuestionIndex];
+  const isLastQuestion = currentQuestionIndex === TOTAL_QUESTIONS - 1;
+
+  // Initialize timer
   useEffect(() => {
-    // Start timer interval
     timerRef.current = setInterval(() => {
       setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
     }, 1000);
@@ -212,102 +208,116 @@ const ExerciseTwoScreen = () => {
     };
   }, [startTime]);
 
-  // Format time as MM:SS
+  // Format time
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // États de l'exercice
-  const [status, setStatus] = useState("idle"); // 'idle', 'success', 'error'
-  const [isAnswered, setIsAnswered] = useState(false); // Vrai après le clic sur Valider
+  // --- HANDLERS ---
 
-  // --- LOGIQUE AUDIO ---
   const handlePlayAudio = async () => {
-    // Play the word audio
-    const success = await playWordAudio("papa");
+    const success = await getAudioForWord(currentQuestion.id);
     if (!success) {
-      Alert.alert(t("errors.audioError"), t("errors.audioNotAvailable"));
+      Alert.alert(
+        t("errors.audioError") || "Audio Error",
+        t("errors.audioNotAvailable") || "Audio not available"
+      );
     }
   };
 
-  // --- LOGIQUE DE VALIDATION ---
   const handleValidate = async () => {
-    if (inputText.trim() === "") return; // Ne rien faire si vide
+    if (inputText.trim() === "") return;
 
     const normalizedInput = inputText.trim().toLowerCase();
+    const isSuccess = normalizedInput === currentQuestion.local.toLowerCase();
 
-    // Le statut d'erreur/succès est défini maintenant
-    const isSuccess = normalizedInput === CORRECT_ANSWER.toLowerCase();
+    // Record result
+    const result = {
+      questionId: currentQuestion.id,
+      questionNumber: currentQuestion.questionNumber,
+      userAnswer: inputText.trim(),
+      correctAnswer: currentQuestion.local,
+      isCorrect: isSuccess
+    };
+    setQuestionResults((prev) => [...prev, result]);
 
     if (isSuccess) {
-      // --- SUCCÈS ✅ ---
       setStatus("success");
-      // Play positive feedback sound
-      await playFeedbackSound(true, currentLanguage);
+      await playFeedbackSound(true);
     } else {
-      // --- ERREUR ❌ ---
       setStatus("error");
-      // Play negative feedback sound
-      await playFeedbackSound(false, currentLanguage);
-      // Déduit la vie immédiatement, mais l'état n'est mis à jour qu'à la fin
+      setErrorCount((prev) => prev + 1);
       setLives((prev) => Math.max(0, prev - 1));
+      await playFeedbackSound(false);
     }
 
-    // On bloque la saisie et affiche le résultat
     setIsAnswered(true);
   };
 
-  // --- LOGIQUE DE NAVIGATION (UNIFIÉE) ---
-  const handleNextStep = () => {
-    // Stop timer
+  const handleNextQuestion = () => {
+    // Check if game over
+    if (lives <= 1) {
+      Alert.alert("Game Over", "Vous avez épuisé toutes vos vies !", [
+        {
+          text: "OK",
+          onPress: () => {
+            const exerciseTime = elapsedTime;
+            const totalTime = (parseInt(params?.totalTime) || 0) + exerciseTime;
+            router.push({
+              pathname: "/exercices/famille/endexos",
+              params: {
+                currentLives: 0,
+                totalTime: totalTime,
+                totalProgress: totalProgress,
+                errorCount: errorCount,
+                completedExercises: 2,
+                totalExercises: 3,
+                exerciseTimes: JSON.stringify([exerciseTime])
+              }
+            });
+          }
+        }
+      ]);
+      return;
+    }
+
+    // Move to next question or finish
+    if (isLastQuestion) {
+      // Finish exercise 2, go to exercise 3
+      finishExercise();
+    } else {
+      // Go to next question
+      setCurrentQuestionIndex((prev) => prev + 1);
+      setInputText("");
+      setStatus("idle");
+      setIsAnswered(false);
+    }
+  };
+
+  const finishExercise = () => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
     }
     const exerciseTime = elapsedTime;
-
-    // Store time for this exercise
-    const newExerciseTimes = [...exerciseTimes, exerciseTime];
-
-    const isSuccess = status === "success";
-    const progressBonus = isSuccess ? 33 : 0;
-
-    // Si l'utilisateur est Game Over, naviguer vers la fin du thème
-    if (lives === 0) {
-      Alert.alert("Game Over", "Vous avez épuisé toutes vos vies !");
-      const totalTime = (parseInt(params?.totalTime) || 0) + exerciseTime;
-      router.push({
-        pathname: "/exercices/famille/endexos",
-        params: {
-          currentLives: 0,
-          totalTime: totalTime,
-          totalProgress: totalProgress,
-          errorCount: parseInt(params?.errorCount) || 0,
-          completedExercises: 2,
-          totalExercises: 3,
-          exerciseTimes: JSON.stringify(newExerciseTimes)
-        }
-      });
-      return;
-    }
-
-    // Navigate to exercise 3 with cumulative time
     const cumulativeTime = (parseInt(params?.totalTime) || 0) + exerciseTime;
+
     router.push({
       pathname: "/exercices/famille/exos3",
       params: {
         currentLives: lives,
         totalTime: cumulativeTime,
-        totalProgress: totalProgress + progressBonus,
-        errorCount: parseInt(params?.errorCount) || 0,
-        exerciseTimes: JSON.stringify(newExerciseTimes)
+        totalProgress: 66, // After 2 exercises (33% + 33%)
+        errorCount: errorCount,
+        exerciseTimes: JSON.stringify([exerciseTime])
       }
     });
   };
 
-  // --- RENDU ---
-  const isInputDisabled = isAnswered;
+  // Calculate progress for this exercise (0-33%)
+  const exerciseProgress = ((currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 33;
+  const overallProgress = totalProgress + exerciseProgress;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -318,22 +328,35 @@ const ExerciseTwoScreen = () => {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-          {/* --- HEADER SIMULÉ (VIES & PROGRESSION) --- */}
+          {/* --- HEADER --- */}
           <View style={styles.header}>
             <View>
               <Text style={styles.headerText}>
-                Progression : {totalProgress}%
+                Question {currentQuestionIndex + 1} / {TOTAL_QUESTIONS}
               </Text>
               <Text style={styles.timerText}>
                 🕒 Temps : {formatTime(elapsedTime)}
               </Text>
             </View>
-            <Text style={styles.livesText}>🐚 {lives} vies restantes</Text>
+            <Text style={styles.livesText}>🐚 {lives} vies</Text>
           </View>
 
-          {/* --- CONSIGNE --- */}
+          {/* Progress bar for this exercise */}
+          <View style={styles.exerciseProgressContainer}>
+            <View style={styles.exerciseProgressBar}>
+              <View
+                style={[
+                  styles.exerciseProgressFill,
+                  {
+                    width: `${((currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 100}%`
+                  }
+                ]}
+              />
+            </View>
+          </View>
+
+          {/* --- INSTRUCTION --- */}
           <View style={styles.instructionContainer}>
-            {/* Image illustration */}
             <View style={styles.imageContainer}>
               <Image
                 source={require("../../../assets/images/avatar-famille.png")}
@@ -342,9 +365,12 @@ const ExerciseTwoScreen = () => {
               />
             </View>
             <Text style={styles.instruction}>
-              Écoutez le mot et écrivez-le ci-dessous :
+              Écoutez et écrivez le mot en langue locale :
             </Text>
-            {/* Le bouton joue le son */}
+            <Text style={styles.frenchWord}>
+              &quot;{currentQuestion.fr}&quot;
+            </Text>
+
             <TouchableOpacity
               style={styles.audioButton}
               onPress={handlePlayAudio}
@@ -353,7 +379,7 @@ const ExerciseTwoScreen = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Champ de Saisie */}
+          {/* --- INPUT --- */}
           <TextInput
             style={[
               styles.input,
@@ -362,16 +388,16 @@ const ExerciseTwoScreen = () => {
             ]}
             placeholder={isAnswered ? "" : "Écrivez votre réponse ici..."}
             value={inputText}
-            onChangeText={(t) => {
-              setInputText(t);
-              // Reset le statut uniquement si on recommence à taper avant de valider
+            onChangeText={(text) => {
+              setInputText(text);
               if (!isAnswered) setStatus("idle");
             }}
-            // Désactivé si on a déjà répondu
-            editable={!isInputDisabled}
+            editable={!isAnswered}
+            autoCapitalize='none'
+            autoCorrect={false}
           />
 
-          {/* --- ZONE DE CORRECTION --- */}
+          {/* --- FEEDBACK --- */}
           {isAnswered && (
             <View
               style={
@@ -392,18 +418,15 @@ const ExerciseTwoScreen = () => {
               {status === "error" && (
                 <Text style={styles.correctionText}>
                   La bonne réponse était :{" "}
-                  <Text style={styles.boldRed}>{CORRECT_ANSWER}</Text>
+                  <Text style={styles.boldRed}>{currentQuestion.local}</Text>
                 </Text>
               )}
             </View>
           )}
         </ScrollView>
 
-        {/* // ... (à l'intérieur du bloc <KeyboardAvoidingView>) ... */}
-
-        {/* --- FOOTER / BOUTONS D'ACTION --- */}
+        {/* --- FOOTER --- */}
         <View style={styles.footerActions}>
-          {/* Bouton Valider / Continuer */}
           <TouchableOpacity
             style={[
               styles.validateButton,
@@ -411,16 +434,17 @@ const ExerciseTwoScreen = () => {
               isAnswered &&
                 status === "success" &&
                 styles.continueButtonSuccess,
-              // Grisé si on n'a pas tapé et qu'on n'a pas encore répondu
               !isAnswered && inputText.trim() === "" && { opacity: 0.5 }
             ]}
-            // 💡 LOGIQUE CLÉ : Si isAnswered est vrai (après la validation), on navigue. Sinon, on valide.
-            onPress={isAnswered ? handleNextStep : handleValidate}
+            onPress={isAnswered ? handleNextQuestion : handleValidate}
             disabled={!isAnswered && inputText.trim() === ""}
           >
             <Text style={styles.validateButtonText}>
-              {/* Le texte change après la validation */}
-              {isAnswered ? "Continuer" : "Valider"}
+              {isAnswered
+                ? isLastQuestion
+                  ? "Terminer"
+                  : "Question suivante"
+                : "Valider"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -438,20 +462,19 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 20,
     alignItems: "center",
-    // justifyContent: 'space-between', // Retiré pour laisser le footer au bas du KeyboardAvoidingView
     paddingBottom: 20
   },
-  // ... (Styles existants) ...
   header: {
     width: "100%",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 20,
+    marginBottom: 15,
     marginTop: 10
   },
   headerText: {
     fontSize: 14,
-    color: "#000"
+    color: "#000",
+    fontWeight: "600"
   },
   livesText: {
     fontSize: 14,
@@ -463,33 +486,55 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 4
   },
+  exerciseProgressContainer: {
+    width: "100%",
+    marginBottom: 20
+  },
+  exerciseProgressBar: {
+    height: 6,
+    backgroundColor: "#E0E0E0",
+    borderRadius: 3,
+    overflow: "hidden"
+  },
+  exerciseProgressFill: {
+    height: "100%",
+    backgroundColor: "#4CAF50",
+    borderRadius: 3
+  },
   instructionContainer: {
     width: "100%",
     alignItems: "center",
-    marginBottom: 40
-  },
-  instruction: {
-    fontSize: 18,
-    fontWeight: "500",
-    marginBottom: 20,
-    textAlign: "center"
+    marginBottom: 30
   },
   imageContainer: {
     width: "100%",
-    height: 100,
+    height: 80,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 15
   },
   illustrationImage: {
-    width: 80,
-    height: 80
+    width: 60,
+    height: 60
+  },
+  instruction: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 15,
+    textAlign: "center"
+  },
+  frenchWord: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 20,
+    fontStyle: "italic"
   },
   audioButton: {
     backgroundColor: "#C81E2F",
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -499,7 +544,7 @@ const styles = StyleSheet.create({
     elevation: 8
   },
   audioIcon: {
-    fontSize: 40
+    fontSize: 32
   },
   input: {
     width: "100%",
@@ -507,9 +552,9 @@ const styles = StyleSheet.create({
     borderColor: "#CCC",
     borderBottomWidth: 2,
     paddingHorizontal: 10,
-    fontSize: 18,
+    fontSize: 20,
     textAlign: "center",
-    marginBottom: 30
+    marginBottom: 20
   },
   inputError: {
     borderColor: "#C81E2F",
@@ -519,14 +564,11 @@ const styles = StyleSheet.create({
     borderColor: "#34C759",
     borderBottomWidth: 3
   },
-
-  // NOUVEAUX STYLES DE CORRECTION
   correctionError: {
     backgroundColor: "#FFEBEE",
     borderLeftWidth: 5,
     borderLeftColor: "#C81E2F",
     padding: 15,
-    marginTop: 10,
     width: "100%",
     borderRadius: 8
   },
@@ -535,21 +577,20 @@ const styles = StyleSheet.create({
     borderLeftWidth: 5,
     borderLeftColor: "#34C759",
     padding: 15,
-    marginTop: 10,
     width: "100%",
     borderRadius: 8
   },
   correctionTitleError: {
     color: "#C81E2F",
     fontWeight: "bold",
-    marginBottom: 5,
-    fontSize: 16
+    fontSize: 16,
+    marginBottom: 5
   },
   correctionTitleSuccess: {
     color: "#34C759",
     fontWeight: "bold",
-    marginBottom: 5,
-    fontSize: 16
+    fontSize: 16,
+    marginBottom: 5
   },
   correctionText: {
     fontSize: 16,
@@ -560,12 +601,10 @@ const styles = StyleSheet.create({
     color: "#C81E2F",
     fontSize: 18
   },
-
-  // FOOTER ACTIONS PLACÉ EN BAS DU KEYBOARDAVOIDINGVIEW
   footerActions: {
     width: "100%",
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 15,
     backgroundColor: "#F5F5F5",
     borderTopWidth: 1,
     borderTopColor: "#EEE"

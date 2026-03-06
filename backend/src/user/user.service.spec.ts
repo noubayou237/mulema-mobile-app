@@ -44,6 +44,9 @@ describe('UserService', () => {
       uploadFile: jest.fn(),
       deleteFile: jest.fn(),
       extractKey: jest.fn(),
+      getSignedUrl: jest
+        .fn()
+        .mockResolvedValue('https://r2.example.com/signed-url.jpg'),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -66,9 +69,13 @@ describe('UserService', () => {
 
       const result = await service.getProfile('user-123');
 
+      // Avatar should have signed URL now
       expect(result).toEqual({
         ...mockUser,
-        avatar: mockAvatar,
+        avatar: {
+          id: mockAvatar.id,
+          imageUrl: 'https://r2.example.com/signed-url.jpg',
+        },
       });
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: 'user-123' },
@@ -153,7 +160,7 @@ describe('UserService', () => {
       );
 
       expect(result.imageUrl).toBe(
-        'https://r2.example.com/avatars/new-avatar.jpg',
+        'https://r2.example.com/signed-url.jpg',
       );
       expect(r2Storage.uploadFile).toHaveBeenCalled();
     });
