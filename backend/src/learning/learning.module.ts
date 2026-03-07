@@ -6,6 +6,7 @@ import { ExerciseModule } from './exercise/exercise.module';
 import { QuestionModule } from './question/question.module';
 import { StoryModule } from './story/story.module';
 import { CowryModule } from './cowry/cowry.module';
+import { UserLanguageModule } from './user-language/user-language.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { CowryModule } from './cowry/cowry.module';
     QuestionModule,
     StoryModule,
     CowryModule,
+    UserLanguageModule,
   ],
 })
 export class LearningModule {}
