@@ -5,12 +5,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  TouchableOpacity,
+  TouchableOpacity
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import api from "../../services/api";
+import api from "@/services/api";
 
 import ScreenWrapper from "../components/ui/ScreenWrapper";
 import AppTitle from "../components/ui/AppTitle";
@@ -27,17 +27,16 @@ export default function SignUpScreen() {
     username: "",
     email: "",
     password: "",
-    confirm: "",
+    confirm: ""
   });
 
   const [ui, setUi] = useState({
     showPassword: false,
     showConfirm: false,
-    loading: false,
+    loading: false
   });
 
-  const onChange = (key) => (val) =>
-    setForm((s) => ({ ...s, [key]: val }));
+  const onChange = (key) => (val) => setForm((s) => ({ ...s, [key]: val }));
 
   const validate = () => {
     if (
@@ -72,7 +71,7 @@ export default function SignUpScreen() {
         email: form.email,
         username: form.username,
         name: form.username,
-        password: form.password,
+        password: form.password
       });
 
       Alert.alert(
@@ -82,7 +81,7 @@ export default function SignUpScreen() {
 
       router.replace({
         pathname: "/(auth)/verify-email",
-        params: { email: form.email, flow: "verify" },
+        params: { email: form.email, flow: "verify" }
       });
     } catch (err) {
       const message =
@@ -99,47 +98,45 @@ export default function SignUpScreen() {
     <ScreenWrapper>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
+        className='flex-1'
       >
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
           showsVerticalScrollIndicator={false}
         >
           {/* Image */}
-          <View className="items-center mb-6">
+          <View className='items-center mb-6'>
             <Image
               source={require("../../assets/images/sign-up.png")}
               style={{ width: 110, height: 110 }}
-              contentFit="contain"
+              contentFit='contain'
             />
           </View>
 
-          <AppTitle className="mb-6">
-            Create Account
-          </AppTitle>
+          <AppTitle className='mb-6'>Create Account</AppTitle>
 
           {/* Username */}
           <AuthInput
-            label="Username"
-            placeholder="Choose a username"
+            label='Username'
+            placeholder='Choose a username'
             value={form.username}
             onChangeText={onChange("username")}
           />
 
           {/* Email */}
           <AuthInput
-            label="Email"
-            placeholder="Enter your email"
+            label='Email'
+            placeholder='Enter your email'
             value={form.email}
             onChangeText={onChange("email")}
-            keyboardType="email-address"
+            keyboardType='email-address'
           />
 
           {/* Password */}
-          <View className="relative">
+          <View className='relative'>
             <AuthInput
-              label="Password"
-              placeholder="Enter password"
+              label='Password'
+              placeholder='Enter password'
               value={form.password}
               onChangeText={onChange("password")}
               secureTextEntry={!ui.showPassword}
@@ -149,28 +146,24 @@ export default function SignUpScreen() {
               onPress={() =>
                 setUi((s) => ({
                   ...s,
-                  showPassword: !s.showPassword,
+                  showPassword: !s.showPassword
                 }))
               }
-              className="absolute right-4 top-10"
+              className='absolute right-4 top-10'
             >
               <Ionicons
-                name={
-                  ui.showPassword
-                    ? "eye-outline"
-                    : "eye-off-outline"
-                }
+                name={ui.showPassword ? "eye-outline" : "eye-off-outline"}
                 size={20}
-                color="#6B7280"
+                color='#6B7280'
               />
             </TouchableOpacity>
           </View>
 
           {/* Confirm Password */}
-          <View className="relative">
+          <View className='relative'>
             <AuthInput
-              label="Confirm Password"
-              placeholder="Confirm password"
+              label='Confirm Password'
+              placeholder='Confirm password'
               value={form.confirm}
               onChangeText={onChange("confirm")}
               secureTextEntry={!ui.showConfirm}
@@ -180,42 +173,30 @@ export default function SignUpScreen() {
               onPress={() =>
                 setUi((s) => ({
                   ...s,
-                  showConfirm: !s.showConfirm,
+                  showConfirm: !s.showConfirm
                 }))
               }
-              className="absolute right-4 top-10"
+              className='absolute right-4 top-10'
             >
               <Ionicons
-                name={
-                  ui.showConfirm
-                    ? "eye-outline"
-                    : "eye-off-outline"
-                }
+                name={ui.showConfirm ? "eye-outline" : "eye-off-outline"}
                 size={20}
-                color="#6B7280"
+                color='#6B7280'
               />
             </TouchableOpacity>
           </View>
 
           {/* Button */}
-          <Button
-            title="Sign Up"
-            onPress={handleSignUp}
-            loading={ui.loading}
-          />
+          <Button title='Sign Up' onPress={handleSignUp} loading={ui.loading} />
 
           {/* Sign In */}
           <TouchableOpacity
-            onPress={() =>
-              router.replace("/(auth)/sign-in")
-            }
-            className="mt-6 items-center"
+            onPress={() => router.replace("/(auth)/sign-in")}
+            className='mt-6 items-center'
           >
-            <AppText variant="muted">
+            <AppText variant='muted'>
               Already have an account?{" "}
-              <AppText className="text-primary">
-                Sign In
-              </AppText>
+              <AppText className='text-primary'>Sign In</AppText>
             </AppText>
           </TouchableOpacity>
         </ScrollView>

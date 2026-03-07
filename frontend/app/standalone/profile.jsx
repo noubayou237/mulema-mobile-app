@@ -18,7 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useUser } from "@/src/context/UserContext";
 import { useState, useEffect } from "react";
 import * as ImagePicker from "expo-image-picker";
-import api from "../../services/api";
+import api from "@/services/api";
 import { useTranslation } from "react-i18next";
 import "../../src/i18n";
 

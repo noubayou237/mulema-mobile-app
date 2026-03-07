@@ -1,7 +1,7 @@
 // app/(tabs)/home.jsx
 
 import React, { useEffect, useState } from "react";
-import { View, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator, Text } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -59,8 +59,8 @@ export default function HomeRouter() {
   // Loader
   if (loading) {
     return (
-      <View className="flex-1 bg-background justify-center items-center">
-        <ActivityIndicator size="large" />
+      <View className='flex-1 bg-background justify-center items-center'>
+        <ActivityIndicator size='large' />
       </View>
     );
   }
@@ -79,9 +79,9 @@ export default function HomeRouter() {
 
     default:
       return (
-        <View className="flex-1 bg-background justify-center items-center px-6">
-          <View className="bg-card border border-border rounded-2xl p-6">
-            <Text className="text-center text-foreground">
+        <View className='flex-1 bg-background justify-center items-center px-6'>
+          <View className='bg-card border border-border rounded-2xl p-6'>
+            <Text className='text-center text-foreground'>
               {t("errors.languageNotSelected") ||
                 "Langue non définie. Sélectionnez une langue."}
             </Text>
