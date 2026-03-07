@@ -6,12 +6,12 @@ import {
   ScrollView,
   View,
   TextInput,
-  TouchableOpacity,
+  TouchableOpacity
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../../services/api";
+import api from "@/services/api";
 import { useTranslation } from "react-i18next";
 
 import ScreenWrapper from "../components/ui/ScreenWrapper";
@@ -74,10 +74,7 @@ export default function VerifyEmail() {
 
   const handleVerification = async () => {
     if (!code.trim()) {
-      return Alert.alert(
-        t("errors.codeRequired"),
-        t("errors.enterCode")
-      );
+      return Alert.alert(t("errors.codeRequired"), t("errors.enterCode"));
     }
 
     setLoading(true);
@@ -85,13 +82,13 @@ export default function VerifyEmail() {
       if (flow === "reset") {
         router.push({
           pathname: "/(auth)/ResetPasswordScreen",
-          params: { email, otpCode: code.trim() },
+          params: { email, otpCode: code.trim() }
         });
       } else {
-        const response = await api.post(
-          "/auth/verify-email-and-login",
-          { email, otpCode: code.trim() }
-        );
+        const response = await api.post("/auth/verify-email-and-login", {
+          email,
+          otpCode: code.trim()
+        });
 
         Alert.alert("Succès", "Email vérifié!");
         await autoLogin(response.data);
@@ -136,54 +133,49 @@ export default function VerifyEmail() {
     <ScreenWrapper>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
+        className='flex-1'
       >
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
         >
           {/* Image */}
-          <View className="items-center mb-6">
+          <View className='items-center mb-6'>
             <Image
               source={require("../../assets/images/otp.png")}
               style={{ width: 120, height: 120 }}
-              contentFit="contain"
+              contentFit='contain'
             />
           </View>
 
           {/* Title */}
-          <AppTitle className="mb-2 text-center">
-            {flow === "verify"
-              ? t("auth.verifyEmail")
-              : t("auth.verifyCode")}
+          <AppTitle className='mb-2 text-center'>
+            {flow === "verify" ? t("auth.verifyEmail") : t("auth.verifyCode")}
           </AppTitle>
 
-          <AppText
-            variant="muted"
-            className="text-center mb-6"
-          >
+          <AppText variant='muted' className='text-center mb-6'>
             {t("auth.codeSentTo")} {email}
           </AppText>
 
           {/* OTP Input */}
           <TextInput
-            className="bg-card border border-border rounded-xl py-4 text-center text-xl tracking-[8px] text-foreground mb-6"
-            placeholder="------"
+            className='bg-card border border-border rounded-xl py-4 text-center text-xl tracking-[8px] text-foreground mb-6'
+            placeholder='------'
             value={code}
             onChangeText={setCode}
-            keyboardType="number-pad"
+            keyboardType='number-pad'
             maxLength={6}
           />
 
           {/* Verify Button */}
           <Button
-            title="Vérifier"
+            title='Vérifier'
             onPress={handleVerification}
             loading={loading}
           />
 
           {/* Resend Section */}
-          <View className="mt-6 items-center">
-            <AppText variant="muted" className="mb-2">
+          <View className='mt-6 items-center'>
+            <AppText variant='muted' className='mb-2'>
               {resendCooldown > 0
                 ? `Renvoyer dans ${formatTime(resendCooldown)}`
                 : "Vous n'avez pas reçu le code ?"}
@@ -191,35 +183,22 @@ export default function VerifyEmail() {
 
             <TouchableOpacity
               onPress={handleResend}
-              disabled={
-                resendLoading || resendCooldown > 0
-              }
-              className={`px-4 py-2 ${
-                resendCooldown > 0
-                  ? "opacity-50"
-                  : ""
-              }`}
+              disabled={resendLoading || resendCooldown > 0}
+              className={`px-4 py-2 ${resendCooldown > 0 ? "opacity-50" : ""}`}
             >
-              <AppText className="text-primary font-semibold">
-                {resendLoading
-                  ? "Envoi..."
-                  : "Renvoyer le code"}
+              <AppText className='text-primary font-semibold'>
+                {resendLoading ? "Envoi..." : "Renvoyer le code"}
               </AppText>
             </TouchableOpacity>
           </View>
 
           {/* Back */}
           <TouchableOpacity
-            onPress={() =>
-              router.replace("/(auth)/sign-up")
-            }
-            className="mt-8 items-center"
+            onPress={() => router.replace("/(auth)/sign-up")}
+            className='mt-8 items-center'
           >
-            <AppText variant="muted">
-              Retour à{" "}
-              <AppText className="text-primary">
-                Inscription
-              </AppText>
+            <AppText variant='muted'>
+              Retour à <AppText className='text-primary'>Inscription</AppText>
             </AppText>
           </TouchableOpacity>
         </ScrollView>

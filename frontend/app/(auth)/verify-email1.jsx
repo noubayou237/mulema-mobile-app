@@ -6,7 +6,7 @@ import {
   Platform,
   ScrollView,
   TextInput,
-  TouchableOpacity,
+  TouchableOpacity
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useSignUp } from "@clerk/clerk-expo";
@@ -31,10 +31,7 @@ export default function VerifyEmailScreen() {
     }
 
     if (!isLoaded || !signUp) {
-      return Alert.alert(
-        "Erreur",
-        "Service d'authentification non prêt."
-      );
+      return Alert.alert("Erreur", "Service d'authentification non prêt.");
     }
 
     try {
@@ -43,28 +40,19 @@ export default function VerifyEmailScreen() {
       Alert.alert("Succès", "Email vérifié.");
       router.replace("/ChoiceLanguage");
     } catch (err) {
-      Alert.alert(
-        "Erreur",
-        err?.message || "Échec de la vérification."
-      );
+      Alert.alert("Erreur", err?.message || "Échec de la vérification.");
     }
   };
 
   const resend = async () => {
     try {
       await signUp.prepareEmailAddressVerification({
-        strategy: "email_code",
+        strategy: "email_code"
       });
 
-      Alert.alert(
-        "Envoyé",
-        `Un nouveau code a été envoyé à ${email}`
-      );
+      Alert.alert("Envoyé", `Un nouveau code a été envoyé à ${email}`);
     } catch (e) {
-      Alert.alert(
-        "Erreur",
-        "Impossible de renvoyer le code."
-      );
+      Alert.alert("Erreur", "Impossible de renvoyer le code.");
     }
   };
 
@@ -72,69 +60,55 @@ export default function VerifyEmailScreen() {
     <ScreenWrapper>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
+        className='flex-1'
       >
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
-            justifyContent: "center",
+            justifyContent: "center"
           }}
         >
           {/* Image */}
-          <View className="items-center mb-6">
+          <View className='items-center mb-6'>
             <Image
               source={require("../../assets/images/otp.png")}
               style={{ width: 120, height: 120 }}
-              contentFit="contain"
+              contentFit='contain'
             />
           </View>
 
-          <AppTitle className="mb-2 text-center">
-            Vérifier l'email
+          <AppTitle className='mb-2 text-center'>
+            Vérifier l&apos;email
           </AppTitle>
 
-          <AppText
-            variant="muted"
-            className="text-center mb-6"
-          >
+          <AppText variant='muted' className='text-center mb-6'>
             Code envoyé à : {email}
           </AppText>
 
           {/* OTP Input */}
           <TextInput
-            className="bg-card border border-border rounded-xl py-4 text-center text-xl tracking-[6px] text-foreground mb-6"
-            placeholder="------"
+            className='bg-card border border-border rounded-xl py-4 text-center text-xl tracking-[6px] text-foreground mb-6'
+            placeholder='------'
             value={code}
             onChangeText={setCode}
-            keyboardType="number-pad"
+            keyboardType='number-pad'
             maxLength={6}
           />
 
-          <Button
-            title="Vérifier"
-            onPress={handleVerify}
-          />
+          <Button title='Vérifier' onPress={handleVerify} />
 
-          <TouchableOpacity
-            onPress={resend}
-            className="mt-4 items-center"
-          >
-            <AppText className="text-primary font-semibold">
+          <TouchableOpacity onPress={resend} className='mt-4 items-center'>
+            <AppText className='text-primary font-semibold'>
               Renvoyer le code
             </AppText>
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() =>
-              router.replace("/(auth)/sign-up")
-            }
-            className="mt-8 items-center"
+            onPress={() => router.replace("/(auth)/sign-up")}
+            className='mt-8 items-center'
           >
-            <AppText variant="muted">
-              Back to{" "}
-              <AppText className="text-primary">
-                Sign up
-              </AppText>
+            <AppText variant='muted'>
+              Back to <AppText className='text-primary'>Sign up</AppText>
             </AppText>
           </TouchableOpacity>
         </ScrollView>

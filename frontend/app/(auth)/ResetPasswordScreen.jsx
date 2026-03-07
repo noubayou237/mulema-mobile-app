@@ -7,10 +7,10 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
+  ScrollView
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import api from "../../services/api";
+import api from "@/services/api";
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
@@ -48,7 +48,7 @@ export default function ResetPasswordScreen() {
       await api.post("/auth/reset-password", {
         email,
         otpCode,
-        newPassword,
+        newPassword
       });
 
       Alert.alert(
@@ -69,42 +69,42 @@ export default function ResetPasswordScreen() {
   };
 
   return (
-    <View className="flex-1 bg-background px-6">
+    <View className='flex-1 bg-background px-6'>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
+        className='flex-1'
       >
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
           showsVerticalScrollIndicator={false}
         >
-          <Text className="text-2xl font-semibold text-foreground mb-2">
+          <Text className='text-2xl font-semibold text-foreground mb-2'>
             Réinitialiser le mot de passe
           </Text>
 
-          <Text className="text-muted-foreground mb-6">
+          <Text className='text-muted-foreground mb-6'>
             Compte : {email || "—"}
           </Text>
 
-          <View className="space-y-4">
+          <View className='space-y-4'>
             <TextInput
-              className="bg-card border border-border rounded-xl px-4 py-3 text-foreground"
-              placeholder="Nouveau mot de passe"
-              placeholderTextColor="#9CA3AF"
+              className='bg-card border border-border rounded-xl px-4 py-3 text-foreground'
+              placeholder='Nouveau mot de passe'
+              placeholderTextColor='#9CA3AF'
               secureTextEntry
               value={newPassword}
               onChangeText={setNewPassword}
-              autoCapitalize="none"
+              autoCapitalize='none'
             />
 
             <TextInput
-              className="bg-card border border-border rounded-xl px-4 py-3 text-foreground"
-              placeholder="Confirmer le mot de passe"
-              placeholderTextColor="#9CA3AF"
+              className='bg-card border border-border rounded-xl px-4 py-3 text-foreground'
+              placeholder='Confirmer le mot de passe'
+              placeholderTextColor='#9CA3AF'
               secureTextEntry
               value={confirmPassword}
               onChangeText={setConfirmPassword}
-              autoCapitalize="none"
+              autoCapitalize='none'
             />
 
             <TouchableOpacity
@@ -114,7 +114,7 @@ export default function ResetPasswordScreen() {
               onPress={handleSubmit}
               disabled={loading}
             >
-              <Text className="text-primary-foreground font-semibold">
+              <Text className='text-primary-foreground font-semibold'>
                 {loading ? "Enregistrement..." : "OK"}
               </Text>
             </TouchableOpacity>
