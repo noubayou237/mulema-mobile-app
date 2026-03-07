@@ -9,12 +9,12 @@ import { STORAGE_KEYS } from "../src/constants/storageKeys";
 const HAS_SELECTED_LANGUAGE = "selectedLanguage";
 const HAS_SEEN_INTRO = "hasSeenIntro";
 const SESSION_KEY = "userSession"; // Must match UserContext.jsx
-const SPLASH_DURATION_MS = 2000; // Reduced to 2 seconds for better UX
+const SPLASH_DURATION_MS = 5000; // Reduced to 2 seconds for better UX
 
 // animation timing
 const BASE_DELAY_MS = 800;
 const STEP_DELAY_MS = 100;
-const ANIM_DURATION = 500;
+const ANIM_DURATION = 1000;
 const BEZIER = Easing.bezier(0.95, 0.05, 0.795, 0.035);
 
 // --- SVG PATHS (INCHANGÉS) ---

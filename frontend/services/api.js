@@ -11,7 +11,7 @@ import { Platform } from "react-native";
 
 // Replace with your PC's IP address for mobile testing
 // To find your IP: run `ip addr` or `ifconfig` in terminal
-const PC_IP = process.env.EXPO_PUBLIC_API_IP || "192.168.43.125";
+const PC_IP = process.env.EXPO_PUBLIC_API_IP || "172.20.10.14";
 
 const API_BASE_URL =
   Platform.OS === "web"
