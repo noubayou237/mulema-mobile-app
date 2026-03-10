@@ -111,4 +111,24 @@ export class AuthController {
       return { success: false, message: error.message };
     }
   }
+
+  // =====================
+  // SOCIAL LOGIN
+  // =====================
+  @Post('social-login')
+  async socialLogin(
+    @Body()
+    body: {
+      provider: 'GOOGLE' | 'FACEBOOK' | 'APPLE';
+      providerId: string;
+      email: string;
+      name: string;
+      username?: string;
+    },
+  ) {
+    this.logger.log(
+      `Social login request: ${body.provider} for email: ${body.email}`,
+    );
+    return this.authService.socialLogin(body);
+  }
 }

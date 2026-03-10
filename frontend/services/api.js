@@ -21,9 +21,19 @@ const getApiUrl = () => {
     return "http://10.0.2.2:5001";
   }
 
-  // 🚀 For ALL physical devices (iOS & Android)
-  const PC_IP = "192.168.195.108"; // 🔁 Mets TON IP exacte
-  return `http://${PC_IP}:5001`;
+  // iOS simulator
+  if (Platform.OS === "ios" && __DEV__) {
+    return "http://localhost:5001";
+  }
+
+  // For ALL physical devices - use environment variable
+  const PC_IP = process.env.EXPO_PUBLIC_API_IP;
+  if (PC_IP) {
+    return `http://${PC_IP}:5001`;
+  }
+
+  // Fallback - this should not happen in production
+  return "http://localhost:5001";
 };
 
 const API_BASE_URL = getApiUrl();
