@@ -9,9 +9,14 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mulema.app",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Use Face ID for authentication"
+      }
     },
     "android": {
+      "package": "com.mulema.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -37,6 +42,29 @@
           "dark": {
             "backgroundColor": "#000000"
           }
+        }
+      ],
+      [
+        "expo-auth-session",
+        {
+          "google": {
+            "clientId": "670109425944-2nndpnus77u6vjpoa1rsv4nrqmuehqa3.apps.googleusercontent.com",
+            "iosClientId": "670109425944-dacodngjkraaba171q1ashtsnpsbfe4i.apps.googleusercontent.com",
+            "androidClientId": "670109425944-eg1djr9lq53df2ans16d61p78f1u4dhs.apps.googleusercontent.com"
+          }
+        }
+      ],
+      [
+        "expo-facebook",
+        {
+          "appId": "1992544871639029",
+          "appName": "Mulema"
+        }
+      ],
+      [
+        "expo-apple-authentication",
+        {
+          "nonce": true
         }
       ]
     ],

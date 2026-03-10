@@ -28,6 +28,12 @@ enum OtpPurpose {
   RESET_PASSWORD
 }
 
+enum SocialProvider {
+  GOOGLE
+  FACEBOOK
+  APPLE
+}
+
 // =====================
 // USER & AUTH
 // =====================
@@ -37,9 +43,12 @@ model User {
   name          String
   email         String   @unique
   username      String   @unique
-  passwordHash  String
+  passwordHash  String?
   role          Role     @default(USER)
   isVerified    Boolean  @default(false)
+  isSocial      Boolean  @default(false)  // true if registered via social login
+  provider      SocialProvider?           // GOOGLE, FACEBOOK, APPLE
+  providerId    String?                   // Social platform user ID
   totalPrawns   Int      @default(0)
   language      String   @default("en") // "en" or "fr"
 

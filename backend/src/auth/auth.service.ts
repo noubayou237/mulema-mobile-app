@@ -388,4 +388,110 @@ export class AuthService {
       user: { id: user.id, email: user.email, username: user.username },
     };
   }
+
+  // =====================
+  // SOCIAL LOGIN
+  // =====================
+  async socialLogin(body: {
+    provider: 'GOOGLE' | 'FACEBOOK' | 'APPLE';
+    providerId: string;
+    email: string;
+    name: string;
+    username?: string;
+  }) {
+    const { provider, providerId, email, name, username } = body;
+
+    if (!provider || !providerId || !email || !name) {
+      throw new BadRequestException('Missing required fields');
+    }
+
+    // Check if user exists with this provider
+    let user = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { email, provider },
+          { providerId, provider },
+        ],
+      },
+    });
+
+    const isNewUser = !user;
+
+    if (user) {
+      // Update existing user's provider info if needed
+      if (!user.provider) {
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            provider,
+            providerId,
+            isSocial: true,
+            isVerified: true, // Social login means email is verified
+          },
+        });
+      }
+    } else {
+      // Create new user
+      const generatedUsername = username || `${name.toLowerCase().replace(/\s+/g, '_')}_${provider.toLowerCase()}`;
+      
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          name,
+          username: generatedUsername,
+          passwordHash: null, // No password for social login
+          provider,
+          providerId,
+          isSocial: true,
+          isVerified: true, // Email verified by social provider
+        },
+      });
+
+      this.logger.log(`New social user created: ${email} via ${provider}`);
+    }
+
+    // Generate JWT tokens
+    const accessToken = (jwt as any).sign(
+      { sub: user.id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: 60 * 15 }, // 15 min
+    );
+
+    const refreshToken = randomBytes(64).toString('hex');
+
+    await this.prisma.refreshToken.create({
+      data: {
+        tokenHash: refreshToken,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+      },
+    });
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        name: user.name,
+      },
+      isNewUser, // Flag to indicate if this is a new registration
+    };
+  }
+
+  // =====================
+  // GENERATE TOKENS (helper)
+  // =====================
+  private generateTokens(user: any) {
+    const accessToken = (jwt as any).sign(
+      { sub: user.id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: 60 * 15 }, // 15 min
+    );
+
+    const refreshToken = randomBytes(64).toString('hex');
+
+    return { accessToken, refreshToken };
+  }
 }
