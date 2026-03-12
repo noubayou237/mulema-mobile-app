@@ -187,7 +187,12 @@ export default function SignUpScreen() {
           </View>
 
           {/* Button */}
-          <Button title='Sign Up' onPress={handleSignUp} loading={ui.loading} />
+          <Button
+            title='Sign Up'
+            onPress={handleSignUp}
+            loading={ui.loading}
+            textClassName='text-white'
+          />
 
           {/* Sign In */}
           <TouchableOpacity

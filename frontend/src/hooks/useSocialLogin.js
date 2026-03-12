@@ -6,23 +6,20 @@ import {
   AppleAuthenticationScope
 } from "expo-apple-authentication";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import api from "@/services/api";
+import { env } from "../env";
 
 const SESSION_KEY = "userSession";
 
-// Google configuration - Replace with your actual Google Cloud credentials
-export const GOOGLE_CLIENT_ID =
-  process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
-export const GOOGLE_IOS_CLIENT_ID =
-  process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || "YOUR_GOOGLE_IOS_CLIENT_ID";
-export const GOOGLE_ANDROID_CLIENT_ID =
-  process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ||
-  "YOUR_GOOGLE_ANDROID_CLIENT_ID";
+// Google configuration - Using environment variables for security
+// These values are securely imported from the validated env object
+const GOOGLE_CLIENT_ID = env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
+const GOOGLE_IOS_CLIENT_ID = env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+const GOOGLE_ANDROID_CLIENT_ID = env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
 
-// Facebook configuration 
-export const FACEBOOK_APP_ID =
-  process.env.EXPO_PUBLIC_FACEBOOK_APP_ID || "YOUR_FACEBOOK_APP_ID";
+// Facebook configuration - Using environment variable
+const FACEBOOK_APP_ID = env.EXPO_PUBLIC_FACEBOOK_APP_ID;
 
 export function useGoogleLogin() {
   const [request, response, promptAsync] = Google.useAuthRequest({
@@ -35,19 +32,11 @@ export function useGoogleLogin() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [result, setResult] = useState(null);
 
-  useEffect(() => {
-    if (response?.type === "success") {
-      handleGoogleLogin(response.authentication.accessToken).catch((err) =>
-        setError(err?.message || err)
-      );
-    } else if (response?.type === "error") {
-      setError(response.error);
-    }
-  }, [response]);
-
-  const handleGoogleLogin = async (accessToken) => {
+  const handleGoogleLogin = useCallback(async (accessToken) => {
     setLoading(true);
+    setError(null);
     try {
       // Get user info from Google
       const userInfoResponse = await fetch(
@@ -76,27 +65,101 @@ export function useGoogleLogin() {
         })
       );
 
-      return { success: true, isNewUser: data.isNewUser, user: data.user };
+      const loginResult = {
+        success: true,
+        isNewUser: data.isNewUser,
+        user: data.user
+      };
+      setResult(loginResult);
+      return loginResult;
     } catch (err) {
-      setError(err?.response?.data?.message || err.message);
-      return { success: false, error: err };
+      const errorMessage =
+        err?.response?.data?.message || err?.message || "Google login failed";
+      setError(errorMessage);
+      const errorResult = { success: false, error: errorMessage };
+      setResult(errorResult);
+      return errorResult;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (response?.type === "success") {
+      handleGoogleLogin(response.authentication.accessToken).catch((err) => {
+        const errorMessage = err?.message || "Google login failed";
+        setError(errorMessage);
+        setResult({ success: false, error: errorMessage });
+      });
+    } else if (response?.type === "error") {
+      const errorMessage =
+        response.error?.message || "Google authentication failed";
+      setError(errorMessage);
+      setResult({ success: false, error: errorMessage });
+    }
+  }, [response, handleGoogleLogin]);
 
   const signIn = async () => {
     setError(null);
-    await promptAsync();
+    setResult(null);
+
+    try {
+      await promptAsync();
+      // Return the result that will be set by the useEffect
+      // We need to wait a bit for the async operation to complete
+      return new Promise((resolve) => {
+        // Check every 100ms if we have a result
+        const checkResult = () => {
+          if (result) {
+            resolve(result);
+          } else if (error) {
+            resolve({ success: false, error: error });
+          } else {
+            setTimeout(checkResult, 100);
+          }
+        };
+        // Start checking after a short delay
+        setTimeout(checkResult, 500);
+      });
+    } catch (err) {
+      const errorMessage = err?.message || "Failed to initiate Google login";
+      return { success: false, error: errorMessage };
+    }
   };
 
-  return { signIn, loading, error };
+  return { signIn, loading, error, result };
 }
 
 // Facebook Login
 export function useFacebookLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Helper function to extract error message from various error types
+  const extractErrorMessage = (err) => {
+    if (!err) return "Unknown error";
+
+    // If it's a string, return it
+    if (typeof err === "string") return err;
+
+    // If it has a message property that's a string
+    if (err.message && typeof err.message === "string") return err.message;
+
+    // If it's a native error with toString method
+    if (err.toString && typeof err.toString === "function") {
+      const str = err.toString();
+      if (typeof str === "string") return str;
+    }
+
+    // Try to get message from response data
+    if (err.response?.data?.message) {
+      const msg = err.response.data.message;
+      return typeof msg === "string" ? msg : JSON.stringify(msg);
+    }
+
+    // Fallback to generic message
+    return "Facebook login failed";
+  };
 
   const signIn = async () => {
     setLoading(true);
@@ -140,8 +203,9 @@ export function useFacebookLogin() {
 
       return { success: false, error: "Facebook login was cancelled" };
     } catch (err) {
-      setError(err?.message || "Facebook login failed");
-      return { success: false, error: err };
+      const errorMessage = extractErrorMessage(err);
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
     }

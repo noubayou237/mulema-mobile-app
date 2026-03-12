@@ -2,6 +2,7 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
+import { env } from "../src/env";
 
 // ⚠️ API URL depends on platform and environment
 // Android emulator : http://10.0.2.2:5001
@@ -27,7 +28,7 @@ const getApiUrl = () => {
   }
 
   // For ALL physical devices - use environment variable
-  const PC_IP = process.env.EXPO_PUBLIC_API_IP;
+  const PC_IP = env.EXPO_PUBLIC_API_IP;
   if (PC_IP) {
     return `http://${PC_IP}:5001`;
   }
@@ -42,7 +43,6 @@ const STORAGE_KEY = "userSession"; // Must match UserContext.jsx
 
 console.log("🔧 API Configuration:");
 console.log("  Platform:", Platform.OS);
-console.log("  Dev Mode:", __DEV__);
 console.log("  API Base URL:", API_BASE_URL);
 
 const api = axios.create({
