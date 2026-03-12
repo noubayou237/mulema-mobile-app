@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity
 } from "react-native";
+import Svg, { G, Path } from "react-native-svg";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -190,7 +191,12 @@ export default function SignInScreen() {
             </TouchableOpacity>
 
             {/* Button */}
-            <Button title='Sign In' onPress={handleSignIn} loading={loading} />
+            <Button
+              title='Sign In'
+              onPress={handleSignIn}
+              loading={loading}
+              textClassName='text-white'
+            />
 
             {/* Divider */}
             <View className='flex-row items-center my-6'>
@@ -213,12 +219,36 @@ export default function SignInScreen() {
                   <Ionicons name='hourglass' size={20} color='#666' />
                 ) : (
                   <>
-                    <Ionicons
-                      name='logo-google'
-                      size={20}
-                      color='#666'
+                    {/* Google SVG Icon */}
+                    <Svg
+                      width={20}
+                      height={20}
+                      viewBox='0 0 16 16'
                       style={{ marginRight: 10 }}
-                    />
+                    >
+                      <G fill='none' fillRule='evenodd'>
+                        <Path
+                          d='M7.209 1.061c.725-.081 1.154-.081 1.933 0a6.57 6.57 0 0 1 3.65 1.82a100 100 0 0 0-1.986 1.93q-1.876-1.59-4.188-.734q-1.696.78-2.362 2.528a78 78 0 0 1-2.148-1.658a.26.26 0 0 0-.16-.027q1.683-3.245 5.26-3.86'
+                          fill='#F44336'
+                          opacity='.987'
+                        />
+                        <Path
+                          d='M1.946 4.92q.085-.013.161.027a78 78 0 0 0 2.148 1.658A7.6 7.6 0 0 0 4.04 7.99q.037.678.215 1.331L2 11.116Q.527 8.038 1.946 4.92'
+                          fill='#FFC107'
+                          opacity='.997'
+                        />
+                        <Path
+                          d='M12.685 13.29a26 26 0 0 0-2.202-1.74q1.15-.812 1.396-2.228H8.122V6.713q3.25-.027 6.497.055q.616 3.345-1.423 6.032a7 7 0 0 1-.51.49'
+                          fill='#448AFF'
+                          opacity='.999'
+                        />
+                        <Path
+                          d='M4.255 9.322q1.23 3.057 4.51 2.854a3.94 3.94 0 0 0 1.718-.626q1.148.812 2.202 1.74a6.62 6.62 0 0 1-4.027 1.684a6.4 6.4 0 0 1-1.02 0Q3.82 14.524 2 11.116z'
+                          fill='#43A047'
+                          opacity='.993'
+                        />
+                      </G>
+                    </Svg>
                     <AppText className='text-gray-700 font-medium'>
                       Continue with Google
                     </AppText>

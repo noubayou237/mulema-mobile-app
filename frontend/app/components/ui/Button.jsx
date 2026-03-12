@@ -6,11 +6,23 @@ export default function Button({
   onPress,
   loading = false,
   variant = "primary",
+  textClassName = ""
 }) {
   const variants = {
     primary: "bg-primary",
     secondary: "bg-secondary",
-    outline: "border border-border bg-transparent",
+    outline: "border border-border bg-transparent"
+  };
+
+  // Determine text color based on variant and custom textClassName
+  const getTextColor = () => {
+    if (textClassName && textClassName.includes("text-white")) {
+      return "text-white";
+    }
+    if (variant === "outline") {
+      return "text-foreground";
+    }
+    return "text-primary-foreground";
   };
 
   return (
@@ -22,13 +34,7 @@ export default function Button({
         loading ? "bg-muted" : variants[variant]
       }`}
     >
-      <Text
-        className={`font-semibold ${
-          variant === "outline"
-            ? "text-foreground"
-            : "text-primary-foreground"
-        }`}
-      >
+      <Text className={`font-semibold ${textClassName || getTextColor()}`}>
         {loading ? "Chargement..." : title}
       </Text>
     </TouchableOpacity>

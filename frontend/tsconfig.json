@@ -13,6 +13,8 @@
     "**/*.tsx",
     "app/_layout.jsx",
     "app/standalone/profile_page.jsx",
-    "nativewind-env.d.ts"
+    "nativewind-env.d.ts",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
   ]
 }

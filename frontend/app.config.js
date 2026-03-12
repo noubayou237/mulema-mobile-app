@@ -1,39 +1,80 @@
-import "dotenv/config";
-
 export default {
   expo: {
-    name: "frontend",          // nom affiché (tu peux changer)
-    slug: "frontend",          // identifiant technique (minuscules, sans espaces)
-    scheme: "frontend",        // scheme pour les deep links (frontend://...)
+    name: "Mulema",
+    slug: "mulema",
+    version: "1.0.0",
+    orientation: "portrait",
+    icon: "./assets/images/icon.png",
+    scheme: "mulema",
+    userInterfaceStyle: "automatic",
+    newArchEnabled: true,
     extra: {
-      clerkPublishableKey: process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
-    },
-
-    // Identifiants pour build (remplace par les tiens avant build)
-    android: {
-      package: "com.yourcompany.frontend", // change par ton package unique
+      apiIp: process.env.EXPO_PUBLIC_API_IP
     },
     ios: {
-      bundleIdentifier: "com.yourcompany.frontend", // change par ton bundle id
+      supportsTablet: true,
+      bundleIdentifier: "com.mulema.app",
+      infoPlist: {
+        NSFaceIDUsageDescription: "Use Face ID for authentication"
+      }
     },
-
-    // Configuration optionnelle de linking (utile pour React Navigation / Expo Router)
-    // Les "prefixes" couvrent : scheme custom + (facultatif) un domaine https
+    android: {
+      package: "com.mulema.app",
+      adaptiveIcon: {
+        backgroundColor: "#E6F4FE",
+        foregroundImage: "./assets/images/android-icon-foreground.png",
+        backgroundImage: "./assets/images/android-icon-background.png",
+        monochromeImage: "./assets/images/android-icon-monochrome.png"
+      },
+      edgeToEdgeEnabled: true,
+      predictiveBackGestureEnabled: false
+    },
+    web: {
+      output: "static",
+      favicon: "./assets/images/favicon.png"
+    },
+    plugins: [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          image: "./assets/images/splash-icon.png",
+          imageWidth: 200,
+          resizeMode: "contain",
+          backgroundColor: "#ffffff",
+          dark: {
+            backgroundColor: "#000000"
+          }
+        }
+      ],
+      [
+        "expo-facebook",
+        {
+          appId: process.env.EXPO_PUBLIC_FACEBOOK_APP_ID,
+          appName: "Mulema"
+        }
+      ],
+      [
+        "expo-apple-authentication",
+        {
+          nonce: true
+        }
+      ]
+    ],
+    experiments: {
+      typedRoutes: true,
+      reactCompiler: true
+    },
     linking: {
-      prefixes: ["frontend://", "https://frontend.example.com"],
+      prefixes: ["mulema://", "https://mulema.example.com"],
       config: {
         screens: {
-          // adapte les routes aux fichiers de ton dossier `app/`
-          // ex: app/sign-in.tsx -> route "sign-in"
           signIn: "sign-in",
           signUp: "sign-up",
           home: "home",
-          // si tu as un écran de verification d'email :
-          verifyEmail: "verify-email",
-          // ou une route dynamique : user/[id].tsx -> "user/:id"
-          // user: "user/:id",
-        },
-      },
-    },
-  },
+          verifyEmail: "verify-email"
+        }
+      }
+    }
+  }
 };
