@@ -1,266 +1,768 @@
-// homebassa.jsx
-
-import React from 'react';
+import React, { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Image,
-  TouchableOpacity, // Importé
-  Dimensions,
-} from 'react-native';
-import { useRouter } from 'expo-router';
+  View, Text, StyleSheet, ScrollView, Image, TouchableOpacity,
+  Dimensions, Animated, Easing, Modal, Pressable, Platform, StatusBar,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
+import "../src/i18n";
 
-// --- Importez vos images locales ---
-const smallPyramid = require('../assets/images/pyramid-small.png');
-const largePyramid = require('../assets/images/pyramid-large.png');
-const sphinx = require('../assets/images/sphinx.png');
-const camel = require('../assets/images/camel.png');
-const lockIcon = require('../assets/images/lock.png'); 
+const { width } = Dimensions.get("window");
 
-const { width } = Dimensions.get('window');
+const smallPyramid = require("../assets/images/pyramid-small.png");
+const largePyramid = require("../assets/images/pyramid-large.png");
+const sphinx        = require("../assets/images/sphinx.png");
+const camel         = require("../assets/images/camel.png");
+const lockIcon      = require("../assets/images/lock.png");
 
-// --- DONNÉES DES NIVEAUX ---
-const LEVELS_DATA = [
-  // J'assume que la navigation pour le Niveau I est vers /exercices/exos1.jsx (ou le chemin exact)
-  { id: 1, title: 'NIVEAU I', unlocked: true, path: '/exercices/exos1' }, 
-  { id: 2, title: 'NIVEAU II', unlocked: false, path: '/levels/bassa/level2' },
-  { id: 3, title: 'NIVEAU III', unlocked: false, path: '/levels/bassa/level3' },
-  { id: 4, title: 'NIVEAU IV', unlocked: false, path: '/levels/bassa/level4' },
-];
+// ── Nunito font helper ─────────────────────────────────────────────────────
+// Make sure useFonts / expo-font loads Nunito in your app entry point.
+// All fontFamily refs here use "Nunito-*" weight variants.
 
-// --- Composant Principal Home Bassa ---
-export default function HomeBassa() {
-  const router = useRouter();
+// ── Sand particle drifting right ───────────────────────────────────────────
+const SandParticle = ({ y: startY, delay, size }) => {
+  const x  = useRef(new Animated.Value(-size)).current;
+  const op = useRef(new Animated.Value(0)).current;
 
-  // Fonction de navigation unique (utilisée par le TouchableOpacity)
-  const handleStartLevel = (level) => {
-    if (level.unlocked) {
-      console.log(`Démarrage du niveau : ${level.title} -> ${level.path}`);
-      router.push(level.path); 
-    } else {
-      console.log(`Le niveau ${level.id} est verrouillé.`);
-    }
-  };
-
-  // Rendu de la carte de niveau
-  const renderLevelCard = (level, index) => {
-    const opacityStyle = level.unlocked ? null : styles.lockedContent;
-    const isFirstLevel = index === 0;
-
-    return (
-      <View key={level.id} style={styles.levelContainer}>
-        
-        {/* 💡 CONTENEUR CLICQUABLE (remplace la View standardLevelCard) */}
-        <TouchableOpacity
-            style={[styles.levelCardButton, opacityStyle, { marginTop: isFirstLevel ? 0 : -50 }]}
-            onPress={() => handleStartLevel(level)}
-            disabled={!level.unlocked}
-            activeOpacity={0.8} // Rétroaction visuelle
-        >
-            {/* --- CONTENU VISUEL INTÉRIEUR --- */}
-            
-            {/* Titre du niveau (pour le Niveau I) */}
-            {isFirstLevel && (
-                 <View style={styles.levelHeader}>
-                    <Text style={styles.levelTitle}>{level.title}</Text>
-                    <Text style={styles.levelSubtitle}>
-                        Debloquez les niveaux suivant en resolvant les exercices de ceux précédent
-                    </Text>
-                </View>
-            )}
-
-            {/* Éléments visuels spécifiques au thème (Pyramides, Sphinx, etc.) */}
-            <View style={styles.mapElement}>
-                {/* Pyramides de fond */}
-                <Image source={smallPyramid} style={[styles.pyramidImage, styles.smallPyramidLeft]} />
-                <Image source={largePyramid} style={[styles.pyramidImage, styles.largePyramidRight]} />
-                
-                {/* Éléments spécifiques à chaque niveau si besoin */}
-                {isFirstLevel && (
-                    <>
-                        <Image source={sphinx} style={styles.sphinxImage} />
-                        <Image source={camel} style={styles.camelImage} />
-                    </>
-                )}
-                
-                {/* Cadenas si le niveau est verrouillé */}
-                {!level.unlocked && (
-                    <Image source={lockIcon} style={styles.lockIcon} />
-                )}
-            </View>
-            
-             {/* Nom du Niveau (affiché comme un indicateur au centre) */}
-             <View style={styles.levelIndicator}>
-                 <Text style={styles.levelIndicatorText}>
-                    {isFirstLevel ? "START" : `Niveau ${level.id}`}
-                 </Text>
-             </View>
-
-        </TouchableOpacity>
-      </View>
-    );
-  };
+  useEffect(() => {
+    const loop = () => {
+      x.setValue(-size); op.setValue(0);
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.parallel([
+          Animated.timing(x,  { toValue: width + size, duration: 5000 + Math.random() * 3000, easing: Easing.linear, useNativeDriver: true }),
+          Animated.sequence([
+            Animated.timing(op, { toValue: 0.25, duration: 400, useNativeDriver: true }),
+            Animated.delay(3500),
+            Animated.timing(op, { toValue: 0,    duration: 600, useNativeDriver: true }),
+          ]),
+        ]),
+      ]).start(loop);
+    };
+    loop();
+  }, []);
 
   return (
-    <ScrollView 
-      style={styles.scrollView}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.mapContainer}>
-        
-        {/* La ligne de carte (chemin marron du désert) */}
-        <View style={styles.mapPath} />
+    <Animated.View style={{
+      position: "absolute", top: startY,
+      width: size, height: size * 0.4, borderRadius: size * 0.2,
+      backgroundColor: "rgba(211,47,47,0.18)",
+      opacity: op, transform: [{ translateX: x }],
+    }} />
+  );
+};
 
-        {/* --- Rendu des Niveaux --- */}
-        {LEVELS_DATA.map(renderLevelCard)}
+// ── Camel walk ─────────────────────────────────────────────────────────────
+const CamelWalk = ({ source, style }) => {
+  const bob  = useRef(new Animated.Value(0)).current;
+  const step = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(bob,  { toValue: -4, duration: 700, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+          Animated.timing(bob,  { toValue:  0, duration: 700, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        ]),
+        Animated.sequence([
+          Animated.timing(step, { toValue:  1, duration: 700, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+          Animated.timing(step, { toValue: -1, duration: 700, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        ]),
+      ])
+    ).start();
+  }, []);
+
+  return (
+    <Animated.Image source={source} style={[style, {
+      transform: [
+        { translateY: bob },
+        { rotate: step.interpolate({ inputRange: [-1, 0, 1], outputRange: ["-3deg", "0deg", "3deg"] }) },
+      ],
+    }]} />
+  );
+};
+
+// ── Sphinx idle breath ─────────────────────────────────────────────────────
+const SphinxIdle = ({ source, style }) => {
+  const breath = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(breath, { toValue: 1.02, duration: 2000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(breath, { toValue: 1,    duration: 2000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
+  return (
+    <Animated.Image source={source} style={[style, { transform: [{ scale: breath }] }]} />
+  );
+};
+
+// ── Level detail modal ─────────────────────────────────────────────────────
+const LevelModal = ({ visible, onClose, level, onStart }) => {
+  const slideUp  = useRef(new Animated.Value(600)).current;
+  const fade     = useRef(new Animated.Value(0)).current;
+  const pyramidB = useRef(new Animated.Value(0.6)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(fade,    { toValue: 1, duration: 250, useNativeDriver: true }),
+        Animated.spring(slideUp, { toValue: 0, tension: 55, friction: 9, useNativeDriver: true }),
+        Animated.spring(pyramidB,{ toValue: 1, tension: 50, friction: 6, delay: 200, useNativeDriver: true }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(fade,    { toValue: 0, duration: 200, useNativeDriver: true }),
+        Animated.timing(slideUp, { toValue: 600, duration: 220, useNativeDriver: true }),
+      ]).start();
+      pyramidB.setValue(0.6);
+    }
+  }, [visible]);
+
+  if (!level) return null;
+  const skills = level.skills || ["Salutations", "Nombres", "Nature", "Famille"];
+
+  return (
+    <Modal transparent visible={visible} onRequestClose={onClose} statusBarTranslucent>
+      <Animated.View style={[m.overlay, { opacity: fade }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <Animated.View style={[m.sheet, { transform: [{ translateY: slideUp }] }]}>
+          <LinearGradient colors={["#FAF7F5", "#F5F0EC"]} style={m.sheetInner}>
+            <View style={m.handle} />
+
+            {/* Desert scene preview */}
+            <Animated.View style={[m.sceneWrap, { transform: [{ scale: pyramidB }] }]}>
+              <Image source={smallPyramid} style={m.previewSmallPyramid} />
+              <Image source={largePyramid} style={m.previewLargePyramid} />
+              {level.id === 1 && <Image source={sphinx} style={m.previewSphinx} />}
+              {!level.unlocked && (
+                <View style={m.lockOverlay}>
+                  <Image source={lockIcon} style={m.lockImg} />
+                </View>
+              )}
+              {level.unlocked && (
+                <View style={m.unlockedBadge}>
+                  <Ionicons name="checkmark-circle" size={14} color="#fff" />
+                  <Text style={m.unlockedText}>Débloqué</Text>
+                </View>
+              )}
+            </Animated.View>
+
+            <Text style={m.levelNum}>NIVEAU {level.id}</Text>
+            <Text style={m.levelName}>{level.title}</Text>
+            <Text style={m.levelDesc}>{level.description}</Text>
+
+            {/* Skills */}
+            <View style={m.skillsRow}>
+              {skills.map((sk, i) => (
+                <View key={i} style={[m.skillChip, !level.unlocked && { opacity: 0.4 }]}>
+                  <Text style={m.skillChipText}>{sk}</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Rewards */}
+            <View style={m.rewardRow}>
+              {[["⭐", "+50 XP"], ["💰", "+10 Coris"], ["🔥", "+1 jour"]].map(([emoji, val], i) => (
+                <View key={i} style={m.rewardItem}>
+                  <Text style={m.rewardEmoji}>{emoji}</Text>
+                  <Text style={m.rewardVal}>{val}</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* CTA */}
+            {level.unlocked ? (
+              <TouchableOpacity
+                onPress={() => { onClose(); onStart(level); }}
+                style={{ width: "100%", borderRadius: 18, overflow: "hidden" }}
+              >
+                <LinearGradient
+                  colors={["#E53935", "#B71C1C"]}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                  style={m.startBtn}
+                >
+                  <Ionicons name="play-circle" size={20} color="#fff" />
+                  <Text style={m.startBtnText}>Commencer l'aventure</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            ) : (
+              <View style={m.lockedCta}>
+                <Ionicons name="lock-closed" size={18} color="#BDBDBD" />
+                <Text style={m.lockedCtaText}>Termine le niveau précédent pour débloquer</Text>
+              </View>
+            )}
+          </LinearGradient>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+};
+
+// ── Level card ─────────────────────────────────────────────────────────────
+const LevelCard = ({ level, index, onPress }) => {
+  const mount     = useRef(new Animated.Value(0)).current;
+  const scale     = useRef(new Animated.Value(0.8)).current;
+  const pressAnim = useRef(new Animated.Value(1)).current;
+  const shimmer   = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(mount, { toValue: 1, duration: 600, delay: index * 200, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.spring(scale,  { toValue: 1, tension: 55, friction: 7, delay: index * 200, useNativeDriver: true }),
+    ]).start();
+
+    if (level.unlocked) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(shimmer, { toValue: 1, duration: 2000, easing: Easing.inOut(Easing.quad), useNativeDriver: false }),
+          Animated.timing(shimmer, { toValue: 0, duration: 2000, easing: Easing.inOut(Easing.quad), useNativeDriver: false }),
+        ])
+      ).start();
+    }
+  }, []);
+
+  const handlePress = () => {
+    Animated.sequence([
+      Animated.spring(pressAnim, { toValue: 0.96, tension: 300, friction: 5, useNativeDriver: true }),
+      Animated.spring(pressAnim, { toValue: 1,    tension: 150, friction: 6, useNativeDriver: true }),
+    ]).start();
+    onPress(level);
+  };
+
+  const isFirst = index === 0;
+  const borderColor = shimmer.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["rgba(211,47,47,0.2)", "rgba(211,47,47,0.5)"],
+  });
+
+  return (
+    <Animated.View style={[s.cardWrap, { opacity: mount, transform: [{ scale }] }]}>
+      <TouchableOpacity onPress={handlePress} activeOpacity={1}>
+        <Animated.View style={{ transform: [{ scale: pressAnim }] }}>
+          <Animated.View style={[s.card, level.unlocked && { borderColor }]}>
+            <LinearGradient
+              colors={level.unlocked
+                ? ["rgba(255,255,255,0.98)", "rgba(250,240,238,0.97)"]
+                : ["rgba(245,242,240,0.97)", "rgba(238,234,232,0.97)"]}
+              style={s.cardGrad}
+            >
+              {/* Header badge — no arrows */}
+              {isFirst && (
+                <View style={s.startBanner}>
+                  <LinearGradient
+                    colors={["#E53935", "#B71C1C"]}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                    style={s.startBannerGrad}
+                  >
+                    <Ionicons name="star" size={13} color="#FFCDD2" />
+                    <Text style={s.startBannerText}>POINT DE DÉPART</Text>
+                    <Ionicons name="star" size={13} color="#FFCDD2" />
+                  </LinearGradient>
+                </View>
+              )}
+
+              {/* Desert scene */}
+              <View style={s.scene}>
+                <LinearGradient
+                  colors={level.unlocked
+                    ? ["rgba(211,47,47,0.04)", "rgba(211,47,47,0.10)"]
+                    : ["rgba(200,190,186,0.12)", "rgba(180,170,165,0.18)"]}
+                  style={s.ground}
+                />
+
+                <Image source={smallPyramid} style={[s.smallPyramid, !level.unlocked && s.dimmed]} />
+                <Image source={largePyramid} style={[s.largePyramid, !level.unlocked && s.dimmed]} />
+
+                {isFirst && (
+                  <>
+                    <SphinxIdle source={sphinx} style={[s.sphinx, !level.unlocked && s.dimmed]} />
+                    <CamelWalk  source={camel}  style={[s.camel,  !level.unlocked && s.dimmed]} />
+                  </>
+                )}
+
+                {!level.unlocked && (
+                  <View style={s.lockOverlay}>
+                    <View style={s.lockCircle}>
+                      <Image source={lockIcon} style={s.lockImg} />
+                    </View>
+                    <Text style={s.lockLabel}>Verrouillé</Text>
+                  </View>
+                )}
+
+                {level.completed && (
+                  <View style={s.completedBadge}>
+                    <Ionicons name="checkmark-circle" size={16} color="#fff" />
+                    <Text style={s.completedText}>Terminé</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Footer */}
+              <View style={s.cardFooter}>
+                <View style={s.cardInfo}>
+                  <Text style={s.cardLevelNum}>Niveau {level.id}</Text>
+                  <Text style={s.cardLevelName}>{level.title}</Text>
+                </View>
+
+                {level.unlocked ? (
+                  <LinearGradient
+                    colors={["#E53935", "#B71C1C"]}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                    style={s.cardBtn}
+                  >
+                    {/* No arrow icon — just text */}
+                    <Text style={s.cardBtnText}>{isFirst ? "START" : "JOUER"}</Text>
+                  </LinearGradient>
+                ) : (
+                  <View style={s.cardBtnLocked}>
+                    <Ionicons name="lock-closed" size={14} color="#BDBDBD" />
+                  </View>
+                )}
+              </View>
+
+              {/* XP badge */}
+              {level.unlocked && (
+                <View style={s.xpBadge}>
+                  <Text style={s.xpText}>+50 XP</Text>
+                </View>
+              )}
+            </LinearGradient>
+          </Animated.View>
+        </Animated.View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
+// ── Progress bar ───────────────────────────────────────────────────────────
+const ProgressBar = ({ total, unlocked }) => {
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(anim, {
+      toValue: unlocked / total, duration: 1200, delay: 400,
+      easing: Easing.out(Easing.cubic), useNativeDriver: false,
+    }).start();
+  }, []);
+
+  return (
+    <View style={s.progressWrap}>
+      <View style={s.progressHeader}>
+        <Text style={s.progressLabel}>Progression</Text>
+        <Text style={s.progressVal}>{unlocked}/{total} niveaux</Text>
       </View>
-      
-      <View style={{ height: 100 }} /> 
-    </ScrollView>
+      <View style={s.progressBg}>
+        <Animated.View style={[s.progressFill, {
+          width: anim.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] }),
+        }]} />
+      </View>
+    </View>
+  );
+};
+
+// ── End banner ─────────────────────────────────────────────────────────────
+const EndBanner = () => {
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(anim, { toValue: 1, duration: 600, delay: 900, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, []);
+
+  return (
+    <Animated.View style={[s.endBanner, {
+      opacity: anim,
+      transform: [{ scale: anim.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1] }) }],
+    }]}>
+      <LinearGradient colors={["rgba(211,47,47,0.08)", "rgba(211,47,47,0.02)"]} style={s.endGrad}>
+        <Text style={s.endEmoji}>🏺</Text>
+        <Text style={s.endTitle}>Maître Bassa t'attend !</Text>
+        <Text style={s.endSub}>Complète tous les niveaux pour décrocher le certificat Bassa.</Text>
+      </LinearGradient>
+    </Animated.View>
+  );
+};
+
+// ── Main screen ────────────────────────────────────────────────────────────
+export default function HomeBassa() {
+  const router = useRouter();
+  const { t }  = useTranslation();
+
+  const [selectedLevel, setSelectedLevel] = useState(null);
+  const [modalVisible, setModalVisible]   = useState(false);
+
+  const bgAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(bgAnim, { toValue: 1, duration: 9000, easing: Easing.inOut(Easing.sin), useNativeDriver: false }),
+        Animated.timing(bgAnim, { toValue: 0, duration: 9000, easing: Easing.inOut(Easing.sin), useNativeDriver: false }),
+      ])
+    ).start();
+  }, []);
+
+  const LEVELS_DATA = [
+    {
+      id: 1, title: "Langue Bassa", unlocked: true, completed: false,
+      path: "/exercices/exos1",
+      description: "Découvre les bases du Bassa, langue parlée au centre et au littoral du Cameroun.",
+      skills: ["Salutations", "Nombres", "Famille", "Nature"],
+    },
+    {
+      id: 2, title: "Vocabulaire", unlocked: false, completed: false,
+      path: "/levels/bassa/level2",
+      description: "Enrichis ton vocabulaire avec les objets et lieux du quotidien.",
+      skills: ["Nourriture", "Animaux", "Village", "Corps"],
+    },
+    {
+      id: 3, title: "Expressions", unlocked: false, completed: false,
+      path: "/levels/bassa/level3",
+      description: "Maîtrise les expressions courantes et les verbes essentiels.",
+      skills: ["Verbes", "Temps", "Questions", "Émotions"],
+    },
+    {
+      id: 4, title: "Maîtrise", unlocked: false, completed: false,
+      path: "/levels/bassa/level4",
+      description: "Atteins la maîtrise avec des dialogues complets et culturels.",
+      skills: ["Dialogue", "Proverbes", "Culture", "Histoire"],
+    },
+  ];
+
+  const sandParticles = [
+    { y: 80,  delay: 0,    size: 12 },
+    { y: 180, delay: 1400, size: 8  },
+    { y: 320, delay: 700,  size: 10 },
+    { y: 450, delay: 2100, size: 7  },
+    { y: 600, delay: 350,  size: 9  },
+  ];
+
+  const handleOpenLevel = (level) => { setSelectedLevel(level); setModalVisible(true); };
+  const handleStart     = (level) => router.push(level.path);
+
+  return (
+    <View style={s.root}>
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+
+      {/* Animated warm off-white background */}
+      <Animated.View style={[StyleSheet.absoluteFill, {
+        backgroundColor: bgAnim.interpolate({ inputRange: [0, 1], outputRange: ["#FAF7F5", "#F5F0EC"] }),
+      }]} />
+
+      {/* Subtle warm texture dots */}
+      <View style={s.dotsLayer} pointerEvents="none">
+        {[...Array(18)].map((_, i) => (
+          <View key={i} style={[s.textureDot, {
+            top:  (i * 53) % 320,
+            left: (i * 79) % (width - 10),
+            opacity: 0.06 + (i % 3) * 0.03,
+          }]} />
+        ))}
+      </View>
+
+      {/* Bottom dune tint */}
+      <View style={s.duneBg} pointerEvents="none">
+        <LinearGradient colors={["transparent", "rgba(211,47,47,0.05)"]} style={{ flex: 1 }} />
+      </View>
+
+      {/* Drifting sand particles */}
+      {sandParticles.map((p, i) => <SandParticle key={i} {...p} />)}
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.scroll}>
+
+        {/* Section header */}
+        <View style={s.sectionHeader}>
+          <LinearGradient colors={["rgba(211,47,47,0.08)", "rgba(211,47,47,0.02)"]} style={s.sectionGrad}>
+            <Text style={s.sectionTitle}>🏜️ Langue Bassa</Text>
+            <Text style={s.sectionSub}>4 niveaux · Explore le désert des mots</Text>
+          </LinearGradient>
+        </View>
+
+        <ProgressBar total={LEVELS_DATA.length} unlocked={LEVELS_DATA.filter(l => l.unlocked).length} />
+
+        {LEVELS_DATA.map((level, index) => (
+          <LevelCard key={level.id} level={level} index={index} onPress={handleOpenLevel} />
+        ))}
+
+        <EndBanner />
+        <View style={{ height: 120 }} />
+      </ScrollView>
+
+      <LevelModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        level={selectedLevel}
+        onStart={handleStart}
+      />
+    </View>
   );
 }
 
-// --- Stylesheet ---
-const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
-    backgroundColor: '#F5F5F7',
+// ── Styles ─────────────────────────────────────────────────────────────────
+const s = StyleSheet.create({
+  root: { flex: 1 },
+  scroll: { paddingTop: 16, paddingHorizontal: 20, alignItems: "center" },
+
+  dotsLayer: { position: "absolute", top: 0, left: 0, right: 0, height: 340 },
+  textureDot: { position: "absolute", width: 3, height: 3, borderRadius: 1.5, backgroundColor: "#D32F2F" },
+
+  duneBg: { position: "absolute", bottom: 0, left: 0, right: 0, height: 200 },
+
+  // Section header
+  sectionHeader: {
+    width: "100%", marginBottom: 16,
+    borderRadius: 20, overflow: "hidden",
+    borderWidth: 1, borderColor: "rgba(211,47,47,0.15)",
   },
-  scrollContent: {
-    paddingTop: 20,
-    alignItems: 'center',
-    paddingHorizontal: 20,
+  sectionGrad: { paddingVertical: 18, paddingHorizontal: 20, alignItems: "center" },
+  sectionTitle: {
+    fontSize: 22, fontWeight: "800", color: "#1A1A1A",
+    fontFamily: "Nunito-ExtraBold",
+    letterSpacing: 0.4, marginBottom: 4,
   },
-  mapContainer: {
-    width: '100%',
-    alignItems: 'center',
-    position: 'relative', 
-  },
-  
-  // --- LIGNE DE CARTE (Chemin marron du désert) ---
-  mapPath: {
-    position: 'absolute',
-    width: '100%',
-    top: 0,
-    bottom: 0,
-    backgroundColor: '#D2B48C', // Couleur sable/désert
-    zIndex: -1, 
+  sectionSub: {
+    fontSize: 13, color: "#888",
+    fontFamily: "Nunito-SemiBold", fontWeight: "600",
   },
 
-  // --- CONTENEUR DE NIVEAU ---
-  levelContainer: {
-    width: '100%',
-    minHeight: 250, 
-    justifyContent: 'flex-start',
-    alignItems: 'center',
+  // Progress
+  progressWrap: { width: "100%", marginBottom: 20 },
+  progressHeader: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
+  progressLabel: {
+    fontSize: 11, color: "#AAAAAA",
+    fontFamily: "Nunito-Bold", fontWeight: "700",
+    letterSpacing: 1, textTransform: "uppercase",
   },
-  
-  // 💡 NOUVEAU STYLE: La carte clicquable
-  levelCardButton: {
-    width: '100%',
-    minHeight: 250, 
-    alignItems: 'center',
-    position: 'relative',
-    backgroundColor: '#C19A6B', // Couleur sable plus foncée pour les plateformes
-    borderRadius: 20,
-    marginVertical: -10, 
-    paddingVertical: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+  progressVal: {
+    fontSize: 12, color: "#D32F2F",
+    fontFamily: "Nunito-Bold", fontWeight: "700",
   },
-  lockedContent: {
-    opacity: 0.3, // Effet flou/verrouillé
+  progressBg: { height: 8, backgroundColor: "rgba(211,47,47,0.1)", borderRadius: 4, overflow: "hidden" },
+  progressFill: {
+    height: "100%", borderRadius: 4,
+    backgroundColor: "#D32F2F",
+    shadowColor: "#D32F2F", shadowOpacity: 0.4, shadowRadius: 6,
   },
 
-  // --- NIVEAU 1 (HEADER) ---
-  levelHeader: {
-    width: '100%',
-    alignItems: 'center',
-    paddingVertical: 10,
-    marginBottom: 0,
-    zIndex: 2, 
+  // Card
+  cardWrap: { width: "100%", marginBottom: 14 },
+  card: {
+    borderRadius: 22, overflow: "hidden",
+    borderWidth: 1.5, borderColor: "rgba(211,47,47,0.2)",
+    shadowColor: "#D32F2F", shadowOpacity: 0.1, shadowRadius: 12, elevation: 4,
   },
-  levelTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#D9534F', 
-    marginBottom: 5,
+  cardGrad: { padding: 0 },
+
+  // Start banner
+  startBanner: { overflow: "hidden" },
+  startBannerGrad: {
+    flexDirection: "row", alignItems: "center",
+    justifyContent: "center", gap: 8, paddingVertical: 10,
   },
-  levelSubtitle: {
-    textAlign: 'center',
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 20,
-    paddingHorizontal: 30,
+  startBannerText: {
+    fontSize: 12, fontWeight: "800", color: "#FFCDD2",
+    fontFamily: "Nunito-ExtraBold", letterSpacing: 2,
   },
 
-  // --- ÉLÉMENTS DE LA CARTE ---
-  mapElement: {
-    position: 'relative',
-    width: '90%',
-    height: 120, 
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
+  // Desert scene
+  scene: {
+    height: 160, position: "relative",
+    alignItems: "center", justifyContent: "flex-end",
+    overflow: "hidden",
   },
-  pyramidImage: {
-    position: 'absolute',
-    resizeMode: 'contain',
+  ground: { position: "absolute", bottom: 0, left: 0, right: 0, height: 40 },
+  dimmed: { opacity: 0.2 },
+  smallPyramid: { position: "absolute", left: 24, bottom: 20, width: 80, height: 80, resizeMode: "contain" },
+  largePyramid: { position: "absolute", right: 16, bottom: 14, width: 110, height: 110, resizeMode: "contain" },
+  sphinx: { position: "absolute", left: width * 0.2, bottom: 18, width: 90, height: 55, resizeMode: "contain" },
+  camel:  { position: "absolute", right: width * 0.22, top: 24, width: 75, height: 48, resizeMode: "contain" },
+
+  lockOverlay: {
+    position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+    alignItems: "center", justifyContent: "center",
   },
-  smallPyramidLeft: {
-    width: 80,
-    height: 80,
-    left: 20,
-    top: 10,
+  lockCircle: {
+    width: 54, height: 54, borderRadius: 27,
+    backgroundColor: "rgba(200,180,170,0.4)",
+    alignItems: "center", justifyContent: "center",
+    marginBottom: 6, borderWidth: 1.5, borderColor: "rgba(211,47,47,0.15)",
   },
-  largePyramidRight: {
-    width: 120,
-    height: 120,
-    right: 10,
-    bottom: 0,
-  },
-  sphinxImage: {
-    width: 100,
-    height: 60,
-    position: 'absolute',
-    left: width * 0.15,
-    bottom: 0,
-    resizeMode: 'contain',
-  },
-  camelImage: {
-    width: 80,
-    height: 50,
-    position: 'absolute',
-    right: width * 0.1,
-    top: 20,
-    resizeMode: 'contain',
-  },
-  lockIcon: {
-    width: 40,
-    height: 40,
-    position: 'absolute',
-    zIndex: 10,
-    resizeMode: 'contain',
+  lockImg: { width: 26, height: 26, resizeMode: "contain" },
+  lockLabel: {
+    fontSize: 11, color: "#BDBDBD",
+    fontFamily: "Nunito-Bold", fontWeight: "700", letterSpacing: 1,
   },
 
-  // 💡 NOUVEAU STYLE: Indicateur de niveau (simule le bouton START/Niveau)
-  levelIndicator: {
-    backgroundColor: '#D9534F',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    marginTop: 10,
-    zIndex: 3,
+  completedBadge: {
+    position: "absolute", top: 10, right: 10,
+    flexDirection: "row", gap: 4, alignItems: "center",
+    backgroundColor: "#D32F2F", borderRadius: 12,
+    paddingHorizontal: 10, paddingVertical: 4,
   },
-  levelIndicatorText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+  completedText: {
+    fontSize: 11, color: "#fff",
+    fontFamily: "Nunito-Bold", fontWeight: "700",
+  },
+
+  // Footer
+  cardFooter: {
+    flexDirection: "row", alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16, paddingTop: 12,
+  },
+  cardInfo: { flex: 1 },
+  cardLevelNum: {
+    fontSize: 10, color: "#D32F2F",
+    fontFamily: "Nunito-Bold", fontWeight: "700",
+    letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 2,
+  },
+  cardLevelName: {
+    fontSize: 17, fontWeight: "800", color: "#1A1A1A",
+    fontFamily: "Nunito-ExtraBold",
+  },
+
+  // ← no arrow icon inside, text only
+  cardBtn: {
+    flexDirection: "row", alignItems: "center",
+    paddingHorizontal: 20, paddingVertical: 11,
+    borderRadius: 16,
+    shadowColor: "#D32F2F", shadowOpacity: 0.3, shadowRadius: 8,
+  },
+  cardBtnText: {
+    fontSize: 13, fontWeight: "800", color: "#fff",
+    fontFamily: "Nunito-ExtraBold", letterSpacing: 0.8,
+  },
+  cardBtnLocked: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: "rgba(211,47,47,0.06)",
+    borderWidth: 1, borderColor: "rgba(211,47,47,0.14)",
+    alignItems: "center", justifyContent: "center",
+  },
+
+  xpBadge: {
+    position: "absolute", top: 12, left: 16,
+    backgroundColor: "rgba(211,47,47,0.1)",
+    borderWidth: 1, borderColor: "rgba(211,47,47,0.3)",
+    borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3,
+  },
+  xpText: {
+    fontSize: 10, color: "#C62828",
+    fontFamily: "Nunito-Bold", fontWeight: "700",
+  },
+
+  // End banner
+  endBanner: {
+    width: "100%", marginTop: 8,
+    borderRadius: 20, overflow: "hidden",
+    borderWidth: 1, borderColor: "rgba(211,47,47,0.15)",
+  },
+  endGrad: { padding: 24, alignItems: "center" },
+  endEmoji: { fontSize: 44, marginBottom: 10 },
+  endTitle: {
+    fontSize: 18, fontWeight: "800", color: "#1A1A1A",
+    fontFamily: "Nunito-ExtraBold", marginBottom: 6, textAlign: "center",
+  },
+  endSub: {
+    fontSize: 13, color: "#888",
+    fontFamily: "Nunito-Regular", textAlign: "center", lineHeight: 20,
+  },
+});
+
+// ── Modal styles ───────────────────────────────────────────────────────────
+const m = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" },
+  sheet: { borderTopLeftRadius: 32, borderTopRightRadius: 32, overflow: "hidden" },
+  sheetInner: { paddingTop: 12, paddingHorizontal: 24, paddingBottom: 40, alignItems: "center" },
+  handle: { width: 44, height: 5, borderRadius: 3, backgroundColor: "rgba(211,47,47,0.2)", marginBottom: 22 },
+
+  sceneWrap: {
+    width: "100%", height: 130, position: "relative",
+    alignItems: "center", justifyContent: "flex-end", marginBottom: 12,
+  },
+  previewSmallPyramid: { position: "absolute", left: 30, bottom: 0, width: 80, height: 80, resizeMode: "contain" },
+  previewLargePyramid: { position: "absolute", right: 20, bottom: 0, width: 100, height: 100, resizeMode: "contain" },
+  previewSphinx: { position: "absolute", left: "35%", bottom: 4, width: 80, height: 48, resizeMode: "contain" },
+
+  lockOverlay: {
+    position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+    alignItems: "center", justifyContent: "center",
+    backgroundColor: "rgba(220,200,195,0.4)", borderRadius: 16,
+  },
+  lockImg: { width: 36, height: 36, resizeMode: "contain" },
+  unlockedBadge: {
+    position: "absolute", bottom: 4, right: 20,
+    flexDirection: "row", alignItems: "center", gap: 4,
+    backgroundColor: "#D32F2F", borderRadius: 12,
+    paddingHorizontal: 10, paddingVertical: 4,
+    shadowColor: "#D32F2F", shadowOpacity: 0.35, shadowRadius: 6,
+  },
+  unlockedText: {
+    fontSize: 11, color: "#fff",
+    fontFamily: "Nunito-Bold", fontWeight: "700",
+  },
+
+  levelNum: {
+    fontSize: 11, color: "#D32F2F",
+    fontFamily: "Nunito-Bold", fontWeight: "700",
+    letterSpacing: 2, textTransform: "uppercase", marginBottom: 4,
+  },
+  levelName: {
+    fontSize: 22, fontWeight: "800", color: "#1A1A1A",
+    fontFamily: "Nunito-ExtraBold", textAlign: "center", marginBottom: 8,
+  },
+  levelDesc: {
+    fontSize: 13, color: "#888",
+    fontFamily: "Nunito-Regular",
+    textAlign: "center", lineHeight: 20, marginBottom: 18,
+  },
+
+  skillsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 20 },
+  skillChip: {
+    backgroundColor: "rgba(211,47,47,0.08)",
+    borderWidth: 1, borderColor: "rgba(211,47,47,0.22)",
+    borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6,
+  },
+  skillChipText: {
+    fontSize: 12, color: "#C62828",
+    fontFamily: "Nunito-SemiBold", fontWeight: "600",
+  },
+
+  rewardRow: { flexDirection: "row", gap: 14, marginBottom: 24 },
+  rewardItem: {
+    alignItems: "center", gap: 4,
+    backgroundColor: "rgba(255,255,255,0.8)",
+    borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10,
+    borderWidth: 1, borderColor: "rgba(211,47,47,0.1)",
+  },
+  rewardEmoji: { fontSize: 22 },
+  rewardVal: {
+    fontSize: 12, fontWeight: "700", color: "#2C2C2C",
+    fontFamily: "Nunito-Bold",
+  },
+
+  startBtn: {
+    paddingVertical: 16, flexDirection: "row",
+    alignItems: "center", justifyContent: "center",
+    gap: 8, borderRadius: 18,
+  },
+  startBtnText: {
+    fontSize: 17, fontWeight: "800", color: "#fff",
+    fontFamily: "Nunito-ExtraBold", letterSpacing: 0.4,
+  },
+
+  lockedCta: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: "rgba(211,47,47,0.04)",
+    borderRadius: 16, paddingVertical: 16, paddingHorizontal: 20,
+    borderWidth: 1, borderColor: "rgba(211,47,47,0.12)",
+    width: "100%", justifyContent: "center",
+  },
+  lockedCtaText: {
+    fontSize: 13, color: "#BDBDBD",
+    fontFamily: "Nunito-SemiBold", fontWeight: "600",
+    textAlign: "center", flex: 1,
   },
 });
