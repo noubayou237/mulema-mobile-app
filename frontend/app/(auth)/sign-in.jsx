@@ -12,7 +12,7 @@ import {
   Easing,
   StyleSheet,
   Dimensions,
-  StatusBar,
+  StatusBar
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
@@ -41,21 +41,34 @@ const FloatingBubble = ({ size, color, startX, delay, duration }) => {
             toValue: -size * 2,
             duration,
             easing: Easing.linear,
-            useNativeDriver: true,
+            useNativeDriver: true
           }),
           Animated.sequence([
-            Animated.timing(opacity, { toValue: 0.25, duration: 600, useNativeDriver: true }),
+            Animated.timing(opacity, {
+              toValue: 0.25,
+              duration: 600,
+              useNativeDriver: true
+            }),
             Animated.delay(duration - 1200),
-            Animated.timing(opacity, { toValue: 0, duration: 600, useNativeDriver: true }),
+            Animated.timing(opacity, {
+              toValue: 0,
+              duration: 600,
+              useNativeDriver: true
+            })
           ]),
           Animated.sequence([
-            Animated.timing(scale, { toValue: 1, duration: 800, easing: Easing.out(Easing.back(1.5)), useNativeDriver: true }),
-          ]),
-        ]),
+            Animated.timing(scale, {
+              toValue: 1,
+              duration: 800,
+              easing: Easing.out(Easing.back(1.5)),
+              useNativeDriver: true
+            })
+          ])
+        ])
       ]).start(loop);
     };
     loop();
-  }, []);
+  }, [delay, duration, size, y, opacity, scale]);
 
   return (
     <Animated.View
@@ -67,7 +80,7 @@ const FloatingBubble = ({ size, color, startX, delay, duration }) => {
         borderRadius: size / 2,
         backgroundColor: color,
         transform: [{ translateY: y }, { scale }],
-        opacity,
+        opacity
       }}
     />
   );
@@ -76,21 +89,29 @@ const FloatingBubble = ({ size, color, startX, delay, duration }) => {
 // ── Animated wave dots ─────────────────────────────────────────────────────
 const WaveDots = () => {
   const dots = [0, 1, 2, 3, 4];
-  const anims = dots.map(() => useRef(new Animated.Value(0)).current);
+  const anims = useRef(dots.map(() => new Animated.Value(0))).current;
 
   useEffect(() => {
     const animations = dots.map((_, i) =>
       Animated.loop(
         Animated.sequence([
           Animated.delay(i * 120),
-          Animated.timing(anims[i], { toValue: -8, duration: 400, useNativeDriver: true }),
-          Animated.timing(anims[i], { toValue: 0, duration: 400, useNativeDriver: true }),
-          Animated.delay((dots.length - i) * 120),
+          Animated.timing(anims[i], {
+            toValue: -8,
+            duration: 400,
+            useNativeDriver: true
+          }),
+          Animated.timing(anims[i], {
+            toValue: 0,
+            duration: 400,
+            useNativeDriver: true
+          }),
+          Animated.delay((dots.length - i) * 120)
         ])
       )
     );
     Animated.stagger(0, animations).start();
-  }, []);
+  }, [anims, dots]);
 
   return (
     <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
@@ -102,10 +123,96 @@ const WaveDots = () => {
             height: 5,
             borderRadius: 3,
             backgroundColor: "#FFFFFF",
-            transform: [{ translateY: anims[i] }],
+            transform: [{ translateY: anims[i] }]
           }}
         />
       ))}
+    </View>
+  );
+};
+
+// ── Field component ────────────────────────────────────────────────────────────
+const Field = ({
+  label,
+  icon,
+  value,
+  onChangeText,
+  placeholder,
+  keyboardType,
+  secureTextEntry,
+  rightIcon,
+  onRightPress,
+  autoCapitalize
+}) => {
+  const [focused, setFocused] = useState(false);
+  const borderAnim = useRef(new Animated.Value(0)).current;
+
+  const handleFocus = () => {
+    setFocused(true);
+    Animated.spring(borderAnim, {
+      toValue: 1,
+      tension: 80,
+      friction: 8,
+      useNativeDriver: false
+    }).start();
+  };
+
+  const handleBlur = () => {
+    setFocused(false);
+    Animated.spring(borderAnim, {
+      toValue: 0,
+      tension: 80,
+      friction: 8,
+      useNativeDriver: false
+    }).start();
+  };
+
+  const borderColor = borderAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["rgba(180,60,60,0.15)", "#D32F2F"]
+  });
+  const bgColor = borderAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["rgba(180,60,60,0.04)", "rgba(211,47,47,0.07)"]
+  });
+
+  return (
+    <View style={{ marginBottom: 14 }}>
+      <Text style={s.label}>{label}</Text>
+      <Animated.View
+        style={[s.inputRow, { borderColor, backgroundColor: bgColor }]}
+      >
+        <Ionicons
+          name={icon}
+          size={18}
+          color={focused ? "#D32F2F" : "#BDBDBD"}
+          style={{ marginRight: 10 }}
+        />
+        <TextInput
+          style={[s.input, rightIcon && { flex: 1 }]}
+          placeholder={placeholder}
+          placeholderTextColor='#C0B8B8'
+          value={value}
+          onChangeText={onChangeText}
+          keyboardType={keyboardType || "default"}
+          secureTextEntry={secureTextEntry}
+          autoCapitalize={autoCapitalize || "none"}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+        />
+        {rightIcon && (
+          <TouchableOpacity
+            onPress={onRightPress}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons
+              name={rightIcon}
+              size={20}
+              color={focused ? "#D32F2F" : "#BDBDBD"}
+            />
+          </TouchableOpacity>
+        )}
+      </Animated.View>
     </View>
   );
 };
@@ -120,8 +227,6 @@ const SignInScreen = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [emailFocused, setEmailFocused] = useState(false);
-  const [passFocused, setPassFocused] = useState(false);
 
   // Mount animations
   const logoAnim = useRef(new Animated.Value(0)).current;
@@ -134,21 +239,56 @@ const SignInScreen = () => {
   useEffect(() => {
     Animated.stagger(120, [
       Animated.parallel([
-        Animated.spring(logoScale, { toValue: 1, tension: 60, friction: 8, useNativeDriver: true }),
-        Animated.timing(logoAnim, { toValue: 1, duration: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.spring(logoScale, {
+          toValue: 1,
+          tension: 60,
+          friction: 8,
+          useNativeDriver: true
+        }),
+        Animated.timing(logoAnim, {
+          toValue: 1,
+          duration: 700,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true
+        })
       ]),
-      Animated.timing(titleAnim, { toValue: 1, duration: 600, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(subtitleAnim, { toValue: 1, duration: 500, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(formAnim, { toValue: 1, duration: 600, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(titleAnim, {
+        toValue: 1,
+        duration: 600,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true
+      }),
+      Animated.timing(subtitleAnim, {
+        toValue: 1,
+        duration: 500,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true
+      }),
+      Animated.timing(formAnim, {
+        toValue: 1,
+        duration: 600,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true
+      })
     ]).start();
 
     Animated.loop(
       Animated.sequence([
-        Animated.timing(buttonPulse, { toValue: 1.03, duration: 1200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(buttonPulse, { toValue: 1, duration: 1200, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(buttonPulse, {
+          toValue: 1.03,
+          duration: 1200,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true
+        }),
+        Animated.timing(buttonPulse, {
+          toValue: 1,
+          duration: 1200,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true
+        })
       ])
     ).start();
-  }, []);
+  }, [buttonPulse, formAnim, logoAnim, logoScale, subtitleAnim, titleAnim]);
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -159,7 +299,8 @@ const SignInScreen = () => {
     try {
       await login(email, password);
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || "Sign in failed.";
+      const msg =
+        err?.response?.data?.message || err?.message || "Sign in failed.";
       Alert.alert("Error", msg);
     } finally {
       setLoading(false);
@@ -175,17 +316,53 @@ const SignInScreen = () => {
   };
 
   const bubbles = [
-    { size: 60, color: "#FFCDD2", startX: width * 0.05, delay: 0, duration: 7000 },
-    { size: 40, color: "#EF9A9A", startX: width * 0.25, delay: 1500, duration: 8500 },
-    { size: 80, color: "#FFCDD2", startX: width * 0.55, delay: 800, duration: 9000 },
-    { size: 30, color: "#EF9A9A", startX: width * 0.75, delay: 2500, duration: 7500 },
-    { size: 50, color: "#FFCDD2", startX: width * 0.88, delay: 400, duration: 8000 },
-    { size: 35, color: "#EF9A9A", startX: width * 0.42, delay: 3000, duration: 6500 },
+    {
+      size: 60,
+      color: "#FFCDD2",
+      startX: width * 0.05,
+      delay: 0,
+      duration: 7000
+    },
+    {
+      size: 40,
+      color: "#EF9A9A",
+      startX: width * 0.25,
+      delay: 1500,
+      duration: 8500
+    },
+    {
+      size: 80,
+      color: "#FFCDD2",
+      startX: width * 0.55,
+      delay: 800,
+      duration: 9000
+    },
+    {
+      size: 30,
+      color: "#EF9A9A",
+      startX: width * 0.75,
+      delay: 2500,
+      duration: 7500
+    },
+    {
+      size: 50,
+      color: "#FFCDD2",
+      startX: width * 0.88,
+      delay: 400,
+      duration: 8000
+    },
+    {
+      size: 35,
+      color: "#EF9A9A",
+      startX: width * 0.42,
+      delay: 3000,
+      duration: 6500
+    }
   ];
 
   return (
     <View style={s.root}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle='dark-content' />
 
       {/* Off-white warm background */}
       <LinearGradient
@@ -193,12 +370,15 @@ const SignInScreen = () => {
         style={StyleSheet.absoluteFill}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
+        pointerEvents='none'
       />
 
       {/* Floating bubbles */}
-      {bubbles.map((b, i) => <FloatingBubble key={i} {...b} />)}
+      {bubbles.map((b, i) => (
+        <FloatingBubble key={i} {...b} />
+      ))}
 
-      <View style={s.meshOverlay} pointerEvents="none" />
+      <View style={s.meshOverlay} pointerEvents='none' />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -208,7 +388,7 @@ const SignInScreen = () => {
         <ScrollView
           contentContainerStyle={s.scroll}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+          keyboardShouldPersistTaps='handled'
         >
           {/* ── Logo ── */}
           <Animated.View
@@ -218,9 +398,14 @@ const SignInScreen = () => {
                 opacity: logoAnim,
                 transform: [
                   { scale: logoScale },
-                  { translateY: logoAnim.interpolate({ inputRange: [0, 1], outputRange: [-30, 0] }) },
-                ],
-              },
+                  {
+                    translateY: logoAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-30, 0]
+                    })
+                  }
+                ]
+              }
             ]}
           >
             <View style={s.logoRing}>
@@ -228,7 +413,7 @@ const SignInScreen = () => {
                 <Image
                   source={require("../../assets/images/logo.png")}
                   style={s.logo}
-                  contentFit="contain"
+                  contentFit='contain'
                 />
               </View>
             </View>
@@ -239,9 +424,16 @@ const SignInScreen = () => {
           <Animated.View
             style={{
               opacity: titleAnim,
-              transform: [{ translateY: titleAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
+              transform: [
+                {
+                  translateY: titleAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0]
+                  })
+                }
+              ],
               alignItems: "center",
-              marginBottom: 6,
+              marginBottom: 6
             }}
           >
             <Text style={s.brand}>mulema</Text>
@@ -251,15 +443,24 @@ const SignInScreen = () => {
           <Animated.View
             style={{
               opacity: subtitleAnim,
-              transform: [{ translateY: subtitleAnim.interpolate({ inputRange: [0, 1], outputRange: [15, 0] }) }],
+              transform: [
+                {
+                  translateY: subtitleAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [15, 0]
+                  })
+                }
+              ],
               alignItems: "center",
-              marginBottom: 36,
+              marginBottom: 36
             }}
           >
             <View style={s.pillBadge}>
               <Text style={s.pillText}>🌍 Langues camerounaises</Text>
             </View>
-            <Text style={s.subtitle}>Connectez-vous pour continuer votre aventure</Text>
+            <Text style={s.subtitle}>
+              Connectez-vous pour continuer votre aventure
+            </Text>
           </Animated.View>
 
           {/* ── Form card ── */}
@@ -268,68 +469,53 @@ const SignInScreen = () => {
               s.card,
               {
                 opacity: formAnim,
-                transform: [{ translateY: formAnim.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) }],
-              },
+                transform: [
+                  {
+                    translateY: formAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [40, 0]
+                    })
+                  }
+                ]
+              }
             ]}
           >
             {/* Email */}
-            <View style={s.fieldWrap}>
-              <Text style={s.label}>Adresse e-mail</Text>
-              <View style={[s.inputRow, emailFocused && s.inputFocused]}>
-                <Ionicons name="mail-outline" size={18} color={emailFocused ? "#D32F2F" : "#BDBDBD"} style={{ marginRight: 10 }} />
-                <TextInput
-                  style={s.input}
-                  placeholder="exemple@email.com"
-                  placeholderTextColor="#C0B8B8"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  onFocus={() => setEmailFocused(true)}
-                  onBlur={() => setEmailFocused(false)}
-                />
-              </View>
-            </View>
+            <Field
+              label='Adresse e-mail'
+              icon='mail-outline'
+              value={email}
+              onChangeText={setEmail}
+              placeholder='exemple@email.com'
+              keyboardType='email-address'
+              autoCapitalize='none'
+            />
 
             {/* Password */}
-            <View style={s.fieldWrap}>
-              <Text style={s.label}>Mot de passe</Text>
-              <View style={[s.inputRow, passFocused && s.inputFocused]}>
-                <Ionicons name="lock-closed-outline" size={18} color={passFocused ? "#D32F2F" : "#BDBDBD"} style={{ marginRight: 10 }} />
-                <TextInput
-                  style={[s.input, { flex: 1 }]}
-                  placeholder="••••••••"
-                  placeholderTextColor="#C0B8B8"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  onFocus={() => setPassFocused(true)}
-                  onBlur={() => setPassFocused(false)}
-                />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                  <Ionicons
-                    name={showPassword ? "eye-outline" : "eye-off-outline"}
-                    size={20}
-                    color={passFocused ? "#D32F2F" : "#BDBDBD"}
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
+            <Field
+              label='Mot de passe'
+              icon='lock-closed-outline'
+              value={password}
+              onChangeText={setPassword}
+              placeholder='••••••••'
+              secureTextEntry={!showPassword}
+              rightIcon={showPassword ? "eye-outline" : "eye-off-outline"}
+              onRightPress={() => setShowPassword(!showPassword)}
+            />
 
             {/* Forgot password */}
-            <TouchableOpacity 
-             onPress={() => router.push("/forgotpass")}
+            <TouchableOpacity
+              onPress={() => router.push("/forgotpass")}
               activeOpacity={0.8}
-              style={s.signUpBtn}
-               style={{ alignSelf: "flex-end", marginBottom: 24 }}>
+              style={[s.signUpBtn, { alignSelf: "flex-end", marginBottom: 24 }]}
+            >
               <Text style={s.forgot}>Mot de passe oublié ?</Text>
             </TouchableOpacity>
 
-
-
             {/* Sign in button */}
-            <Animated.View style={{ transform: [{ scale: loading ? 1 : buttonPulse }] }}>
+            <Animated.View
+              style={{ transform: [{ scale: loading ? 1 : buttonPulse }] }}
+            >
               <TouchableOpacity
                 onPress={handleSignIn}
                 disabled={loading}
@@ -337,7 +523,9 @@ const SignInScreen = () => {
                 style={{ borderRadius: 16, overflow: "hidden" }}
               >
                 <LinearGradient
-                  colors={loading ? ["#E0E0E0", "#E0E0E0"] : ["#E53935", "#B71C1C"]}
+                  colors={
+                    loading ? ["#E0E0E0", "#E0E0E0"] : ["#E53935", "#B71C1C"]
+                  }
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={s.btn}
@@ -347,7 +535,12 @@ const SignInScreen = () => {
                   ) : (
                     <>
                       <Text style={s.btnText}>Se connecter</Text>
-                      <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
+                      <Ionicons
+                        name='arrow-forward'
+                        size={20}
+                        color='#fff'
+                        style={{ marginLeft: 8 }}
+                      />
                     </>
                   )}
                 </LinearGradient>
@@ -369,18 +562,20 @@ const SignInScreen = () => {
             >
               <Text style={s.signUpText}>
                 Pas encore de compte ?{" "}
-                <Text style={s.signUpLink}>S'inscrire gratuitement</Text>
+                <Text style={s.signUpLink}>S&apos;inscrire gratuitement</Text>
               </Text>
             </TouchableOpacity>
           </Animated.View>
 
           {/* Bottom languages strip */}
           <Animated.View style={[s.langStrip, { opacity: formAnim }]}>
-            {["Ewondo", "Bassa", "Fulfulde", "Duala", "Ghomala"].map((lang, i) => (
-              <View key={i} style={s.langChip}>
-                <Text style={s.langChipText}>{lang}</Text>
-              </View>
-            ))}
+            {["Ewondo", "Bassa", "Fulfulde", "Duala", "Ghomala"].map(
+              (lang, i) => (
+                <View key={i} style={s.langChip}>
+                  <Text style={s.langChipText}>{lang}</Text>
+                </View>
+              )
+            )}
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -393,10 +588,18 @@ const OrbitingDot = () => {
   const rot = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.loop(
-      Animated.timing(rot, { toValue: 1, duration: 3000, easing: Easing.linear, useNativeDriver: true })
+      Animated.timing(rot, {
+        toValue: 1,
+        duration: 3000,
+        easing: Easing.linear,
+        useNativeDriver: true
+      })
     ).start();
   }, []);
-  const angle = rot.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] });
+  const angle = rot.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"]
+  });
   return (
     <Animated.View style={[s.orbit, { transform: [{ rotate: angle }] }]}>
       <View style={s.orbitDot} />
@@ -410,18 +613,23 @@ const s = StyleSheet.create({
   meshOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "transparent",
-    opacity: 0.04,
+    opacity: 0.04
   },
   scroll: {
     flexGrow: 1,
     alignItems: "center",
     paddingTop: Platform.OS === "ios" ? 70 : 50,
     paddingBottom: 40,
-    paddingHorizontal: 24,
+    paddingHorizontal: 24
   },
 
   // Logo
-  logoWrap: { alignItems: "center", justifyContent: "center", marginBottom: 20, position: "relative" },
+  logoWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+    position: "relative"
+  },
   logoRing: {
     width: 108,
     height: 108,
@@ -430,7 +638,7 @@ const s = StyleSheet.create({
     borderColor: "rgba(211,47,47,0.3)",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(211,47,47,0.07)",
+    backgroundColor: "rgba(211,47,47,0.07)"
   },
   logoInner: {
     width: 88,
@@ -439,7 +647,7 @@ const s = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.6)",
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden",
+    overflow: "hidden"
   },
   logo: { width: 68, height: 68 },
   orbit: {
@@ -450,7 +658,7 @@ const s = StyleSheet.create({
     top: -6,
     left: -6,
     alignItems: "center",
-    justifyContent: "flex-start",
+    justifyContent: "flex-start"
   },
   orbitDot: {
     width: 10,
@@ -461,7 +669,7 @@ const s = StyleSheet.create({
     shadowColor: "#D32F2F",
     shadowOpacity: 0.8,
     shadowRadius: 6,
-    elevation: 6,
+    elevation: 6
   },
 
   // Text
@@ -470,7 +678,7 @@ const s = StyleSheet.create({
     fontSize: 42,
     fontWeight: "700",
     color: "#1A1A1A",
-    letterSpacing: 3,
+    letterSpacing: 3
   },
   pillBadge: {
     backgroundColor: "rgba(211,47,47,0.1)",
@@ -479,10 +687,20 @@ const s = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 5,
-    marginBottom: 10,
+    marginBottom: 10
   },
-  pillText: { color: "#C62828", fontSize: 12, fontWeight: "600", letterSpacing: 0.5 },
-  subtitle: { color: "#888", fontSize: 14, textAlign: "center", lineHeight: 20 },
+  pillText: {
+    color: "#C62828",
+    fontSize: 12,
+    fontWeight: "600",
+    letterSpacing: 0.5
+  },
+  subtitle: {
+    color: "#888",
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 20
+  },
 
   // Card
   card: {
@@ -492,12 +710,19 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(211,47,47,0.1)",
     padding: 24,
-    marginBottom: 20,
+    marginBottom: 20
   },
 
   // Fields
   fieldWrap: { marginBottom: 16 },
-  label: { color: "#888", fontSize: 12, fontWeight: "600", letterSpacing: 1, marginBottom: 8, textTransform: "uppercase" },
+  label: {
+    color: "#888",
+    fontSize: 12,
+    fontWeight: "600",
+    letterSpacing: 1,
+    marginBottom: 8,
+    textTransform: "uppercase"
+  },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -506,7 +731,7 @@ const s = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "rgba(180,60,60,0.15)",
     paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingVertical: 14
   },
   inputFocused: {
     borderColor: "#D32F2F",
@@ -514,12 +739,17 @@ const s = StyleSheet.create({
     shadowColor: "#D32F2F",
     shadowOpacity: 0.15,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 4
   },
   input: { flex: 1, color: "#1A1A1A", fontSize: 15, fontWeight: "500" },
 
   // Forgot
-  forgot: { color: "#D32F2F", fontSize: 13, fontWeight: "600" },
+  forgot: {
+    color: "#D32F2F",
+    fontSize: 13,
+    fontWeight: "600",
+    paddingInline: 10
+  },
 
   // Button
   btn: {
@@ -531,12 +761,21 @@ const s = StyleSheet.create({
     shadowColor: "#D32F2F",
     shadowOpacity: 0.3,
     shadowRadius: 12,
-    elevation: 8,
+    elevation: 8
   },
-  btnText: { color: "#FFFFFF", fontSize: 17, fontWeight: "700", letterSpacing: 0.5 },
+  btnText: {
+    color: "#FFFFFF",
+    fontSize: 17,
+    fontWeight: "700",
+    letterSpacing: 0.5
+  },
 
   // Divider
-  dividerRow: { flexDirection: "row", alignItems: "center", marginVertical: 20 },
+  dividerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20
+  },
   dividerLine: { flex: 1, height: 1, backgroundColor: "rgba(180,60,60,0.12)" },
   dividerText: { color: "#BDBDBD", fontSize: 13, marginHorizontal: 12 },
 
@@ -544,10 +783,11 @@ const s = StyleSheet.create({
   signUpBtn: {
     alignItems: "center",
     paddingVertical: 14,
+    paddingInline: 10,
     borderRadius: 16,
     borderWidth: 1.5,
     borderColor: "rgba(211,47,47,0.15)",
-    backgroundColor: "rgba(211,47,47,0.04)",
+    backgroundColor: "rgba(211,47,47,0.04)"
   },
   signUpText: { color: "#888", fontSize: 14 },
   signUpLink: { color: "#D32F2F", fontWeight: "700" },
@@ -558,7 +798,7 @@ const s = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "center",
     gap: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: 10
   },
   langChip: {
     backgroundColor: "rgba(211,47,47,0.06)",
@@ -566,9 +806,9 @@ const s = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: "rgba(211,47,47,0.12)",
+    borderColor: "rgba(211,47,47,0.12)"
   },
-  langChipText: { color: "#888", fontSize: 11, fontWeight: "500" },
+  langChipText: { color: "#888", fontSize: 11, fontWeight: "500" }
 });
 
 export default SignInScreen;
