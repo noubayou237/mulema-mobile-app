@@ -190,5 +190,153 @@
   },
   "header": {
     "welcome": "Bienvenue"
+  },
+  "signIn": {
+    "title": "Connexion",
+    "subtitle": "Connectez-vous pour continuer votre aventure",
+    "emailLabel": "Adresse e-mail",
+    "emailPlaceholder": "exemple@email.com",
+    "passwordLabel": "Mot de passe",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "Mot de passe oublié ?",
+    "signInButton": "Se connecter",
+    "noAccount": "Pas encore de compte ?",
+    "signUpFree": "S'inscrire gratuitement",
+    "languages": "Langues camerounaises",
+    "signInFailed": "La connexion a échoué.",
+    "invalidEmail": "Email invalide",
+    "enterValidEmail": "Veuillez d'abord entrer un email valide.",
+    "continueAdventure": "Continuez votre aventure"
+  },
+  "signUp": {
+    "title": "Inscription",
+    "subtitle": "Rejoins la communauté",
+    "usernameLabel": "Nom d'utilisateur",
+    "usernamePlaceholder": "ex: ambe_bassa",
+    "emailLabel": "Adresse e-mail",
+    "emailPlaceholder": "exemple@email.com",
+    "passwordLabel": "Mot de passe",
+    "passwordPlaceholder": "••••••••",
+    "confirmPasswordLabel": "Confirmer le mot de passe",
+    "confirmPasswordPlaceholder": "••••••••",
+    "signUpButton": "Créer mon compte",
+    "alreadyAccount": "Déjà un compte ?",
+    "signInLink": "Se connecter",
+    "or": "ou",
+    "passwordStrength": "Force du mot de passe",
+    "weak": "Faible",
+    "medium": "Moyen",
+    "strong": "Fort",
+    "terms": "En créant un compte, tu acceptes nos",
+    "conditions": "Conditions d'utilisation",
+    "privacy": "Politique de confidentialité",
+    "validation": {
+      "requiredFields": "Remplis tous les champs obligatoires.",
+      "noSpaces": "Le nom d'utilisateur ne doit pas contenir d'espaces.",
+      "passwordMinLength": "Le mot de passe doit contenir au moins {{min}} caractères.",
+      "passwordMismatch": "Les mots de passe ne correspondent pas.",
+      "passwordsMatch": "Les mots de passe correspondent",
+      "passwordsDoNotMatch": "Les mots de passe ne correspondent pas"
+    },
+    "success": {
+      "title": "Inscription réussie !",
+      "message": "Un code de vérification a été envoyé à votre email."
+    },
+    "error": {
+      "title": "Erreur",
+      "creationFailed": "Erreur lors de la création du compte."
+    },
+    "steps": {
+      "profile": "Profil",
+      "email": "Email",
+      "security": "Sécurité"
+    }
+  },
+  "home": {
+    "levels": {
+      "level": "NIVEAU",
+      "unlocked": "Débloqué",
+      "startAdventure": "Commencer l'aventure",
+      "completePrevious": "Termine le niveau précédent pour débloquer",
+      "startPoint": "POINT DE DÉPART",
+      "locked": "Verrouillé",
+      "completed": "Terminé",
+      "progression": "Progression",
+      "levelsUnlocked": "{{unlocked}}/{{total}} niveaux",
+      "masterAwaits": "Maître {{language}} t'attend !",
+      "completeAll": "Complète tous les niveaux pour décrocher le certificat {{language}}."
+    },
+    "welcome": "Bienvenue",
+    "continueLearning": "Continuer l'apprentissage",
+    "yourProgress": "Votre progression"
+  },
+  "lessons": {
+    "title": "Leçons",
+    "lesson": "Leçon",
+    "exercise": "Exercice",
+    "startLesson": "Commencer la leçon",
+    "continueLesson": "Continuer la leçon",
+    "completeLesson": "Terminer la leçon",
+    "lessonCompleted": "Leçon terminée !",
+    "tryAgain": "Réessayer",
+    "stepByStep": "Étape par étape, vous construisez vos connaissances",
+    "completeToUnlock": "Complétez cette leçon pour débloquer la suivante",
+    "locked": "Verrouillé",
+    "unlocked": "Déverrouillé"
+  },
+  "exercises": {
+    "title": "Exercices",
+    "introText": "Choisis un thème et entraîne-toi à apprendre de nouveaux mots et expressions. Plus tu pratiques, plus tu progresses !",
+    "start": "Commencer",
+    "checkAnswer": "Vérifier la réponse",
+    "nextQuestion": "Question suivante",
+    "correct": "Correct !",
+    "incorrect": "Incorrect",
+    "tryAgain": "Réessayer",
+    "continue": "Continuer",
+    "completed": "Terminé !",
+    "score": "Votre score : {{score}}",
+    "questionOf": "Question {{current}} sur {{total}}"
+  },
+  "community": {
+    "title": "Communauté",
+    "subtitle": "Apprends ensemble, progresse ensemble",
+    "activityFeed": "Fil d'activité",
+    "viewStats": "Voir mes statistiques",
+    "points": "points",
+    "completedTheme": "a terminé le thème {{theme}}",
+    "streak": "a atteint {{days}} jours consécutifs",
+    "learnedWords": "a appris {{count}} nouveaux mots aujourd'hui",
+    "completedExercise": "a terminé l'exercice '{{exercise}}'",
+    "earnedPoints": "a gagné {{count}} points de défi"
+  },
+  "profile": {
+    "title": "Profil",
+    "editProfile": "Modifier le profil",
+    "name": "Nom",
+    "username": "Nom d'utilisateur",
+    "email": "Email",
+    "changeProfilePicture": "Changer la photo de profil",
+    "takePhoto": "Prendre une photo",
+    "chooseFromGallery": "Choisir dans la galerie",
+    "points": "Points",
+    "completed": "Terminé",
+    "rank": "Rang",
+    "logout": "Déconnexion",
+    "logoutConfirm": "Êtes-vous sûr de vouloir vous déconnecter ?",
+    "profileUpdated": "Profil mis à jour avec succès",
+    "profilePictureUpdated": "Photo de profil mise à jour avec succès"
+  },
+  "stats": {
+    "title": "Statistiques",
+    "myStats": "Mes statistiques",
+    "weeklyGoal": "des objectifs atteints cette semaine",
+    "dayStreak": "Série de jours",
+    "daysMin": "7 jours",
+    "daysMax": "30 jours",
+    "detailedProgress": "Progression détaillée",
+    "dailyGoal": "Ton objectif du jour",
+    "learnWords": "Apprends {{count}} mots",
+    "completedCount": "déjà {{completed}}/{{goal}} faits"
   }
 }
