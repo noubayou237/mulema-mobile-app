@@ -57,7 +57,7 @@ export default function BottomNav({ activeKey = "exercices" }) {
               style={styles.btn}
               activeOpacity={0.85}
               // Conserver la logique de navigation existante
-              onPress={() => router.replace(`/${it.key}`)}
+              onPress={() => router.replace(`/(tabs)/${it.key}`)}
             >
               <View style={styles.iconWrapper}>
                 {/* Icône */}

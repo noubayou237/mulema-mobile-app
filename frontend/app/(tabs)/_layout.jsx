@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Alert, TouchableOpacity, ActivityIndicator } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Tabs, useRouter, useSegments } from "expo-router";
+import { Slot, useRouter, useSegments } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import Header from "../components/header";
 import BottomNav from "../components/bottom";
@@ -15,7 +15,7 @@ import "../../src/i18n";
  * Tabs layout centralisé :
  * - redirige vers (auth)/sign-in si pas connecté
  * - affiche un Header réutilisable (avec logout à droite)
- * - cache la tabBar native et affiche BottomNav personnalisé
+ * - utilise Stack pour la navigation + BottomNav personnalisé
  */
 
 export default function TabsLayout() {
@@ -155,18 +155,8 @@ export default function TabsLayout() {
       {/* Header commun */}
       <Header title={getTitle()} right={headerRight} />
 
-      {/* Tabs (tabBar native cachée) */}
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarStyle: { display: "none" }
-        }}
-      >
-        <Tabs.Screen name='home' options={{ title: "Home" }} />
-        <Tabs.Screen name='lessons' options={{ title: "Lessons" }} />
-        <Tabs.Screen name='exercices' options={{ title: "Exercices" }} />
-        <Tabs.Screen name='community' options={{ title: "Community" }} />
-      </Tabs>
+      {/* Contenu des écrans */}
+      <Slot />
 
       {/* Bottom navigation custom */}
       <BottomNav activeKey={activeSegment} />
