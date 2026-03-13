@@ -12,7 +12,8 @@ import {
   Easing,
   StyleSheet,
   Dimensions,
-  StatusBar
+  StatusBar,
+  ActivityIndicator
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
@@ -20,6 +21,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useUser } from "../../src/context/UserContext";
 import { useTranslation } from "react-i18next";
+import SocialButtons from "../../src/components/SocialButtons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import api from "../../services/api";
 
 const { width, height } = Dimensions.get("window");
 
@@ -227,6 +231,33 @@ const SignInScreen = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState(false);
+
+  // Handle successful social login
+  const handleSocialLoginSuccess = async (socialData) => {
+    try {
+      setSocialLoading(true);
+      // The backend should return accessToken and refreshToken
+      if (socialData?.accessToken) {
+        const STORAGE_KEY = "userSession";
+        await AsyncStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            accessToken: socialData.accessToken,
+            refreshToken: socialData.refreshToken
+          })
+        );
+        // Get user data
+        const me = await api.get("/auth/me");
+        router.replace("/(tabs)/home");
+      }
+    } catch (error) {
+      console.error("Social login error:", error);
+      Alert.alert(t("common.error"), t("auth.socialLoginError"));
+    } finally {
+      setSocialLoading(false);
+    }
+  };
 
   // Mount animations
   const logoAnim = useRef(new Animated.Value(0)).current;
@@ -547,12 +578,8 @@ const SignInScreen = () => {
               </TouchableOpacity>
             </Animated.View>
 
-            {/* Divider */}
-            <View style={s.dividerRow}>
-              <View style={s.dividerLine} />
-              <Text style={s.dividerText}>ou</Text>
-              <View style={s.dividerLine} />
-            </View>
+            {/* Social Login Buttons */}
+            <SocialButtons onSuccess={handleSocialLoginSuccess} />
 
             {/* Sign up */}
             <TouchableOpacity
