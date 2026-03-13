@@ -331,8 +331,10 @@ const SignInScreen = () => {
       await login(email, password);
     } catch (err) {
       const msg =
-        err?.response?.data?.message || err?.message || "Sign in failed.";
-      Alert.alert("Error", msg);
+        err?.response?.data?.message ||
+        err?.message ||
+        t("signIn.signInFailed");
+      Alert.alert(t("common.error"), msg);
     } finally {
       setLoading(false);
     }
@@ -340,7 +342,7 @@ const SignInScreen = () => {
 
   const onForgotPassword = () => {
     if (!email || !email.includes("@")) {
-      Alert.alert("Invalid Email", "Please enter a valid email first.");
+      Alert.alert(t("signIn.invalidEmail"), t("signIn.enterValidEmail"));
       return;
     }
     router.push({ pathname: "/(auth)/ResetPasswordScreen", params: { email } });
@@ -487,11 +489,9 @@ const SignInScreen = () => {
             }}
           >
             <View style={s.pillBadge}>
-              <Text style={s.pillText}>🌍 Langues camerounaises</Text>
+              <Text style={s.pillText}>🌍 {t("signIn.languages")}</Text>
             </View>
-            <Text style={s.subtitle}>
-              Connectez-vous pour continuer votre aventure
-            </Text>
+            <Text style={s.subtitle}>{t("signIn.subtitle")}</Text>
           </Animated.View>
 
           {/* ── Form card ── */}
@@ -513,22 +513,22 @@ const SignInScreen = () => {
           >
             {/* Email */}
             <Field
-              label='Adresse e-mail'
+              label={t("signIn.emailLabel")}
               icon='mail-outline'
               value={email}
               onChangeText={setEmail}
-              placeholder='exemple@email.com'
+              placeholder={t("signIn.emailPlaceholder")}
               keyboardType='email-address'
               autoCapitalize='none'
             />
 
             {/* Password */}
             <Field
-              label='Mot de passe'
+              label={t("signIn.passwordLabel")}
               icon='lock-closed-outline'
               value={password}
               onChangeText={setPassword}
-              placeholder='••••••••'
+              placeholder={t("signIn.passwordPlaceholder")}
               secureTextEntry={!showPassword}
               rightIcon={showPassword ? "eye-outline" : "eye-off-outline"}
               onRightPress={() => setShowPassword(!showPassword)}
@@ -540,7 +540,7 @@ const SignInScreen = () => {
               activeOpacity={0.8}
               style={[s.signUpBtn, { alignSelf: "flex-end", marginBottom: 24 }]}
             >
-              <Text style={s.forgot}>Mot de passe oublié ?</Text>
+              <Text style={s.forgot}>{t("signIn.forgotPassword")}</Text>
             </TouchableOpacity>
 
             {/* Sign in button */}
@@ -565,7 +565,7 @@ const SignInScreen = () => {
                     <WaveDots />
                   ) : (
                     <>
-                      <Text style={s.btnText}>Se connecter</Text>
+                      <Text style={s.btnText}>{t("signIn.signInButton")}</Text>
                       <Ionicons
                         name='arrow-forward'
                         size={20}
@@ -588,8 +588,8 @@ const SignInScreen = () => {
               style={s.signUpBtn}
             >
               <Text style={s.signUpText}>
-                Pas encore de compte ?{" "}
-                <Text style={s.signUpLink}>S&apos;inscrire gratuitement</Text>
+                {t("signIn.noAccount")}{" "}
+                <Text style={s.signUpLink}>{t("signIn.signUpFree")}</Text>
               </Text>
             </TouchableOpacity>
           </Animated.View>
