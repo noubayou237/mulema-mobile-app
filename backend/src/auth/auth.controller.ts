@@ -111,4 +111,23 @@ export class AuthController {
       return { success: false, message: error.message };
     }
   }
+
+  // Social Login Endpoints
+  @Post('google')
+  async googleLogin(@Body() body: any) {
+    this.logger.log(`Google login request for email: ${body.email}`);
+    return this.authService.socialLogin(body, 'GOOGLE');
+  }
+
+  @Post('facebook')
+  async facebookLogin(@Body() body: any) {
+    this.logger.log(`Facebook login request for facebookId: ${body.facebookId}`);
+    return this.authService.socialLogin(body, 'FACEBOOK');
+  }
+
+  @Post('apple')
+  async appleLogin(@Body() body: any) {
+    this.logger.log(`Apple login request for user: ${body.user}`);
+    return this.authService.socialLogin(body, 'APPLE');
+  }
 }
