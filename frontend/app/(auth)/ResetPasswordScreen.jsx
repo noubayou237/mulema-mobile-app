@@ -114,7 +114,7 @@ const ResetPasswordScreen = () => {
               disabled={loading}
             >
               <Text style={authStyles.buttonText}>
-                {loading ? "Enregistrement..." : "OK"}
+                {loading ? "Enregistrement..." : "Confirmer"}
               </Text>
             </TouchableOpacity>
           </View>
