@@ -6,22 +6,39 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { useRouter, usePathname } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTranslation } from "react-i18next";
 import "../../src/i18n";
 
 const { width, height } = Dimensions.get("window");
-const STREAK_KEY = "@mulema_streak_data";
+const STREAK_KEY   = "@mulema_streak_data";
+const LANG_KEY     = "@mulema_learning_lang";
 
 // ── Design tokens ──────────────────────────────────────────────────────────
-const BG       = "#F0EDE6";
-const CARD_BG  = "#FFFFFF";
-const RED      = "#D32F2F";
+const BG         = "#F0EDE6";
+const CARD_BG    = "#FFFFFF";
+const RED        = "#D32F2F";
+const RED_LIGHT  = "#FFEBEE";
 const TEXT_DARK  = "#2C2C2C";
 const TEXT_MID   = "#6B6B6B";
 const TEXT_LIGHT = "#AAAAAA";
-const SHADOW = { shadowColor: "#000", shadowOpacity: 0.07, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 3 };
+const BORDER     = "#E5E0D8";
+const CARD_SHADOW = {
+  shadowColor: "#000",
+  shadowOpacity: 0.07,
+  shadowRadius: 8,
+  shadowOffset: { width: 0, height: 2 },
+  elevation: 3,
+};
+
+// ── Learning languages available ───────────────────────────────────────────
+// Route pattern: /home?lang=bassa  |  /home?lang=duala  |  /home?lang=ghomala
+const LEARNING_LANGS = [
+  { code: "bassa",   label: "Le Bassa",   emoji: "🏜️", region: "Centre · Littoral",     color: "#D32F2F" },
+  { code: "duala",   label: "Le Duala",   emoji: "🌊", region: "Littoral · Côtes",       color: "#1565C0" },
+  { code: "ghomala", label: "Le Ghomala", emoji: "🏔️", region: "Hauts Plateaux Ouest",  color: "#6A1B9A" },
+];
 
 // ─────────────────────────────────────────────
 // STREAK MODAL
@@ -35,8 +52,8 @@ const StreakModal = ({ visible, onClose, days }) => {
   useEffect(() => {
     if (visible) {
       Animated.parallel([
-        Animated.timing(fade,     { toValue: 1, duration: 250, useNativeDriver: true }),
-        Animated.spring(slideUp,  { toValue: 0, tension: 55, friction: 9, useNativeDriver: true }),
+        Animated.timing(fade,        { toValue: 1, duration: 250, useNativeDriver: true }),
+        Animated.spring(slideUp,     { toValue: 0, tension: 55, friction: 9, useNativeDriver: true }),
         Animated.spring(flameBounce, { toValue: 1, tension: 50, friction: 5, useNativeDriver: true }),
       ]).start();
       Animated.loop(Animated.sequence([
@@ -53,8 +70,8 @@ const StreakModal = ({ visible, onClose, days }) => {
     }
   }, [visible]);
 
-  const weekDays = ["L","M","M","J","V","S","D"];
-  const today = new Date().getDay();
+  const weekDays      = ["L","M","M","J","V","S","D"];
+  const today         = new Date().getDay();
   const adjustedToday = today === 0 ? 6 : today - 1;
 
   return (
@@ -65,13 +82,24 @@ const StreakModal = ({ visible, onClose, days }) => {
           <View style={sm.sheetInner}>
             <View style={sm.handle} />
             <Animated.Text style={[sm.bigFlame, {
-              transform: [{ scale: flameBounce }, { rotate: flameRotate.interpolate({ inputRange: [-1,0,1], outputRange: ["-12deg","0deg","12deg"] }) }]
+              transform: [
+                { scale: flameBounce },
+                { rotate: flameRotate.interpolate({ inputRange: [-1,0,1], outputRange: ["-12deg","0deg","12deg"] }) },
+              ]
             }]}>
               {days === 0 ? "😴" : "🔥"}
             </Animated.Text>
             <Text style={sm.streakCount}>{days}</Text>
-            <Text style={sm.streakTitle}>{days === 0 ? "Lance ton streak !" : days === 1 ? "C'est parti !" : `${days} jours de suite !`}</Text>
-            <Text style={sm.streakSub}>{days === 0 ? "Commence aujourd'hui et construis ton streak 💪" : days < 7 ? "Continue comme ça, tu es sur la bonne voie !" : "Incroyable ! Tu es une machine à apprendre 🚀"}</Text>
+            <Text style={sm.streakTitle}>
+              {days === 0 ? "Lance ton streak !" : days === 1 ? "C'est parti !" : `${days} jours de suite !`}
+            </Text>
+            <Text style={sm.streakSub}>
+              {days === 0
+                ? "Commence aujourd'hui et construis ton streak 💪"
+                : days < 7
+                ? "Continue comme ça, tu es sur la bonne voie !"
+                : "Incroyable ! Tu es une machine à apprendre 🚀"}
+            </Text>
             <View style={sm.weekRow}>
               {weekDays.map((d, i) => {
                 const isToday = i === adjustedToday;
@@ -101,8 +129,8 @@ const StreakModal = ({ visible, onClose, days }) => {
 // CORIS MODAL
 // ─────────────────────────────────────────────
 const CorisModal = ({ visible, onClose, coris }) => {
-  const slideUp = useRef(new Animated.Value(300)).current;
-  const fade    = useRef(new Animated.Value(0)).current;
+  const slideUp  = useRef(new Animated.Value(300)).current;
+  const fade     = useRef(new Animated.Value(0)).current;
   const coinSpin = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -127,7 +155,7 @@ const CorisModal = ({ visible, onClose, coris }) => {
     { icon: "book-outline",   text: "Complète une leçon", reward: "+10 Coris" },
     { icon: "trophy-outline", text: "Gagne un défi",      reward: "+25 Coris" },
     { icon: "flame-outline",  text: "Streak 7 jours",     reward: "+50 Coris" },
-    { icon: "star-outline",   text: "Score parfait",       reward: "+15 Coris" },
+    { icon: "star-outline",   text: "Score parfait",      reward: "+15 Coris" },
   ];
 
   return (
@@ -187,9 +215,9 @@ const NotifModal = ({ visible, onClose }) => {
   }, [visible]);
 
   const notifs = [
-    { icon: "🔥", title: "Streak en danger !", body: "Tu n'as pas encore fait ta leçon aujourd'hui.", time: "il y a 2h",  type: "warning" },
-    { icon: "🏆", title: "Nouveau record !",   body: "Tu viens d'atteindre 7 jours consécutifs.",  time: "Hier",       type: "success" },
-    { icon: "🎯", title: "Défi disponible",    body: "Un nouveau défi Ewondo t'attend.",            time: "Il y a 1j",  type: "info"    },
+    { icon: "🔥", title: "Streak en danger !", body: "Tu n'as pas encore fait ta leçon aujourd'hui.", time: "il y a 2h", type: "warning" },
+    { icon: "🏆", title: "Nouveau record !",   body: "Tu viens d'atteindre 7 jours consécutifs.",  time: "Hier",      type: "success" },
+    { icon: "🎯", title: "Défi disponible",    body: "Un nouveau défi Ewondo t'attend.",            time: "Il y a 1j", type: "info"    },
     { icon: "💬", title: "Conseil du jour",    body: "Répète 10 min chaque matin pour mémoriser vite.", time: "Il y a 2j", type: "tip" },
   ];
   const typeColors = { warning: "#EF5350", success: RED, info: "#C62828", tip: "#B71C1C" };
@@ -203,7 +231,9 @@ const NotifModal = ({ visible, onClose }) => {
             <View style={sm.handle} />
             <View style={sm.notifHeader}>
               <Text style={sm.notifHeaderTitle}>Notifications</Text>
-              <TouchableOpacity onPress={onClose}><Text style={[sm.notifMarkAll, { color: RED }]}>Tout lire</Text></TouchableOpacity>
+              <TouchableOpacity onPress={onClose}>
+                <Text style={[sm.notifMarkAll, { color: RED }]}>Tout lire</Text>
+              </TouchableOpacity>
             </View>
             <ScrollView showsVerticalScrollIndicator={false} style={{ width: "100%" }}>
               {notifs.map((n, i) => (
@@ -220,6 +250,91 @@ const NotifModal = ({ visible, onClose }) => {
                 </TouchableOpacity>
               ))}
             </ScrollView>
+          </View>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+};
+
+// ─────────────────────────────────────────────
+// LEARNING LANGUAGE SWITCHER MODAL
+// ─────────────────────────────────────────────
+const LangSwitcherModal = ({ visible, onClose, currentLang, onSelect }) => {
+  const slideUp = useRef(new Animated.Value(500)).current;
+  const fade    = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(fade,    { toValue: 1, duration: 250, useNativeDriver: true }),
+        Animated.spring(slideUp, { toValue: 0, tension: 55, friction: 9, useNativeDriver: true }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(fade,    { toValue: 0,   duration: 200, useNativeDriver: true }),
+        Animated.timing(slideUp, { toValue: 500, duration: 220, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [visible]);
+
+  return (
+    <Modal transparent visible={visible} onRequestClose={onClose} statusBarTranslucent>
+      <Animated.View style={[sm.overlay, { opacity: fade }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <Animated.View style={[sm.sheet, { transform: [{ translateY: slideUp }] }]}>
+          <View style={ls.sheetInner}>
+            <View style={sm.handle} />
+
+            {/* Title */}
+            <View style={ls.titleRow}>
+              <Text style={ls.title}>Langue d'apprentissage</Text>
+              <TouchableOpacity onPress={onClose} style={ls.closeBtn}>
+                <Ionicons name="close" size={18} color={TEXT_MID} />
+              </TouchableOpacity>
+            </View>
+            <Text style={ls.subtitle}>Choisis la langue camerounaise que tu veux apprendre</Text>
+
+            {/* Language list */}
+            <View style={ls.grid}>
+              {LEARNING_LANGS.map((lang) => {
+                const selected = currentLang?.code === lang.code;
+                return (
+                  <TouchableOpacity
+                    key={lang.code}
+                    onPress={() => { onSelect(lang); onClose(); }}
+                    activeOpacity={0.8}
+                    style={[ls.langCard, selected && { borderColor: lang.color, borderWidth: 2 }]}
+                  >
+                    {/* Left accent bar */}
+                    <View style={[ls.langAccentBar, { backgroundColor: lang.color }]} />
+
+                    <View style={ls.langCardBody}>
+                      <Text style={ls.langEmoji}>{lang.emoji}</Text>
+                      <View style={ls.langTextGroup}>
+                        <Text style={[ls.langName, selected && { color: lang.color }]}>{lang.label}</Text>
+                        <Text style={ls.langRegion}>{lang.region}</Text>
+                      </View>
+                    </View>
+
+                    {/* Selected checkmark */}
+                    {selected ? (
+                      <View style={[ls.checkBadge, { backgroundColor: lang.color }]}>
+                        <Ionicons name="checkmark" size={13} color="#fff" />
+                      </View>
+                    ) : (
+                      <Ionicons name="chevron-forward" size={15} color={TEXT_LIGHT} style={{ marginRight: 14 }} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Coming soon note */}
+            <View style={ls.comingSoonRow}>
+              <Ionicons name="sparkles-outline" size={13} color={TEXT_LIGHT} />
+              <Text style={ls.comingSoonText}>Plus de langues bientôt disponibles !</Text>
+            </View>
           </View>
         </Animated.View>
       </Animated.View>
@@ -347,7 +462,11 @@ const NotifBtn = ({ count, onPress }) => {
     <Animated.View style={{ transform: [{ scale: mount }] }}>
       <TouchableOpacity onPress={onPress} activeOpacity={0.75} style={s.notifBtn}>
         <Animated.View style={{ transform: [{ rotate: ring.interpolate({ inputRange: [-1,0,1], outputRange: ["-22deg","0deg","22deg"] }) }] }}>
-          <Ionicons name={count > 0 ? "notifications" : "notifications-outline"} size={22} color={count > 0 ? TEXT_DARK : TEXT_LIGHT} />
+          <Ionicons
+            name={count > 0 ? "notifications" : "notifications-outline"}
+            size={22}
+            color={count > 0 ? TEXT_DARK : TEXT_LIGHT}
+          />
         </Animated.View>
         {count > 0 && (
           <View style={s.badge}>
@@ -399,10 +518,10 @@ const AvatarBtn = ({ username, avatarSource, onPress }) => {
 
 const getGreeting = () => {
   const h = new Date().getHours();
-  if (h < 5)  return { text: "Bonne nuit",     emoji: "🌙" };
-  if (h < 12) return { text: "Bonjour",         emoji: "☀️" };
-  if (h < 18) return { text: "Bon après-midi",  emoji: "🌤️" };
-  return       { text: "Bonsoir",              emoji: "🌆" };
+  if (h < 5)  return { text: "Bonne nuit",    emoji: "🌙" };
+  if (h < 12) return { text: "Bonjour",        emoji: "☀️" };
+  if (h < 18) return { text: "Bon après-midi", emoji: "🌤️" };
+  return       { text: "Bonsoir",             emoji: "🌆" };
 };
 
 // ─────────────────────────────────────────────
@@ -410,26 +529,33 @@ const getGreeting = () => {
 // ─────────────────────────────────────────────
 export default function Header({
   pageName,
-  username = "Apprenant",
+  username     = "Apprenant",
   avatarSource = null,
   initialCoris = 5,
-  isHome = false,
+  isHome       = false,
   style,
+  onLangChange,
 }) {
-  const router = useRouter();
-  const { t }  = useTranslation();
+  const router   = useRouter();
+  const pathname = usePathname();
+  const { t }    = useTranslation();
 
-  const [coris,      setCoris]      = useState(initialCoris);
-  const [notifCount, setNotifCount] = useState(3);
-  const [streakDays, setStreakDays] = useState(0);
-  const [showStreak, setShowStreak] = useState(false);
-  const [showCoris,  setShowCoris]  = useState(false);
-  const [showNotif,  setShowNotif]  = useState(false);
+  const [coris,          setCoris]          = useState(initialCoris);
+  const [notifCount,     setNotifCount]     = useState(3);
+  const [streakDays,     setStreakDays]      = useState(0);
+  const [showStreak,     setShowStreak]     = useState(false);
+  const [showCoris,      setShowCoris]      = useState(false);
+  const [showNotif,      setShowNotif]      = useState(false);
+  const [showLangPicker, setShowLangPicker] = useState(false);
+
+  // Detect current lang from URL params or fallback to saved/default
+  const [learningLang, setLearningLang] = useState(LEARNING_LANGS[0]);
 
   const slideDown = useRef(new Animated.Value(-90)).current;
   const fadeIn    = useRef(new Animated.Value(0)).current;
   const greetAnim = useRef(new Animated.Value(0)).current;
   const nameAnim  = useRef(new Animated.Value(0)).current;
+  const pillScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -441,10 +567,20 @@ export default function Header({
       Animated.spring(nameAnim,  { toValue: 1, tension: 70, friction: 8, useNativeDriver: true }),
     ]).start();
     loadStreak();
+    loadSavedLang();
     global.decreaseCoris = (n = 1) => setCoris((c) => Math.max(0, c - n));
     global.addCoris      = (n = 1) => setCoris((c) => c + n);
     return () => { try { delete global.decreaseCoris; delete global.addCoris; } catch (_) {} };
   }, []);
+
+  // Sync pill when URL changes (e.g. back navigation)
+  useEffect(() => {
+    const match = pathname?.match(/[?&]lang=([^&]+)/);
+    if (match) {
+      const found = LEARNING_LANGS.find(l => l.code === match[1]);
+      if (found) setLearningLang(found);
+    }
+  }, [pathname]);
 
   const loadStreak = async () => {
     try {
@@ -466,50 +602,99 @@ export default function Header({
     } catch (e) { console.log("Streak err:", e); }
   };
 
+  const loadSavedLang = async () => {
+    try {
+      // URL takes priority
+      const match = pathname?.match(/[?&]lang=([^&]+)/);
+      if (match) {
+        const found = LEARNING_LANGS.find(l => l.code === match[1]);
+        if (found) { setLearningLang(found); return; }
+      }
+      // Then AsyncStorage
+      const saved = await AsyncStorage.getItem(LANG_KEY);
+      if (saved) {
+        const lang = LEARNING_LANGS.find(l => l.code === saved);
+        if (lang) setLearningLang(lang);
+      }
+    } catch (_) {}
+  };
+
+  const handleSelectLang = async (lang) => {
+    // Bounce animation on pill
+    Animated.sequence([
+      Animated.spring(pillScale, { toValue: 0.82, tension: 300, friction: 5, useNativeDriver: true }),
+      Animated.spring(pillScale, { toValue: 1,    tension: 150, friction: 6, useNativeDriver: true }),
+    ]).start();
+
+    setLearningLang(lang);
+
+    // Persist
+    try { await AsyncStorage.setItem(LANG_KEY, lang.code); } catch (_) {}
+
+    // Navigate to home with lang query param: /home?lang=bassa
+    router.replace(`/home?lang=${lang.code}`);
+
+    // Optional parent callback
+    onLangChange?.(lang);
+  };
+
   const { text: greetText, emoji: greetEmoji } = getGreeting();
   const displayName = username.split(" ")[0];
 
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-      <StreakModal visible={showStreak} onClose={() => setShowStreak(false)} days={streakDays} />
-      <CorisModal  visible={showCoris}  onClose={() => setShowCoris(false)}  coris={coris} />
-      <NotifModal  visible={showNotif}  onClose={() => setShowNotif(false)} />
+      <StreakModal     visible={showStreak}    onClose={() => setShowStreak(false)}    days={streakDays} />
+      <CorisModal      visible={showCoris}     onClose={() => setShowCoris(false)}     coris={coris} />
+      <NotifModal      visible={showNotif}     onClose={() => setShowNotif(false)} />
+      <LangSwitcherModal
+        visible={showLangPicker}
+        onClose={() => setShowLangPicker(false)}
+        currentLang={learningLang}
+        onSelect={handleSelectLang}
+      />
 
       <Animated.View style={[s.wrapper, style, { transform: [{ translateY: slideDown }], opacity: fadeIn }]}>
-        {/* Beige background matching the maquette */}
         <View style={[StyleSheet.absoluteFill, { backgroundColor: BG }]} />
         <View style={s.bottomBorder} />
 
         <View style={s.row}>
-          {/* LEFT — lang pill + greeting */}
+          {/* LEFT */}
           <View style={s.left}>
-            {/* Language selector pill (like maquette "Douala ▾") */}
-            <Animated.View style={[{
-              opacity: greetAnim,
-              transform: [{ translateX: greetAnim.interpolate({ inputRange: [0,1], outputRange: [-14,0] }) }]
-            }]}>
-              <View style={s.langPill}>
-                <Text style={s.langPillText}>{pageName || "Mulema"}</Text>
-                <Ionicons name="chevron-down" size={12} color={RED} />
-              </View>
+
+            {/* ── Language pill — tap to open switcher ── */}
+            <Animated.View style={[{ opacity: greetAnim, transform: [{ translateX: greetAnim.interpolate({ inputRange: [0,1], outputRange: [-14,0] }) }, { scale: pillScale }] }]}>
+              <TouchableOpacity onPress={() => setShowLangPicker(true)} activeOpacity={0.85}>
+                <View style={[s.langPill, { backgroundColor: learningLang.color }]}>
+                  <Text style={s.langPillEmoji}>{learningLang.emoji}</Text>
+                  <Text style={s.langPillText}>{learningLang.label}</Text>
+                  <Ionicons name="chevron-down" size={11} color="rgba(255,255,255,0.8)" />
+                </View>
+              </TouchableOpacity>
             </Animated.View>
 
+            {/* Greeting */}
             <Animated.View style={[s.greetRow, {
               opacity: nameAnim,
-              transform: [{ translateX: nameAnim.interpolate({ inputRange: [0,1], outputRange: [-14,0] }) }]
+              transform: [{ translateX: nameAnim.interpolate({ inputRange: [0,1], outputRange: [-14,0] }) }],
             }]}>
               <Text style={s.greetEmoji}>{greetEmoji}</Text>
-              <Text style={s.greetText}>{greetText}, <Text style={s.nameInline}>{displayName}</Text></Text>
+              <Text style={s.greetText}>
+                {greetText}, <Text style={s.nameInline}>{displayName}</Text>
+              </Text>
             </Animated.View>
           </View>
 
-          {/* RIGHT — chips + notif + avatar */}
+          {/* RIGHT */}
           <View style={s.right}>
-            <FlameChip  days={streakDays} onPress={() => setShowStreak(true)} />
-            <CorisChip  coris={coris}      onPress={() => setShowCoris(true)} />
-            <NotifBtn   count={notifCount}  onPress={() => setShowNotif(true)} />
-            <AvatarBtn  username={username} avatarSource={avatarSource} onPress={() => router.push("standalone/profile")} />
+            <FlameChip days={streakDays}  onPress={() => setShowStreak(true)} />
+            <CorisChip coris={coris}      onPress={() => setShowCoris(true)} />
+            <NotifBtn  count={notifCount} onPress={() => setShowNotif(true)} />
+            <AvatarBtn
+              username={username}
+              avatarSource={avatarSource}
+              onPress={() => router.push("standalone/profile")}
+            />
           </View>
         </View>
       </Animated.View>
@@ -527,31 +712,26 @@ const s = StyleSheet.create({
     paddingBottom: 12,
     zIndex: 100,
     elevation: 4,
-    ...SHADOW,
+    ...CARD_SHADOW,
   },
-
-  // Subtle bottom border
   bottomBorder: {
     position: "absolute", bottom: 0, left: 0, right: 0,
-    height: 1, backgroundColor: "#E5E0D8",
+    height: 1, backgroundColor: BORDER,
   },
-
   row: {
     flexDirection: "row", alignItems: "center",
     justifyContent: "space-between", paddingHorizontal: 16,
   },
-
-  // Left
   left: { flex: 1, marginRight: 8, gap: 4 },
 
-  // Language selector pill — key maquette element
+  // Language pill
   langPill: {
     flexDirection: "row", alignItems: "center", gap: 5,
     alignSelf: "flex-start",
-    backgroundColor: RED,
     borderRadius: 20,
     paddingHorizontal: 12, paddingVertical: 6,
   },
+  langPillEmoji: { fontSize: 14 },
   langPillText: {
     fontSize: 14, fontWeight: "800", color: "#fff",
     fontFamily: "Nunito-ExtraBold",
@@ -562,17 +742,15 @@ const s = StyleSheet.create({
   greetText: { fontSize: 12, color: TEXT_MID, fontFamily: "Nunito-Regular" },
   nameInline: { fontWeight: "700", color: TEXT_DARK, fontFamily: "Nunito-Bold" },
 
-  // Right
   right: { flexDirection: "row", alignItems: "center", gap: 6 },
 
-  // Chips — white card style matching maquette
+  // Chips
   chip: {
     flexDirection: "row", alignItems: "center", gap: 5,
     backgroundColor: CARD_BG,
-    borderRadius: 12,
-    borderWidth: 1, borderColor: "#E5E0D8",
+    borderRadius: 12, borderWidth: 1, borderColor: BORDER,
     paddingHorizontal: 8, paddingVertical: 6,
-    ...SHADOW,
+    ...CARD_SHADOW,
   },
   chipEmoji: { fontSize: 17, lineHeight: 21 },
   chipNum:   { fontSize: 14, fontWeight: "800", lineHeight: 16, fontFamily: "Nunito-ExtraBold" },
@@ -580,22 +758,19 @@ const s = StyleSheet.create({
   coinImg:   { width: 18, height: 18, resizeMode: "contain" },
   corisNum:  { fontSize: 14, fontWeight: "800", color: "#E8A000", lineHeight: 16, fontFamily: "Nunito-ExtraBold" },
 
-  // Notif button
+  // Notif
   notifBtn: {
     width: 38, height: 38, borderRadius: 19,
-    backgroundColor: CARD_BG,
-    borderWidth: 1, borderColor: "#E5E0D8",
-    alignItems: "center", justifyContent: "center",
-    position: "relative",
-    ...SHADOW,
+    backgroundColor: CARD_BG, borderWidth: 1, borderColor: BORDER,
+    alignItems: "center", justifyContent: "center", position: "relative",
+    ...CARD_SHADOW,
   },
   badge: {
     position: "absolute", top: 2, right: 2,
     minWidth: 15, height: 15, borderRadius: 8,
     backgroundColor: RED,
     alignItems: "center", justifyContent: "center",
-    borderWidth: 1.5, borderColor: BG,
-    paddingHorizontal: 2,
+    borderWidth: 1.5, borderColor: BG, paddingHorizontal: 2,
   },
   badgeText: { fontSize: 7, color: "#fff", fontWeight: "800" },
 
@@ -606,7 +781,7 @@ const s = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
     borderWidth: 2, borderColor: "#fff",
   },
-  avatarImg: { width: 38, height: 38, borderRadius: 19, borderWidth: 2, borderColor: "#fff" },
+  avatarImg:     { width: 38, height: 38, borderRadius: 19, borderWidth: 2, borderColor: "#fff" },
   avatarInitial: { fontSize: 16, fontWeight: "800", color: "#fff" },
   onlineDot: {
     position: "absolute", bottom: 0, right: 0,
@@ -620,10 +795,13 @@ const s = StyleSheet.create({
 // MODAL STYLES
 // ─────────────────────────────────────────────
 const sm = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.38)", justifyContent: "flex-end" },
-  sheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: "hidden" },
+  overlay:   { flex: 1, backgroundColor: "rgba(0,0,0,0.38)", justifyContent: "flex-end" },
+  sheet:     { borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: "hidden" },
   sheetTall: { maxHeight: height * 0.72 },
-  sheetInner: { backgroundColor: CARD_BG, paddingTop: 12, paddingHorizontal: 24, paddingBottom: 44, alignItems: "center" },
+  sheetInner: {
+    backgroundColor: CARD_BG,
+    paddingTop: 12, paddingHorizontal: 24, paddingBottom: 44, alignItems: "center",
+  },
   handle: { width: 44, height: 5, borderRadius: 3, backgroundColor: "#DDD", marginBottom: 24 },
 
   bigFlame: { fontSize: 72, marginBottom: 4 },
@@ -637,13 +815,11 @@ const sm = StyleSheet.create({
   dayCol:  { alignItems: "center", gap: 6 },
   dayCircle: {
     width: 38, height: 38, borderRadius: 19,
-    backgroundColor: "#F5F3F0",
-    borderWidth: 1.5, borderColor: "#E5E0D8",
+    backgroundColor: "#F5F3F0", borderWidth: 1.5, borderColor: BORDER,
     alignItems: "center", justifyContent: "center",
   },
   dayCircleToday: {
-    borderColor: RED,
-    backgroundColor: "#FFEBEE",
+    borderColor: RED, backgroundColor: RED_LIGHT,
     shadowColor: RED, shadowOpacity: 0.25, shadowRadius: 6, elevation: 3,
   },
   dayCirclePast: { borderColor: "#FFCDD2", backgroundColor: "#FFF3F3" },
@@ -653,14 +829,12 @@ const sm = StyleSheet.create({
   tipsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, width: "100%", marginBottom: 24 },
   tipCard: {
     flex: 1, minWidth: "45%",
-    backgroundColor: "#F7F5F2",
-    borderRadius: 14, borderWidth: 1, borderColor: "#EEE",
+    backgroundColor: "#F7F5F2", borderRadius: 14, borderWidth: 1, borderColor: "#EEE",
     padding: 12, alignItems: "flex-start", gap: 6,
   },
   tipIconWrap: {
     width: 34, height: 34, borderRadius: 17,
-    backgroundColor: "#FFEBEE",
-    borderWidth: 1, borderColor: "#FFCDD2",
+    backgroundColor: RED_LIGHT, borderWidth: 1, borderColor: "#FFCDD2",
     alignItems: "center", justifyContent: "center",
   },
   tipText:   { fontSize: 12, color: TEXT_MID, fontFamily: "Nunito-Regular", lineHeight: 16 },
@@ -671,11 +845,8 @@ const sm = StyleSheet.create({
   notifMarkAll:     { fontSize: 13, fontWeight: "600", fontFamily: "Nunito-SemiBold" },
   notifItem: {
     flexDirection: "row", alignItems: "flex-start", gap: 12,
-    backgroundColor: "#F7F5F2",
-    borderRadius: 14, borderWidth: 1, borderColor: "#EEE",
-    borderLeftWidth: 3,
-    padding: 12, marginBottom: 10, width: "100%",
-    position: "relative",
+    backgroundColor: "#F7F5F2", borderRadius: 14, borderWidth: 1, borderColor: "#EEE",
+    borderLeftWidth: 3, padding: 12, marginBottom: 10, width: "100%", position: "relative",
   },
   notifIcon:  { fontSize: 24, marginTop: 1 },
   notifTitle: { fontSize: 14, fontWeight: "700", color: TEXT_DARK, fontFamily: "Nunito-Bold", marginBottom: 3 },
@@ -685,4 +856,77 @@ const sm = StyleSheet.create({
 
   closeBtn: { width: "100%", borderRadius: 14, paddingVertical: 15, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
   closeBtnText: { fontSize: 15, fontWeight: "700", color: "#fff", fontFamily: "Nunito-Bold", letterSpacing: 0.3 },
+});
+
+// ─────────────────────────────────────────────
+// LANG SWITCHER STYLES
+// ─────────────────────────────────────────────
+const LANG_CARD_W = (width - 40); // full-width single column for 3 langs
+
+const ls = StyleSheet.create({
+  sheetInner: {
+    backgroundColor: CARD_BG,
+    paddingTop: 12, paddingHorizontal: 20,
+    paddingBottom: 36,
+  },
+  titleRow: {
+    flexDirection: "row", alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6, paddingHorizontal: 4,
+  },
+  title: { fontSize: 19, fontWeight: "800", color: TEXT_DARK, fontFamily: "Nunito-ExtraBold" },
+  closeBtn: {
+    width: 32, height: 32, borderRadius: 16,
+    backgroundColor: "#F5F3F0", borderWidth: 1, borderColor: BORDER,
+    alignItems: "center", justifyContent: "center",
+  },
+  subtitle: {
+    fontSize: 12, color: TEXT_MID, fontFamily: "Nunito-Regular",
+    marginBottom: 18, paddingHorizontal: 4,
+  },
+
+  // Single column list
+  grid: { gap: 10 },
+
+  langCard: {
+    width: "100%",
+    backgroundColor: CARD_BG,
+    borderRadius: 16, overflow: "hidden",
+    borderWidth: 1.5, borderColor: BORDER,
+    flexDirection: "row", alignItems: "center",
+    shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 }, elevation: 2,
+    position: "relative",
+  },
+  langAccentBar: {
+    width: 5, alignSelf: "stretch",
+  },
+  langCardBody: {
+    flex: 1, padding: 14,
+    flexDirection: "row", alignItems: "center", gap: 14,
+  },
+  langEmoji: { fontSize: 28 },
+  langTextGroup: { flex: 1 },
+  langName: {
+    fontSize: 15, fontWeight: "800", color: TEXT_DARK,
+    fontFamily: "Nunito-ExtraBold", marginBottom: 2,
+  },
+  langRegion: {
+    fontSize: 11, color: TEXT_LIGHT,
+    fontFamily: "Nunito-Regular",
+  },
+
+  checkBadge: {
+    width: 26, height: 26, borderRadius: 13,
+    alignItems: "center", justifyContent: "center",
+    marginRight: 14,
+  },
+
+  comingSoonRow: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    marginTop: 16, paddingHorizontal: 4,
+  },
+  comingSoonText: {
+    fontSize: 11, color: TEXT_LIGHT, fontFamily: "Nunito-Regular",
+  },
 });
