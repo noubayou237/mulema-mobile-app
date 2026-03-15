@@ -7,9 +7,10 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
+  ScrollView
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { authStyles } from "../../assets/styles/auth.styles";
 import { COLORS } from "../../constants/colors";
 import api from "../../services/api";
@@ -17,6 +18,7 @@ import api from "../../services/api";
 const ResetPasswordScreen = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { t } = useTranslation();
 
   const email = typeof params?.email === "string" ? params.email : "";
   const otpCode = typeof params?.otpCode === "string" ? params.otpCode : "";
@@ -27,22 +29,19 @@ const ResetPasswordScreen = () => {
 
   const handleSubmit = async () => {
     if (!newPassword || !confirmPassword) {
-      return Alert.alert("Erreur", "Complète tous les champs.");
+      return Alert.alert(t("common.error"), t("auth.requiredFields"));
     }
     if (newPassword !== confirmPassword) {
-      return Alert.alert("Erreur", "Les mots de passe ne correspondent pas.");
+      return Alert.alert(t("common.error"), t("auth.passwordMismatch"));
     }
     if (newPassword.length < 8) {
       return Alert.alert(
-        "Erreur",
-        "Le mot de passe doit contenir au moins 8 caractères."
+        t("common.error"),
+        t("auth.passwordMinLength", { min: 8 })
       );
     }
     if (!email || !otpCode) {
-      return Alert.alert(
-        "Erreur",
-        "Informations manquantes. Recommence la procédure."
-      );
+      return Alert.alert(t("common.error"), t("auth.missingInfo"));
     }
 
     setLoading(true);
@@ -50,21 +49,18 @@ const ResetPasswordScreen = () => {
       await api.post("/auth/reset-password", {
         email,
         otpCode,
-        newPassword,
+        newPassword
       });
 
-      Alert.alert(
-        "Succès",
-        "Mot de passe mis à jour. Tu peux maintenant te connecter."
-      );
+      Alert.alert(t("common.success"), t("auth.passwordResetSuccess"));
 
       router.replace("/sign-in");
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
         err?.message ||
-        "Impossible de réinitialiser le mot de passe.";
-      Alert.alert("Erreur", msg);
+        t("auth.passwordResetError");
+      Alert.alert(t("common.error"), msg);
     } finally {
       setLoading(false);
     }
@@ -88,37 +84,37 @@ const ResetPasswordScreen = () => {
             <View style={authStyles.inputContainer}>
               <TextInput
                 style={authStyles.textInput}
-                placeholder="Nouveau mot de passe"
+                placeholder='Nouveau mot de passe'
                 placeholderTextColor={COLORS.textLight}
                 secureTextEntry
                 value={newPassword}
                 onChangeText={setNewPassword}
-                autoCapitalize="none"
+                autoCapitalize='none'
               />
             </View>
 
             <View style={authStyles.inputContainer}>
               <TextInput
                 style={authStyles.textInput}
-                placeholder="Confirmer le mot de passe"
+                placeholder='Confirmer le mot de passe'
                 placeholderTextColor={COLORS.textLight}
                 secureTextEntry
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
-                autoCapitalize="none"
+                autoCapitalize='none'
               />
             </View>
 
             <TouchableOpacity
               style={[
                 authStyles.authButton,
-                loading && authStyles.buttonDisabled,
+                loading && authStyles.buttonDisabled
               ]}
               onPress={handleSubmit}
               disabled={loading}
             >
               <Text style={authStyles.buttonText}>
-                {loading ? "Enregistrement..." : "OK"}
+                {loading ? "Enregistrement..." : "Confirmer"}
               </Text>
             </TouchableOpacity>
           </View>
