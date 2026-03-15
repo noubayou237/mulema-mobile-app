@@ -10,7 +10,15 @@
     "success": "Succès",
     "back": "Retour",
     "next": "Suivant",
-    "done": "Terminé"
+    "done": "Terminé",
+    "saving": "Enregistrement..."
+  },
+  "nav": {
+    "lessons": "Leçons",
+    "exercises": "Exercices",
+    "home": "Accueil",
+    "community": "Communauté",
+    "profile": "Profil"
   },
   "auth": {
     "signIn": "Connexion",
@@ -21,6 +29,8 @@
     "confirmPassword": "Confirmer le mot de passe",
     "forgotPassword": "Mot de passe oublié ?",
     "resetPassword": "Réinitialiser le mot de passe",
+    "newPassword": "Nouveau mot de passe",
+    "confirmNewPassword": "Confirmer le nouveau mot de passe",
     "dontHaveAccount": "Vous n'avez pas de compte ?",
     "alreadyHaveAccount": "Vous avez déjà un compte ?",
     "createAccount": "Créer un compte",
@@ -30,7 +40,15 @@
     "resendOtp": "Renvoyer le code OTP",
     "welcomeBack": "Bon retour",
     "loginSubtitle": "Connectez-vous pour continuer votre parcours d'apprentissage",
-    "codeSentTo": "Code envoyé à:"
+    "codeSentTo": "Code envoyé à:",
+    "requiredFields": "Complète tous les champs.",
+    "passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "passwordMinLength": "Le mot de passe doit contenir au moins {{min}} caractères.",
+    "missingInfo": "Informations manquantes. Recommence la procédure.",
+    "passwordResetSuccess": "Mot de passe mis à jour. Tu peux maintenant te connecter.",
+    "passwordResetError": "Impossible de réinitialiser le mot de passe.",
+    "account": "Compte",
+    "saving": "Enregistrement..."
   },
   "profile": {
     "title": "Profil",
