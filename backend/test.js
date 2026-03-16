@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt';
+nimport bcrypt from 'bcrypt';
 
 const result = await bcrypt.compare(
   'password123',

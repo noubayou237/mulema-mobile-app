@@ -10,7 +10,15 @@
     "success": "Success",
     "back": "Back",
     "next": "Next",
-    "done": "Done"
+    "done": "Done",
+    "saving": "Saving..."
+  },
+  "nav": {
+    "lessons": "Lessons",
+    "exercises": "Exercises",
+    "home": "Home",
+    "community": "Community",
+    "profile": "Profile"
   },
   "auth": {
     "signIn": "Sign In",
@@ -21,6 +29,8 @@
     "confirmPassword": "Confirm Password",
     "forgotPassword": "Forgot Password?",
     "resetPassword": "Reset Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
     "dontHaveAccount": "Don't have an account?",
     "alreadyHaveAccount": "Already have an account?",
     "createAccount": "Create Account",
@@ -30,7 +40,15 @@
     "resendOtp": "Resend OTP",
     "welcomeBack": "Welcome Back",
     "loginSubtitle": "Login to continue your learning journey",
-    "codeSentTo": "Code sent to:"
+    "codeSentTo": "Code sent to:",
+    "requiredFields": "Please fill in all fields.",
+    "passwordMismatch": "Passwords do not match.",
+    "passwordMinLength": "Password must be at least {{min}} characters.",
+    "missingInfo": "Missing information. Please restart the process.",
+    "passwordResetSuccess": "Password updated. You can now sign in.",
+    "passwordResetError": "Unable to reset password.",
+    "account": "Account",
+    "saving": "Saving..."
   },
   "profile": {
     "title": "Profile",
