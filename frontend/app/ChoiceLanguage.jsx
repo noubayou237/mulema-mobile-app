@@ -6,7 +6,8 @@ import {
   FlatList,
   Alert,
   ActivityIndicator,
-  StyleSheet
+  StyleSheet,
+  Text
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
@@ -34,7 +35,6 @@ function LangModalPicker({
 }) {
   const [open, setOpen] = useState(false);
 
-  // Merge local LANGS with available languages from backend
   const allLangs =
     availableLanguages.length > 0
       ? availableLanguages.map((l) => ({
@@ -46,24 +46,24 @@ function LangModalPicker({
         }))
       : LANGS;
 
+  const selectedLabel = selected
+    ? allLangs.find((l) => l.code === selected)?.label
+    : "-- Choisir une langue --";
+
   return (
     <>
       <TouchableOpacity
         onPress={() => setOpen(true)}
         activeOpacity={0.85}
-        className='border border-border rounded-xl py-4 px-4 bg-card'
+        style={styles.picker}
       >
-        <AppText className={!selected ? "text-muted-foreground" : ""}>
-          {selected
-            ? allLangs.find((l) => l.code === selected)?.label
-            : "-- Choisir une langue --"}
-        </AppText>
+        <AppText variant={selected ? "body" : "muted"}>{selectedLabel}</AppText>
       </TouchableOpacity>
 
       <Modal visible={open} animationType='fade' transparent>
-        <View className='flex-1 bg-black/50 justify-center px-6'>
-          <View className='bg-card rounded-2xl p-6 border border-border'>
-            <AppTitle className='text-lg mb-4 text-center'>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <AppTitle style={styles.modalTitle}>
               Sélectionner une langue
             </AppTitle>
 
@@ -79,15 +79,20 @@ function LangModalPicker({
                       if (onSelect) onSelect(item);
                       setOpen(false);
                     }}
-                    className={`py-4 px-4 rounded-xl mb-2 
-                      ${isSelected ? "bg-primary/10" : ""}`}
+                    style={[
+                      styles.langItem,
+                      isSelected && styles.langItemSelected
+                    ]}
                   >
-                    <AppText
-                      className={`text-base 
-                      ${isSelected ? "text-primary font-semibold" : ""}`}
+                    <Text
+                      style={[
+                        styles.langItemText,
+                        isSelected && styles.langItemTextSelected
+                      ]}
                     >
                       {item.label}
-                    </AppText>
+                    </Text>
+                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
                   </TouchableOpacity>
                 );
               }}
@@ -95,9 +100,9 @@ function LangModalPicker({
 
             <TouchableOpacity
               onPress={() => setOpen(false)}
-              className='mt-4 items-center'
+              style={styles.closeButton}
             >
-              <AppText className='text-muted-foreground'>Annuler</AppText>
+              <Text style={styles.closeButtonText}>Fermer</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -108,12 +113,11 @@ function LangModalPicker({
 
 export default function ChoiceLanguage() {
   const router = useRouter();
-  const [selected, setSelected] = useState("");
+  const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [availableLanguages, setAvailableLanguages] = useState([]);
 
-  // Fetch available languages from backend
   useEffect(() => {
     fetchAvailableLanguages();
     loadSavedLanguage();
@@ -130,17 +134,15 @@ export default function ChoiceLanguage() {
         );
       }
     } catch (error) {
-      console.log("Error fetching languages:", error);
-      // Fall back to local LANGS
+      console.log("Error fetching languages:", error.message);
+      // Fall back to local LANGS - already handled
     }
   };
 
   const loadSavedLanguage = async () => {
     try {
-      // First try to get from backend
       const userLanguagesResponse = await api.get("/user-languages");
       if (userLanguagesResponse.data?.length > 0) {
-        // User already has languages, use the first one
         const firstLang = userLanguagesResponse.data[0];
         const langCode =
           firstLang.patrimonialLanguage?.name?.toLowerCase() ||
@@ -150,10 +152,9 @@ export default function ChoiceLanguage() {
         return;
       }
     } catch (error) {
-      console.log("Error fetching user languages:", error);
+      console.log("Error fetching user languages:", error.message);
     }
 
-    // Fall back to AsyncStorage
     try {
       const stored = await AsyncStorage.getItem(SELECTED_LANGUAGE_KEY);
       if (stored) setSelected(stored);
@@ -169,17 +170,14 @@ export default function ChoiceLanguage() {
 
     setLoading(true);
     try {
-      // Try to add language to backend
       try {
         await api.post("/user-languages", {
           patrimonialLanguageId: language.patrimonialLanguageId
         });
       } catch (apiError) {
-        // Language might already exist, that's ok
         console.log("Language might already exist:", apiError.message);
       }
 
-      // Save to AsyncStorage as backup
       await AsyncStorage.setItem(SELECTED_LANGUAGE_KEY, language.code);
 
       router.replace(`/PageVideo?lang=${encodeURIComponent(language.code)}`);
@@ -204,7 +202,7 @@ export default function ChoiceLanguage() {
     return (
       <ScreenWrapper>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size='large' color='#5A4FCF' />
+          <ActivityIndicator size='large' color='#D32F2F' />
         </View>
       </ScreenWrapper>
     );
@@ -213,8 +211,8 @@ export default function ChoiceLanguage() {
   return (
     <ScreenWrapper>
       <View style={styles.container}>
-        <AppTitle style={styles.title}>Bienvenue sur Mulema</AppTitle>
-        <AppText style={styles.subtitle}>
+        <AppTitle style={styles.mainTitle}>Bienvenue sur Mulema</AppTitle>
+        <AppText variant='muted' style={styles.subtitle}>
           Apprenez les langues locales camerounaises
         </AppText>
 
@@ -253,7 +251,7 @@ export default function ChoiceLanguage() {
                   <AppText style={styles.langLabel}>{lang.label}</AppText>
                 </View>
                 {selected === lang.code && (
-                  <AppText style={styles.checkmark}>✓</AppText>
+                  <AppText style={styles.checkmarkText}>✓</AppText>
                 )}
               </Card>
             </TouchableOpacity>
@@ -262,15 +260,14 @@ export default function ChoiceLanguage() {
 
         <View style={styles.buttonContainer}>
           <Button
+            title={loading ? "Chargement..." : "Continuer"}
             onPress={handleContinue}
             disabled={!selected || loading}
             style={[
               styles.button,
               !selected || loading ? styles.buttonDisabled : null
             ]}
-          >
-            {loading ? "Chargement..." : "Continuer"}
-          </Button>
+          />
         </View>
       </View>
     </ScreenWrapper>
@@ -285,27 +282,88 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 24,
     paddingTop: 32
   },
-  title: {
+  mainTitle: {
     fontSize: 28,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 8
+    marginBottom: 8,
+    color: "#050303"
   },
   subtitle: {
     textAlign: "center",
-    color: "#6B6B6B",
-    marginBottom: 32
+    marginBottom: 32,
+    color: "#6B6B6B"
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
-    marginBottom: 16
+    marginBottom: 16,
+    color: "#050303"
   },
   pickerContainer: {
     marginBottom: 32
+  },
+  picker: {
+    borderWidth: 1,
+    borderColor: "#F3E8E8",
+    borderRadius: 12,
+    padding: 16,
+    backgroundColor: "#FFFFFF"
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    paddingHorizontal: 24
+  },
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: "#F3E8E8"
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 16,
+    color: "#050303"
+  },
+  langItem: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  langItemSelected: {
+    backgroundColor: "#FFEBEE"
+  },
+  langItemText: {
+    fontSize: 16,
+    color: "#050303"
+  },
+  langItemTextSelected: {
+    color: "#D32F2F",
+    fontWeight: "600"
+  },
+  checkmark: {
+    color: "#D32F2F",
+    fontSize: 16,
+    fontWeight: "bold"
+  },
+  closeButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    alignItems: "center"
+  },
+  closeButtonText: {
+    color: "#6B6B6B",
+    fontSize: 16
   },
   langList: {
     gap: 16
@@ -314,7 +372,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 16
+    padding: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16
   },
   langCardSelected: {
     borderWidth: 2,
@@ -326,18 +386,21 @@ const styles = StyleSheet.create({
   },
   langLabel: {
     fontSize: 16,
-    marginLeft: 12
+    color: "#050303"
   },
-  checkmark: {
-    color: "#D32F2F"
+  checkmarkText: {
+    color: "#D32F2F",
+    fontSize: 16
   },
   buttonContainer: {
     marginTop: "auto",
     marginBottom: 32
   },
   button: {
-    width: "100%",
-    paddingVertical: 16
+    backgroundColor: "#D32F2F",
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: "center"
   },
   buttonDisabled: {
     opacity: 0.5
