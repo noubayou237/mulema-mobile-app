@@ -5,7 +5,8 @@ import {
   Modal,
   FlatList,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  StyleSheet
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
@@ -202,7 +203,7 @@ export default function ChoiceLanguage() {
   if (initializing) {
     return (
       <ScreenWrapper>
-        <View className='flex-1 items-center justify-center'>
+        <View style={styles.loadingContainer}>
           <ActivityIndicator size='large' color='#5A4FCF' />
         </View>
       </ScreenWrapper>
@@ -211,19 +212,17 @@ export default function ChoiceLanguage() {
 
   return (
     <ScreenWrapper>
-      <View className='flex-1 px-6 pt-8'>
-        <AppTitle className='text-3xl mb-2 text-center'>
-          Bienvenue sur Mulema
-        </AppTitle>
-        <AppText className='text-center text-muted-foreground mb-8'>
+      <View style={styles.container}>
+        <AppTitle style={styles.title}>Bienvenue sur Mulema</AppTitle>
+        <AppText style={styles.subtitle}>
           Apprenez les langues locales camerounaises
         </AppText>
 
-        <AppTitle className='text-xl mb-4'>
+        <AppTitle style={styles.sectionTitle}>
           Quelle langue voulez-vous apprendre ?
         </AppTitle>
 
-        <View className='mb-8'>
+        <View style={styles.pickerContainer}>
           <LangModalPicker
             selected={selected}
             setSelected={(code) => {
@@ -236,7 +235,7 @@ export default function ChoiceLanguage() {
           />
         </View>
 
-        <View className='space-y-4'>
+        <View style={styles.langList}>
           {LANGS.map((lang) => (
             <TouchableOpacity
               key={lang.code}
@@ -245,26 +244,30 @@ export default function ChoiceLanguage() {
               activeOpacity={0.85}
             >
               <Card
-                className={`flex-row items-center justify-between p-4 ${
-                  selected === lang.code ? "border-primary border-2" : ""
-                }`}
+                style={[
+                  styles.langCard,
+                  selected === lang.code ? styles.langCardSelected : null
+                ]}
               >
-                <View className='flex-row items-center'>
-                  <AppText className='text-lg ml-3'>{lang.label}</AppText>
+                <View style={styles.langCardRow}>
+                  <AppText style={styles.langLabel}>{lang.label}</AppText>
                 </View>
                 {selected === lang.code && (
-                  <AppText className='text-primary'>✓</AppText>
+                  <AppText style={styles.checkmark}>✓</AppText>
                 )}
               </Card>
             </TouchableOpacity>
           ))}
         </View>
 
-        <View className='mt-auto mb-8'>
+        <View style={styles.buttonContainer}>
           <Button
             onPress={handleContinue}
             disabled={!selected || loading}
-            className={`w-full py-4 ${!selected || loading ? "opacity-50" : ""}`}
+            style={[
+              styles.button,
+              !selected || loading ? styles.buttonDisabled : null
+            ]}
           >
             {loading ? "Chargement..." : "Continuer"}
           </Button>
@@ -273,3 +276,70 @@ export default function ChoiceLanguage() {
     </ScreenWrapper>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 32
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 8
+  },
+  subtitle: {
+    textAlign: "center",
+    color: "#6B6B6B",
+    marginBottom: 32
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 16
+  },
+  pickerContainer: {
+    marginBottom: 32
+  },
+  langList: {
+    gap: 16
+  },
+  langCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16
+  },
+  langCardSelected: {
+    borderWidth: 2,
+    borderColor: "#D32F2F"
+  },
+  langCardRow: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  langLabel: {
+    fontSize: 16,
+    marginLeft: 12
+  },
+  checkmark: {
+    color: "#D32F2F"
+  },
+  buttonContainer: {
+    marginTop: "auto",
+    marginBottom: 32
+  },
+  button: {
+    width: "100%",
+    paddingVertical: 16
+  },
+  buttonDisabled: {
+    opacity: 0.5
+  }
+});

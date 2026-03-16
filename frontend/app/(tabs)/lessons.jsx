@@ -7,13 +7,24 @@ import {
   StatusBar,
   Animated,
   Image,
-  ActivityIndicator
+  ActivityIndicator,
+  StyleSheet
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import { useTranslation } from "react-i18next";
 import { useLearningProgress } from "../hooks/useLearningProgress";
+
+// Design tokens
+const COLORS = {
+  primary: "#D32F2F",
+  background: "#F9F5F5",
+  card: "#FFFFFF",
+  foreground: "#050303",
+  border: "#F3E8E8",
+  muted: "#6B6B6B"
+};
 
 const HEADER_MIN_HEIGHT = 40;
 const HEADER_SCROLL_FADE_END = 80;
@@ -42,35 +53,39 @@ const LessonItem = ({ item, progress }) => {
       disabled={!isUnlocked}
       onPress={() => isUnlocked && router.push(`/lessons/${item.id}`)}
       activeOpacity={0.85}
-      className={`mx-4 mb-4 rounded-2xl px-6 py-5 flex-row items-center justify-between border border-border
-      ${isUnlocked ? "bg-card" : "bg-muted opacity-60"}`}
+      style={[
+        styles.lessonCard,
+        isUnlocked ? styles.lessonCardUnlocked : styles.lessonCardLocked
+      ]}
     >
-      <View className='flex-row items-center'>
+      <View style={styles.lessonLeft}>
         {item.id === "1" && (
           <Image
             source={{ uri: "https://i.imgur.com/uR5p0Qz.png" }}
-            className='w-10 h-10 rounded-full mr-3'
+            style={styles.lessonImage}
           />
         )}
 
         <View>
           <Text
-            className={`text-lg font-semibold uppercase
-            ${isUnlocked ? "text-foreground" : "text-muted-foreground"}`}
+            style={[
+              styles.lessonTitle,
+              isUnlocked ? styles.textUnlocked : styles.textLocked
+            ]}
           >
             {item.title}
           </Text>
 
           {/* Show stars if completed */}
           {isCompleted && (
-            <View className='flex-row mt-1'>
+            <View style={styles.starsRow}>
               {[1, 2, 3].map((star) => (
                 <FontAwesome
                   key={star}
                   name={star <= stars ? "star" : "star-o"}
                   size={14}
                   color={star <= stars ? "#FFD700" : "#999"}
-                  className='mr-1'
+                  style={{ marginRight: 4 }}
                 />
               ))}
             </View>
@@ -79,9 +94,9 @@ const LessonItem = ({ item, progress }) => {
       </View>
 
       {isUnlocked ? (
-        <View className='flex-row items-center'>
+        <View style={styles.lessonRight}>
           {isCompleted && (
-            <View className='mr-2'>
+            <View style={styles.checkIcon}>
               <Icon name='check-circle' size={20} color='#4CAF50' />
             </View>
           )}
@@ -105,6 +120,7 @@ export default function Lessons() {
   const {
     lessons: progressData,
     loading,
+    error,
     initializeProgress
   } = useLearningProgress(levelId);
 
@@ -122,30 +138,29 @@ export default function Lessons() {
 
   // Initialize progress on first load if needed
   useEffect(() => {
-    if (!loading && progressData.length === 0) {
+    if (!loading && progressData.length === 0 && !error) {
       initializeProgress();
     }
-  }, [loading]);
+  }, [loading, error]);
 
   if (loading) {
     return (
-      <SafeAreaView className='flex-1 bg-background items-center justify-center'>
+      <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size='large' color='#5A4FCF' />
-        <Text className='mt-4 text-muted-foreground'>Loading progress...</Text>
+        <Text style={styles.loadingText}>Loading progress...</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className='flex-1 bg-background'>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle='dark-content' />
 
       {/* Petit header flottant */}
       <Animated.View
-        style={{ opacity: smallHeaderOpacity }}
-        className='absolute top-0 left-0 right-0 h-10 bg-background border-b border-border items-center justify-center z-10'
+        style={[styles.smallHeader, { opacity: smallHeaderOpacity }]}
       >
-        <Text className='font-bold text-primary'>{t("nav.lessons")}</Text>
+        <Text style={styles.smallHeaderText}>{t("nav.lessons")}</Text>
       </Animated.View>
 
       <Animated.FlatList
@@ -155,10 +170,7 @@ export default function Lessons() {
           <LessonItem item={item} progress={progressData} />
         )}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingTop: HEADER_MIN_HEIGHT + 16,
-          paddingBottom: 100
-        }}
+        contentContainerStyle={styles.listContent}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: true }
@@ -166,10 +178,8 @@ export default function Lessons() {
         scrollEventThrottle={16}
         ListHeaderComponent={
           <Animated.View style={{ opacity: largeTitleOpacity }}>
-            <Text className='text-3xl font-bold text-center mt-8 mb-4'>
-              {t("nav.lessons")}
-            </Text>
-            <Text className='text-center text-muted-foreground mb-6 px-6'>
+            <Text style={styles.mainTitle}>{t("nav.lessons")}</Text>
+            <Text style={styles.subtitle}>
               Complete lessons to unlock new content
             </Text>
           </Animated.View>
@@ -178,3 +188,106 @@ export default function Lessons() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  loadingText: {
+    marginTop: 16,
+    color: COLORS.muted
+  },
+  smallHeader: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 40,
+    backgroundColor: COLORS.background,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10
+  },
+  smallHeaderText: {
+    fontWeight: "bold",
+    color: COLORS.primary,
+    fontSize: 14
+  },
+  listContent: {
+    paddingTop: HEADER_MIN_HEIGHT + 16,
+    paddingBottom: 100
+  },
+  mainTitle: {
+    fontSize: 28,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginTop: 32,
+    marginBottom: 16
+  },
+  subtitle: {
+    textAlign: "center",
+    color: COLORS.muted,
+    marginBottom: 24,
+    paddingHorizontal: 24
+  },
+  lessonCard: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: COLORS.border
+  },
+  lessonCardUnlocked: {
+    backgroundColor: COLORS.card
+  },
+  lessonCardLocked: {
+    backgroundColor: COLORS.background,
+    opacity: 0.6
+  },
+  lessonLeft: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  lessonImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12
+  },
+  lessonTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    textTransform: "uppercase"
+  },
+  textUnlocked: {
+    color: COLORS.foreground
+  },
+  textLocked: {
+    color: COLORS.muted
+  },
+  starsRow: {
+    flexDirection: "row",
+    marginTop: 4
+  },
+  lessonRight: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  checkIcon: {
+    marginRight: 8
+  }
+});

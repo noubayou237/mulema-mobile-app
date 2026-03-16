@@ -1,6 +1,12 @@
 // app/(tabs)/_layout.jsx
 import React, { useEffect, useState } from "react";
-import { View, Alert, TouchableOpacity, ActivityIndicator } from "react-native";
+import {
+  View,
+  Alert,
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet
+} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -70,13 +76,25 @@ export default function TabsLayout() {
   );
 
   return (
-    <View className='flex-1 bg-background'>
+    <View style={styles.container}>
       <Header pageName={getTitle()} right={headerRight} />
 
-      {/* Contenu des écrans */}
-      <Slot />
+      {/* Contenu des écrans - avec padding pour BottomNav */}
+      <View style={styles.content}>
+        <Slot />
+      </View>
 
       <BottomNav activeKey={activeSegment} />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F9F5F5"
+  },
+  content: {
+    flex: 1
+  }
+});
