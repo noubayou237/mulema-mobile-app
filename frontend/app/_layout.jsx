@@ -1,8 +1,9 @@
+
 // app/_layout.jsx
 import React from "react";
 import { Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS } from "../constants/colors";
+import { COLORS } from "../src/constants/colors";
 
 // Initialize i18n
 import "../src/i18n";

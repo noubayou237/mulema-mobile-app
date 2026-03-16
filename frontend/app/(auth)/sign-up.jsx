@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
-  Alert,
-  Text,
   View,
+  Text,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -428,7 +428,7 @@ const SignUpScreen = () => {
       });
       Alert.alert(t("signUp.success.title"), t("signUp.success.message"));
       router.replace({
-        pathname: "/verify-email",
+        pathname: "/(auth)/verify-email",
         params: { email: form.email, flow: "verify" }
       });
     } catch (err) {
@@ -793,6 +793,9 @@ const SignUpScreen = () => {
               }}
             >
               En créant un compte, tu acceptes nos{" "}
+              <Text style={{ color: "#D32F2F" }}>
+                Conditions d&apos;utilisation
+              </Text>{" "}
               <Text style={{ color: "#D32F2F" }}>
                 Conditions d&apos;utilisation
               </Text>{" "}

@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
+import { useState, useEffect } from "react";
 import "../../src/i18n";
 
 // --- Configuration et Données ---
@@ -173,6 +174,29 @@ const DailyGoalCard = ({ goal, completed, t }) => {
 export default function Statistiques() {
   const router = useRouter();
   const { t } = useTranslation();
+
+  // State hooks moved inside the component
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Exemple de fetch vers une API fictive
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch("https://api.example.com/user/123");
+        if (!response.ok) throw new Error("Erreur lors du fetch");
+        const data = await response.json();
+        setUserData(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   const goToCommunity = () => {
     // Navigation vers la page Community (supposée être dans le Tab Navigator)
