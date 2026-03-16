@@ -136,13 +136,7 @@ export default function Lessons() {
     extrapolate: "clamp"
   });
 
-  // Initialize progress on first load if needed
-  useEffect(() => {
-    if (!loading && progressData.length === 0 && !error) {
-      initializeProgress();
-    }
-  }, [loading, error]);
-
+  // Show loading only on initial load
   if (loading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
