@@ -17,53 +17,72 @@ export function useLearningProgress(levelId) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Initialize progress for a level (unlocks first lesson)
+  const initializeProgress = useCallback(
+    async (fetchFn) => {
+      if (!user || !levelId) return false;
+
+      try {
+        await api.post(`/progress/init/${levelId}`);
+        // Fetch again after initialization
+        if (fetchFn) await fetchFn();
+        return true;
+      } catch (err) {
+        console.error("Error initializing progress:", err.message);
+        return false;
+      }
+    },
+    [user, levelId]
+  );
+
   // Fetch progress from backend
   const fetchProgress = useCallback(async () => {
+    // Reset loading state at start
+    setLoading(true);
+    setError(null);
+
     if (!user || !levelId) {
       setLoading(false);
       return;
     }
 
     try {
-      setLoading(true);
-      setError(null);
-
       const response = await api.get(`/progress/level/${levelId}`);
       setLessons(response.data);
     } catch (err) {
-      console.error("Error fetching progress:", err);
-      // If 401 (unauthorized), user is not logged in - don't retry
-      if (err.response?.status === 401) {
-        setError("Please sign in to continue");
+      console.error("Error fetching progress:", err.message);
+
+      // Handle different error types
+      if (err.response) {
+        // Server responded with error status
+        if (err.response.status === 401) {
+          setError("Please sign in to continue");
+          setLessons([]);
+        } else if (err.response.status === 404) {
+          // User hasn't initialized progress yet - try to initialize
+          const initialized = await initializeProgress(fetchProgress);
+          if (!initialized) {
+            // If initialization failed, use empty lessons
+            setLessons([]);
+          }
+        } else {
+          // Other server errors
+          setError(err.response.data?.message || "Failed to load progress");
+          setLessons([]);
+        }
+      } else if (err.request) {
+        // Network error - no response received
+        setError("Unable to connect. Using offline mode.");
+        setLessons([]);
+      } else {
+        // Other errors
+        setError(err.message);
         setLessons([]);
       }
-      // If 404, user hasn't initialized progress yet
-      else if (err.response?.status === 404) {
-        await initializeProgress();
-      } else {
-        setError(err.message);
-      }
     } finally {
       setLoading(false);
     }
-  }, [user, levelId]);
-
-  // Initialize progress for a level (unlocks first lesson)
-  const initializeProgress = useCallback(async () => {
-    if (!user || !levelId) return;
-
-    try {
-      setLoading(true);
-      await api.post(`/progress/init/${levelId}`);
-      // Fetch again after initialization
-      await fetchProgress();
-    } catch (err) {
-      console.error("Error initializing progress:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [user, levelId, fetchProgress]);
+  }, [user, levelId, initializeProgress]);
 
   // Complete a lesson and unlock the next one
   const completeLesson = useCallback(
@@ -93,8 +112,7 @@ export function useLearningProgress(levelId) {
 
         return true;
       } catch (err) {
-        console.error("Error completing lesson:", err);
-        setError(err.message);
+        console.error("Error completing lesson:", err.message);
         return false;
       }
     },
@@ -121,14 +139,19 @@ export function useLearningProgress(levelId) {
 
   // Initial fetch
   useEffect(() => {
-    fetchProgress();
+    // Small delay to ensure user context is loaded
+    const timer = setTimeout(() => {
+      fetchProgress();
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [fetchProgress]);
 
   return {
     lessons,
     loading,
     error,
-    initializeProgress,
+    initializeProgress: () => fetchProgress(),
     completeLesson,
     getLesson,
     isLevelCompleted,
