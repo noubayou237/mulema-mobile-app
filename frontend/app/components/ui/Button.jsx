@@ -1,42 +1,84 @@
 import React from "react";
-import { TouchableOpacity, Text } from "react-native";
+import { TouchableOpacity, Text, StyleSheet } from "react-native";
 
 export default function Button({
   title,
   onPress,
   loading = false,
   variant = "primary",
-  textClassName = ""
+  textClassName = "",
+  style,
+  disabled
 }) {
-  const variants = {
-    primary: "bg-primary",
-    secondary: "bg-secondary",
-    outline: "border border-border bg-transparent"
+  const getButtonStyle = () => {
+    if (loading || disabled) {
+      return styles.buttonDisabled;
+    }
+    switch (variant) {
+      case "secondary":
+        return styles.buttonSecondary;
+      case "outline":
+        return styles.buttonOutline;
+      default:
+        return styles.buttonPrimary;
+    }
   };
 
-  // Determine text color based on variant and custom textClassName
-  const getTextColor = () => {
+  const getTextStyle = () => {
     if (textClassName && textClassName.includes("text-white")) {
-      return "text-white";
+      return styles.textWhite;
     }
     if (variant === "outline") {
-      return "text-foreground";
+      return styles.textOutline;
     }
-    return "text-primary-foreground";
+    return styles.textPrimary;
   };
 
   return (
     <TouchableOpacity
       onPress={onPress}
-      disabled={loading}
+      disabled={loading || disabled}
       activeOpacity={0.8}
-      className={`py-3 rounded-xl items-center ${
-        loading ? "bg-muted" : variants[variant]
-      }`}
+      style={[styles.button, getButtonStyle(), style]}
     >
-      <Text className={`font-semibold ${textClassName || getTextColor()}`}>
+      <Text style={[styles.text, getTextStyle()]}>
         {loading ? "Chargement..." : title}
       </Text>
     </TouchableOpacity>
   );
 }
+
+const styles = StyleSheet.create({
+  button: {
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  buttonPrimary: {
+    backgroundColor: "#D32F2F"
+  },
+  buttonSecondary: {
+    backgroundColor: "#6B6B6B"
+  },
+  buttonOutline: {
+    borderWidth: 1,
+    borderColor: "#F3E8E8",
+    backgroundColor: "transparent"
+  },
+  buttonDisabled: {
+    backgroundColor: "#E0E0E0"
+  },
+  text: {
+    fontWeight: "600"
+  },
+  textWhite: {
+    color: "#FFFFFF"
+  },
+  textOutline: {
+    color: "#050303"
+  },
+  textPrimary: {
+    color: "#FFFFFF"
+  }
+});
