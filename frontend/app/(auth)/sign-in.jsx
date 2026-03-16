@@ -436,7 +436,7 @@ const SignInScreen = () => {
               marginBottom: 6
             }}
           >
-            <Text style={s.brand}>mulema</Text>
+            <Text style={s.brand}>Connexion</Text>
           </Animated.View>
 
           {/* ── Subtitle ── */}
@@ -458,7 +458,7 @@ const SignInScreen = () => {
             <View style={s.pillBadge}>
               <Text style={s.pillText}>🌍 Langues camerounaises</Text>
             </View>
-            <Text style={s.subtitle}>
+            <Text style={s.title}>
               Connectez-vous pour continuer votre aventure
             </Text>
           </Animated.View>
@@ -535,12 +535,12 @@ const SignInScreen = () => {
                   ) : (
                     <>
                       <Text style={s.btnText}>Se connecter</Text>
-                      <Ionicons
+                      {/* <Ionicons
                         name='arrow-forward'
                         size={20}
                         color='#fff'
                         style={{ marginLeft: 8 }}
-                      />
+                      /> */}
                     </>
                   )}
                 </LinearGradient>
@@ -674,11 +674,25 @@ const s = StyleSheet.create({
 
   // Text
   brand: {
-    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
-    fontSize: 42,
+    fontFamily: Platform.OS === "ios" ? "nunito" : "sans-serif",
+    fontSize: 29,
     fontWeight: "700",
     color: "#1A1A1A",
-    letterSpacing: 3
+    letterSpacing: 0,
+    marginBottom: 10
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "300",
+    color: "#2C2C2C",
+    marginBottom: 5,
+    textAlign: "center"
+  },
+  subtitle: {
+    color: "#888",
+    fontSize: 12,
+    textAlign: "center",
+    lineHeight: 22
   },
   pillBadge: {
     backgroundColor: "rgba(211,47,47,0.1)",
@@ -695,17 +709,11 @@ const s = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: 0.5
   },
-  subtitle: {
-    color: "#888",
-    fontSize: 14,
-    textAlign: "center",
-    lineHeight: 20
-  },
 
   // Card
   card: {
     width: "100%",
-    backgroundColor: "rgba(255,255,255,0.75)",
+    // backgroundColor: "rgba(255,255,255,0.75)",
     borderRadius: 24,
     borderWidth: 1,
     borderColor: "rgba(211,47,47,0.1)",
