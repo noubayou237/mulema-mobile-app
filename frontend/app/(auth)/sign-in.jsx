@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
+  Text,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -20,6 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useUser } from "../../src/context/UserContext";
 import { useTranslation } from "react-i18next";
+import ScreenWrapper from "../components/ui/ScreenWrapper";
 
 const { width, height } = Dimensions.get("window");
 
@@ -578,7 +580,7 @@ const SignInScreen = () => {
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </ScreenWrapper>
+    </View>
   );
 };
 
