@@ -113,7 +113,7 @@ export default function ProfileEditScreen() {
           <Icon name="arrow-back-outline" size={28} color="#FFFFFF" />
         </TouchableOpacity>
         
-        <Text style={styles.headerTitle}>Modifier Profil</Text>
+        <Text style={styles.headerTitle}>Modifier Profilffffff</Text>
         
         {/* --- Avatar --- */}
         <TouchableOpacity onPress={pickImage} style={styles.avatarContainer}>
