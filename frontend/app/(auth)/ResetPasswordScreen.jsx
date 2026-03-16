@@ -12,7 +12,7 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { authStyles } from "../../assets/styles/auth.styles";
-import { COLORS } from "../../constants/colors";
+import { COLORS } from "../../src/constants/colors";
 import api from "../../services/api";
 
 export default function ResetPasswordScreen() {

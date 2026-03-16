@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
+  Text,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -788,7 +789,9 @@ const SignUpScreen = () => {
               }}
             >
               En créant un compte, tu acceptes nos{" "}
-              <Text style={{ color: "#D32F2F" }}>Conditions d&apos;utilisation</Text>{" "}
+              <Text style={{ color: "#D32F2F" }}>
+                Conditions d&apos;utilisation
+              </Text>{" "}
               et notre{" "}
               <Text style={{ color: "#D32F2F" }}>
                 Politique de confidentialité
@@ -797,7 +800,7 @@ const SignUpScreen = () => {
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </ScreenWrapper>
+    </View>
   );
 };
 
