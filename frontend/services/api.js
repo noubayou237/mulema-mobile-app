@@ -22,7 +22,7 @@ const getApiUrl = () => {
   }
 
   // 🚀 For ALL physical devices (iOS & Android)
-  const PC_IP = "192.168.195.108"; // 🔁 Mets TON IP exacte
+  const PC_IP = "172.20.10.4"; // 🔁 Mets TON IP exacte
   return `http://${PC_IP}:5001`;
 };
 

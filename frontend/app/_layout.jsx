@@ -1,3 +1,4 @@
+
 // app/_layout.jsx
 import React, { useEffect } from "react";
 import { Stack } from "expo-router";
@@ -12,18 +13,19 @@ import "../src/i18n";
 import { LanguageProvider } from "../src/context/LanguageContext";
 import UserProvider, { useUser } from "../src/context/UserContext";
 
-SplashScreen.preventAutoHideAsync();
+// Empêche le splash de disparaître avant que l'app soit prête
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
-// 🔹 Loading screen propre
+// Loading screen
 function LoadingScreen() {
   return (
-    <View className="flex-1 justify-center items-center bg-background">
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       <ActivityIndicator size="large" />
     </View>
   );
 }
 
-// 🔹 AuthGate
+// AuthGate : décide si l'utilisateur est connecté
 function AuthGate() {
   const { user, isLoading } = useUser();
 
@@ -43,7 +45,7 @@ function AuthGate() {
 }
 
 export default function RootLayout() {
-  const [loaded] = useFonts({
+  const [fontsLoaded] = useFonts({
     NunitoRegular: require("../assets/fonts/Nunito-Regular.ttf"),
     NunitoMedium: require("../assets/fonts/Nunito-Medium.ttf"),
     NunitoSemiBold: require("../assets/fonts/Nunito-SemiBold.ttf"),
@@ -51,15 +53,20 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (loaded) SplashScreen.hideAsync();
-  }, [loaded]);
+    if (fontsLoaded) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [fontsLoaded]);
 
-if (!loaded) return null;
+  // Attendre que les fonts soient chargées
+  if (!fontsLoaded) {
+    return <LoadingScreen />;
+  }
 
   return (
     <LanguageProvider>
       <UserProvider>
-        <SafeAreaView className="flex-1 bg-background">
+        <SafeAreaView style={{ flex: 1 }}>
           <AuthGate />
         </SafeAreaView>
       </UserProvider>
