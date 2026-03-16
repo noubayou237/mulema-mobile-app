@@ -91,7 +91,9 @@ const EndScreen = ({ navigation, route }) => {
     router.replace("/exercices/famille/exos1");
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    // Unlock next theme before navigating
+    await unlockNextTheme();
     // Logique : Retour à l'accueil ou à la leçon suivante
     router.dismissAll(); // Vide la pile pour revenir au début
     router.replace("/exercices");
