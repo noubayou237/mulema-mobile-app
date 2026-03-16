@@ -52,7 +52,9 @@ describe('AuthService', () => {
 
   describe('register', () => {
     it('should throw BadRequestException if fields are missing', async () => {
-      await expect(service.register({})).rejects.toThrow(BadRequestException);
+      await expect(service.register({} as any)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should create a new user and send OTP', async () => {
@@ -93,7 +95,9 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('should throw BadRequestException if credentials missing', async () => {
-      await expect(service.login({})).rejects.toThrow(BadRequestException);
+      await expect(service.login({} as any)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw UnauthorizedException if user not found', async () => {
@@ -152,7 +156,7 @@ describe('AuthService', () => {
     };
 
     it('should throw BadRequestException if fields missing', async () => {
-      await expect(service.socialLogin({})).rejects.toThrow(
+      await expect(service.socialLogin({} as any)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -222,7 +226,7 @@ describe('AuthService', () => {
 
   describe('verifyEmail', () => {
     it('should throw BadRequestException if fields missing', async () => {
-      await expect(service.verifyEmail({})).rejects.toThrow(
+      await expect(service.verifyEmail({} as any)).rejects.toThrow(
         BadRequestException,
       );
     });
