@@ -114,8 +114,8 @@ export default function ResetPasswordScreen() {
               onPress={handleSubmit}
               disabled={loading}
             >
-              <Text className='text-primary-foreground font-semibold'>
-                {loading ? "Enregistrement..." : "OK"}
+              <Text style={authStyles.buttonText}>
+                {loading ? "Enregistrement..." : "Confirmer"}
               </Text>
             </TouchableOpacity>
           </View>
