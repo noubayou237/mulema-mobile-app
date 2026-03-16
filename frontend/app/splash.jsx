@@ -85,7 +85,7 @@ export default function Splash() {
           // User is logged in - check language
           if (!hasLang) {
             // First time user - go to language selection
-            router.replace("/ChoiceLanguage");
+            router.replace("/choice-language");
           } else {
             // Returning user - go to home
             router.replace("/(tabs)/home");

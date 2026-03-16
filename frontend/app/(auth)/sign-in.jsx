@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Text,
   View,
+  Text,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -15,6 +15,7 @@ import {
   StatusBar,
   ActivityIndicator
 } from "react-native";
+import Svg, { G, Path } from "react-native-svg";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -224,7 +225,7 @@ const Field = ({
 // ── Main Screen ────────────────────────────────────────────────────────────
 const SignInScreen = () => {
   const router = useRouter();
-  const { login } = useUser();
+  const { login, setUserData } = useUser();
   const { t } = useTranslation();
 
   const [email, setEmail] = useState("");
@@ -323,8 +324,7 @@ const SignInScreen = () => {
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      Alert.alert(t("common.error"), t("errors.requiredField"));
-      return;
+      return Alert.alert(t("common.error"), t("errors.requiredField"));
     }
     setLoading(true);
     try {

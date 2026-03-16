@@ -1,13 +1,7 @@
-import { Redirect, Stack } from "expo-router";
-import { useUser } from "../../src/context/UserContext";
+import { Stack } from "expo-router";
 
 export default function AuthRoutesLayout() {
-  const { user, isLoading } = useUser();
-
-  // If user is logged in, redirect to home
-  if (!isLoading && user) {
-    return <Redirect href={"/(tabs)/home"} />;
-  }
-
+  // No auth check here - let individual pages handle redirects
+  // This prevents interference with social login navigation
   return <Stack screenOptions={{ headerShown: false }} />;
 }

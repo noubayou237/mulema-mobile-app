@@ -101,7 +101,7 @@
     "levelIII": "LEVEL III",
     "levelIV": "LEVEL IV",
     "start": "START",
-    "unlockMessage": "Unlock the next levels by completing the exercises from the previous ones",
+    "unlockMessage": "Unlock the next levels by completing the exercises from the previous level",
     "niveau": "Level"
   },
   "lessons": {

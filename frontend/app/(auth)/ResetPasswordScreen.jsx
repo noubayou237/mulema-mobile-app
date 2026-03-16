@@ -12,10 +12,10 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { authStyles } from "../../assets/styles/auth.styles";
-import { COLORS } from "../../constants/colors";
+import { COLORS } from "../../src/constants/colors";
 import api from "../../services/api";
 
-const ResetPasswordScreen = () => {
+export default function ResetPasswordScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { t } = useTranslation();
@@ -54,7 +54,7 @@ const ResetPasswordScreen = () => {
 
       Alert.alert(t("common.success"), t("auth.passwordResetSuccess"));
 
-      router.replace("/sign-in");
+      router.replace("/(auth)/sign-in");
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
@@ -67,14 +67,13 @@ const ResetPasswordScreen = () => {
   };
 
   return (
-    <View style={authStyles.container}>
+    <View className='flex-1 bg-background px-6'>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={authStyles.keyboardView}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+        className='flex-1'
       >
         <ScrollView
-          contentContainerStyle={authStyles.scrollContent}
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
           showsVerticalScrollIndicator={false}
         >
           <Text style={authStyles.title}>Réinitialiser le mot de passe</Text>
@@ -122,6 +121,4 @@ const ResetPasswordScreen = () => {
       </KeyboardAvoidingView>
     </View>
   );
-};
-
-export default ResetPasswordScreen;
+}

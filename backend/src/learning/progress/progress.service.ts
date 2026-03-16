@@ -56,4 +56,25 @@ export class ProgressService {
 
     return progress;
   }
+
+  async getProgressForLevel(userId: string, levelId: string) {
+    const lessons = await this.prisma.lesson.findMany({
+      where: { levelId },
+      orderBy: { order: 'asc' },
+      include: {
+        userProgress: {
+          where: { userId },
+        },
+      },
+    });
+
+    return lessons.map((lesson) => ({
+      id: lesson.id,
+      title: lesson.title,
+      order: lesson.order,
+      isUnlocked: lesson.userProgress[0]?.isUnlocked ?? false,
+      isCompleted: lesson.userProgress[0]?.isCompleted ?? false,
+      stars: lesson.userProgress[0]?.stars ?? 0,
+    }));
+  }
 }

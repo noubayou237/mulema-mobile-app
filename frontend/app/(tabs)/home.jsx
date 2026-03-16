@@ -1,7 +1,7 @@
 // app/(tabs)/home.jsx
 
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator, Text } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -14,7 +14,7 @@ const HAS_SELECTED_LANGUAGE = "selectedLanguage";
 
 export default function HomeRouter() {
   const { t } = useTranslation();
-  const params = useLocalSearchParams(); // ← correction ici
+  const params = useLocalSearchParams();
   const paramLang = params?.lang ?? null;
 
   const [langToRender, setLangToRender] = useState(null);
@@ -25,10 +25,11 @@ export default function HomeRouter() {
 
     (async () => {
       try {
-        // 1️⃣ Paramètre d'URL : priorité absolue
+        // 1️⃣ Param URL prioritaire
         if (paramLang) {
           const normalized = String(paramLang).toLowerCase();
           await AsyncStorage.setItem(HAS_SELECTED_LANGUAGE, normalized);
+
           if (mounted) {
             setLangToRender(normalized);
             setLoading(false);
@@ -36,18 +37,15 @@ export default function HomeRouter() {
           return;
         }
 
-        // 2️⃣ Fallback: AsyncStorage - utiliser uniquement selectedLanguage (learning language)
-        // Ne pas utiliser ctxLanguage car c'est la langue UI (en/fr), pas la langue d'apprentissage
+        // 2️⃣ Fallback storage
         const stored = await AsyncStorage.getItem(HAS_SELECTED_LANGUAGE);
 
-        if (stored) {
-          setLangToRender(String(stored).toLowerCase());
-        } else {
-          setLangToRender(null);
+        if (mounted) {
+          setLangToRender(stored ? stored.toLowerCase() : null);
         }
       } catch (err) {
         console.warn("HomeRouter: erreur récupération langue", err);
-        setLangToRender(null);
+        if (mounted) setLangToRender(null);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -58,18 +56,17 @@ export default function HomeRouter() {
     };
   }, [paramLang]);
 
-  // Loader pendant la résolution
+  // Loader
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size='large' color='#D9534F' />
+      <View className='flex-1 bg-background justify-center items-center'>
+        <ActivityIndicator size='large' />
       </View>
     );
   }
 
   const lang = (langToRender || "").toLowerCase();
 
-  // 4️⃣ Choix de la bonne Home Page
   switch (lang) {
     case "duala":
       return <HomeDouala />;
@@ -82,21 +79,14 @@ export default function HomeRouter() {
 
     default:
       return (
-        <View style={styles.loadingContainer}>
-          <Text>
-            {t("errors.languageNotSelected") ||
-              "Erreur : Langue non définie. Veuillez sélectionner une langue depuis les paramètres."}
-          </Text>
+        <View className='flex-1 bg-background justify-center items-center px-6'>
+          <View className='bg-card border border-border rounded-2xl p-6'>
+            <Text className='text-center text-foreground'>
+              {t("errors.languageNotSelected") ||
+                "Langue non définie. Sélectionnez une langue."}
+            </Text>
+          </View>
         </View>
       );
   }
 }
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#F5F5F7"
-  }
-});
