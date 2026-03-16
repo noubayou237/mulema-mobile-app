@@ -531,11 +531,11 @@ const ForgotPasswordScreen = () => {
               }
             ]}
           >
-            <Text style={s.brand}>mulema</Text>
-            <Text style={s.title}>Mot de passe oublié ?</Text>
-            <Text style={s.subtitle}>
-              Pas de panique{"\n"}Saisis ton email pour recevoir un code de
-              récupération.
+            {/* <Text style={s.brand}>mulema</Text>/ */}
+            <Text style={s.brand}>Mot de passe oublié ?</Text>
+            <Text style={s.title}>
+              Saisis ton email pour recevoir un code de
+              récupération
             </Text>
           </Animated.View>
 
@@ -639,12 +639,12 @@ const ForgotPasswordScreen = () => {
                       ) : (
                         <>
                           <Text style={s.btnText}>Envoyer le code</Text>
-                          <Ionicons
+                          {/* <Ionicons
                             name='send'
                             size={17}
                             color='#fff'
                             style={{ marginLeft: 8 }}
-                          />
+                          /> */}
                         </>
                       )}
                     </LinearGradient>
@@ -837,23 +837,23 @@ const s = StyleSheet.create({
   // Text
   titleBlock: { alignItems: "center", marginBottom: 28, paddingHorizontal: 24 },
   brand: {
-    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
-    fontSize: 30,
+    fontFamily: Platform.OS === "ios" ? "nunito" : "sans-serif",
+    fontSize: 29,
     fontWeight: "700",
     color: "#1A1A1A",
-    letterSpacing: 3,
+    letterSpacing: 0,
     marginBottom: 10
   },
   title: {
-    fontSize: 22,
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: "300",
     color: "#2C2C2C",
     marginBottom: 10,
     textAlign: "center"
   },
   subtitle: {
     color: "#888",
-    fontSize: 14,
+    fontSize: 12,
     textAlign: "center",
     lineHeight: 22
   },
@@ -861,7 +861,7 @@ const s = StyleSheet.create({
   // Card
   card: {
     width: width - 48,
-    backgroundColor: "rgba(255,255,255,0.75)",
+    // backgroundColor: "rgba(255,255,255,0.75)",
     borderRadius: 24,
     borderWidth: 1,
     borderColor: "rgba(211,47,47,0.1)",
