@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   Dimensions,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  StyleSheet
 } from "react-native";
 import { Video } from "expo-av";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -84,27 +85,24 @@ export default function PageVideo() {
 
   if (resolving) {
     return (
-      <SafeAreaView className="flex-1 bg-background items-center justify-center">
-        <ActivityIndicator size="large" />
-        <Text className="mt-3 text-muted-foreground">Chargement...</Text>
+      <SafeAreaView className='flex-1 bg-background items-center justify-center'>
+        <ActivityIndicator size='large' />
+        <Text className='mt-3 text-muted-foreground'>Chargement...</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
-
+    <SafeAreaView style={styles.container}>
       {/* VIDEO BLOCK */}
-      <View className="w-full bg-black relative overflow-hidden"
-            style={{ height: videoHeight }}>
-
+      <View style={[styles.videoContainer, { height: videoHeight }]}>
         <Video
           ref={videoRef}
           source={{ uri: videoUri }}
-          resizeMode="cover"
+          resizeMode='cover'
           shouldPlay={false}
           isLooping={false}
-          className="absolute w-full h-full"
+          style={styles.video}
           onPlaybackStatusUpdate={(s) => {
             setVideoLoading(false);
             if (s?.didJustFinish) persistAndGoHome();
@@ -113,29 +111,26 @@ export default function PageVideo() {
 
         <LinearGradient
           colors={["rgba(0,0,0,0.15)", "rgba(0,0,0,0.6)", "rgba(0,0,0,0.9)"]}
-          className="absolute w-full h-full"
+          style={styles.gradient}
         />
 
         {/* SKIP */}
-        <View className={`absolute right-4 ${Platform.OS === "ios" ? "top-14" : "top-6"}`}>
+        <View style={styles.skipContainer}>
           <TouchableOpacity
             onPress={persistAndGoHome}
-            className="px-4 py-2 rounded-full bg-white/10"
+            style={styles.skipButton}
           >
-            <Text className="text-white font-semibold text-sm">Skip</Text>
+            <Text style={styles.skipText}>Skip</Text>
           </TouchableOpacity>
         </View>
 
         {/* CENTER PLAY */}
-        <View className="absolute top-[34%] self-center items-center">
+        <View style={styles.playContainer}>
           {videoLoading ? (
-            <ActivityIndicator size="large" color="#fff" />
+            <ActivityIndicator size='large' color='#fff' />
           ) : (
             <>
-              <TouchableOpacity
-                onPress={handlePlay}
-                className="w-20 h-20 rounded-full bg-primary items-center justify-center shadow-lg"
-              >
+              <TouchableOpacity onPress={handlePlay} style={styles.playButton}>
                 <View
                   style={{
                     width: 0,
@@ -151,27 +146,21 @@ export default function PageVideo() {
                 />
               </TouchableOpacity>
 
-              <Text className="mt-4 text-white text-xl font-bold">
-                Play video
-              </Text>
+              <Text style={styles.playText}>Play video</Text>
             </>
           )}
         </View>
       </View>
 
       {/* BOTTOM CONTENT */}
-      <View className={`flex-1 px-6 pt-6 justify-end ${Platform.OS === "ios" ? "pb-10" : "pb-6"}`}>
-        <Text className="text-center text-base text-muted-foreground mb-5">
-          {getDescription(langResolved)}
-        </Text>
+      <View style={styles.bottomContent}>
+        <Text style={styles.description}>{getDescription(langResolved)}</Text>
 
         <TouchableOpacity
           onPress={persistAndGoHome}
-          className="bg-primary rounded-full py-5 items-center"
+          style={styles.continueButton}
         >
-          <Text className="text-white text-lg font-bold">
-            Continue
-          </Text>
+          <Text style={styles.continueText}>Continue</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -190,3 +179,91 @@ function getDescription(lang) {
       return "Vidéo d'introduction";
   }
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F9F5F5"
+  },
+  videoContainer: {
+    width: "100%",
+    backgroundColor: "#000",
+    position: "relative",
+    overflow: "hidden"
+  },
+  video: {
+    position: "absolute",
+    width: "100%",
+    height: "100%"
+  },
+  gradient: {
+    position: "absolute",
+    width: "100%",
+    height: "100%"
+  },
+  skipContainer: {
+    position: "absolute",
+    right: 16,
+    top: Platform.OS === "ios" ? 56 : 24
+  },
+  skipButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.1)"
+  },
+  skipText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 14
+  },
+  playContainer: {
+    position: "absolute",
+    top: "34%",
+    alignSelf: "center",
+    alignItems: "center"
+  },
+  playButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#D32F2F",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5
+  },
+  playText: {
+    marginTop: 16,
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold"
+  },
+  bottomContent: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    justifyContent: "flex-end",
+    paddingBottom: Platform.OS === "ios" ? 40 : 24
+  },
+  description: {
+    textAlign: "center",
+    fontSize: 16,
+    color: "#6B6B6B",
+    marginBottom: 20
+  },
+  continueButton: {
+    backgroundColor: "#D32F2F",
+    borderRadius: 30,
+    paddingVertical: 20,
+    alignItems: "center"
+  },
+  continueText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold"
+  }
+});
