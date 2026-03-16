@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,8 +6,10 @@ import {
   Animated,
   SafeAreaView,
   StatusBar,
-  StyleSheet
+  StyleSheet,
+  ActivityIndicator
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
@@ -25,34 +27,39 @@ const COLORS = {
 const HEADER_MIN_HEIGHT = 40;
 const HEADER_SCROLL_FADE_END = 80;
 
+// Default exercise data - locked status will be dynamically updated
 const exerciseData = [
   {
     id: "1",
     titleKey: "exercises.categories.socialFamily",
     descriptionKey: "exercises.categories.socialFamilyDesc",
     locked: false,
-    route: "/exercices/famille/exos1"
+    route: "/exercices/famille/exos1",
+    storageKey: null // First theme is always unlocked
   },
   {
     id: "2",
     titleKey: "exercises.categories.cooking",
     descriptionKey: "exercises.categories.cookingDesc",
     locked: true,
-    route: "/exercices/cuisine"
+    route: "/exercices/cuisine",
+    storageKey: "theme2_unlocked"
   },
   {
     id: "3",
     titleKey: "exercises.categories.clothing",
     descriptionKey: "exercises.categories.clothingDesc",
     locked: true,
-    route: "/exercices/vetements"
+    route: "/exercices/vetements",
+    storageKey: "theme3_unlocked"
   },
   {
     id: "4",
     titleKey: "exercises.categories.faunaFlora",
     descriptionKey: "exercises.categories.faunaFloraDesc",
     locked: true,
-    route: "/exercices/faune"
+    route: "/exercices/faune",
+    storageKey: "theme4_unlocked"
   }
 ];
 
@@ -101,6 +108,46 @@ export default function ExercicesScreen() {
   const { t } = useTranslation();
   const scrollY = useRef(new Animated.Value(0)).current;
 
+  // State for tracking theme unlock status
+  const [unlockedThemes, setUnlockedThemes] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch unlock status from AsyncStorage on mount
+  useEffect(() => {
+    const fetchUnlockStatus = async () => {
+      try {
+        const unlocked = {};
+
+        // Check each theme's unlock status
+        for (const theme of exerciseData) {
+          if (theme.storageKey) {
+            const status = await AsyncStorage.getItem(theme.storageKey);
+            unlocked[theme.id] = status === "true";
+          } else {
+            // First theme is always unlocked
+            unlocked[theme.id] = true;
+          }
+        }
+
+        setUnlockedThemes(unlocked);
+      } catch (error) {
+        console.error("Error fetching unlock status:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUnlockStatus();
+  }, []);
+
+  // Calculate dynamic exercise data with current unlock status
+  const getExerciseData = () => {
+    return exerciseData.map((theme) => ({
+      ...theme,
+      locked: !unlockedThemes[theme.id]
+    }));
+  };
+
   const handleCardPress = (item) => {
     if (!item.locked) {
       router.push(item.route);
@@ -119,6 +166,18 @@ export default function ExercicesScreen() {
     extrapolate: "clamp"
   });
 
+  // Show loading while fetching unlock status
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle='dark-content' />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size='large' color='#5A4FCF' />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle='dark-content' />
@@ -131,7 +190,7 @@ export default function ExercicesScreen() {
       </Animated.View>
 
       <Animated.FlatList
-        data={exerciseData}
+        data={getExerciseData()}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <ExerciseCard item={item} onPress={handleCardPress} t={t} />
@@ -158,6 +217,12 @@ export default function ExercicesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: COLORS.background
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: COLORS.background
   },
   smallHeader: {
