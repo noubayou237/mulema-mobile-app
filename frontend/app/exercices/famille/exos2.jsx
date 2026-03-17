@@ -13,12 +13,14 @@ import {
   ScrollView,
   Dimensions,
   Image,
-  Alert
+  Alert,
+  ActivityIndicator
 } from "react-native";
 import { Audio } from "expo-av";
 import { useTranslation } from "react-i18next";
 import * as Haptics from "expo-haptics";
 import { THEME_FAMILLE_WORDS } from "../../data/themeData";
+import { generateBlockExercises } from "../../src/services/ExerciseApiService";
 
 const { width } = Dimensions.get("window");
 
@@ -146,8 +148,11 @@ const playFeedbackSound = async (isCorrect) => {
 };
 
 // --- EXERCISE DATA: ALL 6 WORDS ---
-// Using all 6 words from the shared pool for pedagogical consistency
-const EXERCISE_QUESTIONS = THEME_FAMILLE_WORDS.map((word, index) => ({
+// Block ID for the "Famille" theme in the backend
+const THEME_BLOCK_ID = "block-famille-001";
+
+// Static fallback data
+const staticExerciseQuestions = THEME_FAMILLE_WORDS.map((word, index) => ({
   id: word.id,
   questionNumber: index + 1,
   fr: word.fr,
@@ -155,7 +160,7 @@ const EXERCISE_QUESTIONS = THEME_FAMILLE_WORDS.map((word, index) => ({
   audio: word.audio
 }));
 
-const TOTAL_QUESTIONS = EXERCISE_QUESTIONS.length;
+const TOTAL_QUESTIONS = staticExerciseQuestions.length;
 
 const ExerciseTwoScreen = () => {
   const router = useRouter();
@@ -174,6 +179,13 @@ const ExerciseTwoScreen = () => {
   const totalProgress = getParamAsNumber("totalProgress", 33);
 
   // --- STATE ---
+  // Backend data state
+  const [exerciseQuestions, setExerciseQuestions] = useState(
+    staticExerciseQuestions
+  );
+  const [isLoadingExercises, setIsLoadingExercises] = useState(true);
+  const [exerciseError, setExerciseError] = useState(null);
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [inputText, setInputText] = useState("");
   const [lives, setLives] = useState(initialLives);
@@ -192,7 +204,44 @@ const ExerciseTwoScreen = () => {
   const timerRef = useRef(null);
 
   // Current question
-  const currentQuestion = EXERCISE_QUESTIONS[currentQuestionIndex];
+  // Fetch exercises from backend on mount
+  useEffect(() => {
+    const fetchExercises = async () => {
+      try {
+        setIsLoadingExercises(true);
+        const backendExercises = await generateBlockExercises(THEME_BLOCK_ID);
+
+        if (backendExercises && backendExercises.length > 0) {
+          const listenWriteExercise = backendExercises.find(
+            (ex) => ex.type === "LISTEN_WRITE"
+          );
+
+          if (listenWriteExercise && listenWriteExercise.questions) {
+            const transformedQuestions = listenWriteExercise.questions.map(
+              (q, index) => ({
+                id: q.word?.id || `q-${index}`,
+                questionNumber: index + 1,
+                fr: q.word?.sourceText || q.word?.fr || "",
+                local: q.word?.targetText || q.word?.local || "",
+                audio: q.word?.audioUrl
+              })
+            );
+            setExerciseQuestions(transformedQuestions);
+            console.log("✅ Loaded LISTEN_WRITE exercises from backend API");
+          }
+        }
+      } catch (error) {
+        console.log("⚠️ Failed to fetch from backend:", error.message);
+        setExerciseError(error.message);
+      } finally {
+        setIsLoadingExercises(false);
+      }
+    };
+
+    fetchExercises();
+  }, []);
+
+  const currentQuestion = exerciseQuestions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === TOTAL_QUESTIONS - 1;
 
   // Initialize timer

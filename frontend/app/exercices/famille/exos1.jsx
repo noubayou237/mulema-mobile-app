@@ -9,7 +9,8 @@ import {
   TouchableOpacity,
   Dimensions,
   Alert,
-  ScrollView
+  ScrollView,
+  ActivityIndicator
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Audio } from "expo-av";
@@ -18,6 +19,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import useCowrie from "../../hooks/useCowrie";
 import { THEME_FAMILLE_WORDS } from "../../data/themeData";
+import { generateBlockExercises } from "../../src/services/ExerciseApiService";
 
 // Audio state flags
 let audioInitialized = false;
@@ -151,19 +153,32 @@ const playFeedbackSound = async (isCorrect, language = "fr") => {
 // --- DONNÉES DU THÈME (SHARED WORD POOL) ---
 // Uses the same 6 words across ALL exercises for pedagogical repetition
 
+// Block ID for the "Famille" theme in the backend
+// This should match a block ID in your database
+const THEME_BLOCK_ID = "block-famille-001";
+
 // Transform words into pairs for matching exercise
-const matchingPairs = THEME_FAMILLE_WORDS.map((word) => ({
+const transformMatchingPairs = (words) => {
+  return words.map((word) => ({
+    id: word.id || word.sourceText,
+    fr: word.sourceText || word.fr,
+    local: word.targetText || word.local
+  }));
+};
+
+// Static fallback data
+const staticMatchingPairs = THEME_FAMILLE_WORDS.map((word) => ({
   id: word.id,
   fr: word.fr,
   local: word.local
 }));
 
-const exercisesData = [
+const staticExercisesData = [
   {
     id: 1,
     type: "matching",
     instruction: "Associe chaque mot avec sa bonne traduction !",
-    pairs: matchingPairs
+    pairs: staticMatchingPairs
   }
 ];
 
@@ -176,6 +191,60 @@ const ExerciseScreen = ({ navigation }) => {
   // --- ÉTATS (STATE) ---
   const router = useRouter();
   const [currentExIndex, setCurrentExIndex] = useState(0);
+  const [exercisesData, setExercisesData] = useState(staticExercisesData);
+  const [isLoadingExercises, setIsLoadingExercises] = useState(true);
+  const [exerciseError, setExerciseError] = useState(null);
+
+  // Fetch exercises from backend on mount
+  useEffect(() => {
+    const fetchExercises = async () => {
+      try {
+        setIsLoadingExercises(true);
+        // Try to fetch from backend
+        const backendExercises = await generateBlockExercises(THEME_BLOCK_ID);
+
+        if (backendExercises && backendExercises.length > 0) {
+          // Transform backend data to frontend format
+          const matchingExercise = backendExercises.find(
+            (ex) => ex.type === "MATCHING"
+          );
+
+          if (
+            matchingExercise &&
+            matchingExercise.questions &&
+            matchingExercise.questions[0]
+          ) {
+            const transformedPairs = matchingExercise.questions[0].pairs || [];
+            setExercisesData([
+              {
+                id: matchingExercise.id,
+                type: "matching",
+                instruction:
+                  matchingExercise.questions[0].instruction ||
+                  "Associe chaque mot avec sa bonne traduction !",
+                pairs: transformedPairs
+              }
+            ]);
+            console.log("✅ Loaded exercises from backend API");
+          } else {
+            console.log(
+              "⚠️ No matching exercise in backend response, using static data"
+            );
+          }
+        } else {
+          console.log("⚠️ No exercises from backend, using static data");
+        }
+      } catch (error) {
+        console.log("⚠️ Failed to fetch from backend:", error.message);
+        setExerciseError(error.message);
+        // Fall back to static data
+      } finally {
+        setIsLoadingExercises(false);
+      }
+    };
+
+    fetchExercises();
+  }, []);
 
   // Use cowrie hook for automatic recharging
   const { cowries, setCowries, canPlay, isRecharging, formatRechargeTime } =
@@ -416,6 +485,24 @@ const ExerciseScreen = ({ navigation }) => {
     );
   };
 
+  // Show loading while fetching exercises from backend
+  if (isLoadingExercises) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle='dark-content' backgroundColor='#F5F5F5' />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size='large' color='#D32F2F' />
+          <Text style={styles.loadingText}>Chargement des exercices...</Text>
+          {exerciseError && (
+            <Text style={styles.fallbackText}>
+              Utilisation des données locales
+            </Text>
+          )}
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle='dark-content' backgroundColor='#F5F5F5' />
@@ -530,6 +617,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+    padding: 20
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#666"
   },
   pageTitle: {
     fontSize: 22,
@@ -664,6 +763,12 @@ const styles = StyleSheet.create({
   errorText: {
     color: "#C81E2F",
     fontSize: 16,
+    fontStyle: "italic"
+  },
+  fallbackText: {
+    marginTop: 8,
+    fontSize: 12,
+    color: "#999",
     fontStyle: "italic"
   },
   nextButton: {
