@@ -3,39 +3,31 @@ import { useState, useCallback } from "react";
 import * as Google from "expo-auth-session/providers/google";
 import * as Facebook from "expo-auth-session/providers/facebook";
 import * as AppleAuth from "expo-apple-authentication";
-import { makeRedirectUri } from "expo-auth-session";
 import { Platform } from "react-native";
 import api from "../../services/api";
 
 // Environment variables - only imported here to prevent exposure
 const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
-const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
-const GOOGLE_ANDROID_CLIENT_ID =
-  process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
 const FACEBOOK_APP_ID = process.env.EXPO_PUBLIC_FACEBOOK_APP_ID;
+
+// Expo username and app slug from environment variables (not exposed to client)
+// Note: EXPO_USERNAME and APP_SLUG are defined but kept for future use
+// const EXPO_USERNAME = process.env.EXPO_PUBLIC_EXPO_USERNAME;
+// const APP_SLUG = process.env.EXPO_PUBLIC_APP_SLUG || "mulema";
 
 export const useSocialLogin = () => {
   const [loading, setLoading] = useState(null); // 'google' | 'facebook' | 'apple' | null
 
-  // Google Auth
-  const [googleRequest, googleResponse, googlePromptAsync] =
-    Google.useAuthRequest({
-      clientId: GOOGLE_CLIENT_ID,
-      iosClientId: GOOGLE_IOS_CLIENT_ID,
-      androidClientId: GOOGLE_ANDROID_CLIENT_ID,
-      redirectUri: makeRedirectUri({
-        scheme: "mulema",
-        path: "auth"
-      })
-    });
+  // Google Auth - Use explicit redirect URI to match Google Console
+  const [googleRequest, , googlePromptAsync] = Google.useAuthRequest({
+    clientId: GOOGLE_CLIENT_ID,
+    redirectUri: "https://auth.expo.io/@leila237/mulema"
+  });
 
-  // Facebook Auth
-  const [fbRequest, fbResponse, fbPromptAsync] = Facebook.useAuthRequest({
+  // Facebook Auth - Use explicit redirect URI
+  const [fbRequest, , fbPromptAsync] = Facebook.useAuthRequest({
     clientId: FACEBOOK_APP_ID,
-    redirectUri: makeRedirectUri({
-      scheme: "mulema",
-      path: "auth"
-    })
+    redirectUri: "https://auth.expo.io/@leila237/mulema"
   });
 
   const handleGoogleLogin = useCallback(async () => {
@@ -111,7 +103,10 @@ export const useSocialLogin = () => {
       setLoading("apple");
 
       const credential = await AppleAuth.signInAsync({
-        requestedScopes: [AppleAuth.Scope.FULL_NAME, AppleAuth.Scope.EMAIL]
+        requestedScopes: [
+          AppleAuth.AppleAuthenticationScope.FULL_NAME,
+          AppleAuth.AppleAuthenticationScope.EMAIL
+        ]
       });
 
       // Send to your backend

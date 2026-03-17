@@ -2,6 +2,7 @@
   "expo": {
     "name": "Mulema",
     "slug": "mulema",
+    "owner": "leila237",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
