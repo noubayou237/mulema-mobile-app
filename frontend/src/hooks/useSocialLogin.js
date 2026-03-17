@@ -2,9 +2,17 @@
 import { useState, useCallback } from "react";
 import * as Google from "expo-auth-session/providers/google";
 import * as Facebook from "expo-auth-session/providers/facebook";
-import * as AppleAuth from "expo-apple-authentication";
 import { Platform } from "react-native";
 import api from "../../services/api";
+
+// Dynamically import Apple Auth to handle case where module is not available
+// On Android and Web, Apple Sign-In is not supported
+let AppleAuth = null;
+try {
+  AppleAuth = require("expo-apple-authentication");
+} catch (error) {
+  console.warn("expo-apple-authentication is not available on this platform");
+}
 
 // Environment variables - only imported here to prevent exposure
 const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
@@ -102,6 +110,14 @@ export const useSocialLogin = () => {
     try {
       setLoading("apple");
 
+      // Check if Apple Auth is available
+      if (!AppleAuth) {
+        return {
+          success: false,
+          error: "Apple Sign-In is not available on this platform"
+        };
+      }
+
       const credential = await AppleAuth.signInAsync({
         requestedScopes: [
           AppleAuth.AppleAuthenticationScope.FULL_NAME,
@@ -137,7 +153,7 @@ export const useSocialLogin = () => {
     handleAppleLogin,
     googleReady: !!googleRequest,
     facebookReady: !!fbRequest,
-    isAppleAvailable: Platform.OS !== "web"
+    isAppleAvailable: AppleAuth !== null && Platform.OS === "ios"
   };
 };
 

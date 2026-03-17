@@ -46,19 +46,6 @@ export default {
             backgroundColor: "#000000"
           }
         }
-      ],
-      [
-        "expo-facebook",
-        {
-          appId: process.env.EXPO_PUBLIC_FACEBOOK_APP_ID,
-          appName: "Mulema"
-        }
-      ],
-      [
-        "expo-apple-authentication",
-        {
-          nonce: true
-        }
       ]
     ],
     experiments: {

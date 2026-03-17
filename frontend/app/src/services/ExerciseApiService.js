@@ -2,6 +2,7 @@
  * Exercise API Service
  *
  * Handles communication with the backend exercise engine API.
+ * Uses the centralized API client with automatic auth token handling.
  *
  * API Endpoints:
  * - GET /exercises/block/:blockId/generate - Generate exercises for a block
@@ -12,34 +13,7 @@
  * - PATCH /exercises/:id/complete - Complete an exercise
  */
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
-
-/**
- * Fetch wrapper with error handling
- */
-const fetchWithErrorHandling = async (url, options = {}) => {
-  try {
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers
-      }
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.message || `HTTP error! status: ${response.status}`
-      );
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("API Error:", error.message);
-    throw error;
-  }
-};
+import api from '../../../services/api';
 
 /**
  * Generate exercises for a specific block
@@ -48,9 +22,13 @@ const fetchWithErrorHandling = async (url, options = {}) => {
  * @returns {Promise<Object>} Generated exercises
  */
 export const generateBlockExercises = async (blockId) => {
-  return fetchWithErrorHandling(
-    `${API_BASE_URL}/exercises/block/${blockId}/generate`
-  );
+  try {
+    const response = await api.get(`/exercises/block/${blockId}/generate`);
+    return response.data;
+  } catch (error) {
+    console.error('Error generating block exercises:', error);
+    throw error;
+  }
 };
 
 /**
@@ -60,9 +38,13 @@ export const generateBlockExercises = async (blockId) => {
  * @returns {Promise<Object>} Generated exercises
  */
 export const generateThemeExercises = async (themeId) => {
-  return fetchWithErrorHandling(
-    `${API_BASE_URL}/exercises/theme/${themeId}/generate`
-  );
+  try {
+    const response = await api.get(`/exercises/theme/${themeId}/generate`);
+    return response.data;
+  } catch (error) {
+    console.error('Error generating theme exercises:', error);
+    throw error;
+  }
 };
 
 /**
@@ -72,7 +54,13 @@ export const generateThemeExercises = async (themeId) => {
  * @returns {Promise<Array>} Words due for review
  */
 export const getWordsForReview = async (userId) => {
-  return fetchWithErrorHandling(`${API_BASE_URL}/exercises/review/${userId}`);
+  try {
+    const response = await api.get(`/exercises/review/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching review words:', error);
+    throw error;
+  }
 };
 
 /**
@@ -84,10 +72,17 @@ export const getWordsForReview = async (userId) => {
  * @returns {Promise<Object>} Updated progress
  */
 export const updateWordProgress = async (userId, wordId, isCorrect) => {
-  return fetchWithErrorHandling(`${API_BASE_URL}/exercises/word-progress`, {
-    method: "POST",
-    body: JSON.stringify({ userId, wordId, isCorrect })
-  });
+  try {
+    const response = await api.post('/exercises/word-progress', {
+      userId,
+      wordId,
+      isCorrect
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating word progress:', error);
+    throw error;
+  }
 };
 
 /**
@@ -97,10 +92,13 @@ export const updateWordProgress = async (userId, wordId, isCorrect) => {
  * @returns {Promise<Object>} Created exercise
  */
 export const createExercise = async (exerciseData) => {
-  return fetchWithErrorHandling(`${API_BASE_URL}/exercises`, {
-    method: "POST",
-    body: JSON.stringify(exerciseData)
-  });
+  try {
+    const response = await api.post('/exercises', exerciseData);
+    return response.data;
+  } catch (error) {
+    console.error('Error creating exercise:', error);
+    throw error;
+  }
 };
 
 /**
@@ -111,13 +109,13 @@ export const createExercise = async (exerciseData) => {
  * @returns {Promise<Object>} Completion result
  */
 export const completeExercise = async (exerciseId, completionData) => {
-  return fetchWithErrorHandling(
-    `${API_BASE_URL}/exercises/${exerciseId}/complete`,
-    {
-      method: "PATCH",
-      body: JSON.stringify(completionData)
-    }
-  );
+  try {
+    const response = await api.patch(`/exercises/${exerciseId}/complete`, completionData);
+    return response.data;
+  } catch (error) {
+    console.error('Error completing exercise:', error);
+    throw error;
+  }
 };
 
 /**
@@ -127,7 +125,13 @@ export const completeExercise = async (exerciseId, completionData) => {
  * @returns {Promise<Object>} Exercise data
  */
 export const getExercise = async (exerciseId) => {
-  return fetchWithErrorHandling(`${API_BASE_URL}/exercises/${exerciseId}`);
+  try {
+    const response = await api.get(`/exercises/${exerciseId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching exercise:', error);
+    throw error;
+  }
 };
 
 /**
@@ -137,7 +141,13 @@ export const getExercise = async (exerciseId) => {
  * @returns {Promise<Array>} Exercises for the lesson
  */
 export const getExercisesByLesson = async (lessonId) => {
-  return fetchWithErrorHandling(`${API_BASE_URL}/exercises/lesson/${lessonId}`);
+  try {
+    const response = await api.get(`/exercises/lesson/${lessonId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching exercises by lesson:', error);
+    throw error;
+  }
 };
 
 export default {

@@ -10,12 +10,14 @@ import {
   ScrollView,
   Dimensions,
   Alert,
-  Image
+  Image,
+  ActivityIndicator
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Audio } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { THEME_FAMILLE_WORDS, getWrongOptions } from "../../data/themeData";
+import { generateBlockExercises } from "../../src/services/ExerciseApiService";
 
 const { width } = Dimensions.get("window");
 
@@ -93,27 +95,34 @@ const playFeedbackSound = async (isCorrect) => {
 };
 
 // --- EXERCISE DATA: ALL 6 WORDS ---
-// Using all 6 words from the shared pool for pedagogical consistency
-const EXERCISE_QUESTIONS = THEME_FAMILLE_WORDS.map((word, index) => {
-  // Generate options: correct answer + wrong options
-  const wrongOptions = getWrongOptions(word.id, 3);
-  const allOptions = [word, ...wrongOptions];
-  // Shuffle options
-  const shuffledOptions = allOptions.sort(() => Math.random() - 0.5);
+// Block ID for the "Famille" theme in the backend
+const THEME_BLOCK_ID = "block-famille-001";
 
-  return {
-    id: word.id,
-    questionNumber: index + 1,
-    fr: word.fr,
-    local: word.local,
-    options: shuffledOptions.map((opt, optIndex) => ({
-      id: `opt${optIndex + 1}`,
-      text: opt.local
-    }))
-  };
-});
+// Static fallback data
+const generateStaticExerciseQuestions = () => {
+  return THEME_FAMILLE_WORDS.map((word, index) => {
+    // Generate options: correct answer + wrong options
+    const wrongOptions = getWrongOptions(word.id, 3);
+    const allOptions = [word, ...wrongOptions];
+    // Shuffle options
+    const shuffledOptions = allOptions.sort(() => Math.random() - 0.5);
 
-const TOTAL_QUESTIONS = EXERCISE_QUESTIONS.length;
+    return {
+      id: word.id,
+      questionNumber: index + 1,
+      fr: word.fr,
+      local: word.local,
+      options: shuffledOptions.map((opt, optIndex) => ({
+        id: `opt${optIndex + 1}`,
+        text: opt.local
+      }))
+    };
+  });
+};
+
+const staticExerciseQuestions = generateStaticExerciseQuestions();
+
+const TOTAL_QUESTIONS = staticExerciseQuestions.length;
 
 const ExerciseThreeScreen = () => {
   const router = useRouter();
@@ -132,6 +141,13 @@ const ExerciseThreeScreen = () => {
   const totalProgress = getParamAsNumber("totalProgress", 66);
 
   // --- STATE ---
+  // Backend data state
+  const [exerciseQuestions, setExerciseQuestions] = useState(
+    staticExerciseQuestions
+  );
+  const [isLoadingExercises, setIsLoadingExercises] = useState(true);
+  const [exerciseError, setExerciseError] = useState(null);
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [lives, setLives] = useState(initialLives);
   const [selectedOption, setSelectedOption] = useState(null);
@@ -150,11 +166,55 @@ const ExerciseThreeScreen = () => {
   const timerRef = useRef(null);
 
   // Current question
-  const currentQuestion = EXERCISE_QUESTIONS[currentQuestionIndex];
-  const isLastQuestion = currentQuestionIndex === TOTAL_QUESTIONS - 1;
+  const currentQuestion = exerciseQuestions[currentQuestionIndex];
+  const isLastQuestion = currentQuestionIndex === exerciseQuestions.length - 1;
 
   // Initialize timer
   useEffect(() => {
+    // Fetch exercises from backend
+    const fetchExercises = async () => {
+      try {
+        setIsLoadingExercises(true);
+        const backendExercises = await generateBlockExercises(THEME_BLOCK_ID);
+
+        if (backendExercises && backendExercises.length > 0) {
+          const listenSelectExercise = backendExercises.find(
+            (ex) => ex.type === "LISTEN_SELECT_IMAGE"
+          );
+
+          if (listenSelectExercise && listenSelectExercise.questions) {
+            const transformedQuestions = listenSelectExercise.questions.map(
+              (q, index) => {
+                // Get wrong options from backend or generate locally
+                const options = q.options || [];
+                return {
+                  id: q.word?.id || `q-${index}`,
+                  questionNumber: index + 1,
+                  fr: q.word?.sourceText || q.word?.fr || "",
+                  local: q.word?.targetText || q.word?.local || "",
+                  options: options.map((opt, optIndex) => ({
+                    id: `opt${optIndex + 1}`,
+                    text: opt.text || opt
+                  }))
+                };
+              }
+            );
+            setExerciseQuestions(transformedQuestions);
+            console.log(
+              "✅ Loaded LISTEN_SELECT_IMAGE exercises from backend API"
+            );
+          }
+        }
+      } catch (error) {
+        console.log("⚠️ Failed to fetch from backend:", error.message);
+        setExerciseError(error.message);
+      } finally {
+        setIsLoadingExercises(false);
+      }
+    };
+
+    fetchExercises();
+
     timerRef.current = setInterval(() => {
       setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
     }, 1000);
@@ -311,8 +371,27 @@ const ExerciseThreeScreen = () => {
   };
 
   // Calculate progress
-  const exerciseProgress = ((currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 34;
+  const exerciseProgress =
+    ((currentQuestionIndex + 1) / exerciseQuestions.length) * 34;
   const overallProgress = totalProgress + exerciseProgress;
+
+  // Show loading while fetching exercises from backend
+  if (isLoadingExercises) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle='dark-content' backgroundColor='#F5F5F5' />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size='large' color='#D32F2F' />
+          <Text style={styles.loadingText}>Chargement des exercices...</Text>
+          {exerciseError && (
+            <Text style={styles.fallbackText}>
+              Utilisation des données locales
+            </Text>
+          )}
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -426,6 +505,24 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#F5F5F5"
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+    padding: 20
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#666"
+  },
+  fallbackText: {
+    marginTop: 8,
+    fontSize: 12,
+    color: "#999",
+    fontStyle: "italic"
   },
   container: {
     flex: 1,
