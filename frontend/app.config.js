@@ -9,7 +9,10 @@ export default {
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
     extra: {
-      apiIp: process.env.EXPO_PUBLIC_API_IP
+      apiIp: process.env.EXPO_PUBLIC_API_IP,
+      eas: {
+        projectId: "34e3ccd6-55a9-4abe-9cbd-de8441d88ad3"
+      }
     },
     ios: {
       supportsTablet: true,

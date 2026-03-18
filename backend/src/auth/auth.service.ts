@@ -426,6 +426,16 @@ export class AuthService {
       body?.fullName?.givenName ||
       body?.fullName?.familyName ||
       'New User';
+    
+    // Get the provider-specific ID
+    let providerId: string | undefined;
+    if (provider === 'GOOGLE') {
+      providerId = body?.idToken ? undefined : body?.googleId;
+    } else if (provider === 'FACEBOOK') {
+      providerId = body?.facebookId;
+    } else if (provider === 'APPLE') {
+      providerId = body?.user;
+    }
 
     if (!email) {
       throw new BadRequestException('Email is required for social login');
@@ -449,13 +459,28 @@ export class AuthService {
           name,
           passwordHash,
           isVerified: true,
+          isSocial: true,
+          provider,
+          providerId,
         },
       });
-    } else if (!user.isVerified) {
-      // Social login can act as verification
+    } else {
+      // Update existing user with social login info if not already set
+      const updateData: any = { 
+        isVerified: true, 
+        name: name || user.name 
+      };
+      
+      // Only update provider info if user is logging in via social for first time
+      if (!user.provider) {
+        updateData.isSocial = true;
+        updateData.provider = provider;
+        updateData.providerId = providerId;
+      }
+      
       user = await this.prisma.user.update({
         where: { id: user.id },
-        data: { isVerified: true, name: name || user.name },
+        data: updateData,
       });
     }
 

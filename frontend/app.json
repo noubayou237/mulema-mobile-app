@@ -9,11 +9,22 @@
     "scheme": "mulema",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "extra": {
+      "eas": {
+        "projectId": "34e3ccd6-55a9-4abe-9cbd-de8441d88ad3"
+      }
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.mulema.app",
       "infoPlist": {
-        "NSFaceIDUsageDescription": "Use Face ID for authentication"
+        "NSFaceIDUsageDescription": "Use Face ID for authentication",
+        "CFBundleURLTypes": [
+          {
+            "CFBundleTypeRole": "Editor",
+            "CFBundleURLSchemes": ["com.mulema.app", "fb1992544871639029"]
+          }
+        ]
       }
     },
     "android": {
@@ -25,7 +36,19 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https"
+            }
+          ],
+          "category": ["BROWSER", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "output": "static",
