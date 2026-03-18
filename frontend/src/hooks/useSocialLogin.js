@@ -24,7 +24,7 @@ const FACEBOOK_APP_ID = process.env.EXPO_PUBLIC_FACEBOOK_APP_ID;
 const EXPO_USERNAME = process.env.EXPO_PUBLIC_EXPO_USERNAME || "leila237";
 const APP_SLUG = process.env.EXPO_PUBLIC_APP_SLUG || "mulema";
 
-// Generate a random nonce for Apple Sign In (simple approach)
+// Generate a random nonce for Apple Sign In
 const generateNonce = () => {
   return (
     Math.random().toString(36).substring(2, 15) +
@@ -44,7 +44,6 @@ export const useSocialLogin = () => {
     redirectUri: `https://auth.expo.io/@${EXPO_USERNAME}/${APP_SLUG}`,
     scopes: ["openid", "email", "profile"],
     extraParams: {
-      access_type: "offline",
       prompt: "consent"
     }
   });

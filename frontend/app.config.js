@@ -8,6 +8,12 @@ export default {
     scheme: "mulema",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
+    updates: {
+      url: "https://u.expo.dev/34e3ccd6-55a9-4abe-9cbd-de8441d88ad3"
+    },
+    runtimeVersion: {
+      policy: "appVersion"
+    },
     extra: {
       apiIp: process.env.EXPO_PUBLIC_API_IP,
       eas: {
