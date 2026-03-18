@@ -83,6 +83,18 @@ export const useSocialLogin = () => {
           return { success: true, data: response.data };
         } catch (backendError) {
           console.error("Backend error:", backendError);
+          // Check if it's a network error (backend not running)
+          if (
+            backendError.code === "ECONNREFUSED" ||
+            backendError.code === "TIMEOUT" ||
+            backendError.message?.includes("Network")
+          ) {
+            return {
+              success: false,
+              error:
+                "Backend server is not running. Please start the backend or check your connection."
+            };
+          }
           // Even if backend fails, we got the Google token, so still return success
           // The user can still log in with the Google info
           return {
