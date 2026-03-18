@@ -238,6 +238,16 @@ const SignInScreen = () => {
   const handleSocialLoginSuccess = async (socialData) => {
     try {
       setSocialLoading(true);
+
+      // Check if there was an error in the social login
+      if (!socialData?.success) {
+        Alert.alert(
+          t("common.error"),
+          socialData?.error || t("auth.socialLoginError")
+        );
+        return;
+      }
+
       // The backend should return accessToken and refreshToken
       if (socialData?.accessToken) {
         const STORAGE_KEY = "userSession";
@@ -251,6 +261,12 @@ const SignInScreen = () => {
         // Get user data
         const me = await api.get("/auth/me");
         router.replace("/(tabs)/home");
+      } else {
+        // No accessToken means the backend didn't respond properly
+        Alert.alert(
+          t("common.error"),
+          "Unable to complete login. Please make sure the backend server is running."
+        );
       }
     } catch (error) {
       console.error("Social login error:", error);
