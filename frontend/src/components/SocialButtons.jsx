@@ -104,22 +104,20 @@ const SocialButtons = ({ onSuccess }) => {
           )}
         </TouchableOpacity>
 
-        {/* Apple - only available on iOS */}
-        {isAppleAvailable && (
-          <TouchableOpacity
-            style={styles.socialButton}
-            onPress={() => handleLogin("apple")}
-            disabled={!!loading}
-            accessibilityLabel={t("auth.signInWithApple")}
-            accessibilityRole='button'
-          >
-            {isLoading("apple") ? (
-              <ActivityIndicator size='small' color='#000' />
-            ) : (
-              <Ionicons name='logo-apple' size={24} color='#000' />
-            )}
-          </TouchableOpacity>
-        )}
+        {/* Apple Sign In */}
+        <TouchableOpacity
+          style={styles.socialButton}
+          onPress={() => handleLogin("apple")}
+          disabled={!!loading}
+          accessibilityLabel={t("auth.signInWithApple")}
+          accessibilityRole='button'
+        >
+          {isLoading("apple") ? (
+            <ActivityIndicator size='small' color='#000' />
+          ) : (
+            <Ionicons name='logo-apple' size={24} color='#000' />
+          )}
+        </TouchableOpacity>
       </View>
     </View>
   );
