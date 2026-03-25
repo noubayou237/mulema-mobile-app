@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -85,7 +85,7 @@ const FloatingBubble = ({ size, color, startX, delay, duration }) => {
 // ── Wave dots loader ───────────────────────────────────────────────────────
 const WaveDots = () => {
   const dots = [0, 1, 2, 3, 4];
-  const anims = dots.map(() => useRef(new Animated.Value(0)).current);
+  const anims = useMemo(() => dots.map(() => new Animated.Value(0)), []);
   useEffect(() => {
     dots.forEach((_, i) => {
       Animated.loop(
@@ -708,7 +708,9 @@ const ForgotPasswordScreen = () => {
                   style={s.changeEmailBtn}
                 >
                   <Ionicons name='pencil-outline' size={13} color='#BDBDBD' />
-                  <Text style={s.changeEmailText}>Changer d&apos;adresse email</Text>
+                  <Text style={s.changeEmailText}>
+                    Changer d&apos;adresse email
+                  </Text>
                 </TouchableOpacity>
               </Animated.View>
             )}

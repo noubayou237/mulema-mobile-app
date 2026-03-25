@@ -48,7 +48,12 @@
     "passwordResetSuccess": "Password updated. You can now sign in.",
     "passwordResetError": "Unable to reset password.",
     "account": "Account",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "orContinueWith": "or continue with",
+    "signInWithGoogle": "Sign in with Google",
+    "signInWithFacebook": "Sign in with Facebook",
+    "signInWithApple": "Sign in with Apple",
+    "socialLoginError": "Social login error. Please try again."
   },
   "profile": {
     "title": "Profile",
@@ -96,7 +101,7 @@
     "levelIII": "LEVEL III",
     "levelIV": "LEVEL IV",
     "start": "START",
-    "unlockMessage": "Unlock the next levels by completing the exercises from the previous ones",
+    "unlockMessage": "Unlock the next levels by completing the exercises from the previous level",
     "niveau": "Level"
   },
   "lessons": {
@@ -185,5 +190,153 @@
   },
   "header": {
     "welcome": "Welcome"
+  },
+  "signIn": {
+    "title": "Sign In",
+    "subtitle": "Sign in to continue your adventure",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "example@email.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "••••••••",
+    "forgotPassword": "Forgot password?",
+    "signInButton": "Sign in",
+    "noAccount": "Don't have an account?",
+    "signUpFree": "Sign up for free",
+    "languages": "Cameroonian Languages",
+    "signInFailed": "Sign in failed.",
+    "invalidEmail": "Invalid Email",
+    "enterValidEmail": "Please enter a valid email first.",
+    "continueAdventure": "Continue your adventure"
+  },
+  "signUp": {
+    "title": "Sign Up",
+    "subtitle": "Join the community",
+    "usernameLabel": "Username",
+    "usernamePlaceholder": "ex: ambe_bassa",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "example@email.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "••••••••",
+    "confirmPasswordLabel": "Confirm Password",
+    "confirmPasswordPlaceholder": "••••••••",
+    "signUpButton": "Create my account",
+    "alreadyAccount": "Already have an account?",
+    "signInLink": "Sign in",
+    "or": "or",
+    "passwordStrength": "Password strength",
+    "weak": "Weak",
+    "medium": "Medium",
+    "strong": "Strong",
+    "terms": "By creating an account, you accept our",
+    "conditions": "Terms of Use",
+    "privacy": "Privacy Policy",
+    "validation": {
+      "requiredFields": "Please fill in all required fields.",
+      "noSpaces": "Username must not contain spaces.",
+      "passwordMinLength": "Password must be at least {{min}} characters.",
+      "passwordMismatch": "Passwords do not match.",
+      "passwordsMatch": "Passwords match",
+      "passwordsDoNotMatch": "Passwords do not match"
+    },
+    "success": {
+      "title": "Registration successful!",
+      "message": "A verification code has been sent to your email."
+    },
+    "error": {
+      "title": "Error",
+      "creationFailed": "Error creating account."
+    },
+    "steps": {
+      "profile": "Profile",
+      "email": "Email",
+      "security": "Security"
+    }
+  },
+  "home": {
+    "levels": {
+      "level": "LEVEL",
+      "unlocked": "Unlocked",
+      "startAdventure": "Start the adventure",
+      "completePrevious": "Complete the previous level to unlock",
+      "startPoint": "STARTING POINT",
+      "locked": "Locked",
+      "completed": "Completed",
+      "progression": "Progress",
+      "levelsUnlocked": "{{unlocked}}/{{total}} levels",
+      "masterAwaits": "{{language}} master awaits!",
+      "completeAll": "Complete all levels to get the {{language}} certificate."
+    },
+    "welcome": "Welcome",
+    "continueLearning": "Continue Learning",
+    "yourProgress": "Your Progress"
+  },
+  "lessons": {
+    "title": "Lessons",
+    "lesson": "Lesson",
+    "exercise": "Exercise",
+    "startLesson": "Start Lesson",
+    "continueLesson": "Continue Lesson",
+    "completeLesson": "Complete Lesson",
+    "lessonCompleted": "Lesson Completed!",
+    "tryAgain": "Try Again",
+    "stepByStep": "Step by step, you build your knowledge",
+    "completeToUnlock": "Complete this lesson to unlock the next one",
+    "locked": "Locked",
+    "unlocked": "Unlocked"
+  },
+  "exercises": {
+    "title": "Exercises",
+    "introText": "Choose a theme and train yourself to learn new words and expressions. The more you practice, the more you progress!",
+    "start": "Start",
+    "checkAnswer": "Check Answer",
+    "nextQuestion": "Next Question",
+    "correct": "Correct!",
+    "incorrect": "Incorrect",
+    "tryAgain": "Try Again",
+    "continue": "Continue",
+    "completed": "Completed!",
+    "score": "Your score: {{score}}",
+    "questionOf": "Question {{current}} of {{total}}"
+  },
+  "community": {
+    "title": "Community",
+    "subtitle": "Learn together, progress together",
+    "activityFeed": "Activity Feed",
+    "viewStats": "View my statistics",
+    "points": "points",
+    "completedTheme": "completed the {{theme}} theme",
+    "streak": "reached {{days}} consecutive days",
+    "learnedWords": "learned {{count}} new words today",
+    "completedExercise": "completed the '{{exercise}}' exercise",
+    "earnedPoints": "won {{count}} challenge points"
+  },
+  "profile": {
+    "title": "Profile",
+    "editProfile": "Edit Profile",
+    "name": "Name",
+    "username": "Username",
+    "email": "Email",
+    "changeProfilePicture": "Change Profile Picture",
+    "takePhoto": "Take Photo",
+    "chooseFromGallery": "Choose from Gallery",
+    "points": "Points",
+    "completed": "Completed",
+    "rank": "Rank",
+    "logout": "Logout",
+    "logoutConfirm": "Are you sure you want to logout?",
+    "profileUpdated": "Profile updated successfully",
+    "profilePictureUpdated": "Profile picture updated successfully"
+  },
+  "stats": {
+    "title": "Statistics",
+    "myStats": "My Statistics",
+    "weeklyGoal": "of weekly goals achieved",
+    "dayStreak": "Day streak",
+    "daysMin": "7 days",
+    "daysMax": "30 days",
+    "detailedProgress": "Detailed Progress",
+    "dailyGoal": "Your daily goal",
+    "learnWords": "Learn {{count}} words",
+    "completedCount": "{{completed}}/{{goal}} completed"
   }
 }

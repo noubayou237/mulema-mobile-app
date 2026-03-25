@@ -1,6 +1,14 @@
 // src/learning/progress/progress.controller.ts
 
-import { Body, Controller, Post, Param, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Param,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ProgressService } from './progress.service';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -13,7 +21,7 @@ export class ProgressController {
   constructor(private readonly progressService: ProgressService) {}
 
   /**
-   * 🔹 Initialiser la progression d’un utilisateur pour un level
+   * 🔹 Initialiser la progression d'un utilisateur pour un level
    * (appelé une seule fois)
    */
   @Post('init/:levelId')
@@ -21,6 +29,16 @@ export class ProgressController {
   async initProgress(@Req() req: any, @Param('levelId') levelId: string) {
     const userId = req.user.userId;
     return this.progressService.initializeProgress(userId, levelId);
+  }
+
+  /**
+   * 🔹 Get user progress for a level
+   */
+  @Get('level/:levelId')
+  @ApiOperation({ summary: 'Get user progress for a level' })
+  async getProgress(@Req() req: any, @Param('levelId') levelId: string) {
+    const userId = req.user.userId;
+    return this.progressService.getProgressForLevel(userId, levelId);
   }
 
   /**

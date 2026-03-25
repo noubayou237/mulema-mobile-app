@@ -1,17 +1,34 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "Mulema",
+    "slug": "mulema",
+    "owner": "leila237",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "frontend",
+    "scheme": "mulema",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "extra": {
+      "eas": {
+        "projectId": "34e3ccd6-55a9-4abe-9cbd-de8441d88ad3"
+      }
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mulema.app",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Use Face ID for authentication",
+        "CFBundleURLTypes": [
+          {
+            "CFBundleTypeRole": "Editor",
+            "CFBundleURLSchemes": ["com.mulema.app", "fb1992544871639029"]
+          }
+        ]
+      }
     },
     "android": {
+      "package": "com.mulema.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -19,7 +36,19 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https"
+            }
+          ],
+          "category": ["BROWSER", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "output": "static",
@@ -37,6 +66,12 @@
           "dark": {
             "backgroundColor": "#000000"
           }
+        }
+      ],
+      [
+        "expo-apple-authentication",
+        {
+          "nonce": true
         }
       ]
     ],
