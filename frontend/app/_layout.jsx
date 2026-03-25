@@ -1,31 +1,25 @@
+
 // app/_layout.jsx
 import React from "react";
-import { Slot } from "expo-router";
+import { Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS } from "../constants/colors";
+import { COLORS } from "../src/constants/colors";
 
 // Initialize i18n
 import "../src/i18n";
 
-// Contexts (ATTENTION : fichiers placés hors du dossier `app/`, par ex. src/context/)
-import { LanguageProvider } from "../src/context/LanguageContext"; // named export
-import UserProvider from "../src/context/UserContext"; // default export expected
-
-// Error handling note:
-// - expo-av is deprecated; migrate to expo-audio for audio functionality
-// - Global ErrorUtils is not available in newer Expo/React Native versions
-// - If you need error boundaries, use React's ErrorBoundary component pattern
+// Contexts
+import { LanguageProvider } from "../src/context/LanguageContext";
+import UserProvider from "../src/context/UserContext";
 
 export default function RootLayout() {
-  // Children wrapper common to both branches
-  const AppChildren = (
-    <UserProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
-        {/* Slot doit être rendu immédiatement pour que le routeur fonctionne */}
-        <Slot />
-      </SafeAreaView>
-    </UserProvider>
+  return (
+    <LanguageProvider>
+      <UserProvider>
+        <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
+          <Stack screenOptions={{ headerShown: false }} />
+        </SafeAreaView>
+      </UserProvider>
+    </LanguageProvider>
   );
-
-  return <LanguageProvider>{AppChildren}</LanguageProvider>;
 }

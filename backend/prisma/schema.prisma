@@ -28,6 +28,12 @@ enum OtpPurpose {
   RESET_PASSWORD
 }
 
+enum SocialProvider {
+  GOOGLE
+  FACEBOOK
+  APPLE
+}
+
 // =====================
 // USER & AUTH
 // =====================
@@ -37,9 +43,12 @@ model User {
   name          String
   email         String   @unique
   username      String   @unique
-  passwordHash  String
+  passwordHash  String?
   role          Role     @default(USER)
   isVerified    Boolean  @default(false)
+  isSocial      Boolean  @default(false)  // true if registered via social login
+  provider      SocialProvider?           // GOOGLE, FACEBOOK, APPLE
+  providerId    String?                   // Social platform user ID
   totalPrawns   Int      @default(0)
   language      String   @default("en") // "en" or "fr"
 
@@ -173,6 +182,93 @@ model Community {
 }
 
 // =====================
+// LEARNING CONTENT - VOCABULARY
+// =====================
+
+model Theme {
+  id            String   @id @default(uuid())
+  title         String
+  description   String?
+  imageUrl      String?
+  order         Int      @default(0)
+  language      String   @default("dual") // dual (Duala), fr (French), etc.
+
+  words         Word[]
+  blocks        LearningBlock[]
+  lessons       Lesson[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Word {
+  id              String   @id @default(uuid())
+  sourceText      String   // French: "Le papa"
+  targetText      String   // Duala: "Papá"
+  sourceLanguage  String   @default("fr") // Source language code
+  targetLanguage  String   @default("dual") // Target language code
+  imageUrl        String?
+  audioUrl        String?
+  difficultyLevel Int      @default(1) // 1-5 scale
+  order           Int      @default(0)
+
+  themeId         String
+  theme           Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade)
+
+  blockId         String?
+  block           LearningBlock? @relation(fields: [blockId], references: [id], onDelete: SetNull)
+
+  progress        WordProgress[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([themeId])
+  @@index([blockId])
+  @@index([difficultyLevel])
+}
+
+model LearningBlock {
+  id          String   @id @default(uuid())
+  title       String?
+  description String?
+  blockOrder  Int      @default(0)
+  wordCount   Int      @default(6) // Default 6 words per block
+
+  themeId     String
+  theme       Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade)
+
+  words       Word[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([themeId])
+}
+
+model WordProgress {
+  id            String   @id @default(uuid())
+  userId        String
+  wordId        String
+  successCount  Int      @default(0)
+  failureCount  Int      @default(0)
+  lastReviewed  DateTime?
+  nextReview    DateTime?
+  easeFactor    Float    @default(2.5) // SM-2 algorithm ease factor
+  interval      Int      @default(1) // Days until next review
+
+  word          Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, wordId])
+  @@index([userId])
+  @@index([wordId])
+  @@index([nextReview])
+}
+
+// =====================
 // LEARNING CONTENT
 // =====================
 
@@ -203,6 +299,9 @@ model Lesson {
 
   levelId      String
   level        Level    @relation(fields: [levelId], references: [id])
+
+  themeId      String?
+  theme        Theme?   @relation(fields: [themeId], references: [id], onDelete: SetNull)
 
   exercises    Exercise[] @relation("ExerciseLesson")
   userProgress UserProgress[]

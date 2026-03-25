@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -9,12 +9,17 @@ import {
   TouchableOpacity,
   Dimensions,
   Alert,
-  ScrollView
+  ScrollView,
+  ActivityIndicator
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Audio } from "expo-av";
 import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import useCowrie from "../../hooks/useCowrie";
+import { THEME_FAMILLE_WORDS } from "../../data/themeData";
+import { generateBlockExercises } from "../../src/services/ExerciseApiService";
 
 // Audio state flags
 let audioInitialized = false;
@@ -81,8 +86,14 @@ const playWordAudio = async (wordKey) => {
   try {
     // Map words to their audio files based on available assets
     const audioMap = {
-      papa: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/l'oncle en douala.wav"),
-      maman: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Le bebe en duala.wav")
+      // Exercise 1 pairs
+      p1: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Mon Frère en duala.wav"),
+      p2: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/les grands parents en duala.wav"),
+      p3: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Le bebe en duala.wav"),
+      p4: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/l'oncle en douala.wav"),
+      // Exercise 2 pairs
+      p5: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Mon Frère en duala.wav"),
+      p6: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Le bebe en duala.wav")
     };
 
     const audioSource = audioMap[wordKey];
@@ -122,38 +133,52 @@ const playWordAudio = async (wordKey) => {
 // Play correct/incorrect feedback sound
 const playFeedbackSound = async (isCorrect, language = "fr") => {
   try {
-    const { Haptics } = await import("expo-haptics");
-    if (isCorrect) {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } else {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    // Try haptic feedback with proper error handling
+    try {
+      if (isCorrect) {
+        await Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success
+        );
+      } else {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    } catch (hapticsError) {
+      console.log("Haptics not available:", hapticsError.message);
     }
   } catch (error) {
-    console.log("Haptics not available:", error.message);
+    console.log("Feedback error:", error);
   }
 };
 
-// --- DONNÉES SIMULÉES (THEME 1) ---
-const exercisesData = [
+// --- DONNÉES DU THÈME (SHARED WORD POOL) ---
+// Uses the same 6 words across ALL exercises for pedagogical repetition
+
+// Block ID for the "Famille" theme in the backend
+// This should match a block ID in your database
+const THEME_BLOCK_ID = "block-famille-001";
+
+// Transform words into pairs for matching exercise
+const transformMatchingPairs = (words) => {
+  return words.map((word) => ({
+    id: word.id || word.sourceText,
+    fr: word.sourceText || word.fr,
+    local: word.targetText || word.local
+  }));
+};
+
+// Static fallback data
+const staticMatchingPairs = THEME_FAMILLE_WORDS.map((word) => ({
+  id: word.id,
+  fr: word.fr,
+  local: word.local
+}));
+
+const staticExercisesData = [
   {
     id: 1,
     type: "matching",
     instruction: "Associe chaque mot avec sa bonne traduction !",
-    pairs: [
-      { id: "p1", fr: "Le papa", local: "Papá" },
-      { id: "p2", fr: "La tante paternelle", local: "Ndómɛ á tetɛ́" },
-      { id: "p3", fr: "La maman", local: "Mamá" },
-      { id: "p4", fr: "L'oncle paternel", local: "Árí á tetɛ́" }
-    ]
-  },
-  {
-    id: 2,
-    type: "matching",
-    instruction: "Associe les membres de la fratrie !",
-    pairs: [
-      { id: "p5", fr: "Le frère", local: "Muna" },
-      { id: "p6", fr: "La soeur", local: "Sango" }
-    ]
+    pairs: staticMatchingPairs
   }
 ];
 
@@ -161,17 +186,105 @@ const ExerciseScreen = ({ navigation }) => {
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language || "fr";
   const { width } = Dimensions.get("window");
+  const params = useLocalSearchParams();
 
   // --- ÉTATS (STATE) ---
   const router = useRouter();
   const [currentExIndex, setCurrentExIndex] = useState(0);
-  const [lives, setLives] = useState(5);
+  const [exercisesData, setExercisesData] = useState(staticExercisesData);
+  const [isLoadingExercises, setIsLoadingExercises] = useState(true);
+  const [exerciseError, setExerciseError] = useState(null);
+
+  // Fetch exercises from backend on mount
+  useEffect(() => {
+    const fetchExercises = async () => {
+      try {
+        setIsLoadingExercises(true);
+        // Try to fetch from backend
+        const backendExercises = await generateBlockExercises(THEME_BLOCK_ID);
+
+        if (backendExercises && backendExercises.length > 0) {
+          // Transform backend data to frontend format
+          const matchingExercise = backendExercises.find(
+            (ex) => ex.type === "MATCHING"
+          );
+
+          if (
+            matchingExercise &&
+            matchingExercise.questions &&
+            matchingExercise.questions[0]
+          ) {
+            const transformedPairs = matchingExercise.questions[0].pairs || [];
+            setExercisesData([
+              {
+                id: matchingExercise.id,
+                type: "matching",
+                instruction:
+                  matchingExercise.questions[0].instruction ||
+                  "Associe chaque mot avec sa bonne traduction !",
+                pairs: transformedPairs
+              }
+            ]);
+            console.log("✅ Loaded exercises from backend API");
+          } else {
+            console.log(
+              "⚠️ No matching exercise in backend response, using static data"
+            );
+          }
+        } else {
+          console.log("⚠️ No exercises from backend, using static data");
+        }
+      } catch (error) {
+        console.log("⚠️ Failed to fetch from backend:", error.message);
+        setExerciseError(error.message);
+        // Fall back to static data
+      } finally {
+        setIsLoadingExercises(false);
+      }
+    };
+
+    fetchExercises();
+  }, []);
+
+  // Use cowrie hook for automatic recharging
+  const { cowries, setCowries, canPlay, isRecharging, formatRechargeTime } =
+    useCowrie(5);
+
   const [selectedLeft, setSelectedLeft] = useState(null);
   const [selectedRight, setSelectedRight] = useState(null);
   const [matchedPairs, setMatchedPairs] = useState([]);
   const [errorIds, setErrorIds] = useState([]);
   const [errorCount, setErrorCount] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
+
+  // Timer state - Track time taken to complete exercise
+  const [startTime, setStartTime] = useState(() => Date.now());
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const timerRef = useRef(null);
+
+  // Store time per exercise for end screen
+  const [exerciseTimes, setExerciseTimes] = useState([]);
+
+  // Initialize timer when component mounts
+  useEffect(() => {
+    // Start timer interval
+    timerRef.current = setInterval(() => {
+      setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [startTime]);
+
+  // Format time as MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
 
   // NOUVEAUX ÉTATS pour stocker les colonnes mélangées de manière statique
   const [shuffledLeftColumn, setShuffledLeftColumn] = useState([]);
@@ -241,7 +354,7 @@ const ExerciseScreen = ({ navigation }) => {
       }
     } else {
       // --- ÉCHEC ❌ ---
-      setLives((prev) => Math.max(0, prev - 1)); // Perdre une vie
+      setCowries((prev) => Math.max(0, prev - 1)); // Perdre une vie
       setErrorCount((prev) => prev + 1);
       setErrorIds([leftId, rightId]); // Marquer ces deux comme erreur
 
@@ -255,7 +368,7 @@ const ExerciseScreen = ({ navigation }) => {
         setSelectedRight(null);
       }, 1000);
 
-      if (lives <= 1) {
+      if (cowries <= 1) {
         Alert.alert("Oups !", "Vous n'avez plus de coris !");
         // Logique de "Game Over" ici
       }
@@ -263,23 +376,44 @@ const ExerciseScreen = ({ navigation }) => {
   };
 
   const handleNextExercise = () => {
+    // Stop timer and calculate final time for this exercise
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    // Use elapsedTime which is already tracked by the interval
+    const exerciseTime = elapsedTime;
+
+    // Store time for this exercise
+    const newExerciseTimes = [...exerciseTimes, exerciseTime];
+
     if (currentExIndex < exercisesData.length - 1) {
-      // Passer à l'exercice suivant
-      setCurrentExIndex((prev) => prev + 1);
-      // Reset des états pour le nouveau jeu (le useEffect gère le nouveau mélange)
-      setMatchedPairs([]);
-      setSelectedLeft(null);
-      setSelectedRight(null);
-      setIsCompleted(false);
-      setErrorCount(0);
-    } else {
-      // Fin du thème ou page suivante
+      // Pass to next exercise with cumulative time data
+      const newTotalTime = (parseInt(params?.totalTime) || 0) + exerciseTime;
+
+      // Navigate to exos2
       router.push({
         pathname: "/exercices/famille/exos2",
         params: {
-          currentLives: lives,
-          currentTimer: 0,
-          totalProgress: 33
+          currentLives: cowries,
+          totalTime: newTotalTime,
+          totalProgress: 33,
+          errorCount: errorCount,
+          exerciseTimes: JSON.stringify(newExerciseTimes)
+        }
+      });
+    } else {
+      // Fin du thème - navigate to end page with all data
+      const totalTime = (parseInt(params?.totalTime) || 0) + exerciseTime;
+      router.push({
+        pathname: "/exercices/famille/endexos",
+        params: {
+          currentLives: cowries,
+          totalTime: totalTime,
+          totalProgress: 100,
+          errorCount: errorCount,
+          completedExercises: exercisesData.length,
+          totalExercises: exercisesData.length,
+          exerciseTimes: JSON.stringify(newExerciseTimes)
         }
       });
     }
@@ -351,6 +485,24 @@ const ExerciseScreen = ({ navigation }) => {
     );
   };
 
+  // Show loading while fetching exercises from backend
+  if (isLoadingExercises) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle='dark-content' backgroundColor='#F5F5F5' />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size='large' color='#D32F2F' />
+          <Text style={styles.loadingText}>Chargement des exercices...</Text>
+          {exerciseError && (
+            <Text style={styles.fallbackText}>
+              Utilisation des données locales
+            </Text>
+          )}
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle='dark-content' backgroundColor='#F5F5F5' />
@@ -358,6 +510,15 @@ const ExerciseScreen = ({ navigation }) => {
       <View style={styles.container}>
         <Text style={styles.pageTitle}>Vie sociale & famille</Text>
         <View style={styles.headerLine} />
+
+        {/* --- IMAGE ILLUSTRATIVE --- */}
+        <View style={styles.imageContainer}>
+          <Image
+            source={require("../../../assets/images/avatar-famille.png")}
+            style={styles.illustrationImage}
+            resizeMode='contain'
+          />
+        </View>
 
         {/* --- STATS BAR --- */}
         <View style={styles.statsContainer}>
@@ -373,7 +534,7 @@ const ExerciseScreen = ({ navigation }) => {
           </View>
           <View style={styles.livesContainer}>
             <Text style={styles.livesText}>
-              {String(lives).padStart(2, "0")}
+              {String(cowries).padStart(2, "0")}
             </Text>
             <Image
               source={require("../../../assets/images/colla.png")}
@@ -382,9 +543,16 @@ const ExerciseScreen = ({ navigation }) => {
           </View>
         </View>
 
-        {/* --- TIMER --- */}
+        {/* --- TIMER & RECHARGE STATUS --- */}
         <View style={styles.timerContainer}>
-          <Text style={styles.timerText}>🕒 Temps : 1 min 20 s</Text>
+          <Text style={styles.timerText}>
+            🕒 Temps : {formatTime(elapsedTime)}
+          </Text>
+          {isRecharging && (
+            <Text style={styles.rechargeText}>
+              ⚡ Recharge: {formatRechargeTime()}
+            </Text>
+          )}
         </View>
 
         {/* --- CONSIGNE --- */}
@@ -450,6 +618,18 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+    padding: 20
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#666"
+  },
   pageTitle: {
     fontSize: 22,
     fontWeight: "bold",
@@ -462,6 +642,17 @@ const styles = StyleSheet.create({
     width: "100%",
     marginTop: 5,
     marginBottom: 20
+  },
+  imageContainer: {
+    width: "100%",
+    height: 120,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10
+  },
+  illustrationImage: {
+    width: 100,
+    height: 100
   },
   statsContainer: {
     flexDirection: "row",
@@ -495,7 +686,14 @@ const styles = StyleSheet.create({
   },
   timerText: {
     color: "#C81E2F",
-    fontSize: 14
+    fontSize: 14,
+    fontWeight: "600"
+  },
+  rechargeText: {
+    color: "#4CAF50",
+    fontSize: 12,
+    fontWeight: "500",
+    marginTop: 4
   },
   instructionCard: {
     backgroundColor: "#FFF",
@@ -565,6 +763,12 @@ const styles = StyleSheet.create({
   errorText: {
     color: "#C81E2F",
     fontSize: 16,
+    fontStyle: "italic"
+  },
+  fallbackText: {
+    marginTop: 8,
+    fontSize: 12,
+    color: "#999",
     fontStyle: "italic"
   },
   nextButton: {

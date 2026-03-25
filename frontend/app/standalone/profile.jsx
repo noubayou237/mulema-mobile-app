@@ -5,938 +5,1428 @@ import {
   Image,
   StyleSheet,
   Alert,
-  SafeAreaView,
   Platform,
   StatusBar,
   Modal,
   TextInput,
   ActivityIndicator,
-  ScrollView
+  ScrollView,
+  Animated,
+  Easing,
+  Dimensions,
+  Pressable
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useUser } from "@/src/context/UserContext";
-import { useState, useEffect } from "react";
+import { LinearGradient } from "expo-linear-gradient";
+import { useUser } from "../../src/context/UserContext";
+import { useState, useEffect, useRef } from "react";
 import * as ImagePicker from "expo-image-picker";
 import api from "../../services/api";
 import { useTranslation } from "react-i18next";
 import "../../src/i18n";
 
-// Language options with flags
+const { width, height } = Dimensions.get("window");
+
+// ── Design tokens ──────────────────────────────────────────────────────────
+const BG = "#F0EDE6";
+const CARD_BG = "#FFFFFF";
+const RED = "#D32F2F";
+const RED_LIGHT = "#FFEBEE";
+const TEXT_DARK = "#2C2C2C";
+const TEXT_MID = "#6B6B6B";
+const TEXT_LIGHT = "#AAAAAA";
+const BORDER = "#E8E3DC";
+const CARD_SHADOW = {
+  shadowColor: "#000",
+  shadowOpacity: 0.07,
+  shadowRadius: 10,
+  shadowOffset: { width: 0, height: 3 },
+  elevation: 4
+};
+
 const LANGUAGES = [
-  {
-    code: "en",
-    name: "English",
-    flag: "🇺🇸"
-  },
-  {
-    code: "fr",
-    name: "Français",
-    flag: "🇫🇷"
-  }
+  { code: "en", name: "English", flag: "🇺🇸", sub: "English" },
+  { code: "fr", name: "Français", flag: "🇫🇷", sub: "French" }
 ];
 
+// ── Stat card ──────────────────────────────────────────────────────────────
+const StatCard = ({ number, label, icon, color, delay }) => {
+  const mount = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.8)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(mount, {
+        toValue: 1,
+        duration: 450,
+        delay,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true
+      }),
+      Animated.spring(scale, {
+        toValue: 1,
+        tension: 65,
+        friction: 7,
+        delay,
+        useNativeDriver: true
+      })
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View
+      style={[p.statCard, { opacity: mount, transform: [{ scale }] }]}
+    >
+      <View style={[p.statIconWrap, { backgroundColor: `${color}15` }]}>
+        <Ionicons name={icon} size={18} color={color} />
+      </View>
+      <Text style={[p.statNum, { color }]}>{number ?? "–"}</Text>
+      <Text style={p.statLabel}>{label}</Text>
+    </Animated.View>
+  );
+};
+
+// ── Menu item ──────────────────────────────────────────────────────────────
+const MenuItem = ({
+  icon,
+  iconBg,
+  iconColor = TEXT_LIGHT,
+  label,
+  right,
+  onPress,
+  danger,
+  delay = 0,
+  isLast
+}) => {
+  const mount = useRef(new Animated.Value(0)).current;
+  const pressAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.timing(mount, {
+      toValue: 1,
+      duration: 380,
+      delay,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true
+    }).start();
+  }, []);
+
+  const handlePress = () => {
+    Animated.sequence([
+      Animated.timing(pressAnim, {
+        toValue: 0.97,
+        duration: 75,
+        useNativeDriver: true
+      }),
+      Animated.timing(pressAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true
+      })
+    ]).start();
+    onPress?.();
+  };
+
+  return (
+    <Animated.View
+      style={[
+        { opacity: mount, transform: [{ scale: pressAnim }] },
+        !isLast && p.menuItemBorder
+      ]}
+    >
+      <TouchableOpacity
+        onPress={handlePress}
+        activeOpacity={0.8}
+        style={p.menuItem}
+      >
+        <View
+          style={[
+            p.menuIconWrap,
+            { backgroundColor: danger ? RED_LIGHT : iconBg || "#F5F3F0" }
+          ]}
+        >
+          <Ionicons name={icon} size={19} color={danger ? RED : iconColor} />
+        </View>
+        <Text
+          style={[p.menuLabel, danger && { color: RED, fontWeight: "600" }]}
+        >
+          {label}
+        </Text>
+        <View style={{ flex: 1 }} />
+        {right ?? (
+          <Ionicons name='chevron-forward' size={15} color={TEXT_LIGHT} />
+        )}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
+// ── Bottom sheet ───────────────────────────────────────────────────────────
+const BottomSheet = ({ visible, onClose, children, title }) => {
+  const slideUp = useRef(new Animated.Value(500)).current;
+  const fade = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.parallel([
+        Animated.timing(fade, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true
+        }),
+        Animated.spring(slideUp, {
+          toValue: 0,
+          tension: 55,
+          friction: 9,
+          useNativeDriver: true
+        })
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(fade, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true
+        }),
+        Animated.timing(slideUp, {
+          toValue: 500,
+          duration: 220,
+          useNativeDriver: true
+        })
+      ]).start();
+    }
+  }, [visible]);
+
+  return (
+    <Modal
+      transparent
+      visible={visible}
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
+      <Animated.View style={[bs.overlay, { opacity: fade }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <Animated.View
+          style={[bs.sheet, { transform: [{ translateY: slideUp }] }]}
+        >
+          <View style={bs.sheetInner}>
+            <View style={bs.handle} />
+            {title && (
+              <View style={bs.titleRow}>
+                <Text style={bs.title}>{title}</Text>
+                <TouchableOpacity onPress={onClose} style={bs.closeBtn}>
+                  <Ionicons name='close' size={18} color={TEXT_MID} />
+                </TouchableOpacity>
+              </View>
+            )}
+            {children}
+          </View>
+        </Animated.View>
+      </Animated.View>
+    </Modal>
+  );
+};
+
+// ── Main Profile ───────────────────────────────────────────────────────────
 const Profile = () => {
   const router = useRouter();
   const { user, logout, refreshUser, setLanguage } = useUser();
   const { t, i18n } = useTranslation();
-
-  // Get current language from i18n for display
   const currentLanguage = i18n.language || "fr";
 
-  // Profile picture state
   const [profileImage, setProfileImage] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
-  const [showImagePicker, setShowImagePicker] = useState(false);
-
-  // Edit profile state
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState(user?.name || "");
   const [editEmail, setEditEmail] = useState(user?.email || "");
   const [isSaving, setIsSaving] = useState(false);
-
-  // Language modal state
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [isChangingLanguage, setIsChangingLanguage] = useState(false);
+  const [editNameFocused, setEditNameFocused] = useState(false);
+  const [editEmailFocused, setEditEmailFocused] = useState(false);
 
-  // Load user profile data on mount
+  const headerAnim = useRef(new Animated.Value(0)).current;
+  const avatarScale = useRef(new Animated.Value(0.7)).current;
+  const avatarAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const pulseOpacity = useRef(new Animated.Value(0.4)).current;
+
   useEffect(() => {
+    Animated.stagger(80, [
+      Animated.timing(headerAnim, {
+        toValue: 1,
+        duration: 450,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true
+      }),
+      Animated.parallel([
+        Animated.spring(avatarScale, {
+          toValue: 1,
+          tension: 55,
+          friction: 7,
+          useNativeDriver: true
+        }),
+        Animated.timing(avatarAnim, {
+          toValue: 1,
+          duration: 450,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true
+        })
+      ])
+    ]).start();
+
+    Animated.loop(
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.22,
+            duration: 1400,
+            easing: Easing.out(Easing.quad),
+            useNativeDriver: true
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1400,
+            easing: Easing.in(Easing.quad),
+            useNativeDriver: true
+          })
+        ]),
+        Animated.sequence([
+          Animated.timing(pulseOpacity, {
+            toValue: 0,
+            duration: 1400,
+            useNativeDriver: true
+          }),
+          Animated.timing(pulseOpacity, {
+            toValue: 0.4,
+            duration: 1400,
+            useNativeDriver: true
+          })
+        ])
+      ])
+    ).start();
+
     loadUserProfile();
   }, []);
 
   const loadUserProfile = async () => {
-    // Skip if no user is logged in
-    if (!user) {
-      return;
-    }
-
+    if (!user) return;
     try {
       const response = await api.get("/user/profile");
       if (response.data.avatar?.imageUrl) {
-        // Get the image URL
         let imageUrl = response.data.avatar.imageUrl;
-
-        // Handle different URL formats - use proxy endpoint for R2 images
         let fullImageUrl;
         if (
           imageUrl.includes("r2.cloudflarestorage.com") ||
           imageUrl.includes("public.r2")
         ) {
-          // Extract the key from R2 URL and use proxy endpoint
           const key = imageUrl.split("/").pop().split("?")[0];
           fullImageUrl = `http://192.168.43.125:5001/image/avatars/${key}`;
         } else if (imageUrl.startsWith("http")) {
-          // Already a full URL (R2 or other CDN)
           fullImageUrl = imageUrl;
         } else if (imageUrl.startsWith("/")) {
-          // Relative path - prepend API URL
           fullImageUrl = `http://192.168.43.125:5001${imageUrl}`;
         } else {
-          // Just filename - construct full path
           fullImageUrl = `http://192.168.43.125:5001/uploads/avatars/${imageUrl}`;
         }
-
-        // Add cache busting parameter
-        const separator = fullImageUrl.includes("?") ? "&" : "?";
-        fullImageUrl = `${fullImageUrl}${separator}t=${Date.now()}`;
-
-        setProfileImage(fullImageUrl);
+        const sep = fullImageUrl.includes("?") ? "&" : "?";
+        setProfileImage(`${fullImageUrl}${sep}t=${Date.now()}`);
       }
-    } catch (error) {
-      console.log("Error loading profile:", error.message);
+    } catch (e) {
+      console.log("Profile load err:", e.message);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      console.log("Profile: Starting logout...");
-      await logout();
-      console.log("Profile: Logout completed, redirecting...");
-      router.replace("/sign-in");
-    } catch (err) {
-      console.error("Profile logout error:", err);
-      Alert.alert("Error", "Failed to logout. Please try again.");
-    }
+  const handleLogout = () => {
+    Alert.alert("Déconnexion", "Tu vas quitter Mulema. À bientôt ! 👋", [
+      { text: "Annuler", style: "cancel" },
+      {
+        text: "Se déconnecter",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await logout();
+            router.replace("/sign-in");
+          } catch {
+            Alert.alert("Erreur", "Impossible de se déconnecter.");
+          }
+        }
+      }
+    ]);
   };
 
-  // =====================
-  // LANGUAGE FUNCTIONS
-  // =====================
   const handleLanguageChange = async (langCode) => {
     setIsChangingLanguage(true);
     try {
       await setLanguage(langCode);
       setShowLanguageModal(false);
-      Alert.alert(t("messages.languageChanged"), "");
-    } catch (error) {
-      console.error("Error changing language:", error);
+    } catch {
       Alert.alert(t("errors.somethingWentWrong"), "");
     } finally {
       setIsChangingLanguage(false);
     }
   };
 
-  const getCurrentLanguageInfo = () => {
-    return (
-      LANGUAGES.find((lang) => lang.code === currentLanguage) || LANGUAGES[0]
-    );
-  };
+  const getCurrentLang = () =>
+    LANGUAGES.find((l) => l.code === currentLanguage) || LANGUAGES[0];
 
-  // =====================
-  // IMAGE PICKER FUNCTIONS
-  // =====================
-  const requestPermissions = async () => {
-    const { status: cameraStatus } =
-      await ImagePicker.requestCameraPermissionsAsync();
-    const { status: mediaStatus } =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (cameraStatus !== "granted" || mediaStatus !== "granted") {
-      Alert.alert(
-        "Permissions Required",
-        "Please grant camera and media library permissions to upload profile pictures."
-      );
-      return false;
-    }
-    return true;
-  };
-
-  const openImagePicker = async () => {
-    const hasPermissions = await requestPermissions();
-    if (!hasPermissions) return;
-
-    setShowImagePicker(false);
-
-    Alert.alert("Select Profile Picture", "Choose an option", [
-      {
-        text: "Take Photo",
-        onPress: () => launchCamera()
-      },
-      {
-        text: "Choose from Gallery",
-        onPress: () => launchImageLibrary()
-      },
-      {
-        text: "Cancel",
-        style: "cancel"
-      }
+  const openImagePicker = () => {
+    Alert.alert("Photo de profil", "Choisir une option", [
+      { text: "📷 Prendre une photo", onPress: launchCamera },
+      { text: "🖼️ Depuis la galerie", onPress: launchImageLibrary },
+      { text: "Annuler", style: "cancel" }
     ]);
   };
 
   const launchCamera = async () => {
-    try {
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ["images"],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-        base64: false
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setSelectedImage(result.assets[0]);
-        setShowPreview(true);
-      }
-    } catch (error) {
-      console.error("Camera error:", error);
-      Alert.alert("Error", "Failed to take photo. Please try again.");
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") return Alert.alert("Permission refusée", "");
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8
+    });
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0]);
+      setShowPreview(true);
     }
   };
 
   const launchImageLibrary = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-        base64: false
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setSelectedImage(result.assets[0]);
-        setShowPreview(true);
-      }
-    } catch (error) {
-      console.error("Image picker error:", error);
-      Alert.alert("Error", "Failed to select image. Please try again.");
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") return Alert.alert("Permission refusée", "");
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8
+    });
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0]);
+      setShowPreview(true);
     }
   };
 
-  // =====================
-  // UPLOAD FUNCTIONS
-  // =====================
   const uploadProfilePicture = async () => {
-    if (!selectedImage) {
-      Alert.alert("Error", "No image selected");
-      return;
-    }
-
+    if (!selectedImage) return;
     setIsUploading(true);
-
     try {
-      // Create form data
-      const formData = new FormData();
-
-      // Get the file extension
       const uri = selectedImage.uri;
       const filename = uri.split("/").pop();
       const match = /\.(\w+)$/.exec(filename);
       const type = match ? `image/${match[1]}` : "image/jpeg";
-
-      // Append the file
-      formData.append("file", {
-        uri,
-        name: filename || "photo.jpg",
-        type
-      });
-
-      console.log("Uploading profile picture...");
-
+      const formData = new FormData();
+      formData.append("file", { uri, name: filename || "photo.jpg", type });
       const response = await api.put("/user/profile-picture", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data"
-        },
-        timeout: 30000 // 30 seconds timeout
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 30000
       });
-
-      console.log("Upload response:", response.data);
-
       if (response.data.imageUrl) {
-        // Update local state with the new image URL
-        let uploadedUrl = response.data.imageUrl;
-
-        // Use proxy endpoint for R2 images
-        if (
-          uploadedUrl.includes("r2.cloudflarestorage.com") ||
-          uploadedUrl.includes("public.r2")
-        ) {
-          // Extract the key from R2 URL and use proxy endpoint
-          const key = uploadedUrl.split("/").pop().split("?")[0];
-          uploadedUrl = `http://192.168.43.125:5001/image/avatars/${key}`;
-        } else if (uploadedUrl.startsWith("http")) {
-          // Already a full URL (R2 or other CDN)
-        } else if (uploadedUrl.startsWith("/")) {
-          // Relative path - prepend API URL
-          uploadedUrl = `http://192.168.43.125:5001${uploadedUrl}`;
-        } else {
-          // Just filename - construct full path
-          uploadedUrl = `http://192.168.43.125:5001/uploads/avatars/${uploadedUrl}`;
-        }
-
-        // Add cache busting parameter
-        const separator = uploadedUrl.includes("?") ? "&" : "?";
-        const fullImageUrl = `${uploadedUrl}${separator}t=${Date.now()}`;
-        setProfileImage(fullImageUrl);
-
-        Alert.alert(t("profile.profilePictureUpdated"), "");
+        let url = response.data.imageUrl;
+        if (!url.startsWith("http"))
+          url = `http://192.168.43.125:5001${url.startsWith("/") ? "" : "/uploads/avatars/"}${url}`;
+        const sep = url.includes("?") ? "&" : "?";
+        setProfileImage(`${url}${sep}t=${Date.now()}`);
       }
-
       setShowPreview(false);
       setSelectedImage(null);
-    } catch (error) {
-      console.error("Upload error:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to upload image";
-      Alert.alert(t("errors.uploadFailed"), errorMessage);
+    } catch (e) {
+      Alert.alert(
+        t("errors.uploadFailed"),
+        e.response?.data?.message || e.message
+      );
     } finally {
       setIsUploading(false);
     }
   };
 
-  const cancelUpload = () => {
-    setShowPreview(false);
-    setSelectedImage(null);
-  };
-
-  // =====================
-  // EDIT PROFILE FUNCTIONS
-  // =====================
-  const openEditModal = () => {
-    setEditName(user?.name || "");
-    setEditEmail(user?.email || "");
-    setShowEditModal(true);
-  };
-
   const saveProfile = async () => {
-    if (!editName.trim()) {
-      Alert.alert("Error", "Name cannot be empty");
-      return;
-    }
-
-    if (!editEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail)) {
-      Alert.alert("Error", "Please enter a valid email address");
-      return;
-    }
-
+    if (!editName.trim())
+      return Alert.alert("Erreur", "Le nom ne peut pas être vide.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail))
+      return Alert.alert("Erreur", "Email invalide.");
     setIsSaving(true);
-
     try {
-      const response = await api.put("/user/profile", {
+      await api.put("/user/profile", {
         name: editName.trim(),
         email: editEmail.trim()
       });
-
-      // Refresh user context
       await refreshUser();
-
       setShowEditModal(false);
-      Alert.alert(t("profile.profileUpdated"), "");
-    } catch (error) {
-      console.error("Update profile error:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to update profile";
-      Alert.alert("Update Failed", errorMessage);
+    } catch (e) {
+      Alert.alert("Erreur", e.response?.data?.message || e.message);
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Get image source for display
-  const getImageSource = () => {
-    if (profileImage) {
-      return { uri: profileImage };
+  const getImageSource = () =>
+    profileImage
+      ? { uri: profileImage }
+      : require("../../assets/images/avatar-user.png");
+  const displayName = (user?.username || user?.name || "Apprenant").split(
+    " "
+  )[0];
+  const initial = displayName[0]?.toUpperCase() || "M";
+
+  const menuSections = [
+    {
+      title: "Compte",
+      items: [
+        {
+          icon: "person-outline",
+          iconBg: RED_LIGHT,
+          iconColor: RED,
+          label: t("profile.editProfile"),
+          onPress: () => {
+            setEditName(user?.name || "");
+            setEditEmail(user?.email || "");
+            setShowEditModal(true);
+          }
+        },
+        {
+          icon: "language-outline",
+          iconBg: "#FFF3E0",
+          iconColor: "#E65100",
+          label: t("settings.language"),
+          onPress: () => setShowLanguageModal(true),
+          right: (
+            <View style={p.langChip}>
+              <Text style={p.langChipText}>
+                {getCurrentLang().flag} {getCurrentLang().name}
+              </Text>
+            </View>
+          )
+        }
+      ]
+    },
+    {
+      title: "Préférences",
+      items: [
+        {
+          icon: "notifications-outline",
+          iconBg: "#FFF8E1",
+          iconColor: "#F9A825",
+          label: t("settings.notifications"),
+          onPress: () => {}
+        },
+        {
+          icon: "shield-checkmark-outline",
+          iconBg: "#E8F5E9",
+          iconColor: "#2E7D32",
+          label: "Confidentialité",
+          onPress: () => {}
+        },
+        {
+          icon: "settings-outline",
+          iconBg: "#EDE7F6",
+          iconColor: "#6A1B9A",
+          label: t("settings.title"),
+          onPress: () => {}
+        },
+        {
+          icon: "help-circle-outline",
+          iconBg: "#E3F2FD",
+          iconColor: "#1565C0",
+          label: t("settings.helpSupport"),
+          onPress: () => {}
+        }
+      ]
+    },
+    {
+      title: "",
+      items: [
+        {
+          icon: "log-out-outline",
+          label: t("profile.logout"),
+          onPress: handleLogout,
+          danger: true
+        }
+      ]
     }
-    return require("../../assets/images/avatar-user.png");
-  };
+  ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={p.root}>
+      <StatusBar
+        barStyle='dark-content'
+        backgroundColor='transparent'
+        translucent
+      />
+
       <ScrollView
-        style={styles.scrollView}
+        contentContainerStyle={p.scroll}
         showsVerticalScrollIndicator={false}
+        style={{ backgroundColor: BG }}
       >
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>{t("profile.title")}</Text>
-          </View>
+        {/* ── Header bar ── */}
+        <Animated.View
+          style={[
+            p.topBar,
+            {
+              opacity: headerAnim,
+              transform: [
+                {
+                  translateY: headerAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-16, 0]
+                  })
+                }
+              ]
+            }
+          ]}
+        >
+          <TouchableOpacity onPress={() => router.back()} style={p.iconBtn}>
+            <Ionicons name='arrow-back' size={20} color={TEXT_DARK} />
+          </TouchableOpacity>
+          <Text style={p.pageTitle}>{t("profile.title")}</Text>
+          <TouchableOpacity style={p.iconBtn} onPress={() => {}}>
+            <Ionicons name='ellipsis-horizontal' size={20} color={TEXT_MID} />
+          </TouchableOpacity>
+        </Animated.View>
 
-          {/* Profile Picture Section */}
-          <View style={styles.profileHeader}>
-            <View style={styles.avatarContainer}>
-              <Image
-                source={getImageSource()}
-                style={styles.avatar}
-                contentFit='cover'
-              />
-              <TouchableOpacity
-                style={styles.cameraButton}
-                onPress={openImagePicker}
-              >
-                <Ionicons name='camera' size={20} color='#fff' />
-              </TouchableOpacity>
+        {/* ── Avatar card ── */}
+        <Animated.View
+          style={[
+            p.avatarCard,
+            { opacity: avatarAnim, transform: [{ scale: avatarScale }] }
+          ]}
+        >
+          {/* Avatar */}
+          <View style={p.avatarWrap}>
+            <Animated.View
+              style={[
+                p.pulseRing,
+                { transform: [{ scale: pulseAnim }], opacity: pulseOpacity }
+              ]}
+            />
+            <View style={p.avatarOuter}>
+              {profileImage ? (
+                <Image source={getImageSource()} style={p.avatarImg} />
+              ) : (
+                <LinearGradient
+                  colors={["#E53935", "#B71C1C"]}
+                  style={p.avatarFallback}
+                >
+                  <Text style={p.avatarInitial}>{initial}</Text>
+                </LinearGradient>
+              )}
             </View>
-            <View style={styles.userInfo}>
-              <Text style={styles.username}>{user?.username || "User"}</Text>
-              <Text style={styles.email}>{user?.email || ""}</Text>
-            </View>
-          </View>
-
-          <View style={styles.statsContainer}>
-            <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{user?.totalPrawns || 0}</Text>
-              <Text style={styles.statLabel}>{t("profile.points")}</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>{t("profile.completed")}</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statNumber}>-</Text>
-              <Text style={styles.statLabel}>{t("profile.rank")}</Text>
-            </View>
-          </View>
-
-          <View style={styles.menuContainer}>
-            <TouchableOpacity style={styles.menuItem} onPress={openEditModal}>
-              <View style={styles.menuItemLeft}>
-                <Ionicons name='person-outline' size={24} color='#333' />
-                <Text style={styles.menuItemText}>
-                  {t("profile.editProfile")}
-                </Text>
-              </View>
-              <Ionicons name='chevron-forward-outline' size={20} color='#ccc' />
-            </TouchableOpacity>
-
-            {/* Language Selector */}
             <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() => setShowLanguageModal(true)}
+              style={p.cameraBtn}
+              onPress={openImagePicker}
+              activeOpacity={0.85}
             >
-              <View style={styles.menuItemLeft}>
-                <Ionicons name='language-outline' size={24} color='#333' />
-                <Text style={styles.menuItemText}>
-                  {t("settings.language")}
-                </Text>
-              </View>
-              <View style={styles.languageSelector}>
-                <Text style={styles.currentLanguageText}>
-                  {getCurrentLanguageInfo().flag}{" "}
-                  {getCurrentLanguageInfo().name}
-                </Text>
-                <Ionicons
-                  name='chevron-forward-outline'
-                  size={20}
-                  color='#ccc'
-                />
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.menuItem} onPress={() => {}}>
-              <View style={styles.menuItemLeft}>
-                <Ionicons name='notifications-outline' size={24} color='#333' />
-                <Text style={styles.menuItemText}>
-                  {t("settings.notifications")}
-                </Text>
-              </View>
-              <Ionicons name='chevron-forward-outline' size={20} color='#ccc' />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.menuItem} onPress={() => {}}>
-              <View style={styles.menuItemLeft}>
-                <Ionicons name='settings-outline' size={24} color='#333' />
-                <Text style={styles.menuItemText}>{t("settings.title")}</Text>
-              </View>
-              <Ionicons name='chevron-forward-outline' size={20} color='#ccc' />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.menuItem} onPress={() => {}}>
-              <View style={styles.menuItemLeft}>
-                <Ionicons name='help-circle-outline' size={24} color='#333' />
-                <Text style={styles.menuItemText}>
-                  {t("settings.helpSupport")}
-                </Text>
-              </View>
-              <Ionicons name='chevron-forward-outline' size={20} color='#ccc' />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-              <View style={styles.menuItemLeft}>
-                <Ionicons name='log-out-outline' size={24} color='#d9534f' />
-                <Text style={[styles.menuItemText, { color: "#d9534f" }]}>
-                  {t("profile.logout")}
-                </Text>
+              <View style={p.cameraBtnInner}>
+                <Ionicons name='camera' size={14} color='#fff' />
               </View>
             </TouchableOpacity>
           </View>
+
+          {/* Name + email + badge */}
+          <Text style={p.userName}>
+            {user?.username || user?.name || "Apprenant"}
+          </Text>
+          <Text style={p.userEmail}>{user?.email || ""}</Text>
+          <View style={p.levelBadge}>
+            <Text style={p.levelBadgeText}>🌍 Apprenant Mulema</Text>
+          </View>
+
+          {/* Divider */}
+          <View style={p.divider} />
+
+          {/* Quick actions */}
+          <View style={p.quickActions}>
+            <TouchableOpacity
+              style={p.quickActionBtn}
+              onPress={() => {
+                setEditName(user?.name || "");
+                setEditEmail(user?.email || "");
+                setShowEditModal(true);
+              }}
+              activeOpacity={0.8}
+            >
+              <Ionicons name='create-outline' size={16} color={RED} />
+              <Text style={p.quickActionText}>Modifier</Text>
+            </TouchableOpacity>
+            <View style={p.quickActionSep} />
+            <TouchableOpacity
+              style={p.quickActionBtn}
+              onPress={() => {}}
+              activeOpacity={0.8}
+            >
+              <Ionicons name='share-outline' size={16} color={TEXT_MID} />
+              <Text style={[p.quickActionText, { color: TEXT_MID }]}>
+                Partager
+              </Text>
+            </TouchableOpacity>
+            <View style={p.quickActionSep} />
+            <TouchableOpacity
+              style={p.quickActionBtn}
+              onPress={() => {}}
+              activeOpacity={0.8}
+            >
+              <Ionicons name='qr-code-outline' size={16} color={TEXT_MID} />
+              <Text style={[p.quickActionText, { color: TEXT_MID }]}>
+                QR Code
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+
+        {/* ── Stats row ── */}
+        <View style={p.statsRow}>
+          <StatCard
+            number={user?.totalPrawns || 0}
+            label={t("profile.points")}
+            icon='star'
+            color='#E8A000'
+            delay={100}
+          />
+          <StatCard
+            number={0}
+            label={t("profile.completed")}
+            icon='checkmark-circle'
+            color={RED}
+            delay={180}
+          />
+          <StatCard
+            number='–'
+            label={t("profile.rank")}
+            icon='trophy'
+            color='#C62828'
+            delay={260}
+          />
         </View>
+
+        {/* ── Progress card ── */}
+        <Animated.View style={[p.progressCard, { opacity: avatarAnim }]}>
+          <View style={p.progressCardHeader}>
+            <Text style={p.progressCardTitle}>Progression</Text>
+            <View style={p.xpChip}>
+              <Text style={p.xpChipText}>0 XP</Text>
+            </View>
+          </View>
+          <Text style={p.progressCardSub}>
+            Débutant · 0 / 100 XP pour le prochain niveau
+          </Text>
+          <View style={p.progressBarBg}>
+            <View style={[p.progressBarFill, { width: "0%" }]} />
+          </View>
+          <View style={p.progressMilestones}>
+            {["Débutant", "Intermédiaire", "Avancé", "Maître"].map((lvl, i) => (
+              <View key={i} style={p.milestoneItem}>
+                <View
+                  style={[p.milestoneDot, i === 0 && p.milestoneDotActive]}
+                />
+                <Text
+                  style={[p.milestoneLabel, i === 0 && p.milestoneLabelActive]}
+                >
+                  {lvl}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </Animated.View>
+
+        {/* ── Menu sections ── */}
+        {menuSections.map((section, si) => (
+          <View key={si} style={p.section}>
+            {section.title ? (
+              <Text style={p.sectionTitle}>{section.title}</Text>
+            ) : null}
+            <View style={p.sectionCard}>
+              {section.items.map((item, ii) => (
+                <MenuItem
+                  key={ii}
+                  {...item}
+                  delay={280 + (si * 4 + ii) * 55}
+                  isLast={ii === section.items.length - 1}
+                />
+              ))}
+            </View>
+          </View>
+        ))}
+
+        {/* ── App version ── */}
+        <Text style={p.versionText}>
+          Mulema v1.0.0 · Fait avec ❤️ au Cameroun
+        </Text>
+
+        <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* Image Preview Modal */}
-      <Modal
+      {/* ── IMAGE PREVIEW ── */}
+      <BottomSheet
         visible={showPreview}
-        transparent
-        animationType='fade'
-        onRequestClose={cancelUpload}
+        onClose={() => {
+          setShowPreview(false);
+          setSelectedImage(null);
+        }}
+        title='Aperçu de la photo'
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.previewModalContent}>
-            <Text style={styles.previewTitle}>Preview</Text>
-
-            {selectedImage && (
+        {selectedImage && (
+          <View
+            style={{
+              alignItems: "center",
+              paddingHorizontal: 24,
+              paddingBottom: 28
+            }}
+          >
+            <View style={bs.previewImgWrap}>
               <Image
                 source={{ uri: selectedImage.uri }}
-                style={styles.previewImage}
-                contentFit='cover'
+                style={bs.previewImg}
               />
-            )}
-
-            <View style={styles.previewButtons}>
+            </View>
+            <Text style={bs.previewHint}>
+              Cette photo sera visible sur ton profil.
+            </Text>
+            <View style={bs.previewBtns}>
               <TouchableOpacity
-                style={[styles.previewButton, styles.cancelButton]}
-                onPress={cancelUpload}
+                onPress={() => {
+                  setShowPreview(false);
+                  setSelectedImage(null);
+                }}
+                style={bs.cancelBtn}
               >
-                <Text style={styles.cancelButtonText}>
-                  {t("common.cancel")}
-                </Text>
+                <Text style={bs.cancelBtnText}>{t("common.cancel")}</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
-                style={[styles.previewButton, styles.uploadButton]}
                 onPress={uploadProfilePicture}
                 disabled={isUploading}
+                style={[bs.uploadBtn, isUploading && { opacity: 0.7 }]}
               >
                 {isUploading ? (
                   <ActivityIndicator color='#fff' size='small' />
                 ) : (
-                  <Text style={styles.uploadButtonText}>Upload</Text>
+                  <>
+                    <Ionicons
+                      name='cloud-upload-outline'
+                      size={17}
+                      color='#fff'
+                    />
+                    <Text style={bs.uploadBtnText}>Définir comme photo</Text>
+                  </>
                 )}
               </TouchableOpacity>
             </View>
           </View>
-        </View>
-      </Modal>
+        )}
+      </BottomSheet>
 
-      {/* Edit Profile Modal */}
-      <Modal
+      {/* ── EDIT PROFILE ── */}
+      <BottomSheet
         visible={showEditModal}
-        transparent
-        animationType='slide'
-        onRequestClose={() => setShowEditModal(false)}
+        onClose={() => setShowEditModal(false)}
+        title={t("profile.editProfile")}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.editModalContent}>
-            <View style={styles.editModalHeader}>
-              <Text style={styles.editModalTitle}>
-                {t("profile.editProfile")}
-              </Text>
-              <TouchableOpacity onPress={() => setShowEditModal(false)}>
-                <Ionicons name='close' size={24} color='#333' />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>{t("profile.name")}</Text>
-              <TextInput
-                style={styles.input}
-                value={editName}
-                onChangeText={setEditName}
-                placeholder='Enter your name'
-                placeholderTextColor='#999'
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>{t("profile.email")}</Text>
-              <TextInput
-                style={styles.input}
-                value={editEmail}
-                onChangeText={setEditEmail}
-                placeholder='Enter your email'
-                placeholderTextColor='#999'
-                keyboardType='email-address'
-                autoCapitalize='none'
-              />
-            </View>
-
-            <TouchableOpacity
-              style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
-              onPress={saveProfile}
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <ActivityIndicator color='#fff' size='small' />
-              ) : (
-                <Text style={styles.saveButtonText}>{t("common.save")}</Text>
-              )}
-            </TouchableOpacity>
+        <View style={{ paddingHorizontal: 24, paddingBottom: 32 }}>
+          <Text style={bs.fieldLabel}>{t("profile.name")}</Text>
+          <View style={[bs.fieldRow, editNameFocused && bs.fieldFocused]}>
+            <Ionicons
+              name='person-outline'
+              size={16}
+              color={editNameFocused ? RED : TEXT_LIGHT}
+              style={{ marginRight: 10 }}
+            />
+            <TextInput
+              style={bs.fieldInput}
+              value={editName}
+              onChangeText={setEditName}
+              placeholder='Ton nom'
+              placeholderTextColor={TEXT_LIGHT}
+              onFocus={() => setEditNameFocused(true)}
+              onBlur={() => setEditNameFocused(false)}
+            />
           </View>
+
+          <Text style={[bs.fieldLabel, { marginTop: 16 }]}>
+            {t("profile.email")}
+          </Text>
+          <View style={[bs.fieldRow, editEmailFocused && bs.fieldFocused]}>
+            <Ionicons
+              name='mail-outline'
+              size={16}
+              color={editEmailFocused ? RED : TEXT_LIGHT}
+              style={{ marginRight: 10 }}
+            />
+            <TextInput
+              style={bs.fieldInput}
+              value={editEmail}
+              onChangeText={setEditEmail}
+              placeholder='ton@email.com'
+              placeholderTextColor={TEXT_LIGHT}
+              keyboardType='email-address'
+              autoCapitalize='none'
+              onFocus={() => setEditEmailFocused(true)}
+              onBlur={() => setEditEmailFocused(false)}
+            />
+          </View>
+
+          <TouchableOpacity
+            onPress={saveProfile}
+            disabled={isSaving}
+            style={[bs.saveBtn, isSaving && { opacity: 0.7 }]}
+            activeOpacity={0.85}
+          >
+            {isSaving ? (
+              <ActivityIndicator color='#fff' size='small' />
+            ) : (
+              <>
+                <Ionicons name='checkmark-circle' size={18} color='#fff' />
+                <Text style={bs.saveBtnText}>{t("common.save")}</Text>
+              </>
+            )}
+          </TouchableOpacity>
         </View>
-      </Modal>
+      </BottomSheet>
 
-      {/* Language Selection Modal */}
-      <Modal
+      {/* ── LANGUAGE MODAL ── */}
+      <BottomSheet
         visible={showLanguageModal}
-        transparent
-        animationType='slide'
-        onRequestClose={() => setShowLanguageModal(false)}
+        onClose={() => setShowLanguageModal(false)}
+        title={t("settings.selectLanguage")}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.languageModalContent}>
-            <View style={styles.languageModalHeader}>
-              <Text style={styles.languageModalTitle}>
-                {t("settings.selectLanguage")}
-              </Text>
-              <TouchableOpacity onPress={() => setShowLanguageModal(false)}>
-                <Ionicons name='close' size={24} color='#333' />
-              </TouchableOpacity>
-            </View>
-
-            {LANGUAGES.map((lang) => (
+        <View style={{ paddingHorizontal: 24, paddingBottom: 32 }}>
+          {LANGUAGES.map((lang) => {
+            const selected = currentLanguage === lang.code;
+            return (
               <TouchableOpacity
                 key={lang.code}
-                style={[
-                  styles.languageOption,
-                  currentLanguage === lang.code && styles.languageOptionSelected
-                ]}
                 onPress={() => handleLanguageChange(lang.code)}
                 disabled={isChangingLanguage}
+                activeOpacity={0.8}
               >
-                <View style={styles.languageOptionContent}>
-                  <Text style={styles.languageFlag}>{lang.flag}</Text>
-                  <Text
-                    style={[
-                      styles.languageName,
-                      currentLanguage === lang.code &&
-                        styles.languageNameSelected
-                    ]}
-                  >
-                    {lang.name}
-                  </Text>
+                <View
+                  style={[bs.langOption, selected && bs.langOptionSelected]}
+                >
+                  <Text style={bs.langFlag}>{lang.flag}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[bs.langName, selected && { color: RED }]}>
+                      {lang.name}
+                    </Text>
+                    <Text style={bs.langSub}>{lang.sub}</Text>
+                  </View>
+                  {selected && (
+                    <Ionicons name='checkmark-circle' size={22} color={RED} />
+                  )}
                 </View>
-                {currentLanguage === lang.code && (
-                  <Ionicons name='checkmark-circle' size={24} color='#4CAF50' />
-                )}
               </TouchableOpacity>
-            ))}
-
-            {isChangingLanguage && (
-              <ActivityIndicator
-                color='#4CAF50'
-                size='small'
-                style={styles.languageLoader}
-              />
-            )}
-          </View>
+            );
+          })}
+          {isChangingLanguage && (
+            <ActivityIndicator color={RED} style={{ marginTop: 12 }} />
+          )}
         </View>
-      </Modal>
-    </SafeAreaView>
+      </BottomSheet>
+    </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0
+// ── Profile styles ─────────────────────────────────────────────────────────
+const p = StyleSheet.create({
+  root: { flex: 1, backgroundColor: BG },
+  scroll: {
+    flexGrow: 1,
+    paddingTop: Platform.OS === "ios" ? 54 : 40,
+    paddingBottom: 20
   },
-  scrollView: {
-    flex: 1
-  },
-  content: {
-    flex: 1,
-    padding: 20
-  },
-  header: {
-    marginBottom: 30
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#333"
-  },
-  profileHeader: {
+
+  // Top bar
+  topBar: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 30,
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    marginBottom: 20
   },
-  avatarContainer: {
-    position: "relative"
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: CARD_BG,
+    borderWidth: 1,
+    borderColor: BORDER,
+    alignItems: "center",
+    justifyContent: "center",
+    ...CARD_SHADOW
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40
+  pageTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: TEXT_DARK,
+    fontFamily: "Nunito-ExtraBold",
+    letterSpacing: 0.3
   },
-  cameraButton: {
+
+  // Avatar card — white card style
+  avatarCard: {
+    backgroundColor: CARD_BG,
+    borderRadius: 24,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    paddingTop: 28,
+    paddingBottom: 0,
+    alignItems: "center",
+    ...CARD_SHADOW
+  },
+  avatarWrap: {
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 14
+  },
+  pulseRing: {
+    position: "absolute",
+    width: 108,
+    height: 108,
+    borderRadius: 54,
+    borderWidth: 2,
+    borderColor: RED
+  },
+  avatarOuter: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    overflow: "hidden",
+    borderWidth: 3,
+    borderColor: "#fff",
+    shadowColor: RED,
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6
+  },
+  avatarImg: { width: "100%", height: "100%", borderRadius: 46 },
+  avatarFallback: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  avatarInitial: {
+    fontSize: 34,
+    fontWeight: "800",
+    color: "#fff",
+    fontFamily: "Nunito-ExtraBold"
+  },
+  cameraBtn: {
     position: "absolute",
     bottom: 0,
     right: 0,
-    backgroundColor: "#4CAF50",
+    borderWidth: 2.5,
+    borderColor: BG,
+    borderRadius: 16
+  },
+  cameraBtnInner: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    justifyContent: "center",
+    backgroundColor: RED,
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#fff"
+    justifyContent: "center"
   },
-  userInfo: {
-    justifyContent: "center",
-    marginLeft: 20,
-    flex: 1
-  },
-  username: {
+
+  userName: {
     fontSize: 22,
-    fontWeight: "bold",
-    color: "#333"
+    fontWeight: "800",
+    color: TEXT_DARK,
+    fontFamily: "Nunito-ExtraBold",
+    letterSpacing: 0.2,
+    marginBottom: 4
   },
-  email: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 5
+  userEmail: {
+    fontSize: 13,
+    color: TEXT_LIGHT,
+    fontFamily: "Nunito-Regular",
+    marginBottom: 10
   },
-  statsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 30
+  levelBadge: {
+    backgroundColor: RED_LIGHT,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: `${RED}25`,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    marginBottom: 18
   },
-  statBox: {
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    width: "30%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#4CAF50"
-  },
-  statLabel: {
+  levelBadgeText: {
+    color: RED,
     fontSize: 12,
-    color: "#666",
-    marginTop: 5
+    fontWeight: "700",
+    fontFamily: "Nunito-Bold"
   },
-  menuContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 15,
-    padding: 10
+
+  divider: { width: "100%", height: 1, backgroundColor: "#F0EDE6" },
+
+  // Quick actions row inside avatar card
+  quickActions: {
+    flexDirection: "row",
+    width: "100%",
+    paddingVertical: 4
+  },
+  quickActionBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    paddingVertical: 14
+  },
+  quickActionText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: RED,
+    fontFamily: "Nunito-Bold"
+  },
+  quickActionSep: { width: 1, backgroundColor: "#F0EDE6", marginVertical: 10 },
+
+  // Stats row
+  statsRow: {
+    flexDirection: "row",
+    gap: 10,
+    paddingHorizontal: 16,
+    marginBottom: 14
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: CARD_BG,
+    borderRadius: 18,
+    padding: 14,
+    alignItems: "center",
+    gap: 6,
+    ...CARD_SHADOW
+  },
+  statIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 2
+  },
+  statNum: { fontSize: 20, fontWeight: "900", fontFamily: "Nunito-ExtraBold" },
+  statLabel: {
+    fontSize: 10,
+    color: TEXT_LIGHT,
+    fontWeight: "600",
+    textAlign: "center",
+    fontFamily: "Nunito-SemiBold"
+  },
+
+  // Progress card
+  progressCard: {
+    backgroundColor: CARD_BG,
+    borderRadius: 20,
+    marginHorizontal: 16,
+    marginBottom: 14,
+    padding: 18,
+    ...CARD_SHADOW
+  },
+  progressCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4
+  },
+  progressCardTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: TEXT_DARK,
+    fontFamily: "Nunito-ExtraBold"
+  },
+  xpChip: {
+    backgroundColor: RED_LIGHT,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: `${RED}25`,
+    paddingHorizontal: 10,
+    paddingVertical: 4
+  },
+  xpChipText: {
+    fontSize: 12,
+    color: RED,
+    fontWeight: "700",
+    fontFamily: "Nunito-Bold"
+  },
+  progressCardSub: {
+    fontSize: 12,
+    color: TEXT_LIGHT,
+    fontFamily: "Nunito-Regular",
+    marginBottom: 12
+  },
+  progressBarBg: {
+    height: 8,
+    backgroundColor: "#EEE",
+    borderRadius: 4,
+    overflow: "hidden",
+    marginBottom: 14
+  },
+  progressBarFill: { height: "100%", backgroundColor: RED, borderRadius: 4 },
+
+  progressMilestones: { flexDirection: "row", justifyContent: "space-between" },
+  milestoneItem: { alignItems: "center", gap: 4 },
+  milestoneDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#DDD"
+  },
+  milestoneDotActive: {
+    backgroundColor: RED,
+    shadowColor: RED,
+    shadowOpacity: 0.4,
+    shadowRadius: 4
+  },
+  milestoneLabel: {
+    fontSize: 10,
+    color: TEXT_LIGHT,
+    fontFamily: "Nunito-SemiBold"
+  },
+  milestoneLabelActive: {
+    color: RED,
+    fontWeight: "700",
+    fontFamily: "Nunito-Bold"
+  },
+
+  // Menu sections
+  section: { paddingHorizontal: 16, marginBottom: 10 },
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: TEXT_LIGHT,
+    fontFamily: "Nunito-Bold",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    marginBottom: 8,
+    paddingLeft: 4
+  },
+  sectionCard: {
+    backgroundColor: CARD_BG,
+    borderRadius: 18,
+    overflow: "hidden",
+    ...CARD_SHADOW
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    padding: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 14
+  },
+  menuItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: "#eee"
+    borderBottomColor: "#F5F3F0"
   },
-  menuItemLeft: {
-    flexDirection: "row",
-    alignItems: "center"
+  menuIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center"
   },
-  menuItemText: {
-    fontSize: 16,
-    color: "#333",
-    marginLeft: 15
-  },
-  languageSelector: {
-    flexDirection: "row",
-    alignItems: "center"
-  },
-  currentLanguageText: {
+  menuLabel: {
     fontSize: 14,
-    color: "#666",
-    marginRight: 5
+    fontWeight: "500",
+    color: TEXT_DARK,
+    fontFamily: "Nunito-SemiBold"
   },
 
-  // Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center"
-  },
-
-  // Preview Modal
-  previewModalContent: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 20,
-    width: "85%",
-    maxWidth: 400,
-    alignItems: "center"
-  },
-  previewTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 20
-  },
-  previewImage: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    marginBottom: 20
-  },
-  previewButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    paddingHorizontal: 10
-  },
-  previewButton: {
-    flex: 1,
-    paddingVertical: 12,
+  langChip: {
+    backgroundColor: "#FFF3E0",
     borderRadius: 10,
-    alignItems: "center",
-    marginHorizontal: 5
-  },
-  cancelButton: {
-    backgroundColor: "#e0e0e0"
-  },
-  cancelButtonText: {
-    color: "#333",
-    fontWeight: "600"
-  },
-  uploadButton: {
-    backgroundColor: "#4CAF50"
-  },
-  uploadButtonText: {
-    color: "#fff",
-    fontWeight: "600"
-  },
-
-  // Edit Modal
-  editModalContent: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 20,
-    width: "90%",
-    maxWidth: 400
-  },
-  editModalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20
-  },
-  editModalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333"
-  },
-  inputContainer: {
-    marginBottom: 15
-  },
-  inputLabel: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 5
-  },
-  input: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 10,
-    padding: 15,
-    fontSize: 16,
-    color: "#333"
-  },
-  saveButton: {
-    backgroundColor: "#4CAF50",
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    marginTop: 10
-  },
-  saveButtonDisabled: {
-    opacity: 0.7
-  },
-  saveButtonText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 16
-  },
-
-  // Language Modal
-  languageModalContent: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 20,
-    width: "90%",
-    maxWidth: 400
-  },
-  languageModalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20
-  },
-  languageModalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333"
-  },
-  languageOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-    backgroundColor: "#f5f5f5"
-  },
-  languageOptionSelected: {
-    backgroundColor: "#e8f5e9",
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     borderWidth: 1,
-    borderColor: "#4CAF50"
+    borderColor: "#FFE0B2"
   },
-  languageOptionContent: {
-    flexDirection: "row",
-    alignItems: "center"
-  },
-  languageFlag: {
-    fontSize: 28,
-    marginRight: 15
-  },
-  languageName: {
-    fontSize: 16,
-    color: "#333"
-  },
-  languageNameSelected: {
+  langChipText: {
+    color: "#E65100",
+    fontSize: 12,
     fontWeight: "600",
-    color: "#4CAF50"
+    fontFamily: "Nunito-Bold"
   },
-  languageLoader: {
-    marginTop: 10
+
+  versionText: {
+    textAlign: "center",
+    fontSize: 11,
+    color: TEXT_LIGHT,
+    fontFamily: "Nunito-Regular",
+    marginTop: 8
+  }
+});
+
+// ── Bottom sheet styles ────────────────────────────────────────────────────
+const bs = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.38)",
+    justifyContent: "flex-end"
+  },
+  sheet: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    overflow: "hidden"
+  },
+  sheetInner: { backgroundColor: CARD_BG, paddingTop: 12 },
+  handle: {
+    width: 44,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "#DDD",
+    alignSelf: "center",
+    marginBottom: 18
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 24,
+    marginBottom: 18
+  },
+  title: {
+    fontSize: 19,
+    fontWeight: "800",
+    color: TEXT_DARK,
+    fontFamily: "Nunito-ExtraBold"
+  },
+  closeBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "#F5F3F0",
+    borderWidth: 1,
+    borderColor: BORDER,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+
+  // Preview
+  previewImgWrap: {
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+    overflow: "hidden",
+    borderWidth: 3,
+    borderColor: `${RED}40`,
+    marginBottom: 14,
+    ...CARD_SHADOW
+  },
+  previewImg: { width: "100%", height: "100%" },
+  previewHint: {
+    color: TEXT_MID,
+    fontSize: 13,
+    fontFamily: "Nunito-Regular",
+    marginBottom: 22,
+    textAlign: "center"
+  },
+  previewBtns: { flexDirection: "row", gap: 12, width: "100%" },
+  cancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: "#F5F3F0",
+    borderWidth: 1,
+    borderColor: BORDER,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  cancelBtnText: {
+    color: TEXT_MID,
+    fontWeight: "600",
+    fontSize: 14,
+    fontFamily: "Nunito-SemiBold"
+  },
+  uploadBtn: {
+    flex: 1.4,
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: RED,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7
+  },
+  uploadBtnText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
+    fontFamily: "Nunito-Bold"
+  },
+
+  // Fields
+  fieldLabel: {
+    color: TEXT_MID,
+    fontSize: 11,
+    fontWeight: "700",
+    fontFamily: "Nunito-Bold",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginBottom: 8
+  },
+  fieldRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F7F5F2",
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: BORDER,
+    paddingHorizontal: 14,
+    paddingVertical: 13
+  },
+  fieldFocused: { borderColor: RED, backgroundColor: RED_LIGHT },
+  fieldInput: {
+    flex: 1,
+    color: TEXT_DARK,
+    fontSize: 15,
+    fontFamily: "Nunito-Regular"
+  },
+  saveBtn: {
+    marginTop: 22,
+    backgroundColor: RED,
+    borderRadius: 16,
+    paddingVertical: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8
+  },
+  saveBtnText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "700",
+    fontFamily: "Nunito-Bold"
+  },
+
+  // Language
+  langOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    backgroundColor: "#F7F5F2",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: BORDER,
+    padding: 14,
+    marginBottom: 10
+  },
+  langOptionSelected: { borderColor: `${RED}40`, backgroundColor: RED_LIGHT },
+  langFlag: { fontSize: 30 },
+  langName: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: TEXT_DARK,
+    fontFamily: "Nunito-Bold"
+  },
+  langSub: {
+    fontSize: 12,
+    color: TEXT_LIGHT,
+    marginTop: 2,
+    fontFamily: "Nunito-Regular"
   }
 });
 
