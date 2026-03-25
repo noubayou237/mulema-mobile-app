@@ -2,27 +2,49 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
+import { env } from "../src/env";
 
-// ⚠️ API URL depends on platform
+// ⚠️ API URL depends on platform and environment
 // Android emulator : http://10.0.2.2:5001
 // iOS simulator : http://localhost:5001
 // Web browser : http://localhost:5001
-// Phone real : Use YOUR_PC_IP environment variable or update below
+// Phone real : Use EXPO_PUBLIC_API_IP environment variable
 
-// Replace with your PC's IP address for mobile testing
-// To find your IP: run `ip addr` or `ifconfig` in terminal
-const PC_IP = process.env.EXPO_PUBLIC_API_IP || "172.20.10.14";
+// Determine API base URL based on platform
+const getApiUrl = () => {
+  // For development on physical devices - always use environment variable
+  const PC_IP = env.EXPO_PUBLIC_API_IP;
 
-const API_BASE_URL =
-  Platform.OS === "web"
-    ? "http://localhost:5001"
-    : Platform.OS === "android" && !__DEV__
-      ? `http://${PC_IP}:5001` // Android physical device
-      : `http://${PC_IP}:5001`; // iOS physical device
+  if (PC_IP) {
+    return `http://${PC_IP}:5001`;
+  }
+
+  // Web
+  if (Platform.OS === "web") {
+    return "http://localhost:5001";
+  }
+
+  // Android emulator
+  if (Platform.OS === "android" && __DEV__) {
+    return "http://10.0.2.2:5001";
+  }
+
+  // iOS simulator
+  if (Platform.OS === "ios" && __DEV__) {
+    return "http://localhost:5001";
+  }
+
+  // Fallback
+  return "http://localhost:5001";
+};
+
+const API_BASE_URL = getApiUrl();
 
 const STORAGE_KEY = "userSession"; // Must match UserContext.jsx
 
-console.log("API Base URL:", API_BASE_URL);
+console.log("🔧 API Configuration:");
+console.log("  Platform:", Platform.OS);
+console.log("  API Base URL:", API_BASE_URL);
 
 const api = axios.create({
   baseURL: API_BASE_URL,

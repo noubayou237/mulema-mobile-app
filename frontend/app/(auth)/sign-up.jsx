@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
-  Alert,
-  Text,
   View,
+  Text,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -128,7 +128,7 @@ const WaveDots = () => {
 };
 
 // ── Password strength bar ──────────────────────────────────────────────────
-const StrengthBar = ({ password }) => {
+const StrengthBar = ({ password, t }) => {
   const anim = useRef(new Animated.Value(0)).current;
 
   const getStrength = (p) => {
@@ -139,9 +139,11 @@ const StrengthBar = ({ password }) => {
     if (/[A-Z]/.test(p)) score++;
     if (/[0-9]/.test(p)) score++;
     if (/[^A-Za-z0-9]/.test(p)) score++;
-    if (score <= 1) return { score: 1, label: "Faible", color: "#F44336" };
-    if (score <= 3) return { score: 3, label: "Moyen", color: "#E57373" };
-    return { score: 5, label: "Fort", color: "#D32F2F" };
+    if (score <= 1)
+      return { score: 1, label: t("signUp.weak"), color: "#F44336" };
+    if (score <= 3)
+      return { score: 3, label: t("signUp.medium"), color: "#E57373" };
+    return { score: 5, label: t("signUp.strong"), color: "#D32F2F" };
   };
 
   const { score, label, color } = getStrength(password);
@@ -167,7 +169,7 @@ const StrengthBar = ({ password }) => {
         }}
       >
         <Text style={{ color: "#AAAAAA", fontSize: 11 }}>
-          Force du mot de passe
+          {t ? t("signUp.passwordStrength") : "Password strength"}
         </Text>
         <Text style={{ color, fontSize: 11, fontWeight: "700" }}>{label}</Text>
       </View>
@@ -404,19 +406,18 @@ const SignUpScreen = () => {
       !form.password ||
       !form.confirm
     )
-      return "Remplis tous les champs obligatoires.";
-    if (/\s/.test(form.username))
-      return "Le nom d'utilisateur ne doit pas contenir d'espaces.";
+      return t("signUp.validation.requiredFields");
+    if (/\s/.test(form.username)) return t("signUp.validation.noSpaces");
     if (form.password.length < MIN_PASSWORD)
-      return `Le mot de passe doit contenir au moins ${MIN_PASSWORD} caractères.`;
+      return t("signUp.validation.passwordMinLength", { min: MIN_PASSWORD });
     if (form.password !== form.confirm)
-      return "Les mots de passe ne correspondent pas.";
+      return t("signUp.validation.passwordMismatch");
     return null;
   };
 
   const handleSignUp = useCallback(async () => {
     const error = validate();
-    if (error) return Alert.alert("Erreur", error);
+    if (error) return Alert.alert(t("signUp.error.title"), error);
     setUi((s) => ({ ...s, loading: true }));
     try {
       await api.post("/auth/register", {
@@ -425,20 +426,17 @@ const SignUpScreen = () => {
         name: form.username,
         password: form.password
       });
-      Alert.alert(
-        "Inscription réussie !",
-        "Un code de vérification a été envoyé à votre email."
-      );
+      Alert.alert(t("signUp.success.title"), t("signUp.success.message"));
       router.replace({
-        pathname: "/verify-email",
+        pathname: "/(auth)/verify-email",
         params: { email: form.email, flow: "verify" }
       });
     } catch (err) {
       const message =
         err?.response?.data?.message ||
         err?.message ||
-        "Erreur lors de la création du compte.";
-      Alert.alert("Erreur", message);
+        t("signUp.error.creationFailed");
+      Alert.alert(t("signUp.error.title"), message);
     } finally {
       setUi((s) => ({ ...s, loading: false }));
     }
@@ -483,10 +481,18 @@ const SignUpScreen = () => {
   ];
 
   const steps = [
-    { label: "Profil", icon: "person", done: form.username.length > 0 },
-    { label: "Email", icon: "mail", done: form.email.includes("@") },
     {
-      label: "Sécurité",
+      label: t("signUp.steps.profile"),
+      icon: "person",
+      done: form.username.length > 0
+    },
+    {
+      label: t("signUp.steps.email"),
+      icon: "mail",
+      done: form.email.includes("@")
+    },
+    {
+      label: t("signUp.steps.security"),
       icon: "shield-checkmark",
       done: form.password.length >= 6 && form.password === form.confirm
     }
@@ -565,7 +571,7 @@ const SignUpScreen = () => {
           >
             <Text style={s.brand}>mulema</Text>
             <View style={s.pillBadge}>
-              <Text style={s.pillText}>✨ Rejoins la communauté</Text>
+              <Text style={s.pillText}>✨ {t("signUp.subtitle")}</Text>
             </View>
           </Animated.View>
 
@@ -629,26 +635,26 @@ const SignUpScreen = () => {
             ]}
           >
             <Field
-              label="Nom d'utilisateur"
+              label={t("signUp.usernameLabel")}
               icon='person-outline'
-              placeholder='ex: ambe_bassa'
+              placeholder={t("signUp.usernamePlaceholder")}
               value={form.username}
               onChangeText={onChange("username")}
             />
 
             <Field
-              label='Adresse e-mail'
+              label={t("signUp.emailLabel")}
               icon='mail-outline'
-              placeholder='exemple@email.com'
+              placeholder={t("signUp.emailPlaceholder")}
               value={form.email}
               onChangeText={onChange("email")}
               keyboardType='email-address'
             />
 
             <Field
-              label='Mot de passe'
+              label={t("signUp.passwordLabel")}
               icon='lock-closed-outline'
-              placeholder='••••••••'
+              placeholder={t("signUp.passwordPlaceholder")}
               value={form.password}
               onChangeText={onChange("password")}
               secureTextEntry={!ui.showPassword}
@@ -657,13 +663,13 @@ const SignUpScreen = () => {
                 setUi((s) => ({ ...s, showPassword: !s.showPassword }))
               }
             >
-              <StrengthBar password={form.password} />
+              <StrengthBar password={form.password} t={t} />
             </Field>
 
             <Field
-              label='Confirmer le mot de passe'
+              label={t("signUp.confirmPasswordLabel")}
               icon='shield-checkmark-outline'
-              placeholder='••••••••'
+              placeholder={t("signUp.confirmPasswordPlaceholder")}
               value={form.confirm}
               onChangeText={onChange("confirm")}
               secureTextEntry={!ui.showConfirm}
@@ -704,8 +710,8 @@ const SignUpScreen = () => {
                   }}
                 >
                   {form.password === form.confirm
-                    ? "Les mots de passe correspondent"
-                    : "Les mots de passe ne correspondent pas"}
+                    ? t("signUp.validation.passwordsMatch")
+                    : t("signUp.validation.passwordsDoNotMatch")}
                 </Text>
               </View>
             )}
@@ -735,7 +741,7 @@ const SignUpScreen = () => {
                     <WaveDots />
                   ) : (
                     <>
-                      <Text style={s.btnText}>Créer mon compte</Text>
+                      <Text style={s.btnText}>{t("signUp.signUpButton")}</Text>
                       <Ionicons
                         name='sparkles'
                         size={18}
@@ -751,7 +757,7 @@ const SignUpScreen = () => {
             {/* Divider */}
             <View style={s.dividerRow}>
               <View style={s.dividerLine} />
-              <Text style={s.dividerText}>ou</Text>
+              <Text style={s.dividerText}>{t("signUp.or")}</Text>
               <View style={s.dividerLine} />
             </View>
 
@@ -762,8 +768,9 @@ const SignUpScreen = () => {
               style={s.signInBtn}
             >
               <Text style={s.signInText}>
-                Déjà un compte ?{"  "}
-                <Text style={s.signInLink}>Se connecter</Text>
+                {t("signUp.alreadyAccount")}
+                {"  "}
+                <Text style={s.signInLink}>{t("signUp.signInLink")}</Text>
               </Text>
             </TouchableOpacity>
           </Animated.View>
@@ -786,7 +793,12 @@ const SignUpScreen = () => {
               }}
             >
               En créant un compte, tu acceptes nos{" "}
-              <Text style={{ color: "#D32F2F" }}>Conditions d&apos;utilisation</Text>{" "}
+              <Text style={{ color: "#D32F2F" }}>
+                Conditions d&apos;utilisation
+              </Text>{" "}
+              <Text style={{ color: "#D32F2F" }}>
+                Conditions d&apos;utilisation
+              </Text>{" "}
               et notre{" "}
               <Text style={{ color: "#D32F2F" }}>
                 Politique de confidentialité

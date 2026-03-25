@@ -1,161 +1,209 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
   Animated,
   SafeAreaView,
-  StatusBar
+  StatusBar,
+  StyleSheet,
+  ActivityIndicator
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons"; // Assurez-vous d'avoir installé @expo/vector-icons
+import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
-import "../../src/i18n";
 
-// --- Données pour les cartes d'exercice ---
+// Design tokens (matching profile page)
+const COLORS = {
+  primary: "#D32F2F",
+  background: "#F9F5F5",
+  card: "#FFFFFF",
+  foreground: "#050303",
+  border: "#F3E8E8",
+  muted: "#6B6B6B"
+};
+
+const HEADER_MIN_HEIGHT = 40;
+const HEADER_SCROLL_FADE_END = 80;
+
+// Default exercise data - locked status will be dynamically updated
 const exerciseData = [
   {
     id: "1",
     titleKey: "exercises.categories.socialFamily",
     descriptionKey: "exercises.categories.socialFamilyDesc",
     locked: false,
-    route: "/exercices/famille/exos1" // Exemple de route
+    route: "/exercices/famille/exos1",
+    storageKey: null // First theme is always unlocked
   },
   {
     id: "2",
     titleKey: "exercises.categories.cooking",
     descriptionKey: "exercises.categories.cookingDesc",
     locked: true,
-    route: "/exercices/cuisine"
+    route: "/exercices/cuisine",
+    storageKey: "theme2_unlocked"
   },
   {
     id: "3",
     titleKey: "exercises.categories.clothing",
     descriptionKey: "exercises.categories.clothingDesc",
     locked: true,
-    route: "/exercices/vetements"
+    route: "/exercices/vetements",
+    storageKey: "theme3_unlocked"
   },
   {
     id: "4",
     titleKey: "exercises.categories.faunaFlora",
     descriptionKey: "exercises.categories.faunaFloraDesc",
     locked: true,
-    route: "/exercices/faune"
+    route: "/exercices/faune",
+    storageKey: "theme4_unlocked"
   }
 ];
 
-// --- Hauteur de l'en-tête fixe ---
-const HEADER_MIN_HEIGHT = 40;
-// --- Point de défilement où l'animation se termine ---
-const HEADER_SCROLL_FADE_END = 80;
-
-/**
- * Composant de carte réutilisable
- */
-const ExerciseCard = ({ titleKey, descriptionKey, locked, onPress, t }) => {
+const ExerciseCard = ({ item, onPress, t }) => {
   return (
     <TouchableOpacity
-      style={[styles.cardContainer, locked && styles.cardLocked]}
-      onPress={onPress}
-      disabled={locked}
-      activeOpacity={0.8}
+      disabled={item.locked}
+      onPress={() => onPress(item)}
+      activeOpacity={0.85}
+      style={[
+        styles.exerciseCard,
+        item.locked ? styles.exerciseCardLocked : styles.exerciseCardUnlocked
+      ]}
     >
-      {/* Icône de verrouillage */}
-      {locked && (
+      {item.locked && (
         <Ionicons name='lock-closed' size={20} style={styles.lockIcon} />
       )}
 
-      {/* Contenu texte */}
-      <View>
-        <Text style={styles.cardTitle}>{t(titleKey)}</Text>
-        <Text style={styles.cardDescription}>{t(descriptionKey)}</Text>
-        <Text style={styles.cardButtonText}>{t("exercises.start")}</Text>
-      </View>
+      <Text
+        style={[
+          styles.exerciseTitle,
+          item.locked ? styles.textLocked : styles.textUnlocked
+        ]}
+      >
+        {t(item.titleKey)}
+      </Text>
+
+      <Text
+        style={[
+          styles.exerciseDescription,
+          item.locked ? styles.textLocked : styles.textUnlocked
+        ]}
+      >
+        {t(item.descriptionKey)}
+      </Text>
+
+      {!item.locked && (
+        <Text style={styles.startText}>{t("exercises.start")}</Text>
+      )}
     </TouchableOpacity>
   );
 };
 
-/**
- * Composant principal de la page
- */
 export default function ExercicesScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const scrollY = useRef(new Animated.Value(0)).current;
 
-  // Gère la navigation
+  // State for tracking theme unlock status
+  const [unlockedThemes, setUnlockedThemes] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch unlock status from AsyncStorage on mount
+  useEffect(() => {
+    const fetchUnlockStatus = async () => {
+      try {
+        const unlocked = {};
+
+        // Check each theme's unlock status
+        for (const theme of exerciseData) {
+          if (theme.storageKey) {
+            const status = await AsyncStorage.getItem(theme.storageKey);
+            unlocked[theme.id] = status === "true";
+          } else {
+            // First theme is always unlocked
+            unlocked[theme.id] = true;
+          }
+        }
+
+        setUnlockedThemes(unlocked);
+      } catch (error) {
+        console.error("Error fetching unlock status:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUnlockStatus();
+  }, []);
+
+  // Calculate dynamic exercise data with current unlock status
+  const getExerciseData = () => {
+    return exerciseData.map((theme) => ({
+      ...theme,
+      locked: !unlockedThemes[theme.id]
+    }));
+  };
+
   const handleCardPress = (item) => {
     if (!item.locked) {
       router.push(item.route);
     }
   };
 
-  // --- Animations ---
-
-  // Opacité du petit en-tête (centré)
   const smallHeaderOpacity = scrollY.interpolate({
     inputRange: [HEADER_SCROLL_FADE_END / 2, HEADER_SCROLL_FADE_END],
     outputRange: [0, 1],
     extrapolate: "clamp"
   });
 
-  // Opacité du grand titre (à gauche)
   const largeTitleOpacity = scrollY.interpolate({
     inputRange: [0, HEADER_SCROLL_FADE_END / 2],
     outputRange: [1, 0],
     extrapolate: "clamp"
   });
 
-  // --- Composants de Rendu ---
-
-  // Affiche le grand titre et l'intro en haut de la liste
-  const renderListHeader = () => (
-    <View style={styles.listHeaderContainer}>
-      <Animated.Text
-        style={[styles.largeTitle, { opacity: largeTitleOpacity }]}
-      >
-        {t("nav.exercises")}
-      </Animated.Text>
-      <Text style={styles.introText}>{t("exercises.introText")}</Text>
-    </View>
-  );
-
-  // Affiche une carte d'exercice
-  const renderCardItem = ({ item }) => (
-    <ExerciseCard
-      titleKey={item.titleKey}
-      descriptionKey={item.descriptionKey}
-      locked={item.locked}
-      onPress={() => handleCardPress(item)}
-      t={t}
-    />
-  );
+  // Show loading while fetching unlock status
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle='dark-content' />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size='large' color='#5A4FCF' />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle='light-content' />
+      <StatusBar barStyle='dark-content' />
 
-      {/* EN-TÊTE FIXE (Petit & Centré)
-        Apparaît au défilement 
-      */}
+      {/* Petit header flottant */}
       <Animated.View
         style={[styles.smallHeader, { opacity: smallHeaderOpacity }]}
       >
         <Text style={styles.smallHeaderText}>{t("nav.exercises")}</Text>
       </Animated.View>
 
-      {/* LISTE SCROLLABLE
-        Contient le grand titre et les cartes 
-      */}
       <Animated.FlatList
-        data={exerciseData}
-        renderItem={renderCardItem}
+        data={getExerciseData()}
         keyExtractor={(item) => item.id}
-        ListHeaderComponent={renderListHeader}
-        // Style du contenu de la liste (padding)
-        contentContainerStyle={styles.listContentContainer}
-        // Événement de défilement pour piloter l'animation
+        renderItem={({ item }) => (
+          <ExerciseCard item={item} onPress={handleCardPress} t={t} />
+        )}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          <Animated.View style={{ opacity: largeTitleOpacity }}>
+            <Text style={styles.mainTitle}>{t("nav.exercises")}</Text>
+
+            <Text style={styles.subtitle}>{t("exercises.introText")}</Text>
+          </Animated.View>
+        }
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: true }
@@ -166,85 +214,89 @@ export default function ExercicesScreen() {
   );
 }
 
-// --- Styles ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffffff" // Fond sombre
+    backgroundColor: COLORS.background
   },
-  // --- En-tête (petit, centré) ---
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: COLORS.background
+  },
   smallHeader: {
-    height: HEADER_MIN_HEIGHT,
-    width: "100%",
     position: "absolute",
     top: 0,
     left: 0,
-    backgroundColor: "#ffffffff", // Un peu plus clair que le fond
-    justifyContent: "center",
+    right: 0,
+    height: 40,
+    backgroundColor: COLORS.background,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
     alignItems: "center",
-    zIndex: 10, // Pour être au-dessus de la liste
-    borderBottomWidth: 2,
-    borderColor: "#ffffffff"
+    justifyContent: "center",
+    zIndex: 10
   },
   smallHeaderText: {
-    fontSize: 16,
     fontWeight: "bold",
-    color: "#f30707ff"
+    color: COLORS.primary,
+    fontSize: 14
   },
-  // --- Contenu de la liste ---
-  listContentContainer: {
+  listContent: {
     paddingHorizontal: 16,
-    paddingBottom: 30 // Espace en bas
+    paddingTop: HEADER_MIN_HEIGHT + 16,
+    paddingBottom: 100
   },
-  listHeaderContainer: {
-    paddingTop: HEADER_MIN_HEIGHT + 10, // Démarrer le contenu SOUS l'en-tête fixe
-    marginBottom: 10
-  },
-  largeTitle: {
-    fontSize: 34,
+  mainTitle: {
+    fontSize: 28,
     fontWeight: "bold",
-    color: "#FF3B30",
-    marginBottom: 16
+    color: COLORS.primary,
+    marginBottom: 8,
+    marginTop: 32
   },
-  introText: {
-    fontSize: 16,
-    color: "#000000ff", // Gris clair
-    lineHeight: 22,
-    marginBottom: 20
+  subtitle: {
+    color: COLORS.muted,
+    marginBottom: 24,
+    lineHeight: 22
   },
-  // --- Carte d'exercice ---
-  cardContainer: {
-    backgroundColor: "#C83A44", // Rouge de l'image
-    borderRadius: 12,
-    padding: 20,
+  exerciseCard: {
+    borderRadius: 16,
+    padding: 24,
     marginBottom: 16,
-    overflow: "hidden" // Pour les coins arrondis
+    borderWidth: 1,
+    borderColor: COLORS.border
   },
-  cardLocked: {
-    opacity: 0.6 // Griser la carte si verrouillée
+  exerciseCardUnlocked: {
+    backgroundColor: COLORS.primary
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "white",
-    textTransform: "uppercase",
-    marginBottom: 8
-  },
-  cardDescription: {
-    fontSize: 14,
-    color: "white",
-    marginBottom: 16,
-    lineHeight: 20
-  },
-  cardButtonText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "white"
+  exerciseCardLocked: {
+    backgroundColor: COLORS.background,
+    opacity: 0.6
   },
   lockIcon: {
     position: "absolute",
     top: 16,
     right: 16,
-    color: "white"
+    color: COLORS.foreground
+  },
+  exerciseTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    textTransform: "uppercase",
+    marginBottom: 8
+  },
+  exerciseDescription: {
+    marginBottom: 16
+  },
+  textUnlocked: {
+    color: "#FFFFFF"
+  },
+  textLocked: {
+    color: COLORS.muted
+  },
+  startText: {
+    color: "#FFFFFF",
+    fontWeight: "600"
   }
 });

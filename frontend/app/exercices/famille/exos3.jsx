@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   View,
@@ -9,10 +9,15 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
-  Alert
+  Alert,
+  Image,
+  ActivityIndicator
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Audio } from "expo-av";
+import * as Haptics from "expo-haptics";
+import { THEME_FAMILLE_WORDS, getWrongOptions } from "../../data/themeData";
+import { generateBlockExercises } from "../../src/services/ExerciseApiService";
 
 const { width } = Dimensions.get("window");
 
@@ -31,7 +36,7 @@ const isKeepAwakeError = (error) => {
   );
 };
 
-// Audio initialization with error handling for keep-awake issues
+// Audio initialization with error handling
 const initializeAudio = async () => {
   if (audioInitialized || audioDisabled) return !audioDisabled;
 
@@ -45,7 +50,6 @@ const initializeAudio = async () => {
     audioInitialized = true;
     return true;
   } catch (error) {
-    // Handle keep awake error gracefully
     if (isKeepAwakeError(error)) {
       console.warn("Keep awake not available:", error.message);
       try {
@@ -71,29 +75,54 @@ const initializeAudio = async () => {
 // Initialize audio on module load
 initializeAudio().catch(() => {});
 
-// Play correct/incorrect feedback sound
-const playFeedbackSound = async (isCorrect, language = "fr") => {
+// Play feedback sound
+const playFeedbackSound = async (isCorrect) => {
   try {
-    const { Haptics } = await import("expo-haptics");
-    if (isCorrect) {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } else {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    try {
+      if (isCorrect) {
+        await Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success
+        );
+      } else {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    } catch (hapticsError) {
+      console.log("Haptics not available:", hapticsError.message);
     }
   } catch (error) {
-    console.log("Haptics not available:", error.message);
+    console.log("Feedback error:", error);
   }
 };
 
-// --- DONNÉES DE L'EXERCICE ---
-const QUESTION_TEXT = "Quel est le mot local pour dire 'Le frère' ?";
-const CORRECT_ANSWER = "Muna";
-const options = [
-  { id: "opt1", text: "Papá" },
-  { id: "opt2", text: "Ndómɛ" },
-  { id: "opt3", text: "Muna" }, // Bonne réponse
-  { id: "opt4", text: "Sango" }
-];
+// --- EXERCISE DATA: ALL 6 WORDS ---
+// Block ID for the "Famille" theme in the backend
+const THEME_BLOCK_ID = "block-famille-001";
+
+// Static fallback data
+const generateStaticExerciseQuestions = () => {
+  return THEME_FAMILLE_WORDS.map((word, index) => {
+    // Generate options: correct answer + wrong options
+    const wrongOptions = getWrongOptions(word.id, 3);
+    const allOptions = [word, ...wrongOptions];
+    // Shuffle options
+    const shuffledOptions = allOptions.sort(() => Math.random() - 0.5);
+
+    return {
+      id: word.id,
+      questionNumber: index + 1,
+      fr: word.fr,
+      local: word.local,
+      options: shuffledOptions.map((opt, optIndex) => ({
+        id: `opt${optIndex + 1}`,
+        text: opt.local
+      }))
+    };
+  });
+};
+
+const staticExerciseQuestions = generateStaticExerciseQuestions();
+
+const TOTAL_QUESTIONS = staticExerciseQuestions.length;
 
 const ExerciseThreeScreen = () => {
   const router = useRouter();
@@ -101,7 +130,7 @@ const ExerciseThreeScreen = () => {
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language || "fr";
 
-  // --- SÉCURISATION ET CONVERSION DES PARAMÈTRES (Reçu de exos2) ---
+  // --- PARAMETER HANDLING ---
   const getParamAsNumber = (key, fallback) => {
     const value = params[key];
     const num = value ? parseInt(value, 10) : fallback;
@@ -109,53 +138,192 @@ const ExerciseThreeScreen = () => {
   };
 
   const initialLives = getParamAsNumber("currentLives", 5);
-  const initialTimer = getParamAsNumber("currentTimer", 0);
-  const totalProgress = getParamAsNumber("totalProgress", 66); // Commence à 66% après deux exos
+  const totalProgress = getParamAsNumber("totalProgress", 66);
 
-  // --- ÉTATS ---
+  // --- STATE ---
+  // Backend data state
+  const [exerciseQuestions, setExerciseQuestions] = useState(
+    staticExerciseQuestions
+  );
+  const [isLoadingExercises, setIsLoadingExercises] = useState(true);
+  const [exerciseError, setExerciseError] = useState(null);
+
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [lives, setLives] = useState(initialLives);
-  const [timer] = useState(initialTimer);
-  const [progress, setProgress] = useState(totalProgress); // Progression affichée
   const [selectedOption, setSelectedOption] = useState(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+  const [errorCount, setErrorCount] = useState(
+    getParamAsNumber("errorCount", 0)
+  );
 
-  // --- LOGIQUE DU JEU ---
+  // Track results for each question
+  const [questionResults, setQuestionResults] = useState([]);
+
+  // Timer state
+  const [startTime] = useState(() => Date.now());
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const timerRef = useRef(null);
+
+  // Current question
+  const currentQuestion = exerciseQuestions[currentQuestionIndex];
+  const isLastQuestion = currentQuestionIndex === exerciseQuestions.length - 1;
+
+  // Initialize timer
+  useEffect(() => {
+    // Fetch exercises from backend
+    const fetchExercises = async () => {
+      try {
+        setIsLoadingExercises(true);
+        const backendExercises = await generateBlockExercises(THEME_BLOCK_ID);
+
+        if (backendExercises && backendExercises.length > 0) {
+          const listenSelectExercise = backendExercises.find(
+            (ex) => ex.type === "LISTEN_SELECT_IMAGE"
+          );
+
+          if (listenSelectExercise && listenSelectExercise.questions) {
+            const transformedQuestions = listenSelectExercise.questions.map(
+              (q, index) => {
+                // Get wrong options from backend or generate locally
+                const options = q.options || [];
+                return {
+                  id: q.word?.id || `q-${index}`,
+                  questionNumber: index + 1,
+                  fr: q.word?.sourceText || q.word?.fr || "",
+                  local: q.word?.targetText || q.word?.local || "",
+                  options: options.map((opt, optIndex) => ({
+                    id: `opt${optIndex + 1}`,
+                    text: opt.text || opt
+                  }))
+                };
+              }
+            );
+            setExerciseQuestions(transformedQuestions);
+            console.log(
+              "✅ Loaded LISTEN_SELECT_IMAGE exercises from backend API"
+            );
+          }
+        }
+      } catch (error) {
+        console.log("⚠️ Failed to fetch from backend:", error.message);
+        setExerciseError(error.message);
+      } finally {
+        setIsLoadingExercises(false);
+      }
+    };
+
+    fetchExercises();
+
+    timerRef.current = setInterval(() => {
+      setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [startTime]);
+
+  // Format time
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // --- HANDLERS ---
+
   const handleOptionSelect = async (optionText) => {
-    if (isAnswered) return; // On bloque après la 1ère réponse
+    if (isAnswered) return;
 
     setSelectedOption(optionText);
     setIsAnswered(true);
 
-    if (optionText === CORRECT_ANSWER) {
-      setIsCorrect(true);
-      setProgress(100); // Ex. réussi, progression à 100%
-      // Play positive feedback sound
-      await playFeedbackSound(true, currentLanguage);
+    const success = optionText === currentQuestion.local;
+    setIsCorrect(success);
+
+    // Record result
+    const result = {
+      questionId: currentQuestion.id,
+      questionNumber: currentQuestion.questionNumber,
+      userAnswer: optionText,
+      correctAnswer: currentQuestion.local,
+      isCorrect: success
+    };
+    setQuestionResults((prev) => [...prev, result]);
+
+    if (success) {
+      await playFeedbackSound(true);
     } else {
-      setIsCorrect(false);
-      // Play negative feedback sound
-      await playFeedbackSound(false, currentLanguage);
-      // Déduit la vie immédiatement
+      setErrorCount((prev) => prev + 1);
       setLives((prev) => Math.max(0, prev - 1));
-      // Progression reste inchangée si raté
+      await playFeedbackSound(false);
     }
   };
 
-  const handleNext = () => {
-    // Navigation vers la page de fin avec les résultats
+  const handleNextQuestion = () => {
+    // Check if game over
+    if (lives <= 1) {
+      Alert.alert("Game Over", "Vous avez épuisé toutes vos vies !", [
+        {
+          text: "OK",
+          onPress: () => {
+            const exerciseTime = elapsedTime;
+            const totalTime = (parseInt(params?.totalTime) || 0) + exerciseTime;
+            router.push({
+              pathname: "/exercices/famille/endexos",
+              params: {
+                currentLives: 0,
+                totalTime: totalTime,
+                totalProgress: 100,
+                errorCount: errorCount,
+                completedExercises: 3,
+                totalExercises: 3,
+                exerciseTimes: JSON.stringify([exerciseTime])
+              }
+            });
+          }
+        }
+      ]);
+      return;
+    }
+
+    // Move to next question or finish
+    if (isLastQuestion) {
+      finishExercise();
+    } else {
+      setCurrentQuestionIndex((prev) => prev + 1);
+      setSelectedOption(null);
+      setIsAnswered(false);
+      setIsCorrect(false);
+    }
+  };
+
+  const finishExercise = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    const exerciseTime = elapsedTime;
+    const totalTime = (parseInt(params?.totalTime) || 0) + exerciseTime;
+
     router.push({
       pathname: "/exercices/famille/endexos",
       params: {
-        finalLives: lives,
-        finalProgress: progress
-        // Ajoutez d'autres stats nécessaires ici
+        currentLives: lives,
+        totalTime: totalTime,
+        totalProgress: 100,
+        errorCount: errorCount,
+        completedExercises: 3,
+        totalExercises: 3,
+        exerciseTimes: JSON.stringify([exerciseTime])
       }
     });
   };
 
-  // --- RENDU DYNAMIQUE DES BOUTONS (Gris, Rouge, Vert) ---
-  const getButtonStyle = (optText) => {
+  // Get button style based on state
+  const getButtonStyle = (optionText) => {
     let style = {
       backgroundColor: "#E0E0E0",
       borderWidth: 1,
@@ -164,16 +332,16 @@ const ExerciseThreeScreen = () => {
     let textStyle = { color: "#000" };
 
     if (isAnswered) {
-      if (optText === CORRECT_ANSWER) {
-        // TOUJOURS afficher la bonne réponse en VERT à la fin
+      if (optionText === currentQuestion.local) {
+        // Always show correct answer in green
         style = {
           backgroundColor: "#34C759",
           borderColor: "#34C759",
           borderWidth: 2
         };
         textStyle = { color: "#FFF" };
-      } else if (optText === selectedOption && !isCorrect) {
-        // Si c'est celle qu'on a cliqué et qu'elle est fausse -> ROUGE
+      } else if (optionText === selectedOption && !isCorrect) {
+        // Selected wrong answer in red
         style = {
           backgroundColor: "#FFCDD2",
           borderColor: "#C81E2F",
@@ -181,7 +349,7 @@ const ExerciseThreeScreen = () => {
         };
         textStyle = { color: "#C81E2F" };
       } else {
-        // Les autres s'effacent légèrement
+        // Other options fade
         style = {
           backgroundColor: "#F0F0F0",
           opacity: 0.6,
@@ -189,8 +357,8 @@ const ExerciseThreeScreen = () => {
           borderColor: "#E0E0E0"
         };
       }
-    } else if (optText === selectedOption) {
-      // État "Sélectionné avant validation" (Bleu)
+    } else if (optionText === selectedOption) {
+      // Selected before answering - blue
       style = {
         backgroundColor: "#E3F2FD",
         borderColor: "#2196F3",
@@ -202,33 +370,75 @@ const ExerciseThreeScreen = () => {
     return { style, textStyle };
   };
 
+  // Calculate progress
+  const exerciseProgress =
+    ((currentQuestionIndex + 1) / exerciseQuestions.length) * 34;
+  const overallProgress = totalProgress + exerciseProgress;
+
+  // Show loading while fetching exercises from backend
+  if (isLoadingExercises) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle='dark-content' backgroundColor='#F5F5F5' />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size='large' color='#D32F2F' />
+          <Text style={styles.loadingText}>Chargement des exercices...</Text>
+          {exerciseError && (
+            <Text style={styles.fallbackText}>
+              Utilisation des données locales
+            </Text>
+          )}
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle='dark-content' backgroundColor='#F5F5F5' />
 
       <View style={styles.container}>
-        {/* --- HEADER (VIES & PROGRESSION) --- */}
+        {/* --- HEADER --- */}
         <View style={styles.header}>
-          {/* Barre de progression */}
           <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
+            <View
+              style={[styles.progressBarFill, { width: `${overallProgress}%` }]}
+            />
           </View>
-          {/* Compteur de Coris */}
-          <View style={styles.livesContainer}>
+          <View style={styles.headerRight}>
+            <Text style={styles.timerText}>🕒 {formatTime(elapsedTime)}</Text>
             <Text style={styles.livesText}>🐚 {lives}</Text>
           </View>
         </View>
 
+        {/* Question counter */}
+        <View style={styles.questionCounter}>
+          <Text style={styles.questionCounterText}>
+            Question {currentQuestionIndex + 1} / {TOTAL_QUESTIONS}
+          </Text>
+        </View>
+
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* --- CONSIGNE --- */}
-          <View style={styles.instructionContainer}>
-            <Text style={styles.instructionTitle}>Question Finale</Text>
-            <Text style={styles.instructionText}>{QUESTION_TEXT}</Text>
+          {/* --- IMAGE --- */}
+          <View style={styles.imageContainer}>
+            <Image
+              source={require("../../../assets/images/avatar-famille.png")}
+              style={styles.illustrationImage}
+              resizeMode='contain'
+            />
           </View>
 
-          {/* --- GRILLE D'OPTIONS --- */}
+          {/* --- QUESTION --- */}
+          <View style={styles.instructionContainer}>
+            <Text style={styles.instructionTitle}>
+              Traduisez en langue locale
+            </Text>
+            <Text style={styles.instructionText}>{currentQuestion.fr}</Text>
+          </View>
+
+          {/* --- OPTIONS --- */}
           <View style={styles.optionsGrid}>
-            {options.map((opt) => {
+            {currentQuestion.options.map((opt) => {
               const { style, textStyle } = getButtonStyle(opt.text);
               return (
                 <TouchableOpacity
@@ -243,7 +453,7 @@ const ExerciseThreeScreen = () => {
             })}
           </View>
 
-          {/* --- BANDEAU DE CORRECTION EN BAS --- */}
+          {/* --- FEEDBACK --- */}
           {isAnswered && (
             <View
               style={
@@ -259,27 +469,31 @@ const ExerciseThreeScreen = () => {
               >
                 {isCorrect
                   ? "Bravo ! C'est correct !"
-                  : `La bonne réponse est : ${CORRECT_ANSWER}`}
+                  : `La bonne réponse est : ${currentQuestion.local}`}
               </Text>
             </View>
           )}
         </ScrollView>
       </View>
 
-      {/* --- FOOTER / BOUTON CONTINUER --- */}
+      {/* --- FOOTER --- */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={[
             styles.nextButton,
-            !isAnswered && styles.nextButtonDisabled, // Grisé tant qu'on n'a pas joué
-            isAnswered && !isCorrect && { backgroundColor: "#C81E2F" }, // Rouge si raté
-            isAnswered && isCorrect && { backgroundColor: "#34C759" } // Vert si réussi
+            !isAnswered && styles.nextButtonDisabled,
+            isAnswered && !isCorrect && { backgroundColor: "#C81E2F" },
+            isAnswered && isCorrect && { backgroundColor: "#34C759" }
           ]}
-          onPress={handleNext}
+          onPress={handleNextQuestion}
           disabled={!isAnswered}
         >
           <Text style={styles.nextButtonText}>
-            {isAnswered ? "Continuer" : "Valider"}
+            {isAnswered
+              ? isLastQuestion
+                ? "Terminer"
+                : "Question suivante"
+              : "Valider"}
           </Text>
         </TouchableOpacity>
       </View>
@@ -292,6 +506,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F5F5F5"
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+    padding: 20
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#666"
+  },
+  fallbackText: {
+    marginTop: 8,
+    fontSize: 12,
+    color: "#999",
+    fontStyle: "italic"
+  },
   container: {
     flex: 1,
     paddingHorizontal: 20,
@@ -303,34 +535,64 @@ const styles = StyleSheet.create({
     paddingBottom: 20
   },
 
-  // --- HEADER & STATS ---
+  // --- HEADER ---
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     width: "100%",
-    marginBottom: 20
+    marginBottom: 10
   },
   progressBarContainer: {
-    height: 12,
+    height: 10,
     flex: 1,
     backgroundColor: "#E0E0E0",
-    borderRadius: 6,
-    marginRight: 15
+    borderRadius: 5,
+    marginRight: 15,
+    overflow: "hidden"
   },
   progressBarFill: {
     height: "100%",
     backgroundColor: "#C81E2F",
-    borderRadius: 6
+    borderRadius: 5
   },
-  livesContainer: {
-    flexDirection: "row",
-    alignItems: "center"
+  headerRight: {
+    alignItems: "flex-end"
+  },
+  timerText: {
+    fontSize: 12,
+    color: "#666",
+    marginBottom: 4
   },
   livesText: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#C81E2F"
+  },
+
+  // --- QUESTION COUNTER ---
+  questionCounter: {
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 15
+  },
+  questionCounterText: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "500"
+  },
+
+  // --- IMAGE ---
+  imageContainer: {
+    width: "100%",
+    height: 80,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 15
+  },
+  illustrationImage: {
+    width: 60,
+    height: 60
   },
 
   // --- INSTRUCTIONS ---
@@ -340,7 +602,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 20,
     alignItems: "center",
-    marginBottom: 30,
+    marginBottom: 25,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -350,17 +612,17 @@ const styles = StyleSheet.create({
   instructionTitle: {
     color: "#C81E2F",
     fontWeight: "bold",
-    fontSize: 16,
+    fontSize: 14,
     marginBottom: 10
   },
   instructionText: {
     textAlign: "center",
-    fontSize: 18,
+    fontSize: 22,
     color: "#000",
     fontWeight: "600"
   },
 
-  // --- GRILLE D'OPTIONS ---
+  // --- OPTIONS ---
   optionsGrid: {
     width: "100%",
     flexDirection: "row",
@@ -381,12 +643,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold"
   },
 
-  // --- BANDEAUX DE CORRECTION ---
+  // --- FEEDBACK ---
   correctionBanner: {
     backgroundColor: "#FFCDD2",
     padding: 15,
     borderRadius: 10,
-    marginTop: 20,
+    marginTop: 15,
     borderWidth: 1,
     borderColor: "#C81E2F",
     alignItems: "center",
@@ -395,41 +657,42 @@ const styles = StyleSheet.create({
   correctionBannerText: {
     color: "#C81E2F",
     fontSize: 16,
-    fontWeight: "500"
+    fontWeight: "600"
   },
   correctionSuccess: {
-    backgroundColor: "#E8F5E9",
+    backgroundColor: "#C8E6C9",
     padding: 15,
     borderRadius: 10,
-    marginTop: 20,
+    marginTop: 15,
     borderWidth: 1,
-    borderColor: "#34C759",
+    borderColor: "#4CAF50",
     alignItems: "center",
     width: "100%"
   },
   correctionSuccessText: {
-    color: "#34C759",
+    color: "#2E7D32",
     fontSize: 16,
-    fontWeight: "bold"
+    fontWeight: "600"
   },
 
-  // --- FOOTER & BOUTON ---
+  // --- FOOTER ---
   footer: {
     width: "100%",
     paddingHorizontal: 20,
     paddingVertical: 15,
     backgroundColor: "#F5F5F5",
     borderTopWidth: 1,
-    borderColor: "#E0E0E0"
+    borderTopColor: "#EEE"
   },
   nextButton: {
-    width: "100%",
     paddingVertical: 15,
     borderRadius: 30,
-    alignItems: "center"
+    alignItems: "center",
+    width: "100%",
+    backgroundColor: "#C81E2F"
   },
   nextButtonDisabled: {
-    backgroundColor: "#E0E0E0"
+    backgroundColor: "#CCC"
   },
   nextButtonText: {
     color: "#FFF",

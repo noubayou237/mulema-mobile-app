@@ -15,7 +15,8 @@ const UserContext = createContext({
   login: async () => {},
   logout: async () => {},
   refreshUser: async () => {},
-  setLanguage: async () => {}
+  setLanguage: async () => {},
+  setUserData: () => {}
 });
 
 export default function UserProvider({ children }) {
@@ -50,7 +51,7 @@ export default function UserProvider({ children }) {
           if (parsed?.accessToken) {
             // Validate token with backend
             try {
-              const res = await api.get("/auth/me");
+              const res = await api.get("/auth/me", { timeout: 5000 });
               setUser(res.data);
             } catch (authError) {
               // Only clear session on 401 (unauthorized) - not on network errors
@@ -58,7 +59,8 @@ export default function UserProvider({ children }) {
                 await AsyncStorage.removeItem(STORAGE_KEY);
                 setUser(null);
               }
-              // For other errors, keep the session and user will be null but we don't clear storage
+              // For other errors (network, timeout), keep the session
+              console.warn("UserContext: Auth check failed", authError.message);
             }
           }
         }
@@ -93,27 +95,21 @@ export default function UserProvider({ children }) {
 
   // ❌ LOGOUT
   const logout = async () => {
-    console.log("UserContext: Logout started");
     try {
       const session = await AsyncStorage.getItem(STORAGE_KEY);
-      console.log("UserContext: Session found:", !!session);
       if (session) {
         const parsed = JSON.parse(session);
         if (parsed?.refreshToken) {
-          console.log("UserContext: Calling /auth/logout");
-          await api.post("/auth/logout", { refreshToken: parsed.refreshToken });
+          await api.post("/auth/logout", {
+            refreshToken: parsed.refreshToken
+          });
         }
       }
     } catch (e) {
-      console.warn(
-        "UserContext: Logout API error (continuing anyway):",
-        e.message
-      );
+      console.warn("Logout API error:", e.message);
     } finally {
-      console.log("UserContext: Clearing storage and redirecting");
       await AsyncStorage.removeItem(STORAGE_KEY);
-      setUser(null);
-      router.replace("/(auth)/sign-in");
+      setUser(null); // 🔥 PLUS DE router.replace
     }
   };
 
@@ -127,6 +123,11 @@ export default function UserProvider({ children }) {
       console.warn("UserContext: Refresh user error:", e.message);
       throw e;
     }
+  };
+
+  // 🔧 SET USER DATA (for social login and external updates)
+  const setUserData = (userData) => {
+    setUser(userData);
   };
 
   // 🌐 CHANGE LANGUAGE
@@ -158,7 +159,8 @@ export default function UserProvider({ children }) {
         login,
         logout,
         refreshUser,
-        setLanguage
+        setLanguage,
+        setUserData
       }}
     >
       {children}

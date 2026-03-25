@@ -1,51 +1,74 @@
-// app/ChoiceLanguage.jsx
 import React, { useState, useEffect } from "react";
 import {
   View,
-  Text,
   TouchableOpacity,
-  StyleSheet,
   Modal,
   FlatList,
   Alert,
   ActivityIndicator,
-  SafeAreaView,
+  StyleSheet,
+  Text
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 
+import ScreenWrapper from "./components/ui/ScreenWrapper";
+import AppTitle from "./components/ui/AppTitle";
+import AppText from "./components/ui/AppText";
+import Button from "./components/ui/Button";
+import Card from "./components/ui/Card";
+import api from "../services/api";
+
 const SELECTED_LANGUAGE_KEY = "selectedLanguage";
 
 const LANGS = [
-  { code: "bassa", label: "Le Bassa" },
-  { code: "duala", label: "Le Duala" },
-  { code: "ghomala", label: "Le Ghomala" },
+  { code: "bassa", label: "Le Bassa", patrimonialLanguageId: "bassa-id" },
+  { code: "duala", label: "Le Duala", patrimonialLanguageId: "duala-id" },
+  { code: "ghomala", label: "Le Ghomala", patrimonialLanguageId: "ghomala-id" }
 ];
 
-function LangModalPicker({ selected, setSelected }) {
+function LangModalPicker({
+  selected,
+  setSelected,
+  onSelect,
+  availableLanguages = []
+}) {
   const [open, setOpen] = useState(false);
+
+  const allLangs =
+    availableLanguages.length > 0
+      ? availableLanguages.map((l) => ({
+          code:
+            l.patrimonialLanguage?.name?.toLowerCase() ||
+            l.officialLanguage?.name?.toLowerCase(),
+          label: l.patrimonialLanguage?.name || l.officialLanguage?.name,
+          id: l.id
+        }))
+      : LANGS;
+
+  const selectedLabel = selected
+    ? allLangs.find((l) => l.code === selected)?.label
+    : "-- Choisir une langue --";
 
   return (
     <>
       <TouchableOpacity
         onPress={() => setOpen(true)}
-        style={styles.selectorButton}
         activeOpacity={0.85}
+        style={styles.picker}
       >
-        <Text style={[styles.selectorText, !selected && { color: "#888" }]}>
-          {selected
-            ? LANGS.find((l) => l.code === selected)?.label
-            : "-- Choisir une langue --"}
-        </Text>
+        <AppText variant={selected ? "body" : "muted"}>{selectedLabel}</AppText>
       </TouchableOpacity>
 
-      <Modal visible={open} animationType="slide" transparent>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Sélectionner une langue</Text>
+      <Modal visible={open} animationType='fade' transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <AppTitle style={styles.modalTitle}>
+              Sélectionner une langue
+            </AppTitle>
 
             <FlatList
-              data={LANGS}
+              data={allLangs}
               keyExtractor={(item) => item.code}
               renderItem={({ item }) => {
                 const isSelected = selected === item.code;
@@ -53,21 +76,23 @@ function LangModalPicker({ selected, setSelected }) {
                   <TouchableOpacity
                     onPress={() => {
                       setSelected(item.code);
+                      if (onSelect) onSelect(item);
                       setOpen(false);
                     }}
                     style={[
                       styles.langItem,
-                      isSelected && styles.langItemSelected,
+                      isSelected && styles.langItemSelected
                     ]}
                   >
                     <Text
                       style={[
-                        styles.langText,
-                        isSelected && styles.langTextSelected,
+                        styles.langItemText,
+                        isSelected && styles.langItemTextSelected
                       ]}
                     >
                       {item.label}
                     </Text>
+                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
                   </TouchableOpacity>
                 );
               }}
@@ -75,9 +100,9 @@ function LangModalPicker({ selected, setSelected }) {
 
             <TouchableOpacity
               onPress={() => setOpen(false)}
-              style={styles.closeBtn}
+              style={styles.closeButton}
             >
-              <Text>Annuler</Text>
+              <Text style={styles.closeButtonText}>Fermer</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -88,169 +113,296 @@ function LangModalPicker({ selected, setSelected }) {
 
 export default function ChoiceLanguage() {
   const router = useRouter();
-  const [selected, setSelected] = useState("");
+  const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
+  const [availableLanguages, setAvailableLanguages] = useState([]);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const stored = await AsyncStorage.getItem(SELECTED_LANGUAGE_KEY);
-        if (stored) setSelected(stored);
-      } catch (e) {
-        console.warn("Erreur lecture langue:", e);
-      } finally {
-        setInitializing(false);
-      }
-    })();
+    fetchAvailableLanguages();
+    loadSavedLanguage();
   }, []);
 
-  const handleContinue = async () => {
-    if (!selected) {
-      Alert.alert("Choix requis", "Veuillez sélectionner une langue.");
-      return;
+  const fetchAvailableLanguages = async () => {
+    try {
+      const response = await api.get("/user-languages/available");
+      if (response.data?.patrimonialLanguages) {
+        setAvailableLanguages(
+          response.data.patrimonialLanguages.map((lang) => ({
+            patrimonialLanguage: { name: lang.name }
+          }))
+        );
+      }
+    } catch (error) {
+      console.log("Error fetching languages:", error.message);
+      // Fall back to local LANGS - already handled
     }
+  };
+
+  const loadSavedLanguage = async () => {
+    try {
+      const userLanguagesResponse = await api.get("/user-languages");
+      if (userLanguagesResponse.data?.length > 0) {
+        const firstLang = userLanguagesResponse.data[0];
+        const langCode =
+          firstLang.patrimonialLanguage?.name?.toLowerCase() ||
+          firstLang.officialLanguage?.name?.toLowerCase();
+        setSelected(langCode);
+        setInitializing(false);
+        return;
+      }
+    } catch (error) {
+      console.log("Error fetching user languages:", error.message);
+    }
+
+    try {
+      const stored = await AsyncStorage.getItem(SELECTED_LANGUAGE_KEY);
+      if (stored) setSelected(stored);
+    } catch (e) {
+      console.warn("Erreur lecture langue:", e);
+    } finally {
+      setInitializing(false);
+    }
+  };
+
+  const handleLanguageSelect = async (language) => {
+    if (!language) return;
 
     setLoading(true);
     try {
-      await AsyncStorage.setItem(SELECTED_LANGUAGE_KEY, selected);
-      router.replace(`/PageVideo?lang=${encodeURIComponent(selected)}`);
+      try {
+        await api.post("/user-languages", {
+          patrimonialLanguageId: language.patrimonialLanguageId
+        });
+      } catch (apiError) {
+        console.log("Language might already exist:", apiError.message);
+      }
+
+      await AsyncStorage.setItem(SELECTED_LANGUAGE_KEY, language.code);
+
+      router.replace(`/PageVideo?lang=${encodeURIComponent(language.code)}`);
     } catch (e) {
+      console.error("Error saving language:", e);
       Alert.alert("Erreur", "Impossible d'enregistrer la langue.");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleContinue = async () => {
+    if (!selected) {
+      return Alert.alert("Choix requis", "Veuillez sélectionner une langue.");
+    }
+
+    const language = LANGS.find((l) => l.code === selected);
+    await handleLanguageSelect(language);
+  };
+
   if (initializing) {
     return (
-      <SafeAreaView style={styles.center}>
-        <ActivityIndicator size="large" color="#B22222" />
-      </SafeAreaView>
+      <ScreenWrapper>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size='large' color='#D32F2F' />
+        </View>
+      </ScreenWrapper>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>
-          Choisis la langue que tu souhaites apprendre
-        </Text>
-        <Text style={styles.subtitle}>
-          Découvre l’histoire de cette langue maternelle
-        </Text>
+    <ScreenWrapper>
+      <View style={styles.container}>
+        <AppTitle style={styles.mainTitle}>Bienvenue sur Mulema</AppTitle>
+        <AppText variant='muted' style={styles.subtitle}>
+          Apprenez les langues locales camerounaises
+        </AppText>
 
-        <View style={styles.pickerWrap}>
-          <LangModalPicker selected={selected} setSelected={setSelected} />
+        <AppTitle style={styles.sectionTitle}>
+          Quelle langue voulez-vous apprendre ?
+        </AppTitle>
+
+        <View style={styles.pickerContainer}>
+          <LangModalPicker
+            selected={selected}
+            setSelected={(code) => {
+              setSelected(code);
+              const lang = LANGS.find((l) => l.code === code);
+              if (lang) handleLanguageSelect(lang);
+            }}
+            onSelect={handleLanguageSelect}
+            availableLanguages={availableLanguages}
+          />
         </View>
 
-        <TouchableOpacity
-          style={[
-            styles.button,
-            (!selected || loading) && styles.buttonDisabled,
-          ]}
-          onPress={handleContinue}
-          disabled={!selected || loading}
-        >
-          <Text style={styles.buttonText}>
-            {loading ? "Patiente..." : "Continuer"}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.langList}>
+          {LANGS.map((lang) => (
+            <TouchableOpacity
+              key={lang.code}
+              onPress={() => handleLanguageSelect(lang)}
+              disabled={loading}
+              activeOpacity={0.85}
+            >
+              <Card
+                style={[
+                  styles.langCard,
+                  selected === lang.code ? styles.langCardSelected : null
+                ]}
+              >
+                <View style={styles.langCardRow}>
+                  <AppText style={styles.langLabel}>{lang.label}</AppText>
+                </View>
+                {selected === lang.code && (
+                  <AppText style={styles.checkmarkText}>✓</AppText>
+                )}
+              </Card>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.buttonContainer}>
+          <Button
+            title={loading ? "Chargement..." : "Continuer"}
+            onPress={handleContinue}
+            disabled={!selected || loading}
+            style={[
+              styles.button,
+              !selected || loading ? styles.buttonDisabled : null
+            ]}
+          />
+        </View>
       </View>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 
-/* ---------------- STYLES ---------------- */
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  content: {
+  loadingContainer: {
     flex: 1,
-    padding: 24,
-    justifyContent: "center",
+    alignItems: "center",
+    justifyContent: "center"
   },
-  title: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#B22222",
+  container: {
+    flex: 1,
+    paddingTop: 32
+  },
+  mainTitle: {
+    fontSize: 28,
+    fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 10,
+    marginBottom: 8,
+    color: "#050303"
   },
   subtitle: {
-    fontSize: 16,
-    color: "#666",
     textAlign: "center",
-    marginBottom: 40,
+    marginBottom: 32,
+    color: "#6B6B6B"
   },
-  pickerWrap: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    marginBottom: 24,
-  },
-  selectorButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 14,
-  },
-  selectorText: {
-    fontSize: 16,
-    color: "#111",
-  },
-  button: {
-    backgroundColor: "#B22222",
-    padding: 18,
-    borderRadius: 12,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: "#fff",
-    fontWeight: "700",
+  sectionTitle: {
     fontSize: 18,
-    textAlign: "center",
+    fontWeight: "600",
+    marginBottom: 16,
+    color: "#050303"
   },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
-    justifyContent: "center",
-    padding: 20,
+  pickerContainer: {
+    marginBottom: 32
   },
-  modalCard: {
-    backgroundColor: "#fff",
+  picker: {
+    borderWidth: 1,
+    borderColor: "#F3E8E8",
     borderRadius: 12,
-    padding: 14,
+    padding: 16,
+    backgroundColor: "#FFFFFF"
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    paddingHorizontal: 24
+  },
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: "#F3E8E8"
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 12,
+    fontWeight: "600",
     textAlign: "center",
+    marginBottom: 16,
+    color: "#050303"
   },
   langItem: {
     paddingVertical: 14,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     borderRadius: 8,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center"
   },
   langItemSelected: {
-    backgroundColor: "#fff4f4",
+    backgroundColor: "#FFEBEE"
   },
-  langText: {
+  langItemText: {
     fontSize: 16,
-    color: "#111",
+    color: "#050303"
   },
-  langTextSelected: {
-    fontWeight: "700",
-    color: "#B22222",
+  langItemTextSelected: {
+    color: "#D32F2F",
+    fontWeight: "600"
   },
-  closeBtn: {
-    marginTop: 12,
+  checkmark: {
+    color: "#D32F2F",
+    fontSize: 16,
+    fontWeight: "bold"
+  },
+  closeButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    alignItems: "center"
+  },
+  closeButtonText: {
+    color: "#6B6B6B",
+    fontSize: 16
+  },
+  langList: {
+    gap: 16
+  },
+  langCard: {
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16
   },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+  langCardSelected: {
+    borderWidth: 2,
+    borderColor: "#D32F2F"
   },
+  langCardRow: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
+  langLabel: {
+    fontSize: 16,
+    color: "#050303"
+  },
+  checkmarkText: {
+    color: "#D32F2F",
+    fontSize: 16
+  },
+  buttonContainer: {
+    marginTop: "auto",
+    marginBottom: 32
+  },
+  button: {
+    backgroundColor: "#D32F2F",
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: "center"
+  },
+  buttonDisabled: {
+    opacity: 0.5
+  }
 });

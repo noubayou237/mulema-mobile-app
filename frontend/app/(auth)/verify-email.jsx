@@ -4,8 +4,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Text,
   View,
+  Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
@@ -21,7 +21,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../../services/api";
 import { useTranslation } from "react-i18next";
-import "../../src/i18n";
+
+import ScreenWrapper from "../components/ui/ScreenWrapper";
+import AppTitle from "../components/ui/AppTitle";
+import AppText from "../components/ui/AppText";
+import Button from "../components/ui/Button";
 
 const { width, height } = Dimensions.get("window");
 const RESEND_COOLDOWN = 60;
@@ -322,7 +326,7 @@ const VerifyEmail = () => {
     try {
       if (flow === "reset") {
         router.push({
-          pathname: "/ResetPasswordScreen",
+          pathname: "/(auth)/ResetPasswordScreen",
           params: { email, otpCode: code.trim() }
         });
       } else {
@@ -349,7 +353,7 @@ const VerifyEmail = () => {
     setResendLoading(true);
     try {
       await api.post("/auth/request-otp", { email });
-      Alert.alert("Envoyé", `Un nouveau code a été envoyé à ${email}`);
+      Alert.alert("Envoyé", `Nouveau code envoyé à ${email}`);
       startCountdown();
     } catch (err) {
       Alert.alert(

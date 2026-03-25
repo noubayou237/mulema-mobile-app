@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Text,
   View,
+  Text,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -12,14 +12,19 @@ import {
   Easing,
   StyleSheet,
   Dimensions,
-  StatusBar
+  StatusBar,
+  ActivityIndicator
 } from "react-native";
+import Svg, { G, Path } from "react-native-svg";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useUser } from "../../src/context/UserContext";
 import { useTranslation } from "react-i18next";
+import SocialButtons from "../../src/components/SocialButtons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import api from "../../services/api";
 
 const { width, height } = Dimensions.get("window");
 
@@ -220,13 +225,56 @@ const Field = ({
 // ── Main Screen ────────────────────────────────────────────────────────────
 const SignInScreen = () => {
   const router = useRouter();
-  const { login } = useUser();
+  const { login, setUserData } = useUser();
   const { t } = useTranslation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState(false);
+
+  // Handle successful social login
+  const handleSocialLoginSuccess = async (socialData) => {
+    try {
+      setSocialLoading(true);
+
+      // Check if there was an error in the social login
+      if (!socialData?.success) {
+        Alert.alert(
+          t("common.error"),
+          socialData?.error || t("auth.socialLoginError")
+        );
+        return;
+      }
+
+      // The backend should return accessToken and refreshToken
+      if (socialData?.accessToken) {
+        const STORAGE_KEY = "userSession";
+        await AsyncStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            accessToken: socialData.accessToken,
+            refreshToken: socialData.refreshToken
+          })
+        );
+        // Get user data
+        const me = await api.get("/auth/me");
+        router.replace("/(tabs)/home");
+      } else {
+        // No accessToken means the backend didn't respond properly
+        Alert.alert(
+          t("common.error"),
+          "Unable to complete login. Please make sure the backend server is running."
+        );
+      }
+    } catch (error) {
+      console.error("Social login error:", error);
+      Alert.alert(t("common.error"), t("auth.socialLoginError"));
+    } finally {
+      setSocialLoading(false);
+    }
+  };
 
   // Mount animations
   const logoAnim = useRef(new Animated.Value(0)).current;
@@ -292,16 +340,17 @@ const SignInScreen = () => {
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      Alert.alert(t("common.error"), t("errors.requiredField"));
-      return;
+      return Alert.alert(t("common.error"), t("errors.requiredField"));
     }
     setLoading(true);
     try {
       await login(email, password);
     } catch (err) {
       const msg =
-        err?.response?.data?.message || err?.message || "Sign in failed.";
-      Alert.alert("Error", msg);
+        err?.response?.data?.message ||
+        err?.message ||
+        t("signIn.signInFailed");
+      Alert.alert(t("common.error"), msg);
     } finally {
       setLoading(false);
     }
@@ -309,7 +358,7 @@ const SignInScreen = () => {
 
   const onForgotPassword = () => {
     if (!email || !email.includes("@")) {
-      Alert.alert("Invalid Email", "Please enter a valid email first.");
+      Alert.alert(t("signIn.invalidEmail"), t("signIn.enterValidEmail"));
       return;
     }
     router.push({ pathname: "/(auth)/ResetPasswordScreen", params: { email } });
@@ -456,11 +505,15 @@ const SignInScreen = () => {
             }}
           >
             <View style={s.pillBadge}>
-              <Text style={s.pillText}>🌍 Langues camerounaises</Text>
+              <Text style={s.pillText}>🌍 {t("signIn.languages")}</Text>
             </View>
+<<<<<<< HEAD
             <Text style={s.title}>
               Connectez-vous pour continuer votre aventure
             </Text>
+=======
+            <Text style={s.subtitle}>{t("signIn.subtitle")}</Text>
+>>>>>>> b81adc9e1964d4ad03460f86d72c355383b87893
           </Animated.View>
 
           {/* ── Form card ── */}
@@ -482,22 +535,22 @@ const SignInScreen = () => {
           >
             {/* Email */}
             <Field
-              label='Adresse e-mail'
+              label={t("signIn.emailLabel")}
               icon='mail-outline'
               value={email}
               onChangeText={setEmail}
-              placeholder='exemple@email.com'
+              placeholder={t("signIn.emailPlaceholder")}
               keyboardType='email-address'
               autoCapitalize='none'
             />
 
             {/* Password */}
             <Field
-              label='Mot de passe'
+              label={t("signIn.passwordLabel")}
               icon='lock-closed-outline'
               value={password}
               onChangeText={setPassword}
-              placeholder='••••••••'
+              placeholder={t("signIn.passwordPlaceholder")}
               secureTextEntry={!showPassword}
               rightIcon={showPassword ? "eye-outline" : "eye-off-outline"}
               onRightPress={() => setShowPassword(!showPassword)}
@@ -509,7 +562,7 @@ const SignInScreen = () => {
               activeOpacity={0.8}
               style={[s.signUpBtn, { alignSelf: "flex-end", marginBottom: 24 }]}
             >
-              <Text style={s.forgot}>Mot de passe oublié ?</Text>
+              <Text style={s.forgot}>{t("signIn.forgotPassword")}</Text>
             </TouchableOpacity>
 
             {/* Sign in button */}
@@ -534,8 +587,13 @@ const SignInScreen = () => {
                     <WaveDots />
                   ) : (
                     <>
+<<<<<<< HEAD
                       <Text style={s.btnText}>Se connecter</Text>
                       {/* <Ionicons
+=======
+                      <Text style={s.btnText}>{t("signIn.signInButton")}</Text>
+                      <Ionicons
+>>>>>>> b81adc9e1964d4ad03460f86d72c355383b87893
                         name='arrow-forward'
                         size={20}
                         color='#fff'
@@ -547,12 +605,8 @@ const SignInScreen = () => {
               </TouchableOpacity>
             </Animated.View>
 
-            {/* Divider */}
-            <View style={s.dividerRow}>
-              <View style={s.dividerLine} />
-              <Text style={s.dividerText}>ou</Text>
-              <View style={s.dividerLine} />
-            </View>
+            {/* Social Login Buttons */}
+            <SocialButtons onSuccess={handleSocialLoginSuccess} />
 
             {/* Sign up */}
             <TouchableOpacity
@@ -561,8 +615,8 @@ const SignInScreen = () => {
               style={s.signUpBtn}
             >
               <Text style={s.signUpText}>
-                Pas encore de compte ?{" "}
-                <Text style={s.signUpLink}>S&apos;inscrire gratuitement</Text>
+                {t("signIn.noAccount")}{" "}
+                <Text style={s.signUpLink}>{t("signIn.signUpFree")}</Text>
               </Text>
             </TouchableOpacity>
           </Animated.View>
