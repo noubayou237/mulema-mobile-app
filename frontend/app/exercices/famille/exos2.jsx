@@ -20,7 +20,10 @@ import { Audio } from "expo-av";
 import { useTranslation } from "react-i18next";
 import * as Haptics from "expo-haptics";
 import { THEME_FAMILLE_WORDS } from "../../data/themeData";
+<<<<<<< HEAD
 import { generateBlockExercises } from "../../src/services/ExerciseApiService";
+=======
+>>>>>>> feat/settings-page
 
 const { width } = Dimensions.get("window");
 
@@ -148,11 +151,16 @@ const playFeedbackSound = async (isCorrect) => {
 };
 
 // --- EXERCISE DATA: ALL 6 WORDS ---
+<<<<<<< HEAD
 // Block ID for the "Famille" theme in the backend
 const THEME_BLOCK_ID = "block-famille-001";
 
 // Static fallback data
 const staticExerciseQuestions = THEME_FAMILLE_WORDS.map((word, index) => ({
+=======
+// Using all 6 words from the shared pool for pedagogical consistency
+const EXERCISE_QUESTIONS = THEME_FAMILLE_WORDS.map((word, index) => ({
+>>>>>>> feat/settings-page
   id: word.id,
   questionNumber: index + 1,
   fr: word.fr,
@@ -160,7 +168,11 @@ const staticExerciseQuestions = THEME_FAMILLE_WORDS.map((word, index) => ({
   audio: word.audio
 }));
 
+<<<<<<< HEAD
 const TOTAL_QUESTIONS = staticExerciseQuestions.length;
+=======
+const TOTAL_QUESTIONS = EXERCISE_QUESTIONS.length;
+>>>>>>> feat/settings-page
 
 const ExerciseTwoScreen = () => {
   const router = useRouter();
@@ -179,6 +191,7 @@ const ExerciseTwoScreen = () => {
   const totalProgress = getParamAsNumber("totalProgress", 33);
 
   // --- STATE ---
+<<<<<<< HEAD
   // Backend data state
   const [exerciseQuestions, setExerciseQuestions] = useState(
     staticExerciseQuestions
@@ -186,6 +199,8 @@ const ExerciseTwoScreen = () => {
   const [isLoadingExercises, setIsLoadingExercises] = useState(true);
   const [exerciseError, setExerciseError] = useState(null);
 
+=======
+>>>>>>> feat/settings-page
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [inputText, setInputText] = useState("");
   const [lives, setLives] = useState(initialLives);
@@ -204,6 +219,7 @@ const ExerciseTwoScreen = () => {
   const timerRef = useRef(null);
 
   // Current question
+<<<<<<< HEAD
   // Fetch exercises from backend on mount
   useEffect(() => {
     const fetchExercises = async () => {
@@ -242,6 +258,9 @@ const ExerciseTwoScreen = () => {
   }, []);
 
   const currentQuestion = exerciseQuestions[currentQuestionIndex];
+=======
+  const currentQuestion = EXERCISE_QUESTIONS[currentQuestionIndex];
+>>>>>>> feat/settings-page
   const isLastQuestion = currentQuestionIndex === TOTAL_QUESTIONS - 1;
 
   // Initialize timer

@@ -48,12 +48,16 @@
     "passwordResetSuccess": "Password updated. You can now sign in.",
     "passwordResetError": "Unable to reset password.",
     "account": "Account",
+<<<<<<< HEAD
     "saving": "Saving...",
     "orContinueWith": "or continue with",
     "signInWithGoogle": "Sign in with Google",
     "signInWithFacebook": "Sign in with Facebook",
     "signInWithApple": "Sign in with Apple",
     "socialLoginError": "Social login error. Please try again."
+=======
+    "saving": "Saving..."
+>>>>>>> feat/settings-page
   },
   "profile": {
     "title": "Profile",

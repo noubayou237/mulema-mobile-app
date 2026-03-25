@@ -1,11 +1,16 @@
 import React from "react";
+<<<<<<< HEAD
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
+=======
+import { TouchableOpacity, Text } from "react-native";
+>>>>>>> feat/settings-page
 
 export default function Button({
   title,
   onPress,
   loading = false,
   variant = "primary",
+<<<<<<< HEAD
   textClassName = "",
   style,
   disabled
@@ -32,21 +37,51 @@ export default function Button({
       return styles.textOutline;
     }
     return styles.textPrimary;
+=======
+  textClassName = ""
+}) {
+  const variants = {
+    primary: "bg-primary",
+    secondary: "bg-secondary",
+    outline: "border border-border bg-transparent"
+  };
+
+  // Determine text color based on variant and custom textClassName
+  const getTextColor = () => {
+    if (textClassName && textClassName.includes("text-white")) {
+      return "text-white";
+    }
+    if (variant === "outline") {
+      return "text-foreground";
+    }
+    return "text-primary-foreground";
+>>>>>>> feat/settings-page
   };
 
   return (
     <TouchableOpacity
       onPress={onPress}
+<<<<<<< HEAD
       disabled={loading || disabled}
       activeOpacity={0.8}
       style={[styles.button, getButtonStyle(), style]}
     >
       <Text style={[styles.text, getTextStyle()]}>
+=======
+      disabled={loading}
+      activeOpacity={0.8}
+      className={`py-3 rounded-xl items-center ${
+        loading ? "bg-muted" : variants[variant]
+      }`}
+    >
+      <Text className={`font-semibold ${textClassName || getTextColor()}`}>
+>>>>>>> feat/settings-page
         {loading ? "Chargement..." : title}
       </Text>
     </TouchableOpacity>
   );
 }
+<<<<<<< HEAD
 
 const styles = StyleSheet.create({
   button: {
@@ -82,3 +117,5 @@ const styles = StyleSheet.create({
     color: "#FFFFFF"
   }
 });
+=======
+>>>>>>> feat/settings-page

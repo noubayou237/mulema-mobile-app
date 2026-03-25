@@ -13,9 +13,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useUser } from "../../src/context/UserContext";
 import { useTranslation } from "react-i18next";
 
+<<<<<<< HEAD
 import Header from "../components/header";
 import BottomNav from "../components/bottom";
 
+=======
+>>>>>>> feat/settings-page
 import "../../src/i18n";
 
 /**
@@ -76,6 +79,7 @@ export default function TabsLayout() {
   );
 
   return (
+<<<<<<< HEAD
     <View style={styles.container}>
       <Header pageName={getTitle()} right={headerRight} />
 
@@ -83,6 +87,13 @@ export default function TabsLayout() {
       <View style={styles.content}>
         <Slot />
       </View>
+=======
+    <View className='flex-1 bg-background'>
+      <Header pageName={getTitle()} right={headerRight} />
+
+      {/* Contenu des écrans */}
+      <Slot />
+>>>>>>> feat/settings-page
 
       <BottomNav activeKey={activeSegment} />
     </View>

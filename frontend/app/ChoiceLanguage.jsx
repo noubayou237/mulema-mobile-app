@@ -5,9 +5,13 @@ import {
   Modal,
   FlatList,
   Alert,
+<<<<<<< HEAD
   ActivityIndicator,
   StyleSheet,
   Text
+=======
+  ActivityIndicator
+>>>>>>> feat/settings-page
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
@@ -17,7 +21,11 @@ import AppTitle from "./components/ui/AppTitle";
 import AppText from "./components/ui/AppText";
 import Button from "./components/ui/Button";
 import Card from "./components/ui/Card";
+<<<<<<< HEAD
 import api from "../services/api";
+=======
+import api from "@/services/api";
+>>>>>>> feat/settings-page
 
 const SELECTED_LANGUAGE_KEY = "selectedLanguage";
 
@@ -35,6 +43,10 @@ function LangModalPicker({
 }) {
   const [open, setOpen] = useState(false);
 
+<<<<<<< HEAD
+=======
+  // Merge local LANGS with available languages from backend
+>>>>>>> feat/settings-page
   const allLangs =
     availableLanguages.length > 0
       ? availableLanguages.map((l) => ({
@@ -46,15 +58,19 @@ function LangModalPicker({
         }))
       : LANGS;
 
+<<<<<<< HEAD
   const selectedLabel = selected
     ? allLangs.find((l) => l.code === selected)?.label
     : "-- Choisir une langue --";
 
+=======
+>>>>>>> feat/settings-page
   return (
     <>
       <TouchableOpacity
         onPress={() => setOpen(true)}
         activeOpacity={0.85}
+<<<<<<< HEAD
         style={styles.picker}
       >
         <AppText variant={selected ? "body" : "muted"}>{selectedLabel}</AppText>
@@ -64,6 +80,21 @@ function LangModalPicker({
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <AppTitle style={styles.modalTitle}>
+=======
+        className='border border-border rounded-xl py-4 px-4 bg-card'
+      >
+        <AppText className={!selected ? "text-muted-foreground" : ""}>
+          {selected
+            ? allLangs.find((l) => l.code === selected)?.label
+            : "-- Choisir une langue --"}
+        </AppText>
+      </TouchableOpacity>
+
+      <Modal visible={open} animationType='fade' transparent>
+        <View className='flex-1 bg-black/50 justify-center px-6'>
+          <View className='bg-card rounded-2xl p-6 border border-border'>
+            <AppTitle className='text-lg mb-4 text-center'>
+>>>>>>> feat/settings-page
               Sélectionner une langue
             </AppTitle>
 
@@ -79,6 +110,7 @@ function LangModalPicker({
                       if (onSelect) onSelect(item);
                       setOpen(false);
                     }}
+<<<<<<< HEAD
                     style={[
                       styles.langItem,
                       isSelected && styles.langItemSelected
@@ -93,6 +125,17 @@ function LangModalPicker({
                       {item.label}
                     </Text>
                     {isSelected && <Text style={styles.checkmark}>✓</Text>}
+=======
+                    className={`py-4 px-4 rounded-xl mb-2 
+                      ${isSelected ? "bg-primary/10" : ""}`}
+                  >
+                    <AppText
+                      className={`text-base 
+                      ${isSelected ? "text-primary font-semibold" : ""}`}
+                    >
+                      {item.label}
+                    </AppText>
+>>>>>>> feat/settings-page
                   </TouchableOpacity>
                 );
               }}
@@ -100,9 +143,15 @@ function LangModalPicker({
 
             <TouchableOpacity
               onPress={() => setOpen(false)}
+<<<<<<< HEAD
               style={styles.closeButton}
             >
               <Text style={styles.closeButtonText}>Fermer</Text>
+=======
+              className='mt-4 items-center'
+            >
+              <AppText className='text-muted-foreground'>Annuler</AppText>
+>>>>>>> feat/settings-page
             </TouchableOpacity>
           </View>
         </View>
@@ -118,6 +167,7 @@ export default function ChoiceLanguage() {
   const [initializing, setInitializing] = useState(true);
   const [availableLanguages, setAvailableLanguages] = useState([]);
 
+  // Fetch available languages from backend
   useEffect(() => {
     fetchAvailableLanguages();
     loadSavedLanguage();
@@ -134,15 +184,27 @@ export default function ChoiceLanguage() {
         );
       }
     } catch (error) {
+<<<<<<< HEAD
       console.log("Error fetching languages:", error.message);
       // Fall back to local LANGS - already handled
+=======
+      console.log("Error fetching languages:", error);
+      // Fall back to local LANGS
+>>>>>>> feat/settings-page
     }
   };
 
   const loadSavedLanguage = async () => {
     try {
+<<<<<<< HEAD
       const userLanguagesResponse = await api.get("/user-languages");
       if (userLanguagesResponse.data?.length > 0) {
+=======
+      // First try to get from backend
+      const userLanguagesResponse = await api.get("/user-languages");
+      if (userLanguagesResponse.data?.length > 0) {
+        // User already has languages, use the first one
+>>>>>>> feat/settings-page
         const firstLang = userLanguagesResponse.data[0];
         const langCode =
           firstLang.patrimonialLanguage?.name?.toLowerCase() ||
@@ -152,9 +214,16 @@ export default function ChoiceLanguage() {
         return;
       }
     } catch (error) {
+<<<<<<< HEAD
       console.log("Error fetching user languages:", error.message);
     }
 
+=======
+      console.log("Error fetching user languages:", error);
+    }
+
+    // Fall back to AsyncStorage
+>>>>>>> feat/settings-page
     try {
       const stored = await AsyncStorage.getItem(SELECTED_LANGUAGE_KEY);
       if (stored) setSelected(stored);
@@ -170,14 +239,26 @@ export default function ChoiceLanguage() {
 
     setLoading(true);
     try {
+<<<<<<< HEAD
+=======
+      // Try to add language to backend
+>>>>>>> feat/settings-page
       try {
         await api.post("/user-languages", {
           patrimonialLanguageId: language.patrimonialLanguageId
         });
       } catch (apiError) {
+<<<<<<< HEAD
         console.log("Language might already exist:", apiError.message);
       }
 
+=======
+        // Language might already exist, that's ok
+        console.log("Language might already exist:", apiError.message);
+      }
+
+      // Save to AsyncStorage as backup
+>>>>>>> feat/settings-page
       await AsyncStorage.setItem(SELECTED_LANGUAGE_KEY, language.code);
 
       router.replace(`/PageVideo?lang=${encodeURIComponent(language.code)}`);
@@ -201,8 +282,13 @@ export default function ChoiceLanguage() {
   if (initializing) {
     return (
       <ScreenWrapper>
+<<<<<<< HEAD
         <View style={styles.loadingContainer}>
           <ActivityIndicator size='large' color='#D32F2F' />
+=======
+        <View className='flex-1 items-center justify-center'>
+          <ActivityIndicator size='large' color='#5A4FCF' />
+>>>>>>> feat/settings-page
         </View>
       </ScreenWrapper>
     );
@@ -210,6 +296,7 @@ export default function ChoiceLanguage() {
 
   return (
     <ScreenWrapper>
+<<<<<<< HEAD
       <View style={styles.container}>
         <AppTitle style={styles.mainTitle}>Bienvenue sur Mulema</AppTitle>
         <AppText variant='muted' style={styles.subtitle}>
@@ -221,6 +308,21 @@ export default function ChoiceLanguage() {
         </AppTitle>
 
         <View style={styles.pickerContainer}>
+=======
+      <View className='flex-1 px-6 pt-8'>
+        <AppTitle className='text-3xl mb-2 text-center'>
+          Bienvenue sur Mulema
+        </AppTitle>
+        <AppText className='text-center text-muted-foreground mb-8'>
+          Apprenez les langues locales camerounaises
+        </AppText>
+
+        <AppTitle className='text-xl mb-4'>
+          Quelle langue voulez-vous apprendre ?
+        </AppTitle>
+
+        <View className='mb-8'>
+>>>>>>> feat/settings-page
           <LangModalPicker
             selected={selected}
             setSelected={(code) => {
@@ -233,7 +335,11 @@ export default function ChoiceLanguage() {
           />
         </View>
 
+<<<<<<< HEAD
         <View style={styles.langList}>
+=======
+        <View className='space-y-4'>
+>>>>>>> feat/settings-page
           {LANGS.map((lang) => (
             <TouchableOpacity
               key={lang.code}
@@ -242,6 +348,7 @@ export default function ChoiceLanguage() {
               activeOpacity={0.85}
             >
               <Card
+<<<<<<< HEAD
                 style={[
                   styles.langCard,
                   selected === lang.code ? styles.langCardSelected : null
@@ -252,12 +359,24 @@ export default function ChoiceLanguage() {
                 </View>
                 {selected === lang.code && (
                   <AppText style={styles.checkmarkText}>✓</AppText>
+=======
+                className={`flex-row items-center justify-between p-4 ${
+                  selected === lang.code ? "border-primary border-2" : ""
+                }`}
+              >
+                <View className='flex-row items-center'>
+                  <AppText className='text-lg ml-3'>{lang.label}</AppText>
+                </View>
+                {selected === lang.code && (
+                  <AppText className='text-primary'>✓</AppText>
+>>>>>>> feat/settings-page
                 )}
               </Card>
             </TouchableOpacity>
           ))}
         </View>
 
+<<<<<<< HEAD
         <View style={styles.buttonContainer}>
           <Button
             title={loading ? "Chargement..." : "Continuer"}
@@ -268,11 +387,22 @@ export default function ChoiceLanguage() {
               !selected || loading ? styles.buttonDisabled : null
             ]}
           />
+=======
+        <View className='mt-auto mb-8'>
+          <Button
+            onPress={handleContinue}
+            disabled={!selected || loading}
+            className={`w-full py-4 ${!selected || loading ? "opacity-50" : ""}`}
+          >
+            {loading ? "Chargement..." : "Continuer"}
+          </Button>
+>>>>>>> feat/settings-page
         </View>
       </View>
     </ScreenWrapper>
   );
 }
+<<<<<<< HEAD
 
 const styles = StyleSheet.create({
   loadingContainer: {
@@ -406,3 +536,5 @@ const styles = StyleSheet.create({
     opacity: 0.5
   }
 });
+=======
+>>>>>>> feat/settings-page

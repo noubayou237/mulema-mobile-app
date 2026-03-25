@@ -48,12 +48,16 @@
     "passwordResetSuccess": "Mot de passe mis à jour. Tu peux maintenant te connecter.",
     "passwordResetError": "Impossible de réinitialiser le mot de passe.",
     "account": "Compte",
+<<<<<<< HEAD
     "saving": "Enregistrement...",
     "orContinueWith": "ou continuer avec",
     "signInWithGoogle": "Se connecter avec Google",
     "signInWithFacebook": "Se connecter avec Facebook",
     "signInWithApple": "Se connecter avec Apple",
     "socialLoginError": "Erreur lors de la connexion sociale. Veuillez réessayer."
+=======
+    "saving": "Enregistrement..."
+>>>>>>> feat/settings-page
   },
   "profile": {
     "title": "Profil",

@@ -128,7 +128,11 @@ const WaveDots = () => {
 };
 
 // ── Password strength bar ──────────────────────────────────────────────────
+<<<<<<< HEAD
 const StrengthBar = ({ password, t }) => {
+=======
+const StrengthBar = ({ password }) => {
+>>>>>>> feat/settings-page
   const anim = useRef(new Animated.Value(0)).current;
 
   const getStrength = (p) => {
@@ -139,11 +143,17 @@ const StrengthBar = ({ password, t }) => {
     if (/[A-Z]/.test(p)) score++;
     if (/[0-9]/.test(p)) score++;
     if (/[^A-Za-z0-9]/.test(p)) score++;
+<<<<<<< HEAD
     if (score <= 1)
       return { score: 1, label: t("signUp.weak"), color: "#F44336" };
     if (score <= 3)
       return { score: 3, label: t("signUp.medium"), color: "#E57373" };
     return { score: 5, label: t("signUp.strong"), color: "#D32F2F" };
+=======
+    if (score <= 1) return { score: 1, label: "Faible", color: "#F44336" };
+    if (score <= 3) return { score: 3, label: "Moyen", color: "#E57373" };
+    return { score: 5, label: "Fort", color: "#D32F2F" };
+>>>>>>> feat/settings-page
   };
 
   const { score, label, color } = getStrength(password);
@@ -169,7 +179,11 @@ const StrengthBar = ({ password, t }) => {
         }}
       >
         <Text style={{ color: "#AAAAAA", fontSize: 11 }}>
+<<<<<<< HEAD
           {t ? t("signUp.passwordStrength") : "Password strength"}
+=======
+          Force du mot de passe
+>>>>>>> feat/settings-page
         </Text>
         <Text style={{ color, fontSize: 11, fontWeight: "700" }}>{label}</Text>
       </View>
@@ -321,7 +335,6 @@ const Field = ({
 // ── Main Screen ────────────────────────────────────────────────────────────
 const SignUpScreen = () => {
   const router = useRouter();
-  const { t } = useTranslation();
 
   const [form, setForm] = useState({
     username: "",
@@ -406,18 +419,35 @@ const SignUpScreen = () => {
       !form.password ||
       !form.confirm
     )
+<<<<<<< HEAD
       return t("signUp.validation.requiredFields");
     if (/\s/.test(form.username)) return t("signUp.validation.noSpaces");
     if (form.password.length < MIN_PASSWORD)
       return t("signUp.validation.passwordMinLength", { min: MIN_PASSWORD });
     if (form.password !== form.confirm)
       return t("signUp.validation.passwordMismatch");
+=======
+      return "Remplis tous les champs obligatoires.";
+    if (/\s/.test(form.username))
+      return "Le nom d'utilisateur ne doit pas contenir d'espaces.";
+
+    if (form.password.length < MIN_PASSWORD)
+      return `Le mot de passe doit contenir au moins ${MIN_PASSWORD} caractères.`;
+
+    if (form.password !== form.confirm)
+      return "Les mots de passe ne correspondent pas.";
+
+>>>>>>> feat/settings-page
     return null;
   };
 
   const handleSignUp = useCallback(async () => {
     const error = validate();
+<<<<<<< HEAD
     if (error) return Alert.alert(t("signUp.error.title"), error);
+=======
+    if (error) return Alert.alert("Erreur", error);
+>>>>>>> feat/settings-page
     setUi((s) => ({ ...s, loading: true }));
     try {
       await api.post("/auth/register", {
@@ -426,7 +456,15 @@ const SignUpScreen = () => {
         name: form.username,
         password: form.password
       });
+<<<<<<< HEAD
       Alert.alert(t("signUp.success.title"), t("signUp.success.message"));
+=======
+      Alert.alert(
+        "Inscription réussie !",
+        "Un code de vérification a été envoyé à votre email."
+      );
+
+>>>>>>> feat/settings-page
       router.replace({
         pathname: "/(auth)/verify-email",
         params: { email: form.email, flow: "verify" }
@@ -435,8 +473,13 @@ const SignUpScreen = () => {
       const message =
         err?.response?.data?.message ||
         err?.message ||
+<<<<<<< HEAD
         t("signUp.error.creationFailed");
       Alert.alert(t("signUp.error.title"), message);
+=======
+        "Erreur lors de la création du compte.";
+      Alert.alert("Erreur", message);
+>>>>>>> feat/settings-page
     } finally {
       setUi((s) => ({ ...s, loading: false }));
     }
@@ -481,6 +524,7 @@ const SignUpScreen = () => {
   ];
 
   const steps = [
+<<<<<<< HEAD
     {
       label: t("signUp.steps.profile"),
       icon: "person",
@@ -493,6 +537,12 @@ const SignUpScreen = () => {
     },
     {
       label: t("signUp.steps.security"),
+=======
+    { label: "Profil", icon: "person", done: form.username.length > 0 },
+    { label: "Email", icon: "mail", done: form.email.includes("@") },
+    {
+      label: "Sécurité",
+>>>>>>> feat/settings-page
       icon: "shield-checkmark",
       done: form.password.length >= 6 && form.password === form.confirm
     }
@@ -571,7 +621,11 @@ const SignUpScreen = () => {
           >
             <Text style={s.brand}>mulema</Text>
             <View style={s.pillBadge}>
+<<<<<<< HEAD
               <Text style={s.pillText}>✨ {t("signUp.subtitle")}</Text>
+=======
+              <Text style={s.pillText}>✨ Rejoins la communauté</Text>
+>>>>>>> feat/settings-page
             </View>
           </Animated.View>
 
@@ -635,26 +689,44 @@ const SignUpScreen = () => {
             ]}
           >
             <Field
+<<<<<<< HEAD
               label={t("signUp.usernameLabel")}
               icon='person-outline'
               placeholder={t("signUp.usernamePlaceholder")}
+=======
+              label="Nom d'utilisateur"
+              icon='person-outline'
+              placeholder='ex: ambe_bassa'
+>>>>>>> feat/settings-page
               value={form.username}
               onChangeText={onChange("username")}
             />
 
             <Field
+<<<<<<< HEAD
               label={t("signUp.emailLabel")}
               icon='mail-outline'
               placeholder={t("signUp.emailPlaceholder")}
+=======
+              label='Adresse e-mail'
+              icon='mail-outline'
+              placeholder='exemple@email.com'
+>>>>>>> feat/settings-page
               value={form.email}
               onChangeText={onChange("email")}
               keyboardType='email-address'
             />
 
             <Field
+<<<<<<< HEAD
               label={t("signUp.passwordLabel")}
               icon='lock-closed-outline'
               placeholder={t("signUp.passwordPlaceholder")}
+=======
+              label='Mot de passe'
+              icon='lock-closed-outline'
+              placeholder='••••••••'
+>>>>>>> feat/settings-page
               value={form.password}
               onChangeText={onChange("password")}
               secureTextEntry={!ui.showPassword}
@@ -663,6 +735,7 @@ const SignUpScreen = () => {
                 setUi((s) => ({ ...s, showPassword: !s.showPassword }))
               }
             >
+<<<<<<< HEAD
               <StrengthBar password={form.password} t={t} />
             </Field>
 
@@ -670,6 +743,15 @@ const SignUpScreen = () => {
               label={t("signUp.confirmPasswordLabel")}
               icon='shield-checkmark-outline'
               placeholder={t("signUp.confirmPasswordPlaceholder")}
+=======
+              <StrengthBar password={form.password} />
+            </Field>
+
+            <Field
+              label='Confirmer le mot de passe'
+              icon='shield-checkmark-outline'
+              placeholder='••••••••'
+>>>>>>> feat/settings-page
               value={form.confirm}
               onChangeText={onChange("confirm")}
               secureTextEntry={!ui.showConfirm}
@@ -710,8 +792,13 @@ const SignUpScreen = () => {
                   }}
                 >
                   {form.password === form.confirm
+<<<<<<< HEAD
                     ? t("signUp.validation.passwordsMatch")
                     : t("signUp.validation.passwordsDoNotMatch")}
+=======
+                    ? "Les mots de passe correspondent"
+                    : "Les mots de passe ne correspondent pas"}
+>>>>>>> feat/settings-page
                 </Text>
               </View>
             )}
@@ -741,7 +828,11 @@ const SignUpScreen = () => {
                     <WaveDots />
                   ) : (
                     <>
+<<<<<<< HEAD
                       <Text style={s.btnText}>{t("signUp.signUpButton")}</Text>
+=======
+                      <Text style={s.btnText}>Créer mon compte</Text>
+>>>>>>> feat/settings-page
                       <Ionicons
                         name='sparkles'
                         size={18}
@@ -757,7 +848,11 @@ const SignUpScreen = () => {
             {/* Divider */}
             <View style={s.dividerRow}>
               <View style={s.dividerLine} />
+<<<<<<< HEAD
               <Text style={s.dividerText}>{t("signUp.or")}</Text>
+=======
+              <Text style={s.dividerText}>ou</Text>
+>>>>>>> feat/settings-page
               <View style={s.dividerLine} />
             </View>
 
@@ -768,9 +863,14 @@ const SignUpScreen = () => {
               style={s.signInBtn}
             >
               <Text style={s.signInText}>
+<<<<<<< HEAD
                 {t("signUp.alreadyAccount")}
                 {"  "}
                 <Text style={s.signInLink}>{t("signUp.signInLink")}</Text>
+=======
+                Déjà un compte ?{"  "}
+                <Text style={s.signInLink}>Se connecter</Text>
+>>>>>>> feat/settings-page
               </Text>
             </TouchableOpacity>
           </Animated.View>
@@ -796,9 +896,12 @@ const SignUpScreen = () => {
               <Text style={{ color: "#D32F2F" }}>
                 Conditions d&apos;utilisation
               </Text>{" "}
+<<<<<<< HEAD
               <Text style={{ color: "#D32F2F" }}>
                 Conditions d&apos;utilisation
               </Text>{" "}
+=======
+>>>>>>> feat/settings-page
               et notre{" "}
               <Text style={{ color: "#D32F2F" }}>
                 Politique de confidentialité

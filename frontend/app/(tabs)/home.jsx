@@ -1,7 +1,11 @@
 // app/(tabs)/home.jsx
 
 import React, { useEffect, useState } from "react";
+<<<<<<< HEAD
 import { View, ActivityIndicator, Text, StyleSheet } from "react-native";
+=======
+import { View, ActivityIndicator, Text } from "react-native";
+>>>>>>> feat/settings-page
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -68,7 +72,11 @@ export default function HomeRouter() {
   // Loader
   if (loading) {
     return (
+<<<<<<< HEAD
       <View style={styles.loadingContainer}>
+=======
+      <View className='flex-1 bg-background justify-center items-center'>
+>>>>>>> feat/settings-page
         <ActivityIndicator size='large' />
       </View>
     );
@@ -88,9 +96,15 @@ export default function HomeRouter() {
 
     default:
       return (
+<<<<<<< HEAD
         <View style={styles.defaultContainer}>
           <View style={styles.defaultCard}>
             <Text style={styles.defaultText}>
+=======
+        <View className='flex-1 bg-background justify-center items-center px-6'>
+          <View className='bg-card border border-border rounded-2xl p-6'>
+            <Text className='text-center text-foreground'>
+>>>>>>> feat/settings-page
               {t("errors.languageNotSelected") ||
                 "Langue non définie. Sélectionnez une langue."}
             </Text>
@@ -99,6 +113,7 @@ export default function HomeRouter() {
       );
   }
 }
+<<<<<<< HEAD
 
 const styles = StyleSheet.create({
   loadingContainer: {
@@ -126,3 +141,5 @@ const styles = StyleSheet.create({
     color: COLORS.foreground
   }
 });
+=======
+>>>>>>> feat/settings-page

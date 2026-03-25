@@ -1,4 +1,5 @@
 import React from "react";
+<<<<<<< HEAD
 import { Text, StyleSheet } from "react-native";
 
 export default function AppTitle({ children, className = "", style }) {
@@ -19,3 +20,14 @@ const styles = StyleSheet.create({
     color: "#050303"
   }
 });
+=======
+import { Text } from "react-native";
+
+export default function AppTitle({ children, className = "" }) {
+  return (
+    <Text className={`text-2xl font-semibold text-foreground ${className}`}>
+      {children}
+    </Text>
+  );
+}
+>>>>>>> feat/settings-page

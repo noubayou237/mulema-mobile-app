@@ -112,6 +112,7 @@ export class AuthController {
     }
   }
 
+<<<<<<< HEAD
   // Social Login Endpoints
   @Post('google')
   async googleLogin(@Body() body: any) {
@@ -129,5 +130,25 @@ export class AuthController {
   async appleLogin(@Body() body: any) {
     this.logger.log(`Apple login request for user: ${body.user}`);
     return this.authService.socialLogin(body, 'APPLE');
+=======
+  // =====================
+  // SOCIAL LOGIN
+  // =====================
+  @Post('social-login')
+  async socialLogin(
+    @Body()
+    body: {
+      provider: 'GOOGLE' | 'FACEBOOK' | 'APPLE';
+      providerId: string;
+      email: string;
+      name: string;
+      username?: string;
+    },
+  ) {
+    this.logger.log(
+      `Social login request: ${body.provider} for email: ${body.email}`,
+    );
+    return this.authService.socialLogin(body);
+>>>>>>> feat/settings-page
   }
 }

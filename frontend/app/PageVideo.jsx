@@ -85,14 +85,21 @@ export default function PageVideo() {
 
   if (resolving) {
     return (
+<<<<<<< HEAD
       <SafeAreaView className='flex-1 bg-background items-center justify-center'>
         <ActivityIndicator size='large' />
         <Text className='mt-3 text-muted-foreground'>Chargement...</Text>
+=======
+      <SafeAreaView className="flex-1 bg-background items-center justify-center">
+        <ActivityIndicator size="large" />
+        <Text className="mt-3 text-muted-foreground">Chargement...</Text>
+>>>>>>> feat/settings-page
       </SafeAreaView>
     );
   }
 
   return (
+<<<<<<< HEAD
     <SafeAreaView style={styles.container}>
       {/* VIDEO BLOCK */}
       <View style={[styles.videoContainer, { height: videoHeight }]}>
@@ -121,16 +128,61 @@ export default function PageVideo() {
             style={styles.skipButton}
           >
             <Text style={styles.skipText}>Skip</Text>
+=======
+    <SafeAreaView className="flex-1 bg-background">
+
+      {/* VIDEO BLOCK */}
+      <View className="w-full bg-black relative overflow-hidden"
+            style={{ height: videoHeight }}>
+
+        <Video
+          ref={videoRef}
+          source={{ uri: videoUri }}
+          resizeMode="cover"
+          shouldPlay={false}
+          isLooping={false}
+          className="absolute w-full h-full"
+          onPlaybackStatusUpdate={(s) => {
+            setVideoLoading(false);
+            if (s?.didJustFinish) persistAndGoHome();
+          }}
+        />
+
+        <LinearGradient
+          colors={["rgba(0,0,0,0.15)", "rgba(0,0,0,0.6)", "rgba(0,0,0,0.9)"]}
+          className="absolute w-full h-full"
+        />
+
+        {/* SKIP */}
+        <View className={`absolute right-4 ${Platform.OS === "ios" ? "top-14" : "top-6"}`}>
+          <TouchableOpacity
+            onPress={persistAndGoHome}
+            className="px-4 py-2 rounded-full bg-white/10"
+          >
+            <Text className="text-white font-semibold text-sm">Skip</Text>
+>>>>>>> feat/settings-page
           </TouchableOpacity>
         </View>
 
         {/* CENTER PLAY */}
+<<<<<<< HEAD
         <View style={styles.playContainer}>
           {videoLoading ? (
             <ActivityIndicator size='large' color='#fff' />
           ) : (
             <>
               <TouchableOpacity onPress={handlePlay} style={styles.playButton}>
+=======
+        <View className="absolute top-[34%] self-center items-center">
+          {videoLoading ? (
+            <ActivityIndicator size="large" color="#fff" />
+          ) : (
+            <>
+              <TouchableOpacity
+                onPress={handlePlay}
+                className="w-20 h-20 rounded-full bg-primary items-center justify-center shadow-lg"
+              >
+>>>>>>> feat/settings-page
                 <View
                   style={{
                     width: 0,
@@ -146,13 +198,20 @@ export default function PageVideo() {
                 />
               </TouchableOpacity>
 
+<<<<<<< HEAD
               <Text style={styles.playText}>Play video</Text>
+=======
+              <Text className="mt-4 text-white text-xl font-bold">
+                Play video
+              </Text>
+>>>>>>> feat/settings-page
             </>
           )}
         </View>
       </View>
 
       {/* BOTTOM CONTENT */}
+<<<<<<< HEAD
       <View style={styles.bottomContent}>
         <Text style={styles.description}>{getDescription(langResolved)}</Text>
 
@@ -161,6 +220,20 @@ export default function PageVideo() {
           style={styles.continueButton}
         >
           <Text style={styles.continueText}>Continue</Text>
+=======
+      <View className={`flex-1 px-6 pt-6 justify-end ${Platform.OS === "ios" ? "pb-10" : "pb-6"}`}>
+        <Text className="text-center text-base text-muted-foreground mb-5">
+          {getDescription(langResolved)}
+        </Text>
+
+        <TouchableOpacity
+          onPress={persistAndGoHome}
+          className="bg-primary rounded-full py-5 items-center"
+        >
+          <Text className="text-white text-lg font-bold">
+            Continue
+          </Text>
+>>>>>>> feat/settings-page
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -178,6 +251,7 @@ function getDescription(lang) {
     default:
       return "Vidéo d'introduction";
   }
+<<<<<<< HEAD
 }
 
 const styles = StyleSheet.create({
@@ -267,3 +341,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold"
   }
 });
+=======
+}
+>>>>>>> feat/settings-page

@@ -6,14 +6,18 @@ import {
   Animated,
   SafeAreaView,
   StatusBar,
+<<<<<<< HEAD
   StyleSheet,
   ActivityIndicator
+=======
+>>>>>>> feat/settings-page
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 
+<<<<<<< HEAD
 // Design tokens (matching profile page)
 const COLORS = {
   primary: "#D32F2F",
@@ -28,6 +32,11 @@ const HEADER_MIN_HEIGHT = 40;
 const HEADER_SCROLL_FADE_END = 80;
 
 // Default exercise data - locked status will be dynamically updated
+=======
+const HEADER_MIN_HEIGHT = 40;
+const HEADER_SCROLL_FADE_END = 80;
+
+>>>>>>> feat/settings-page
 const exerciseData = [
   {
     id: "1",
@@ -35,7 +44,10 @@ const exerciseData = [
     descriptionKey: "exercises.categories.socialFamilyDesc",
     locked: false,
     route: "/exercices/famille/exos1",
+<<<<<<< HEAD
     storageKey: null // First theme is always unlocked
+=======
+>>>>>>> feat/settings-page
   },
   {
     id: "2",
@@ -43,7 +55,10 @@ const exerciseData = [
     descriptionKey: "exercises.categories.cookingDesc",
     locked: true,
     route: "/exercices/cuisine",
+<<<<<<< HEAD
     storageKey: "theme2_unlocked"
+=======
+>>>>>>> feat/settings-page
   },
   {
     id: "3",
@@ -51,7 +66,10 @@ const exerciseData = [
     descriptionKey: "exercises.categories.clothingDesc",
     locked: true,
     route: "/exercices/vetements",
+<<<<<<< HEAD
     storageKey: "theme3_unlocked"
+=======
+>>>>>>> feat/settings-page
   },
   {
     id: "4",
@@ -59,8 +77,12 @@ const exerciseData = [
     descriptionKey: "exercises.categories.faunaFloraDesc",
     locked: true,
     route: "/exercices/faune",
+<<<<<<< HEAD
     storageKey: "theme4_unlocked"
   }
+=======
+  },
+>>>>>>> feat/settings-page
 ];
 
 const ExerciseCard = ({ item, onPress, t }) => {
@@ -69,6 +91,7 @@ const ExerciseCard = ({ item, onPress, t }) => {
       disabled={item.locked}
       onPress={() => onPress(item)}
       activeOpacity={0.85}
+<<<<<<< HEAD
       style={[
         styles.exerciseCard,
         item.locked ? styles.exerciseCardLocked : styles.exerciseCardUnlocked
@@ -83,21 +106,48 @@ const ExerciseCard = ({ item, onPress, t }) => {
           styles.exerciseTitle,
           item.locked ? styles.textLocked : styles.textUnlocked
         ]}
+=======
+      className={`relative rounded-2xl p-6 mb-4 border border-border 
+      ${item.locked ? "bg-muted opacity-60" : "bg-primary"}`}
+    >
+      {item.locked && (
+        <Ionicons
+          name="lock-closed"
+          size={20}
+          className="absolute top-4 right-4 text-primary-foreground"
+        />
+      )}
+
+      <Text
+        className={`text-lg font-bold uppercase mb-2 
+        ${item.locked ? "text-muted-foreground" : "text-primary-foreground"}`}
+>>>>>>> feat/settings-page
       >
         {t(item.titleKey)}
       </Text>
 
       <Text
+<<<<<<< HEAD
         style={[
           styles.exerciseDescription,
           item.locked ? styles.textLocked : styles.textUnlocked
         ]}
+=======
+        className={`mb-4 
+        ${item.locked ? "text-muted-foreground" : "text-primary-foreground"}`}
+>>>>>>> feat/settings-page
       >
         {t(item.descriptionKey)}
       </Text>
 
       {!item.locked && (
+<<<<<<< HEAD
         <Text style={styles.startText}>{t("exercises.start")}</Text>
+=======
+        <Text className="text-primary-foreground font-semibold">
+          {t("exercises.start")}
+        </Text>
+>>>>>>> feat/settings-page
       )}
     </TouchableOpacity>
   );
@@ -108,6 +158,7 @@ export default function ExercicesScreen() {
   const { t } = useTranslation();
   const scrollY = useRef(new Animated.Value(0)).current;
 
+<<<<<<< HEAD
   // State for tracking theme unlock status
   const [unlockedThemes, setUnlockedThemes] = useState({});
   const [isLoading, setIsLoading] = useState(true);
@@ -148,6 +199,8 @@ export default function ExercicesScreen() {
     }));
   };
 
+=======
+>>>>>>> feat/settings-page
   const handleCardPress = (item) => {
     if (!item.locked) {
       router.push(item.route);
@@ -157,15 +210,16 @@ export default function ExercicesScreen() {
   const smallHeaderOpacity = scrollY.interpolate({
     inputRange: [HEADER_SCROLL_FADE_END / 2, HEADER_SCROLL_FADE_END],
     outputRange: [0, 1],
-    extrapolate: "clamp"
+    extrapolate: "clamp",
   });
 
   const largeTitleOpacity = scrollY.interpolate({
     inputRange: [0, HEADER_SCROLL_FADE_END / 2],
     outputRange: [1, 0],
-    extrapolate: "clamp"
+    extrapolate: "clamp",
   });
 
+<<<<<<< HEAD
   // Show loading while fetching unlock status
   if (isLoading) {
     return (
@@ -181,15 +235,24 @@ export default function ExercicesScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle='dark-content' />
+=======
+  return (
+    <SafeAreaView className="flex-1 bg-background">
+      <StatusBar barStyle="dark-content" />
+>>>>>>> feat/settings-page
 
       {/* Petit header flottant */}
       <Animated.View
-        style={[styles.smallHeader, { opacity: smallHeaderOpacity }]}
+        style={{ opacity: smallHeaderOpacity }}
+        className="absolute top-0 left-0 right-0 h-10 bg-background border-b border-border items-center justify-center z-10"
       >
-        <Text style={styles.smallHeaderText}>{t("nav.exercises")}</Text>
+        <Text className="font-bold text-primary">
+          {t("nav.exercises")}
+        </Text>
       </Animated.View>
 
       <Animated.FlatList
+<<<<<<< HEAD
         data={getExerciseData()}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
@@ -202,6 +265,32 @@ export default function ExercicesScreen() {
             <Text style={styles.mainTitle}>{t("nav.exercises")}</Text>
 
             <Text style={styles.subtitle}>{t("exercises.introText")}</Text>
+=======
+        data={exerciseData}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <ExerciseCard
+            item={item}
+            onPress={handleCardPress}
+            t={t}
+          />
+        )}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: HEADER_MIN_HEIGHT + 16,
+          paddingBottom: 40,
+        }}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          <Animated.View style={{ opacity: largeTitleOpacity }}>
+            <Text className="text-3xl font-bold text-primary mb-4">
+              {t("nav.exercises")}
+            </Text>
+
+            <Text className="text-muted-foreground mb-6 leading-6">
+              {t("exercises.introText")}
+            </Text>
+>>>>>>> feat/settings-page
           </Animated.View>
         }
         onScroll={Animated.event(
@@ -212,6 +301,7 @@ export default function ExercicesScreen() {
       />
     </SafeAreaView>
   );
+<<<<<<< HEAD
 }
 
 const styles = StyleSheet.create({
@@ -300,3 +390,6 @@ const styles = StyleSheet.create({
     fontWeight: "600"
   }
 });
+=======
+}
+>>>>>>> feat/settings-page

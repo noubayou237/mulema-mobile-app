@@ -2,7 +2,10 @@
  * Exercise API Service
  *
  * Handles communication with the backend exercise engine API.
+<<<<<<< HEAD
  * Uses the centralized API client with automatic auth token handling.
+=======
+>>>>>>> feat/settings-page
  *
  * API Endpoints:
  * - GET /exercises/block/:blockId/generate - Generate exercises for a block
@@ -13,7 +16,38 @@
  * - PATCH /exercises/:id/complete - Complete an exercise
  */
 
+<<<<<<< HEAD
 import api from '../../../services/api';
+=======
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+
+/**
+ * Fetch wrapper with error handling
+ */
+const fetchWithErrorHandling = async (url, options = {}) => {
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.message || `HTTP error! status: ${response.status}`
+      );
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("API Error:", error.message);
+    throw error;
+  }
+};
+>>>>>>> feat/settings-page
 
 /**
  * Generate exercises for a specific block
@@ -22,6 +56,7 @@ import api from '../../../services/api';
  * @returns {Promise<Object>} Generated exercises
  */
 export const generateBlockExercises = async (blockId) => {
+<<<<<<< HEAD
   try {
     const response = await api.get(`/exercises/block/${blockId}/generate`);
     return response.data;
@@ -29,6 +64,11 @@ export const generateBlockExercises = async (blockId) => {
     console.error('Error generating block exercises:', error);
     throw error;
   }
+=======
+  return fetchWithErrorHandling(
+    `${API_BASE_URL}/exercises/block/${blockId}/generate`
+  );
+>>>>>>> feat/settings-page
 };
 
 /**
@@ -38,6 +78,7 @@ export const generateBlockExercises = async (blockId) => {
  * @returns {Promise<Object>} Generated exercises
  */
 export const generateThemeExercises = async (themeId) => {
+<<<<<<< HEAD
   try {
     const response = await api.get(`/exercises/theme/${themeId}/generate`);
     return response.data;
@@ -45,6 +86,11 @@ export const generateThemeExercises = async (themeId) => {
     console.error('Error generating theme exercises:', error);
     throw error;
   }
+=======
+  return fetchWithErrorHandling(
+    `${API_BASE_URL}/exercises/theme/${themeId}/generate`
+  );
+>>>>>>> feat/settings-page
 };
 
 /**
@@ -54,6 +100,7 @@ export const generateThemeExercises = async (themeId) => {
  * @returns {Promise<Array>} Words due for review
  */
 export const getWordsForReview = async (userId) => {
+<<<<<<< HEAD
   try {
     const response = await api.get(`/exercises/review/${userId}`);
     return response.data;
@@ -61,6 +108,9 @@ export const getWordsForReview = async (userId) => {
     console.error('Error fetching review words:', error);
     throw error;
   }
+=======
+  return fetchWithErrorHandling(`${API_BASE_URL}/exercises/review/${userId}`);
+>>>>>>> feat/settings-page
 };
 
 /**
@@ -72,6 +122,7 @@ export const getWordsForReview = async (userId) => {
  * @returns {Promise<Object>} Updated progress
  */
 export const updateWordProgress = async (userId, wordId, isCorrect) => {
+<<<<<<< HEAD
   try {
     const response = await api.post('/exercises/word-progress', {
       userId,
@@ -83,6 +134,12 @@ export const updateWordProgress = async (userId, wordId, isCorrect) => {
     console.error('Error updating word progress:', error);
     throw error;
   }
+=======
+  return fetchWithErrorHandling(`${API_BASE_URL}/exercises/word-progress`, {
+    method: "POST",
+    body: JSON.stringify({ userId, wordId, isCorrect })
+  });
+>>>>>>> feat/settings-page
 };
 
 /**
@@ -92,6 +149,7 @@ export const updateWordProgress = async (userId, wordId, isCorrect) => {
  * @returns {Promise<Object>} Created exercise
  */
 export const createExercise = async (exerciseData) => {
+<<<<<<< HEAD
   try {
     const response = await api.post('/exercises', exerciseData);
     return response.data;
@@ -99,6 +157,12 @@ export const createExercise = async (exerciseData) => {
     console.error('Error creating exercise:', error);
     throw error;
   }
+=======
+  return fetchWithErrorHandling(`${API_BASE_URL}/exercises`, {
+    method: "POST",
+    body: JSON.stringify(exerciseData)
+  });
+>>>>>>> feat/settings-page
 };
 
 /**
@@ -109,6 +173,7 @@ export const createExercise = async (exerciseData) => {
  * @returns {Promise<Object>} Completion result
  */
 export const completeExercise = async (exerciseId, completionData) => {
+<<<<<<< HEAD
   try {
     const response = await api.patch(`/exercises/${exerciseId}/complete`, completionData);
     return response.data;
@@ -116,6 +181,15 @@ export const completeExercise = async (exerciseId, completionData) => {
     console.error('Error completing exercise:', error);
     throw error;
   }
+=======
+  return fetchWithErrorHandling(
+    `${API_BASE_URL}/exercises/${exerciseId}/complete`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(completionData)
+    }
+  );
+>>>>>>> feat/settings-page
 };
 
 /**
@@ -125,6 +199,7 @@ export const completeExercise = async (exerciseId, completionData) => {
  * @returns {Promise<Object>} Exercise data
  */
 export const getExercise = async (exerciseId) => {
+<<<<<<< HEAD
   try {
     const response = await api.get(`/exercises/${exerciseId}`);
     return response.data;
@@ -132,6 +207,9 @@ export const getExercise = async (exerciseId) => {
     console.error('Error fetching exercise:', error);
     throw error;
   }
+=======
+  return fetchWithErrorHandling(`${API_BASE_URL}/exercises/${exerciseId}`);
+>>>>>>> feat/settings-page
 };
 
 /**
@@ -141,6 +219,7 @@ export const getExercise = async (exerciseId) => {
  * @returns {Promise<Array>} Exercises for the lesson
  */
 export const getExercisesByLesson = async (lessonId) => {
+<<<<<<< HEAD
   try {
     const response = await api.get(`/exercises/lesson/${lessonId}`);
     return response.data;
@@ -148,6 +227,9 @@ export const getExercisesByLesson = async (lessonId) => {
     console.error('Error fetching exercises by lesson:', error);
     throw error;
   }
+=======
+  return fetchWithErrorHandling(`${API_BASE_URL}/exercises/lesson/${lessonId}`);
+>>>>>>> feat/settings-page
 };
 
 export default {

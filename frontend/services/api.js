@@ -12,6 +12,7 @@ import { env } from "../src/env";
 
 // Determine API base URL based on platform
 const getApiUrl = () => {
+<<<<<<< HEAD
   // For development on physical devices - always use environment variable
   const PC_IP = env.EXPO_PUBLIC_API_IP;
 
@@ -24,6 +25,13 @@ const getApiUrl = () => {
     return "http://localhost:5001";
   }
 
+=======
+  // Web
+  if (Platform.OS === "web") {
+    return "http://localhost:5001";
+  }
+
+>>>>>>> feat/settings-page
   // Android emulator
   if (Platform.OS === "android" && __DEV__) {
     return "http://10.0.2.2:5001";
@@ -34,7 +42,17 @@ const getApiUrl = () => {
     return "http://localhost:5001";
   }
 
+<<<<<<< HEAD
   // Fallback
+=======
+  // For ALL physical devices - use environment variable
+  const PC_IP = env.EXPO_PUBLIC_API_IP;
+  if (PC_IP) {
+    return `http://${PC_IP}:5001`;
+  }
+
+  // Fallback - this should not happen in production
+>>>>>>> feat/settings-page
   return "http://localhost:5001";
 };
 

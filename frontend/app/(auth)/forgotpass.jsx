@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import React, { useState, useEffect, useRef, useMemo } from "react";
+=======
+import React, { useState, useEffect, useRef } from "react";
+>>>>>>> feat/settings-page
 import {
   Alert,
   KeyboardAvoidingView,
@@ -85,7 +89,11 @@ const FloatingBubble = ({ size, color, startX, delay, duration }) => {
 // ── Wave dots loader ───────────────────────────────────────────────────────
 const WaveDots = () => {
   const dots = [0, 1, 2, 3, 4];
+<<<<<<< HEAD
   const anims = useMemo(() => dots.map(() => new Animated.Value(0)), []);
+=======
+  const anims = dots.map(() => useRef(new Animated.Value(0)).current);
+>>>>>>> feat/settings-page
   useEffect(() => {
     dots.forEach((_, i) => {
       Animated.loop(
@@ -531,11 +539,19 @@ const ForgotPasswordScreen = () => {
               }
             ]}
           >
+<<<<<<< HEAD
             {/* <Text style={s.brand}>mulema</Text>/ */}
             <Text style={s.brand}>Mot de passe oublié ?</Text>
             <Text style={s.title}>
               Saisis ton email pour recevoir un code de
               récupération
+=======
+            <Text style={s.brand}>mulema</Text>
+            <Text style={s.title}>Mot de passe oublié ?</Text>
+            <Text style={s.subtitle}>
+              Pas de panique{"\n"}Saisis ton email pour recevoir un code de
+              récupération.
+>>>>>>> feat/settings-page
             </Text>
           </Animated.View>
 
@@ -639,12 +655,20 @@ const ForgotPasswordScreen = () => {
                       ) : (
                         <>
                           <Text style={s.btnText}>Envoyer le code</Text>
+<<<<<<< HEAD
                           {/* <Ionicons
+=======
+                          <Ionicons
+>>>>>>> feat/settings-page
                             name='send'
                             size={17}
                             color='#fff'
                             style={{ marginLeft: 8 }}
+<<<<<<< HEAD
                           /> */}
+=======
+                          />
+>>>>>>> feat/settings-page
                         </>
                       )}
                     </LinearGradient>
@@ -708,9 +732,13 @@ const ForgotPasswordScreen = () => {
                   style={s.changeEmailBtn}
                 >
                   <Ionicons name='pencil-outline' size={13} color='#BDBDBD' />
+<<<<<<< HEAD
                   <Text style={s.changeEmailText}>
                     Changer d&apos;adresse email
                   </Text>
+=======
+                  <Text style={s.changeEmailText}>Changer d&apos;adresse email</Text>
+>>>>>>> feat/settings-page
                 </TouchableOpacity>
               </Animated.View>
             )}
@@ -839,6 +867,7 @@ const s = StyleSheet.create({
   // Text
   titleBlock: { alignItems: "center", marginBottom: 28, paddingHorizontal: 24 },
   brand: {
+<<<<<<< HEAD
     fontFamily: Platform.OS === "ios" ? "nunito" : "sans-serif",
     fontSize: 29,
     fontWeight: "700",
@@ -849,13 +878,29 @@ const s = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "300",
+=======
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    fontSize: 30,
+    fontWeight: "700",
+    color: "#1A1A1A",
+    letterSpacing: 3,
+    marginBottom: 10
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "700",
+>>>>>>> feat/settings-page
     color: "#2C2C2C",
     marginBottom: 10,
     textAlign: "center"
   },
   subtitle: {
     color: "#888",
+<<<<<<< HEAD
     fontSize: 12,
+=======
+    fontSize: 14,
+>>>>>>> feat/settings-page
     textAlign: "center",
     lineHeight: 22
   },
@@ -863,7 +908,11 @@ const s = StyleSheet.create({
   // Card
   card: {
     width: width - 48,
+<<<<<<< HEAD
     // backgroundColor: "rgba(255,255,255,0.75)",
+=======
+    backgroundColor: "rgba(255,255,255,0.75)",
+>>>>>>> feat/settings-page
     borderRadius: 24,
     borderWidth: 1,
     borderColor: "rgba(211,47,47,0.1)",

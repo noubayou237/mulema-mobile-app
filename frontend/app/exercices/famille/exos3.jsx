@@ -10,14 +10,21 @@ import {
   ScrollView,
   Dimensions,
   Alert,
+<<<<<<< HEAD
   Image,
   ActivityIndicator
+=======
+  Image
+>>>>>>> feat/settings-page
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Audio } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { THEME_FAMILLE_WORDS, getWrongOptions } from "../../data/themeData";
+<<<<<<< HEAD
 import { generateBlockExercises } from "../../src/services/ExerciseApiService";
+=======
+>>>>>>> feat/settings-page
 
 const { width } = Dimensions.get("window");
 
@@ -95,6 +102,7 @@ const playFeedbackSound = async (isCorrect) => {
 };
 
 // --- EXERCISE DATA: ALL 6 WORDS ---
+<<<<<<< HEAD
 // Block ID for the "Famille" theme in the backend
 const THEME_BLOCK_ID = "block-famille-001";
 
@@ -123,6 +131,29 @@ const generateStaticExerciseQuestions = () => {
 const staticExerciseQuestions = generateStaticExerciseQuestions();
 
 const TOTAL_QUESTIONS = staticExerciseQuestions.length;
+=======
+// Using all 6 words from the shared pool for pedagogical consistency
+const EXERCISE_QUESTIONS = THEME_FAMILLE_WORDS.map((word, index) => {
+  // Generate options: correct answer + wrong options
+  const wrongOptions = getWrongOptions(word.id, 3);
+  const allOptions = [word, ...wrongOptions];
+  // Shuffle options
+  const shuffledOptions = allOptions.sort(() => Math.random() - 0.5);
+
+  return {
+    id: word.id,
+    questionNumber: index + 1,
+    fr: word.fr,
+    local: word.local,
+    options: shuffledOptions.map((opt, optIndex) => ({
+      id: `opt${optIndex + 1}`,
+      text: opt.local
+    }))
+  };
+});
+
+const TOTAL_QUESTIONS = EXERCISE_QUESTIONS.length;
+>>>>>>> feat/settings-page
 
 const ExerciseThreeScreen = () => {
   const router = useRouter();
@@ -141,6 +172,7 @@ const ExerciseThreeScreen = () => {
   const totalProgress = getParamAsNumber("totalProgress", 66);
 
   // --- STATE ---
+<<<<<<< HEAD
   // Backend data state
   const [exerciseQuestions, setExerciseQuestions] = useState(
     staticExerciseQuestions
@@ -148,6 +180,8 @@ const ExerciseThreeScreen = () => {
   const [isLoadingExercises, setIsLoadingExercises] = useState(true);
   const [exerciseError, setExerciseError] = useState(null);
 
+=======
+>>>>>>> feat/settings-page
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [lives, setLives] = useState(initialLives);
   const [selectedOption, setSelectedOption] = useState(null);
@@ -166,6 +200,7 @@ const ExerciseThreeScreen = () => {
   const timerRef = useRef(null);
 
   // Current question
+<<<<<<< HEAD
   const currentQuestion = exerciseQuestions[currentQuestionIndex];
   const isLastQuestion = currentQuestionIndex === exerciseQuestions.length - 1;
 
@@ -215,6 +250,13 @@ const ExerciseThreeScreen = () => {
 
     fetchExercises();
 
+=======
+  const currentQuestion = EXERCISE_QUESTIONS[currentQuestionIndex];
+  const isLastQuestion = currentQuestionIndex === TOTAL_QUESTIONS - 1;
+
+  // Initialize timer
+  useEffect(() => {
+>>>>>>> feat/settings-page
     timerRef.current = setInterval(() => {
       setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
     }, 1000);
@@ -371,6 +413,7 @@ const ExerciseThreeScreen = () => {
   };
 
   // Calculate progress
+<<<<<<< HEAD
   const exerciseProgress =
     ((currentQuestionIndex + 1) / exerciseQuestions.length) * 34;
   const overallProgress = totalProgress + exerciseProgress;
@@ -393,6 +436,11 @@ const ExerciseThreeScreen = () => {
     );
   }
 
+=======
+  const exerciseProgress = ((currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 34;
+  const overallProgress = totalProgress + exerciseProgress;
+
+>>>>>>> feat/settings-page
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle='dark-content' backgroundColor='#F5F5F5' />

@@ -8,6 +8,7 @@ export default {
     scheme: "mulema",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
+<<<<<<< HEAD
     updates: {
       url: "https://u.expo.dev/34e3ccd6-55a9-4abe-9cbd-de8441d88ad3"
     },
@@ -19,6 +20,10 @@ export default {
       eas: {
         projectId: "34e3ccd6-55a9-4abe-9cbd-de8441d88ad3"
       }
+=======
+    extra: {
+      apiIp: process.env.EXPO_PUBLIC_API_IP
+>>>>>>> feat/settings-page
     },
     ios: {
       supportsTablet: true,
@@ -55,6 +60,22 @@ export default {
             backgroundColor: "#000000"
           }
         }
+<<<<<<< HEAD
+=======
+      ],
+      [
+        "expo-facebook",
+        {
+          appId: process.env.EXPO_PUBLIC_FACEBOOK_APP_ID,
+          appName: "Mulema"
+        }
+      ],
+      [
+        "expo-apple-authentication",
+        {
+          nonce: true
+        }
+>>>>>>> feat/settings-page
       ]
     ],
     experiments: {

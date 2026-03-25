@@ -1,4 +1,5 @@
 import React from "react";
+<<<<<<< HEAD
 import { View, StyleSheet } from "react-native";
 
 export default function Card({ children, className = "", style }) {
@@ -24,3 +25,14 @@ const styles = StyleSheet.create({
     elevation: 2
   }
 });
+=======
+import { View } from "react-native";
+
+export default function Card({ children, className = "" }) {
+  return (
+    <View className={`bg-card rounded-2xl p-4 shadow-sm ${className}`}>
+      {children}
+    </View>
+  );
+}
+>>>>>>> feat/settings-page

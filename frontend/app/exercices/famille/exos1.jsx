@@ -19,7 +19,10 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import useCowrie from "../../hooks/useCowrie";
 import { THEME_FAMILLE_WORDS } from "../../data/themeData";
+<<<<<<< HEAD
 import { generateBlockExercises } from "../../src/services/ExerciseApiService";
+=======
+>>>>>>> feat/settings-page
 
 // Audio state flags
 let audioInitialized = false;
@@ -153,6 +156,7 @@ const playFeedbackSound = async (isCorrect, language = "fr") => {
 // --- DONNÉES DU THÈME (SHARED WORD POOL) ---
 // Uses the same 6 words across ALL exercises for pedagogical repetition
 
+<<<<<<< HEAD
 // Block ID for the "Famille" theme in the backend
 // This should match a block ID in your database
 const THEME_BLOCK_ID = "block-famille-001";
@@ -168,17 +172,29 @@ const transformMatchingPairs = (words) => {
 
 // Static fallback data
 const staticMatchingPairs = THEME_FAMILLE_WORDS.map((word) => ({
+=======
+// Transform words into pairs for matching exercise
+const matchingPairs = THEME_FAMILLE_WORDS.map((word) => ({
+>>>>>>> feat/settings-page
   id: word.id,
   fr: word.fr,
   local: word.local
 }));
 
+<<<<<<< HEAD
 const staticExercisesData = [
+=======
+const exercisesData = [
+>>>>>>> feat/settings-page
   {
     id: 1,
     type: "matching",
     instruction: "Associe chaque mot avec sa bonne traduction !",
+<<<<<<< HEAD
     pairs: staticMatchingPairs
+=======
+    pairs: matchingPairs
+>>>>>>> feat/settings-page
   }
 ];
 
@@ -191,6 +207,7 @@ const ExerciseScreen = ({ navigation }) => {
   // --- ÉTATS (STATE) ---
   const router = useRouter();
   const [currentExIndex, setCurrentExIndex] = useState(0);
+<<<<<<< HEAD
   const [exercisesData, setExercisesData] = useState(staticExercisesData);
   const [isLoadingExercises, setIsLoadingExercises] = useState(true);
   const [exerciseError, setExerciseError] = useState(null);
@@ -245,6 +262,8 @@ const ExerciseScreen = ({ navigation }) => {
 
     fetchExercises();
   }, []);
+=======
+>>>>>>> feat/settings-page
 
   // Use cowrie hook for automatic recharging
   const { cowries, setCowries, canPlay, isRecharging, formatRechargeTime } =

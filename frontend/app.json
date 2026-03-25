@@ -2,7 +2,10 @@
   "expo": {
     "name": "Mulema",
     "slug": "mulema",
+<<<<<<< HEAD
     "owner": "leila237",
+=======
+>>>>>>> feat/settings-page
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -18,6 +21,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.mulema.app",
       "infoPlist": {
+<<<<<<< HEAD
         "NSFaceIDUsageDescription": "Use Face ID for authentication",
         "CFBundleURLTypes": [
           {
@@ -25,6 +29,9 @@
             "CFBundleURLSchemes": ["com.mulema.app", "fb1992544871639029"]
           }
         ]
+=======
+        "NSFaceIDUsageDescription": "Use Face ID for authentication"
+>>>>>>> feat/settings-page
       }
     },
     "android": {

@@ -12,8 +12,12 @@ import {
   Easing,
   StyleSheet,
   Dimensions,
+<<<<<<< HEAD
   StatusBar,
   ActivityIndicator
+=======
+  StatusBar
+>>>>>>> feat/settings-page
 } from "react-native";
 import Svg, { G, Path } from "react-native-svg";
 import { useRouter } from "expo-router";
@@ -22,9 +26,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useUser } from "../../src/context/UserContext";
 import { useTranslation } from "react-i18next";
+<<<<<<< HEAD
 import SocialButtons from "../../src/components/SocialButtons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../../services/api";
+=======
+import ScreenWrapper from "../components/ui/ScreenWrapper";
+>>>>>>> feat/settings-page
 
 const { width, height } = Dimensions.get("window");
 
@@ -338,6 +346,68 @@ const SignInScreen = () => {
     ).start();
   }, [buttonPulse, formAnim, logoAnim, logoScale, subtitleAnim, titleAnim]);
 
+  // Mount animations
+  const logoAnim = useRef(new Animated.Value(0)).current;
+  const titleAnim = useRef(new Animated.Value(0)).current;
+  const subtitleAnim = useRef(new Animated.Value(0)).current;
+  const formAnim = useRef(new Animated.Value(0)).current;
+  const logoScale = useRef(new Animated.Value(0.5)).current;
+  const buttonPulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.stagger(120, [
+      Animated.parallel([
+        Animated.spring(logoScale, {
+          toValue: 1,
+          tension: 60,
+          friction: 8,
+          useNativeDriver: true
+        }),
+        Animated.timing(logoAnim, {
+          toValue: 1,
+          duration: 700,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true
+        })
+      ]),
+      Animated.timing(titleAnim, {
+        toValue: 1,
+        duration: 600,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true
+      }),
+      Animated.timing(subtitleAnim, {
+        toValue: 1,
+        duration: 500,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true
+      }),
+      Animated.timing(formAnim, {
+        toValue: 1,
+        duration: 600,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true
+      })
+    ]).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(buttonPulse, {
+          toValue: 1.03,
+          duration: 1200,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true
+        }),
+        Animated.timing(buttonPulse, {
+          toValue: 1,
+          duration: 1200,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true
+        })
+      ])
+    ).start();
+  }, [buttonPulse, formAnim, logoAnim, logoScale, subtitleAnim, titleAnim]);
+
   const handleSignIn = async () => {
     if (!email || !password) {
       return Alert.alert(t("common.error"), t("errors.requiredField"));
@@ -347,10 +417,15 @@ const SignInScreen = () => {
       await login(email, password);
     } catch (err) {
       const msg =
+<<<<<<< HEAD
         err?.response?.data?.message ||
         err?.message ||
         t("signIn.signInFailed");
       Alert.alert(t("common.error"), msg);
+=======
+        err?.response?.data?.message || err?.message || "Sign in failed.";
+      Alert.alert("Error", msg);
+>>>>>>> feat/settings-page
     } finally {
       setLoading(false);
     }
@@ -465,10 +540,150 @@ const SignInScreen = () => {
                   contentFit='contain'
                 />
               </View>
+<<<<<<< HEAD
+=======
             </View>
             <OrbitingDot />
           </Animated.View>
 
+          {/* ── Title ── */}
+          <Animated.View
+            style={{
+              opacity: titleAnim,
+              transform: [
+                {
+                  translateY: titleAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0]
+                  })
+                }
+              ],
+              alignItems: "center",
+              marginBottom: 6
+            }}
+          >
+            <Text style={s.brand}>mulema</Text>
+          </Animated.View>
+
+          {/* ── Subtitle ── */}
+          <Animated.View
+            style={{
+              opacity: subtitleAnim,
+              transform: [
+                {
+                  translateY: subtitleAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [15, 0]
+                  })
+                }
+              ],
+              alignItems: "center",
+              marginBottom: 36
+            }}
+          >
+            <View style={s.pillBadge}>
+              <Text style={s.pillText}>🌍 Langues camerounaises</Text>
+            </View>
+            <Text style={s.subtitle}>
+              Connectez-vous pour continuer votre aventure
+            </Text>
+          </Animated.View>
+
+          {/* ── Form card ── */}
+          <Animated.View
+            style={[
+              s.card,
+              {
+                opacity: formAnim,
+                transform: [
+                  {
+                    translateY: formAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [40, 0]
+                    })
+                  }
+                ]
+              }
+            ]}
+          >
+            {/* Email */}
+            <Field
+              label='Adresse e-mail'
+              icon='mail-outline'
+              value={email}
+              onChangeText={setEmail}
+              placeholder='exemple@email.com'
+              keyboardType='email-address'
+              autoCapitalize='none'
+            />
+
+            {/* Password */}
+            <Field
+              label='Mot de passe'
+              icon='lock-closed-outline'
+              value={password}
+              onChangeText={setPassword}
+              placeholder='••••••••'
+              secureTextEntry={!showPassword}
+              rightIcon={showPassword ? "eye-outline" : "eye-off-outline"}
+              onRightPress={() => setShowPassword(!showPassword)}
+            />
+
+            {/* Forgot password */}
+            <TouchableOpacity
+              onPress={() => router.push("/forgotpass")}
+              activeOpacity={0.8}
+              style={[s.signUpBtn, { alignSelf: "flex-end", marginBottom: 24 }]}
+            >
+              <Text style={s.forgot}>Mot de passe oublié ?</Text>
+            </TouchableOpacity>
+
+            {/* Sign in button */}
+            <Animated.View
+              style={{ transform: [{ scale: loading ? 1 : buttonPulse }] }}
+            >
+              <TouchableOpacity
+                onPress={handleSignIn}
+                disabled={loading}
+                activeOpacity={0.85}
+                style={{ borderRadius: 16, overflow: "hidden" }}
+              >
+                <LinearGradient
+                  colors={
+                    loading ? ["#E0E0E0", "#E0E0E0"] : ["#E53935", "#B71C1C"]
+                  }
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={s.btn}
+                >
+                  {loading ? (
+                    <WaveDots />
+                  ) : (
+                    <>
+                      <Text style={s.btnText}>Se connecter</Text>
+                      <Ionicons
+                        name='arrow-forward'
+                        size={20}
+                        color='#fff'
+                        style={{ marginLeft: 8 }}
+                      />
+                    </>
+                  )}
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated.View>
+
+            {/* Divider */}
+            <View style={s.dividerRow}>
+              <View style={s.dividerLine} />
+              <Text style={s.dividerText}>ou</Text>
+              <View style={s.dividerLine} />
+>>>>>>> feat/settings-page
+            </View>
+            <OrbitingDot />
+          </Animated.View>
+
+<<<<<<< HEAD
           {/* ── Title ── */}
           <Animated.View
             style={{
@@ -610,13 +825,22 @@ const SignInScreen = () => {
 
             {/* Sign up */}
             <TouchableOpacity
+=======
+            {/* Sign up */}
+            <TouchableOpacity
+>>>>>>> feat/settings-page
               onPress={() => router.push("/sign-up")}
               activeOpacity={0.8}
               style={s.signUpBtn}
             >
               <Text style={s.signUpText}>
+<<<<<<< HEAD
                 {t("signIn.noAccount")}{" "}
                 <Text style={s.signUpLink}>{t("signIn.signUpFree")}</Text>
+=======
+                Pas encore de compte ?{" "}
+                <Text style={s.signUpLink}>S&apos;inscrire gratuitement</Text>
+>>>>>>> feat/settings-page
               </Text>
             </TouchableOpacity>
           </Animated.View>
@@ -728,6 +952,7 @@ const s = StyleSheet.create({
 
   // Text
   brand: {
+<<<<<<< HEAD
     fontFamily: Platform.OS === "ios" ? "nunito" : "sans-serif",
     fontSize: 29,
     fontWeight: "700",
@@ -747,6 +972,13 @@ const s = StyleSheet.create({
     fontSize: 12,
     textAlign: "center",
     lineHeight: 22
+=======
+    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
+    fontSize: 42,
+    fontWeight: "700",
+    color: "#1A1A1A",
+    letterSpacing: 3
+>>>>>>> feat/settings-page
   },
   pillBadge: {
     backgroundColor: "rgba(211,47,47,0.1)",
@@ -763,11 +995,24 @@ const s = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: 0.5
   },
+<<<<<<< HEAD
+=======
+  subtitle: {
+    color: "#888",
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 20
+  },
+>>>>>>> feat/settings-page
 
   // Card
   card: {
     width: "100%",
+<<<<<<< HEAD
     // backgroundColor: "rgba(255,255,255,0.75)",
+=======
+    backgroundColor: "rgba(255,255,255,0.75)",
+>>>>>>> feat/settings-page
     borderRadius: 24,
     borderWidth: 1,
     borderColor: "rgba(211,47,47,0.1)",
