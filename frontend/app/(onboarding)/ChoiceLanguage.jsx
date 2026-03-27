@@ -12,12 +12,12 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 
-import ScreenWrapper from "./components/ui/ScreenWrapper";
-import AppTitle from "./components/ui/AppTitle";
-import AppText from "./components/ui/AppText";
-import Button from "./components/ui/Button";
-import Card from "./components/ui/Card";
-import api from "../services/api";
+import ScreenWrapper from "../components/ui/ScreenWrapper";
+import AppTitle from "../components/ui/AppTitle";
+import AppText from "../components/ui/AppText";
+import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
+import api from "../../services/api";
 
 const SELECTED_LANGUAGE_KEY = "selectedLanguage";
 

@@ -30,8 +30,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 
 // ── Design system ──
-import { Colors, Typo, Space, Radius, Shadow } from "../src/theme/tokens";
-import { MButton } from "../src/components/ui/MComponents";
+import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
+import { MButton } from "../../src/components/ui/MComponents";
 
 const HAS_SEEN_INTRO = "hasSeenIntro";
 const HAS_SELECTED_LANGUAGE = "selectedLanguage";
