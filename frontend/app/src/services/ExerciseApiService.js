@@ -13,7 +13,7 @@
  * - PATCH /exercises/:id/complete - Complete an exercise
  */
 
-import api from '../../../services/api';
+import api from '../../../src/services/api';
 
 /**
  * Generate exercises for a specific block

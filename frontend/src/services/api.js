@@ -2,7 +2,7 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
-import { env } from "../src/env";
+import { env } from "../env";
 
 // ⚠️ API URL depends on platform and environment
 // Android emulator : http://10.0.2.2:5001

@@ -26,7 +26,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../../services/api";
+import api from "../../src/services/api";
 import { useTranslation } from "react-i18next";
 
 // ── Design system ──

@@ -24,7 +24,7 @@ import {
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
-import api from "../../services/api";
+import api from "../../src/services/api";
 import { useTranslation } from "react-i18next";
 
 // ── Design system ──

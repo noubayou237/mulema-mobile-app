@@ -7,7 +7,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../../services/api";
+import api from "../../src/services/api";
 
 const STORAGE_KEY = "userSession";
 
