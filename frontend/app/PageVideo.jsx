@@ -1,18 +1,37 @@
+/**
+ * ╔══════════════════════════════════════════════════════════════╗
+ * ║  Mulema — PageVideo (Intro Video Screen)                      ║
+ * ║  Matches the video_de_presentation.png maquette.              ║
+ * ║  Fullscreen video with overlay, play button, skip, continue.  ║
+ * ║  All business logic preserved (lang resolve, persist, nav).   ║
+ * ╚══════════════════════════════════════════════════════════════╝
+ *
+ *  NOTE: Place a fallback image at assets/images/video_placeholder.jpg
+ *  (a photo of an African market scene, sunset, or cultural scene).
+ *  If missing, a dark gradient is shown until the video loads.
+ */
+
 import React, { useRef, useState, useEffect } from "react";
 import {
-  SafeAreaView,
   View,
   Text,
   TouchableOpacity,
   Dimensions,
   Platform,
   ActivityIndicator,
-  StyleSheet
+  StyleSheet,
+  StatusBar,
+  ImageBackground,
 } from "react-native";
 import { Video } from "expo-av";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
+
+// ── Design system ──
+import { Colors, Typo, Space, Radius, Shadow } from "../src/theme/tokens";
+import { MButton } from "../src/components/ui/MComponents";
 
 const HAS_SEEN_INTRO = "hasSeenIntro";
 const HAS_SELECTED_LANGUAGE = "selectedLanguage";
@@ -21,8 +40,54 @@ const VIDEO_BY_LANG = {
   bassa: "https://example.com/videos/bassa/intro.m3u8",
   duala: "https://example.com/videos/duala/intro.m3u8",
   ghomala: "https://example.com/videos/ghomala/intro.m3u8",
-  default: "https://example.com/videos/default/intro.m3u8"
+  default: "https://example.com/videos/default/intro.m3u8",
 };
+
+const { width, height } = Dimensions.get("window");
+
+/* ══════════════════════════════════════════════════════════════
+   Play Button — frosted glass circle
+   ══════════════════════════════════════════════════════════════ */
+
+const PlayButton = ({ onPress, loading }) => {
+  if (loading) {
+    return (
+      <View style={s.playCircle}>
+        <ActivityIndicator size="large" color={Colors.onPrimary} />
+      </View>
+    );
+  }
+
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={s.playCircle}>
+      <View style={s.playTriangle} />
+    </TouchableOpacity>
+  );
+};
+
+/* ══════════════════════════════════════════════════════════════
+   Progress Dots — 3 dots, first one active
+   ══════════════════════════════════════════════════════════════ */
+
+const ProgressDots = ({ active = 0, total = 3 }) => (
+  <View style={s.dotsRow}>
+    {Array(total).fill(0).map((_, i) => (
+      <View
+        key={i}
+        style={[
+          s.dot,
+          i === active
+            ? { backgroundColor: Colors.primaryContainer, width: 32 }
+            : { backgroundColor: Colors.onPrimary + "40", width: 12 },
+        ]}
+      />
+    ))}
+  </View>
+);
+
+/* ══════════════════════════════════════════════════════════════
+   Main Screen
+   ══════════════════════════════════════════════════════════════ */
 
 export default function PageVideo() {
   const router = useRouter();
@@ -34,7 +99,9 @@ export default function PageVideo() {
   const [langResolved, setLangResolved] = useState(null);
   const [resolving, setResolving] = useState(true);
   const [videoLoading, setVideoLoading] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
 
+  // ── Resolve language — ORIGINAL LOGIC ──
   useEffect(() => {
     let mounted = true;
 
@@ -63,207 +130,248 @@ export default function PageVideo() {
       }
     })();
 
-    return () => (mounted = false);
+    return () => { mounted = false; };
   }, [paramLang]);
 
   const videoUri = VIDEO_BY_LANG[langResolved] ?? VIDEO_BY_LANG.default;
 
+  // ── Persist & navigate — ORIGINAL LOGIC ──
   const persistAndGoHome = async () => {
     await AsyncStorage.setItem(HAS_SELECTED_LANGUAGE, langResolved);
     await AsyncStorage.setItem(HAS_SEEN_INTRO, "true");
     router.replace(`/(tabs)/home?lang=${langResolved}`);
   };
 
+  // ── Play handler ──
   const handlePlay = async () => {
     try {
-      await videoRef.current?.replayAsync?.();
+      if (isPlaying) {
+        await videoRef.current?.pauseAsync?.();
+        setIsPlaying(false);
+      } else {
+        await videoRef.current?.replayAsync?.();
+        setIsPlaying(true);
+      }
     } catch {}
   };
 
-  const { height } = Dimensions.get("window");
-  const videoHeight = Math.round(height * 0.62);
+  // ── Get description — ORIGINAL LOGIC ──
+  const getDescription = (lang) => {
+    switch ((lang || "").toLowerCase()) {
+      case "bassa": return "Découvrez Mulema en action — Bassa";
+      case "duala": return "Découvrez Mulema en action — Duala";
+      case "ghomala": return "Découvrez Mulema en action — Ghomala";
+      default: return "Découvrez Mulema en action";
+    }
+  };
 
+  // ── Loading state ──
   if (resolving) {
     return (
-      <SafeAreaView className='flex-1 bg-background items-center justify-center'>
-        <ActivityIndicator size='large' />
-        <Text className='mt-3 text-muted-foreground'>Chargement...</Text>
-      </SafeAreaView>
+      <View style={[s.root, { alignItems: "center", justifyContent: "center" }]}>
+        <StatusBar barStyle="light-content" />
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={[Typo.bodyMd, { color: Colors.textSecondary, marginTop: Space.md }]}>
+          Chargement...
+        </Text>
+      </View>
     );
   }
 
+  // ── Fallback background ──
+  // If you have a placeholder image, uncomment ImageBackground below.
+  // Otherwise the gradient acts as the fallback.
+  let placeholderImage = null;
+  try {
+    placeholderImage = require("../../assets/images/video_placeholder.jpg");
+  } catch {
+    placeholderImage = null;
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
-      {/* VIDEO BLOCK */}
-      <View style={[styles.videoContainer, { height: videoHeight }]}>
+    <View style={s.root}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
+      {/* ── Fullscreen Video ── */}
+      <View style={s.videoFill}>
+        {/* Fallback image or dark bg */}
+        {placeholderImage ? (
+          <ImageBackground
+            source={placeholderImage}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+          />
+        ) : (
+          <LinearGradient
+            colors={["#1a1a2e", "#16213e", "#0f3460"]}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+
+        {/* Video layer */}
         <Video
           ref={videoRef}
           source={{ uri: videoUri }}
-          resizeMode='cover'
+          resizeMode="cover"
           shouldPlay={false}
           isLooping={false}
-          style={styles.video}
-          onPlaybackStatusUpdate={(s) => {
-            setVideoLoading(false);
-            if (s?.didJustFinish) persistAndGoHome();
+          style={StyleSheet.absoluteFill}
+          onPlaybackStatusUpdate={(status) => {
+            if (status.isLoaded) setVideoLoading(false);
+            if (status?.didJustFinish) persistAndGoHome();
+            if (status?.isPlaying !== undefined) setIsPlaying(status.isPlaying);
           }}
         />
 
+        {/* Dark gradient overlay — bottom heavy */}
         <LinearGradient
-          colors={["rgba(0,0,0,0.15)", "rgba(0,0,0,0.6)", "rgba(0,0,0,0.9)"]}
-          style={styles.gradient}
+          colors={[
+            "rgba(0,0,0,0.05)",
+            "rgba(0,0,0,0.1)",
+            "rgba(0,0,0,0.5)",
+            "rgba(0,0,0,0.85)",
+          ]}
+          locations={[0, 0.3, 0.7, 1]}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
         />
 
-        {/* SKIP */}
-        <View style={styles.skipContainer}>
-          <TouchableOpacity
-            onPress={persistAndGoHome}
-            style={styles.skipButton}
-          >
-            <Text style={styles.skipText}>Skip</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* CENTER PLAY */}
-        <View style={styles.playContainer}>
-          {videoLoading ? (
-            <ActivityIndicator size='large' color='#fff' />
-          ) : (
-            <>
-              <TouchableOpacity onPress={handlePlay} style={styles.playButton}>
-                <View
-                  style={{
-                    width: 0,
-                    height: 0,
-                    marginLeft: 6,
-                    borderLeftWidth: 18,
-                    borderLeftColor: "white",
-                    borderTopWidth: 12,
-                    borderTopColor: "transparent",
-                    borderBottomWidth: 12,
-                    borderBottomColor: "transparent"
-                  }}
-                />
-              </TouchableOpacity>
-
-              <Text style={styles.playText}>Play video</Text>
-            </>
-          )}
-        </View>
-      </View>
-
-      {/* BOTTOM CONTENT */}
-      <View style={styles.bottomContent}>
-        <Text style={styles.description}>{getDescription(langResolved)}</Text>
-
+        {/* ── Skip button (top right) ── */}
         <TouchableOpacity
           onPress={persistAndGoHome}
-          style={styles.continueButton}
+          activeOpacity={0.7}
+          style={s.skipBtn}
         >
-          <Text style={styles.continueText}>Continue</Text>
+          <Text style={s.skipText}>Skip</Text>
         </TouchableOpacity>
+
+        {/* ── Center play button ── */}
+        {!isPlaying && (
+          <View style={s.playCenterWrap}>
+            <PlayButton onPress={handlePlay} loading={videoLoading} />
+          </View>
+        )}
+
+        {/* ── Bottom content (over video) ── */}
+        <View style={s.bottomOverlay}>
+          {/* Progress dots */}
+          <ProgressDots active={0} total={3} />
+
+          {/* Description */}
+          <Text style={s.description}>
+            {getDescription(langResolved)}
+          </Text>
+
+          {/* Continue button */}
+          <MButton
+            title="Continuer"
+            onPress={persistAndGoHome}
+            // icon="arrow-forward"
+            style={{ width: "100%" }}
+          />
+        </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
-function getDescription(lang) {
-  switch ((lang || "").toLowerCase()) {
-    case "bassa":
-      return "Vidéo d'introduction - Bassa";
-    case "duala":
-      return "Vidéo d'introduction - Duala";
-    case "ghomala":
-      return "Vidéo d'introduction - Ghomala";
-    default:
-      return "Vidéo d'introduction";
-  }
-}
+/* ──────────────────────────────────────────────────────────────
+   Styles
+   ────────────────────────────────────────────────────────────── */
 
-const styles = StyleSheet.create({
-  container: {
+const s = StyleSheet.create({
+  root: {
     flex: 1,
-    backgroundColor: "#F9F5F5"
+    backgroundColor: Colors.black,
   },
-  videoContainer: {
+
+  // Fullscreen video container
+  videoFill: {
+    flex: 1,
     width: "100%",
-    backgroundColor: "#000",
+    height: "100%",
     position: "relative",
-    overflow: "hidden"
   },
-  video: {
+
+  // Skip
+  skipBtn: {
     position: "absolute",
-    width: "100%",
-    height: "100%"
-  },
-  gradient: {
-    position: "absolute",
-    width: "100%",
-    height: "100%"
-  },
-  skipContainer: {
-    position: "absolute",
-    right: 16,
-    top: Platform.OS === "ios" ? 56 : 24
-  },
-  skipButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.1)"
+    right: Space["2xl"],
+    top: Platform.OS === "ios" ? 58 : 40,
+    paddingHorizontal: Space.lg,
+    paddingVertical: Space.sm,
+    borderRadius: Radius.full,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    zIndex: 10,
   },
   skipText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 14
+    color: Colors.onPrimary,
+    ...Typo.titleSm,
   },
-  playContainer: {
+
+  // Play button center
+  playCenterWrap: {
     position: "absolute",
-    top: "34%",
-    alignSelf: "center",
-    alignItems: "center"
-  },
-  playButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#D32F2F",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 100,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 5
+    zIndex: 5,
   },
-  playText: {
-    marginTop: 16,
-    color: "#fff",
-    fontSize: 20,
-    fontWeight: "bold"
+  playCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.3)",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  bottomContent: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    justifyContent: "flex-end",
-    paddingBottom: Platform.OS === "ios" ? 40 : 24
+  playTriangle: {
+    width: 0,
+    height: 0,
+    marginLeft: 5,
+    borderLeftWidth: 20,
+    borderLeftColor: Colors.onPrimary,
+    borderTopWidth: 13,
+    borderTopColor: "transparent",
+    borderBottomWidth: 13,
+    borderBottomColor: "transparent",
   },
+
+  // Progress dots
+  dotsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Space.sm,
+    marginBottom: Space.xl,
+  },
+  dot: {
+    height: 4,
+    borderRadius: 2,
+  },
+
+  // Bottom overlay
+  bottomOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: Space["2xl"],
+    paddingBottom: Platform.OS === "ios" ? 48 : 32,
+    paddingTop: Space["2xl"],
+    zIndex: 10,
+  },
+
+  // Description
   description: {
+    ...Typo.titleLg,
+    color: Colors.onPrimary,
     textAlign: "center",
-    fontSize: 16,
-    color: "#6B6B6B",
-    marginBottom: 20
+    marginBottom: Space["2xl"],
   },
-  continueButton: {
-    backgroundColor: "#D32F2F",
-    borderRadius: 30,
-    paddingVertical: 20,
-    alignItems: "center"
-  },
-  continueText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold"
-  }
 });
