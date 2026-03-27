@@ -17,7 +17,7 @@ import AppTitle from "../components/ui/AppTitle";
 import AppText from "../components/ui/AppText";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
-import api from "../../services/api";
+import api from "../../src/services/api";
 
 const SELECTED_LANGUAGE_KEY = "selectedLanguage";
 

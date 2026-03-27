@@ -23,7 +23,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useUser } from "../../src/context/UserContext";
 import { useState, useEffect, useRef } from "react";
 import * as ImagePicker from "expo-image-picker";
-import api from "../../services/api";
+import api from "../../src/services/api";
 import { useTranslation } from "react-i18next";
 import "../../src/i18n";
 

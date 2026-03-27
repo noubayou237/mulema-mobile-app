@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import api from "../../services/api";
+import api from "../services/api";
 import { changeLanguage, initializeLanguage } from "../i18n";
 
 const STORAGE_KEY = "userSession"; // Single key for session storage

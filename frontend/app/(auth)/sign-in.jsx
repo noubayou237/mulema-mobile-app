@@ -27,7 +27,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useUser } from "../../src/context/UserContext";
 import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../../services/api";
+import api from "../../src/services/api";
 
 // ── Design system ──
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";

@@ -2,7 +2,7 @@
 import { useState, useCallback } from "react";
 import * as Google from "expo-auth-session/providers/google";
 import * as Facebook from "expo-auth-session/providers/facebook";
-import api from "../../services/api";
+import api from "../services/api";
 
 // Dynamically import Apple Auth to handle case where module is not available
 // On Android and Web, Apple Sign-In is not supported
