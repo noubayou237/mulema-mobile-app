@@ -64,108 +64,114 @@ export const Colors = {
    These objects are spread directly into <Text style={...}>.
    ────────────────────────────────────────────────────────────── */
 
-const fontFamily = Platform.OS === "ios" ? "nunito" : "sans-serif";
+// Police fantaisiste pour titres/headings (Fredoka — arrondie et chaleureuse)
+const fontTitle = "Fredoka_700Bold";
+const fontTitleMd = "Fredoka_600SemiBold";
+const fontTitleSm = "Fredoka_500Medium";
+
+// Police corps de texte (Nunito — lisible et douce)
+const fontBody = "Nunito-Regular";
+const fontBodyMedium = "Nunito-Medium";
+const fontBodySemiBold = "Nunito-SemiBold";
+const fontBodyBold = "Nunito-Bold";
 
 export const Typo = {
   displayLg: {
-    fontFamily,
+    fontFamily: fontTitle,
     fontSize: 40,
-    fontWeight: "800",
-    letterSpacing: -0.8,
     lineHeight: 48,
     color: Colors.onSurface,
   },
   displayMd: {
-    fontFamily,
+    fontFamily: fontTitle,
     fontSize: 32,
-    fontWeight: "800",
-    letterSpacing: -0.6,
     lineHeight: 40,
     color: Colors.onSurface,
   },
   headlineLg: {
-    fontFamily,
+    fontFamily: fontTitle,
     fontSize: 28,
-    fontWeight: "700",
-    letterSpacing: -0.4,
     lineHeight: 36,
     color: Colors.onSurface,
   },
   headlineMd: {
-    fontFamily,
+    fontFamily: fontTitle,
     fontSize: 24,
-    fontWeight: "700",
-    letterSpacing: -0.2,
     lineHeight: 32,
     color: Colors.onSurface,
   },
   titleLg: {
-    fontFamily,
+    fontFamily: fontTitleMd,
     fontSize: 20,
-    fontWeight: "600",
     lineHeight: 28,
     color: Colors.onSurface,
   },
   titleMd: {
-    fontFamily,
+    fontFamily: fontTitleMd,
     fontSize: 17,
-    fontWeight: "600",
     lineHeight: 24,
     color: Colors.onSurface,
   },
   titleSm: {
-    fontFamily,
+    fontFamily: fontTitleSm,
     fontSize: 15,
-    fontWeight: "600",
     lineHeight: 22,
     color: Colors.onSurface,
   },
   bodyLg: {
-    fontFamily,
+    fontFamily: fontBody,
     fontSize: 16,
     fontWeight: "400",
     lineHeight: 24,
     color: Colors.onSurfaceVariant,
   },
   bodyMd: {
-    fontFamily,
+    fontFamily: fontBody,
     fontSize: 14,
     fontWeight: "400",
     lineHeight: 21,
     color: Colors.onSurfaceVariant,
   },
   bodySm: {
-    fontFamily,
+    fontFamily: fontBody,
     fontSize: 12,
     fontWeight: "400",
     lineHeight: 18,
     color: Colors.textSecondary,
   },
   labelLg: {
-    fontFamily,
+    fontFamily: fontBodySemiBold,
     fontSize: 14,
-    fontWeight: "600",
     letterSpacing: 0.4,
     lineHeight: 20,
     color: Colors.onSurface,
   },
   labelMd: {
-    fontFamily,
+    fontFamily: fontBodySemiBold,
     fontSize: 12,
-    fontWeight: "600",
     letterSpacing: 0.5,
     lineHeight: 16,
     color: Colors.textSecondary,
   },
   labelSm: {
-    fontFamily,
+    fontFamily: fontBodyBold,
     fontSize: 11,
-    fontWeight: "600",
     letterSpacing: 0.8,
     textTransform: "uppercase",
     lineHeight: 16,
     color: Colors.textTertiary,
   },
+};
+
+// Export des familles de polices pour usage direct
+export const Fonts = {
+  title:      fontTitle,
+  titleMd:    fontTitleMd,
+  titleSm:    fontTitleSm,
+  body:       fontBody,
+  bodyMedium: fontBodyMedium,
+  bodySemiBold: fontBodySemiBold,
+  bodyBold:   fontBodyBold,
 };
 
 

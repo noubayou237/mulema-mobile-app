@@ -28,6 +28,14 @@ export class UserController {
   constructor(private userService: UserService) {}
 
   // =====================
+  // GET DASHBOARD
+  // =====================
+  @Get('dashboard')
+  async getDashboard(@CurrentUser() user: AuthUser) {
+    return this.userService.getDashboard(user.userId);
+  }
+
+  // =====================
   // GET PROFILE
   // =====================
   @Get('profile')
