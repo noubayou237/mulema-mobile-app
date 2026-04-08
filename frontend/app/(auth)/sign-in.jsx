@@ -24,7 +24,8 @@ import {
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
-import { useUser } from "../../src/context/UserContext";
+// import { useUser } from "../../src/context/UserContext";
+import { useAuthStore } from "../../src/stores/useAuthStore";
 import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../../src/services/api";
@@ -49,7 +50,8 @@ const { width } = Dimensions.get("window");
 
 const SignInScreen = () => {
   const router = useRouter();
-  const { login } = useUser();
+  // const { login } = useUser();
+  const { login } = useAuthStore();
   const { t } = useTranslation();
 
   // ── State ──

@@ -7,9 +7,327 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// =====================
-// ENUMS
-// =====================
+model User {
+  id                 String            @id @default(uuid())
+  name               String
+  email              String            @unique
+  username           String            @unique
+  passwordHash       String?
+  role               Role              @default(USER)
+  isVerified         Boolean           @default(false)
+  totalPrawns        Int               @default(0)
+  officialLanguageId String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  language           String            @default("en")
+  isSocial           Boolean           @default(false)
+  provider           SocialProvider?
+  providerId         String?
+  avatar             Avatar?
+  cowry              Cowry?
+  otps               Otp[]
+  refreshTokens      RefreshToken[]
+  rootsStreak        RootsStreak?
+  settings           Settings?
+  statistics         Statistics?
+  officialLanguage   OfficialLanguage? @relation(fields: [officialLanguageId], references: [id])
+  languages          UserLanguage[]
+  progress           UserProgress[]
+  communities        Community[]       @relation("CommunityToUser")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Otp {
+  id        String     @id @default(uuid())
+  code      String
+  purpose   OtpPurpose
+  expiresAt DateTime
+  createdAt DateTime   @default(now())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Statistics {
+  id                 String @id @default(uuid())
+  totalLearningTime  Float
+  lessonsCompleted   Int
+  exercisesCompleted Int
+  totalPrawns        Int
+  userId             String @unique
+  user               User   @relation(fields: [userId], references: [id])
+}
+
+model RootsStreak {
+  id            String @id @default(uuid())
+  daysConnected Int
+  userId        String @unique
+  user          User   @relation(fields: [userId], references: [id])
+}
+
+model Settings {
+  id            String  @id @default(uuid())
+  notifications Boolean @default(true)
+  soundEnabled  Boolean @default(true)
+  darkMode      Boolean @default(false)
+  userId        String  @unique
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Avatar {
+  id          String  @id @default(uuid())
+  imageUrl    String
+  accessoryId String?
+  userId      String  @unique
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model OfficialLanguage {
+  id            String         @id @default(uuid())
+  name          String
+  communities   Community[]
+  users         User[]
+  userLanguages UserLanguage[]
+}
+
+model PatrimonialLanguage {
+  id            String         @id @default(uuid())
+  name          String
+  levels        Level[]
+  mulemThemes   MulemTheme[]
+  stories       Story[]
+  userLanguages UserLanguage[]
+}
+
+model UserLanguage {
+  id                    String               @id @default(uuid())
+  userId                String
+  officialLanguageId    String?
+  patrimonialLanguageId String?
+  officialLanguage      OfficialLanguage?    @relation(fields: [officialLanguageId], references: [id])
+  patrimonialLanguage   PatrimonialLanguage? @relation(fields: [patrimonialLanguageId], references: [id])
+  user                  User                 @relation(fields: [userId], references: [id])
+}
+
+model Community {
+  id                 String           @id @default(uuid())
+  rank               Int
+  officialLanguageId String
+  officialLanguage   OfficialLanguage @relation(fields: [officialLanguageId], references: [id])
+  users              User[]           @relation("CommunityToUser")
+}
+
+model Theme {
+  id          String          @id @default(uuid())
+  title       String
+  description String?
+  imageUrl    String?
+  order       Int             @default(0)
+  language    String          @default("dual")
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  blocks      LearningBlock[]
+  lessons     Lesson[]
+  words       Word[]
+}
+
+model Word {
+  id              String         @id @default(uuid())
+  sourceText      String
+  targetText      String
+  sourceLanguage  String         @default("fr")
+  targetLanguage  String         @default("dual")
+  imageUrl        String?
+  audioUrl        String?
+  difficultyLevel Int            @default(1)
+  order           Int            @default(0)
+  themeId         String
+  blockId         String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  block           LearningBlock? @relation(fields: [blockId], references: [id])
+  theme           Theme          @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  progress        WordProgress[]
+
+  @@index([themeId])
+  @@index([blockId])
+  @@index([difficultyLevel])
+}
+
+model LearningBlock {
+  id          String   @id @default(uuid())
+  title       String?
+  description String?
+  blockOrder  Int      @default(0)
+  wordCount   Int      @default(6)
+  themeId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  theme       Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  words       Word[]
+
+  @@index([themeId])
+}
+
+model WordProgress {
+  id           String    @id @default(uuid())
+  userId       String
+  wordId       String
+  successCount Int       @default(0)
+  failureCount Int       @default(0)
+  lastReviewed DateTime?
+  nextReview   DateTime?
+  easeFactor   Float     @default(2.5)
+  interval     Int       @default(1)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  word         Word      @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, wordId])
+  @@index([userId])
+  @@index([wordId])
+  @@index([nextReview])
+}
+
+model Story {
+  id                    String              @id @default(uuid())
+  patrimonialLanguageId String
+  exercises             Exercise[]          @relation("ExerciseStory")
+  patrimonialLanguage   PatrimonialLanguage @relation(fields: [patrimonialLanguageId], references: [id])
+}
+
+model Level {
+  id                    String              @id @default(uuid())
+  levelNumber           Int
+  title                 String?
+  patrimonialLanguageId String
+  lessons               Lesson[]
+  patrimonialLanguage   PatrimonialLanguage @relation(fields: [patrimonialLanguageId], references: [id])
+}
+
+model Lesson {
+  id           String         @id @default(uuid())
+  title        String
+  order        Int
+  contentUrl   String?
+  levelId      String
+  themeId      String?
+  exercises    Exercise[]     @relation("ExerciseLesson")
+  level        Level          @relation(fields: [levelId], references: [id])
+  theme        Theme?         @relation(fields: [themeId], references: [id])
+  userProgress UserProgress[]
+}
+
+model UserProgress {
+  id          String  @id @default(uuid())
+  isUnlocked  Boolean @default(false)
+  isCompleted Boolean @default(false)
+  stars       Int     @default(0)
+  userId      String
+  lessonId    String
+  lesson      Lesson  @relation(fields: [lessonId], references: [id])
+  user        User    @relation(fields: [userId], references: [id])
+
+  @@unique([userId, lessonId])
+}
+
+model Exercise {
+  id        String     @id @default(uuid())
+  theme     String
+  timeSpent Float
+  accuracy  Float
+  lessonId  String?
+  storyId   String?
+  lesson    Lesson?    @relation("ExerciseLesson", fields: [lessonId], references: [id])
+  story     Story?     @relation("ExerciseStory", fields: [storyId], references: [id])
+  questions Question[]
+  score     Score?
+}
+
+model Question {
+  id            String       @id @default(uuid())
+  content       String
+  type          QuestionType
+  correctAnswer String
+  options       String[]
+  exerciseId    String
+  exercise      Exercise     @relation(fields: [exerciseId], references: [id])
+}
+
+model Score {
+  id         String   @id @default(uuid())
+  scoreValue Int
+  exerciseId String   @unique
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+}
+
+model Cowry {
+  id             String @id @default(uuid())
+  maxCowries     Int    @default(5)
+  currentCowries Int
+  rechargeTime   Int
+  userId         String @unique
+  user           User   @relation(fields: [userId], references: [id])
+}
+
+model MulemTheme {
+  id                    String              @id @default(uuid())
+  patrimonialLanguageId String
+  code                  String
+  order                 Int                 @default(0)
+  name_fr               String
+  name_local            String
+  icon                  String?
+  color                 String?
+  locked                Boolean             @default(false)
+  lock_hint             String?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  exercises             MulemExercise[]
+  patrimonialLanguage   PatrimonialLanguage @relation(fields: [patrimonialLanguageId], references: [id])
+  words                 MulemWord[]
+
+  @@unique([patrimonialLanguageId, code])
+}
+
+model MulemWord {
+  id         String     @id @default(uuid())
+  themeId    String
+  order      Int        @default(0)
+  word_fr    String
+  word_local String
+  hint       String?
+  audio_key  String?
+  audio_url  String?
+  image_key  String?
+  image_url  String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  theme      MulemTheme @relation(fields: [themeId], references: [id], onDelete: Cascade)
+
+  @@index([themeId])
+}
+
+model MulemExercise {
+  id                String     @id @default(uuid())
+  themeId           String
+  order             Int        @default(0)
+  type              String
+  instruction_fr    String?
+  instruction_local String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  theme             MulemTheme @relation(fields: [themeId], references: [id], onDelete: Cascade)
+
+  @@index([themeId])
+}
 
 enum QuestionType {
   MATCHING
@@ -32,344 +350,4 @@ enum SocialProvider {
   GOOGLE
   FACEBOOK
   APPLE
-}
-
-// =====================
-// USER & AUTH
-// =====================
-
-model User {
-  id            String   @id @default(uuid())
-  name          String
-  email         String   @unique
-  username      String   @unique
-  passwordHash  String?
-  role          Role     @default(USER)
-  isVerified    Boolean  @default(false)
-  isSocial      Boolean  @default(false)  // true if registered via social login
-  provider      SocialProvider?           // GOOGLE, FACEBOOK, APPLE
-  providerId    String?                   // Social platform user ID
-  totalPrawns   Int      @default(0)
-  language      String   @default("en") // "en" or "fr"
-
-  refreshTokens RefreshToken[]
-  otps          Otp[]
-
-  statistics    Statistics?
-  rootsStreak   RootsStreak?
-  cowry         Cowry?
-  languages     UserLanguage[]
-  settings      Settings?
-  avatar        Avatar?
-  progress      UserProgress[]
-  communities   Community[]
-
-  officialLanguageId String?
-  officialLanguage   OfficialLanguage? @relation(fields: [officialLanguageId], references: [id])
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-model RefreshToken {
-  id         String   @id @default(uuid())
-  tokenHash String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Otp {
-  id        String   @id @default(uuid())
-  code      String
-  purpose   OtpPurpose
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-// =====================
-// USER PROFILE
-// =====================
-
-model Statistics {
-  id                 String   @id @default(uuid())
-  totalLearningTime  Float
-  lessonsCompleted   Int
-  exercisesCompleted Int
-  totalPrawns        Int
-
-  userId             String   @unique
-  user               User     @relation(fields: [userId], references: [id])
-}
-
-model RootsStreak {
-  id            String   @id @default(uuid())
-  daysConnected Int
-
-  userId        String   @unique
-  user          User     @relation(fields: [userId], references: [id])
-}
-
-model Settings {
-  id            String   @id @default(uuid())
-  notifications Boolean  @default(true)
-  soundEnabled  Boolean  @default(true)
-  darkMode      Boolean  @default(false)
-
-  userId        String   @unique
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model Avatar {
-  id          String   @id @default(uuid())
-  imageUrl    String
-  accessoryId String?
-
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-// =====================
-// LANGUAGES
-// =====================
-
-model OfficialLanguage {
-  id            String          @id @default(uuid())
-  name          String
-
-  users         User[]
-  communities   Community[]
-  userLanguages UserLanguage[]
-}
-
-model PatrimonialLanguage {
-  id            String          @id @default(uuid())
-  name          String
-
-  stories       Story[]
-  levels        Level[]
-  userLanguages UserLanguage[]
-}
-
-model UserLanguage {
-  id                    String               @id @default(uuid())
-  userId                String
-  officialLanguageId    String?
-  patrimonialLanguageId String?
-
-  user                  User                 @relation(fields: [userId], references: [id])
-  officialLanguage      OfficialLanguage?    @relation(fields: [officialLanguageId], references: [id])
-  patrimonialLanguage   PatrimonialLanguage? @relation(fields: [patrimonialLanguageId], references: [id])
-}
-
-// =====================
-// COMMUNITY
-// =====================
-
-model Community {
-  id                 String           @id @default(uuid())
-  rank               Int
-
-  officialLanguageId String
-  officialLanguage   OfficialLanguage @relation(fields: [officialLanguageId], references: [id])
-
-  users              User[]
-}
-
-// =====================
-// LEARNING CONTENT - VOCABULARY
-// =====================
-
-model Theme {
-  id            String   @id @default(uuid())
-  title         String
-  description   String?
-  imageUrl      String?
-  order         Int      @default(0)
-  language      String   @default("dual") // dual (Duala), fr (French), etc.
-
-  words         Word[]
-  blocks        LearningBlock[]
-  lessons       Lesson[]
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-model Word {
-  id              String   @id @default(uuid())
-  sourceText      String   // French: "Le papa"
-  targetText      String   // Duala: "Papá"
-  sourceLanguage  String   @default("fr") // Source language code
-  targetLanguage  String   @default("dual") // Target language code
-  imageUrl        String?
-  audioUrl        String?
-  difficultyLevel Int      @default(1) // 1-5 scale
-  order           Int      @default(0)
-
-  themeId         String
-  theme           Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade)
-
-  blockId         String?
-  block           LearningBlock? @relation(fields: [blockId], references: [id], onDelete: SetNull)
-
-  progress        WordProgress[]
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  @@index([themeId])
-  @@index([blockId])
-  @@index([difficultyLevel])
-}
-
-model LearningBlock {
-  id          String   @id @default(uuid())
-  title       String?
-  description String?
-  blockOrder  Int      @default(0)
-  wordCount   Int      @default(6) // Default 6 words per block
-
-  themeId     String
-  theme       Theme    @relation(fields: [themeId], references: [id], onDelete: Cascade)
-
-  words       Word[]
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([themeId])
-}
-
-model WordProgress {
-  id            String   @id @default(uuid())
-  userId        String
-  wordId        String
-  successCount  Int      @default(0)
-  failureCount  Int      @default(0)
-  lastReviewed  DateTime?
-  nextReview    DateTime?
-  easeFactor    Float    @default(2.5) // SM-2 algorithm ease factor
-  interval      Int      @default(1) // Days until next review
-
-  word          Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@unique([userId, wordId])
-  @@index([userId])
-  @@index([wordId])
-  @@index([nextReview])
-}
-
-// =====================
-// LEARNING CONTENT
-// =====================
-
-model Story {
-  id                    String              @id @default(uuid())
-  patrimonialLanguageId String
-  patrimonialLanguage   PatrimonialLanguage @relation(fields: [patrimonialLanguageId], references: [id])
-
-  exercises             Exercise[] @relation("ExerciseStory")
-}
-
-model Level {
-  id                    String              @id @default(uuid())
-  levelNumber           Int
-  title                 String?
-
-  patrimonialLanguageId String
-  patrimonialLanguage   PatrimonialLanguage @relation(fields: [patrimonialLanguageId], references: [id])
-
-  lessons               Lesson[]
-}
-
-model Lesson {
-  id           String   @id @default(uuid())
-  title        String
-  order        Int
-  contentUrl   String?
-
-  levelId      String
-  level        Level    @relation(fields: [levelId], references: [id])
-
-  themeId      String?
-  theme        Theme?   @relation(fields: [themeId], references: [id], onDelete: SetNull)
-
-  exercises    Exercise[] @relation("ExerciseLesson")
-  userProgress UserProgress[]
-}
-
-model UserProgress {
-  id          String   @id @default(uuid())
-  isUnlocked  Boolean  @default(false)
-  isCompleted Boolean  @default(false)
-  stars       Int      @default(0)
-
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  lessonId    String
-  lesson      Lesson  @relation(fields: [lessonId], references: [id])
-
-  @@unique([userId, lessonId])
-}
-
-// =====================
-// EXERCISES & SCORES
-// =====================
-
-model Exercise {
-  id        String   @id @default(uuid())
-  theme     String
-  timeSpent Float
-  accuracy  Float
-
-  lessonId  String?
-  lesson    Lesson? @relation("ExerciseLesson", fields: [lessonId], references: [id])
-
-  storyId   String?
-  story     Story?  @relation("ExerciseStory", fields: [storyId], references: [id])
-
-  questions Question[]
-  score     Score?
-}
-
-model Question {
-  id            String       @id @default(uuid())
-  content       String
-  type          QuestionType
-  correctAnswer String
-  options       String[]
-
-  exerciseId    String
-  exercise      Exercise     @relation(fields: [exerciseId], references: [id])
-}
-
-model Score {
-  id          String   @id @default(uuid())
-  scoreValue  Int
-
-  exerciseId  String   @unique
-  exercise    Exercise @relation(fields: [exerciseId], references: [id])
-}
-
-// =====================
-// GAME ECONOMY
-// =====================
-
-model Cowry {
-  id             String   @id @default(uuid())
-  maxCowries     Int      @default(5)
-  currentCowries Int
-  rechargeTime   Int
-
-  userId         String   @unique
-  user           User     @relation(fields: [userId], references: [id])
 }

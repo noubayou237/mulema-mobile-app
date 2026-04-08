@@ -12,6 +12,7 @@
  */
 
 import React, { useRef, useState, useEffect } from "react";
+import { useLanguageStore } from "../../src/stores/useLanguageStore";
 import {
   View,
   Text,
@@ -30,8 +31,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 
 // ── Design system ──
-import { Colors, Typo, Space, Radius, Shadow } from "../src/theme/tokens";
-import { MButton } from "../src/components/ui/MComponents";
+import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
+import { MButton } from "../../src/components/ui/MComponents";
 
 const HAS_SEEN_INTRO = "hasSeenIntro";
 const HAS_SELECTED_LANGUAGE = "selectedLanguage";
@@ -136,11 +137,24 @@ export default function PageVideo() {
   const videoUri = VIDEO_BY_LANG[langResolved] ?? VIDEO_BY_LANG.default;
 
   // ── Persist & navigate — ORIGINAL LOGIC ──
-  const persistAndGoHome = async () => {
+// ✅ NOUVEAU — utilise le store pour que le root layout détecte la langue
+const persistAndGoHome = async () => {
+  // Trouver l'objet langue complet dans le store
+  const { languages, setActiveLanguage } = useLanguageStore.getState();
+  const lang = languages.find(
+    (l) => l.code === langResolved || l.name.toLowerCase() === langResolved
+  );
+  
+  if (lang) {
+    await setActiveLanguage(lang);
+  } else {
+    // Fallback si la langue n'est pas trouvée dans le store
     await AsyncStorage.setItem(HAS_SELECTED_LANGUAGE, langResolved);
-    await AsyncStorage.setItem(HAS_SEEN_INTRO, "true");
-    router.replace(`/(tabs)/home?lang=${langResolved}`);
-  };
+  }
+  
+  await AsyncStorage.setItem(HAS_SEEN_INTRO, "true");
+  router.replace("/(tabs)/home");
+};
 
   // ── Play handler ──
   const handlePlay = async () => {

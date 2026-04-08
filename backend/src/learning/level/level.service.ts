@@ -27,4 +27,42 @@ export class LevelService {
       },
     });
   }
+
+  async getThemeWords(themeId: string) {
+    return this.prisma.mulemWord.findMany({
+      where: { themeId },
+      orderBy: { order: 'asc' },
+      select: {
+        id: true,
+        order: true,
+        word_fr: true,
+        word_local: true,
+        hint: true,
+        audio_url: true,
+        image_url: true,
+      },
+    });
+  }
+
+  async findThemesByLanguage(languageId: string) {
+    const themes = await this.prisma.mulemTheme.findMany({
+      where: { patrimonialLanguageId: languageId },
+      orderBy: { order: 'asc' },
+      include: { _count: { select: { words: true } } },
+    });
+
+    return themes.map((t) => ({
+      id: t.id,
+      name: t.name_fr,
+      nameLocal: t.name_local,
+      code: t.code,
+      order: t.order,
+      icon: t.icon,
+      color: t.color,
+      locked: t.locked,
+      lockHint: t.lock_hint,
+      lessonsCount: t._count.words,
+      lessonsCompleted: 0,
+    }));
+  }
 }

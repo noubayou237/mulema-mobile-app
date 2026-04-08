@@ -15,4 +15,14 @@ export class LevelController {
   findByLanguage(@Param('id') languageId: string) {
     return this.service.findByLanguage(languageId);
   }
+
+  @Get('themes/language/:id')
+  findThemesByLanguage(@Param('id') languageId: string) {
+    return this.service.findThemesByLanguage(languageId);
+  }
+
+  @Get(':themeId/words')
+  getThemeWords(@Param('themeId') themeId: string) {
+    return this.service.getThemeWords(themeId);
+  }
 }

@@ -18,12 +18,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // ── Config ──
 // Change cette URL selon ton environnement
-// Local :    http://10.0.2.2:3000/api   (Android emulator)
+// Local :    http://10.0.2.2:50001/api   (Android emulator)
 //            http://localhost:3000/api    (iOS simulator)
 // Production: https://api.mulema.app/api
 
+const API_IP = process.env.EXPO_PUBLIC_API_IP || "172.20.10.04";
 const BASE_URL = __DEV__
-  ? "http://10.0.2.2:3000/api"   // ← adapte selon ta machine
+  ? `http://${API_IP}:5001`
   : "https://api.mulema.app/api";
 
 const STORAGE_KEY = "userSession";

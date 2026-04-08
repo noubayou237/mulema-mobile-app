@@ -2,14 +2,10 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   TouchableOpacity,
-  Modal,
-  FlatList,
   Alert,
   ActivityIndicator,
   StyleSheet,
-  Text
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 
 import ScreenWrapper from "../components/ui/ScreenWrapper";
@@ -18,148 +14,42 @@ import AppText from "../components/ui/AppText";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import api from "../../src/services/api";
-
-const SELECTED_LANGUAGE_KEY = "selectedLanguage";
-
-const LANGS = [
-  { code: "bassa", label: "Le Bassa", patrimonialLanguageId: "bassa-id" },
-  { code: "duala", label: "Le Duala", patrimonialLanguageId: "duala-id" },
-  { code: "ghomala", label: "Le Ghomala", patrimonialLanguageId: "ghomala-id" }
-];
-
-function LangModalPicker({
-  selected,
-  setSelected,
-  onSelect,
-  availableLanguages = []
-}) {
-  const [open, setOpen] = useState(false);
-
-  const allLangs =
-    availableLanguages.length > 0
-      ? availableLanguages.map((l) => ({
-          code:
-            l.patrimonialLanguage?.name?.toLowerCase() ||
-            l.officialLanguage?.name?.toLowerCase(),
-          label: l.patrimonialLanguage?.name || l.officialLanguage?.name,
-          id: l.id
-        }))
-      : LANGS;
-
-  const selectedLabel = selected
-    ? allLangs.find((l) => l.code === selected)?.label
-    : "-- Choisir une langue --";
-
-  return (
-    <>
-      <TouchableOpacity
-        onPress={() => setOpen(true)}
-        activeOpacity={0.85}
-        style={styles.picker}
-      >
-        <AppText variant={selected ? "body" : "muted"}>{selectedLabel}</AppText>
-      </TouchableOpacity>
-
-      <Modal visible={open} animationType='fade' transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <AppTitle style={styles.modalTitle}>
-              Sélectionner une langue
-            </AppTitle>
-
-            <FlatList
-              data={allLangs}
-              keyExtractor={(item) => item.code}
-              renderItem={({ item }) => {
-                const isSelected = selected === item.code;
-                return (
-                  <TouchableOpacity
-                    onPress={() => {
-                      setSelected(item.code);
-                      if (onSelect) onSelect(item);
-                      setOpen(false);
-                    }}
-                    style={[
-                      styles.langItem,
-                      isSelected && styles.langItemSelected
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.langItemText,
-                        isSelected && styles.langItemTextSelected
-                      ]}
-                    >
-                      {item.label}
-                    </Text>
-                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
-                  </TouchableOpacity>
-                );
-              }}
-            />
-
-            <TouchableOpacity
-              onPress={() => setOpen(false)}
-              style={styles.closeButton}
-            >
-              <Text style={styles.closeButtonText}>Fermer</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </>
-  );
-}
+import { useLanguageStore } from "../../src/stores/useLanguageStore";
 
 export default function ChoiceLanguage() {
   const router = useRouter();
+  const { setActiveLanguage } = useLanguageStore();
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
-  const [availableLanguages, setAvailableLanguages] = useState([]);
+  const [languages, setLanguages] = useState([]);
 
   useEffect(() => {
-    fetchAvailableLanguages();
-    loadSavedLanguage();
+    loadLanguages();
   }, []);
 
-  const fetchAvailableLanguages = async () => {
+  // Charge les langues patrimoniales depuis le backend
+  const loadLanguages = async () => {
     try {
-      const response = await api.get("/user-languages/available");
-      if (response.data?.patrimonialLanguages) {
-        setAvailableLanguages(
-          response.data.patrimonialLanguages.map((lang) => ({
-            patrimonialLanguage: { name: lang.name }
-          }))
-        );
+      const { data } = await api.get("/patrimonial-languages");
+      const langs = (data || []).map((l) => ({
+        id: l.id,
+        name: l.name,
+        code: l.name.toLowerCase(),
+        label: `Le ${l.name}`,
+        type: "patrimonial",
+      }));
+      setLanguages(langs);
+
+      // Restaurer la sélection précédente
+      const userLangs = await api.get("/user-languages").catch(() => ({ data: [] }));
+      if (userLangs.data?.length > 0) {
+        const first = userLangs.data[0];
+        const code = first.patrimonialLanguage?.name?.toLowerCase();
+        if (code) setSelected(code);
       }
     } catch (error) {
       console.log("Error fetching languages:", error.message);
-      // Fall back to local LANGS - already handled
-    }
-  };
-
-  const loadSavedLanguage = async () => {
-    try {
-      const userLanguagesResponse = await api.get("/user-languages");
-      if (userLanguagesResponse.data?.length > 0) {
-        const firstLang = userLanguagesResponse.data[0];
-        const langCode =
-          firstLang.patrimonialLanguage?.name?.toLowerCase() ||
-          firstLang.officialLanguage?.name?.toLowerCase();
-        setSelected(langCode);
-        setInitializing(false);
-        return;
-      }
-    } catch (error) {
-      console.log("Error fetching user languages:", error.message);
-    }
-
-    try {
-      const stored = await AsyncStorage.getItem(SELECTED_LANGUAGE_KEY);
-      if (stored) setSelected(stored);
-    } catch (e) {
-      console.warn("Erreur lecture langue:", e);
     } finally {
       setInitializing(false);
     }
@@ -169,16 +59,19 @@ export default function ChoiceLanguage() {
     if (!language) return;
 
     setLoading(true);
+    setSelected(language.code);
     try {
+      // Enregistrer dans le backend
       try {
         await api.post("/user-languages", {
-          patrimonialLanguageId: language.patrimonialLanguageId
+          patrimonialLanguageId: language.id,
         });
       } catch (apiError) {
         console.log("Language might already exist:", apiError.message);
       }
 
-      await AsyncStorage.setItem(SELECTED_LANGUAGE_KEY, language.code);
+      // Mettre à jour le store (synchronise AsyncStorage + state)
+      await setActiveLanguage(language);
 
       router.replace(`/PageVideo?lang=${encodeURIComponent(language.code)}`);
     } catch (e) {
@@ -194,7 +87,7 @@ export default function ChoiceLanguage() {
       return Alert.alert("Choix requis", "Veuillez sélectionner une langue.");
     }
 
-    const language = LANGS.find((l) => l.code === selected);
+    const language = languages.find((l) => l.code === selected);
     await handleLanguageSelect(language);
   };
 
@@ -220,23 +113,10 @@ export default function ChoiceLanguage() {
           Quelle langue voulez-vous apprendre ?
         </AppTitle>
 
-        <View style={styles.pickerContainer}>
-          <LangModalPicker
-            selected={selected}
-            setSelected={(code) => {
-              setSelected(code);
-              const lang = LANGS.find((l) => l.code === code);
-              if (lang) handleLanguageSelect(lang);
-            }}
-            onSelect={handleLanguageSelect}
-            availableLanguages={availableLanguages}
-          />
-        </View>
-
         <View style={styles.langList}>
-          {LANGS.map((lang) => (
+          {languages.map((lang) => (
             <TouchableOpacity
-              key={lang.code}
+              key={lang.id}
               onPress={() => handleLanguageSelect(lang)}
               disabled={loading}
               activeOpacity={0.85}
@@ -256,6 +136,11 @@ export default function ChoiceLanguage() {
               </Card>
             </TouchableOpacity>
           ))}
+          {languages.length === 0 && !initializing && (
+            <AppText variant="muted" style={{ textAlign: "center" }}>
+              Aucune langue disponible. Vérifiez votre connexion.
+            </AppText>
+          )}
         </View>
 
         <View style={styles.buttonContainer}>

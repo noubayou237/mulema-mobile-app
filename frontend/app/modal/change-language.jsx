@@ -1,0 +1,202 @@
+/**
+ * ╔══════════════════════════════════════════════════════════════╗
+ * ║  MULEMA — Change Language Screen                              ║
+ * ║  Matches changer_de_langue.png maquette                       ║
+ * ║  Place at: app/modal/change-language.jsx                      ║
+ * ╚══════════════════════════════════════════════════════════════╝
+ */
+
+import React, { useEffect } from "react";
+import {
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, StatusBar, ActivityIndicator,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+
+import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
+import { MButton, MCulturalCard } from "../../src/components/ui/MComponents";
+import { useLanguageStore } from "../../src/stores/useLanguageStore";
+import { useAuthStore } from "../../src/stores/useAuthStore";
+
+/* ── Language Row ── */
+const LanguageRow = ({ language, isActive, onPress }) => {
+  // Placeholder progress — will come from backend per-language stats
+  const progress = Math.floor(Math.random() * 100);
+
+  return (
+    <TouchableOpacity
+      onPress={() => onPress(language)}
+      activeOpacity={0.7}
+      style={[s.langRow, Shadow.sm]}
+    >
+      {/* Flag placeholder */}
+      <View style={s.flagCircle}>
+        <Text style={{ fontSize: 24 }}>{getFlag(language.code)}</Text>
+      </View>
+
+      <View style={{ flex: 1, marginLeft: Space.lg }}>
+        <Text style={Typo.titleMd}>{language.name}</Text>
+        <Text style={[Typo.bodySm, { marginTop: 2 }]}>{progress}% complété</Text>
+      </View>
+
+      {/* Mini progress bar */}
+      <View style={s.miniProgress}>
+        <View style={[s.miniProgressFill, { height: `${Math.max(progress, 5)}%` }]} />
+      </View>
+
+      <Ionicons name="chevron-forward" size={18} color={Colors.textTertiary} style={{ marginLeft: Space.md }} />
+    </TouchableOpacity>
+  );
+};
+
+/* ── Flag emoji helper ── */
+const getFlag = (code) => {
+  const flags = {
+    dua: "🇨🇲", ewo: "🇨🇲", bas: "🇨🇲", bam: "🇨🇲", ful: "🇨🇲",
+    gho: "🇨🇲", wol: "🇸🇳", swa: "🇰🇪", yor: "🇳🇬", zul: "🇿🇦",
+    hau: "🇳🇬", ibo: "🇳🇬", amh: "🇪🇹", lin: "🇨🇩",
+  };
+  return flags[code] || "🌍";
+};
+
+/* ══════════════════════════════════════════════════════════════ */
+
+export default function ChangeLanguageScreen() {
+  const router = useRouter();
+  const { user } = useAuthStore();
+  const { activeLanguage, languages, isLoading, fetchLanguages, setActiveLanguage } = useLanguageStore();
+
+  useEffect(() => {
+    if (languages.length === 0) fetchLanguages();
+  }, []);
+
+  const handleSelectLanguage = async (language) => {
+    if (language.id === activeLanguage?.id) return; // déjà active
+    await setActiveLanguage(language);
+    router.back();
+  };
+
+  const otherLanguages = languages.filter((l) => l.id !== activeLanguage?.id);
+
+  return (
+    <View style={s.root}>
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.surface} />
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+
+        {/* ── Header ── */}
+        <View style={s.header}>
+          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
+</TouchableOpacity>
+{/* <Text style={[Typo.titleLg, { marginLeft: Space.md, flex: 1 }]}>Mes Langues</Text> */}
+<View style={{ width: 24 }} />
+        </View>
+
+        {/* ── Title ── */}
+        <Text style={Typo.displayMd}>Mes Langues</Text>
+        <Text style={[Typo.bodyLg, { marginTop: Space.sm, marginBottom: Space["2xl"] }]}>
+          Gérez votre parcours d'apprentissage
+        </Text>
+
+        {/* ── Active Session Card ── */}
+        {activeLanguage && (
+          <LinearGradient
+            colors={[Colors.primary, Colors.primaryContainer]}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            style={s.activeCard}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: Space.lg }}>
+              <View style={s.activeDot} />
+              <Text style={[Typo.labelSm, { color: Colors.onPrimary, marginLeft: Space.sm }]}>SESSION ACTIVE</Text>
+            </View>
+
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: Space.lg }}>
+              <View style={s.activeFlagCircle}>
+                <Text style={{ fontSize: 28 }}>{getFlag(activeLanguage.code)}</Text>
+              </View>
+              <View style={{ marginLeft: Space.lg, flex: 1 }}>
+                <Text style={[Typo.headlineMd, { color: Colors.onPrimary }]}>{activeLanguage.name}</Text>
+                {/* Mini progress */}
+                <View style={{ flexDirection: "row", alignItems: "center", marginTop: Space.sm }}>
+                  <View style={s.activeProgressTrack}>
+                    <View style={[s.activeProgressFill, { width: "65%" }]} />
+                  </View>
+                  <Text style={[Typo.labelMd, { color: Colors.onPrimary, marginLeft: Space.sm }]}>65%</Text>
+                </View>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              onPress={() => router.replace("/(tabs)/home")}
+              activeOpacity={0.8}
+              style={s.continueBtn}
+            >
+              <Text style={[Typo.titleSm, { color: Colors.primary }]}>Continuer</Text>
+            </TouchableOpacity>
+          </LinearGradient>
+        )}
+
+        {/* ── Autres Langues ── */}
+        <Text style={[Typo.labelSm, { marginTop: Space["3xl"], marginBottom: Space.lg }]}>AUTRES LANGUES</Text>
+
+        {isLoading ? (
+          <ActivityIndicator size="large" color={Colors.primary} style={{ marginVertical: Space["3xl"] }} />
+        ) : (
+          otherLanguages.map((lang) => (
+            <LanguageRow
+              key={lang.id}
+              language={lang}
+              isActive={false}
+              onPress={handleSelectLanguage}
+            />
+          ))
+        )}
+
+        {/* ── Explorer de nouvelles langues ── */}
+        <TouchableOpacity activeOpacity={0.7} style={s.exploreBtn}>
+          <View style={s.exploreIcon}>
+            <Ionicons name="add" size={28} color={Colors.primary} />
+          </View>
+          <Text style={[Typo.titleSm, { color: Colors.primary, marginTop: Space.md }]}>
+            Explorer de nouvelles langues
+          </Text>
+        </TouchableOpacity>
+
+        {/* ── Cultural Card ── */}
+        <View style={{ marginTop: Space["2xl"] }}>
+          <MCulturalCard
+            body={"Changer de langue n'efface jamais votre progression dans vos autres sessions !"}
+          />
+        </View>
+
+        <View style={{ height: Space["4xl"] }} />
+      </ScrollView>
+    </View>
+  );
+}
+
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: Colors.surface },
+  scroll: { paddingHorizontal: Space["2xl"], paddingBottom: Space["2xl"] },
+  header: { flexDirection: "row", alignItems: "center", paddingTop: Platform.OS === "ios" ? 60 : 44, paddingBottom: Space.xl },
+  avatarSmall: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.primary + "15", alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: Colors.primary },
+
+  // Active session card
+  activeCard: { borderRadius: Radius.xl, padding: Space["2xl"], marginBottom: Space.sm },
+  activeDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.secondaryContainer },
+  activeFlagCircle: { width: 52, height: 52, borderRadius: 26, backgroundColor: Colors.onPrimary + "20", alignItems: "center", justifyContent: "center" },
+  activeProgressTrack: { flex: 1, height: 6, backgroundColor: Colors.onPrimary + "30", borderRadius: 3, maxWidth: 100 },
+  activeProgressFill: { height: "100%", backgroundColor: Colors.onPrimary, borderRadius: 3 },
+  continueBtn: { backgroundColor: Colors.onPrimary, borderRadius: Radius.full, paddingVertical: Space.md, alignItems: "center" },
+
+  // Language row
+  langRow: { flexDirection: "row", alignItems: "center", backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.xl, padding: Space.xl, marginBottom: Space.md },
+  flagCircle: { width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.surfaceContainerLow, alignItems: "center", justifyContent: "center" },
+  miniProgress: { width: 6, height: 40, backgroundColor: Colors.surfaceVariant, borderRadius: 3, overflow: "hidden", justifyContent: "flex-end" },
+  miniProgressFill: { width: "100%", backgroundColor: Colors.primary, borderRadius: 3 },
+
+  // Explore button
+  exploreBtn: { alignItems: "center", paddingVertical: Space["2xl"], borderWidth: 2, borderColor: Colors.surfaceVariant, borderStyle: "dashed", borderRadius: Radius.xl, marginTop: Space.md },
+  exploreIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.primary + "10", alignItems: "center", justifyContent: "center" },
+});

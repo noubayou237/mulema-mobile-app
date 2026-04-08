@@ -17,6 +17,52 @@ export class UserService {
   ) {}
 
   // =====================
+  // GET DASHBOARD
+  // =====================
+  async getDashboard(userId: string) {
+    const [stats, streak, cowry, userLanguages] = await Promise.all([
+      this.prisma.statistics.findUnique({ where: { userId } }),
+      this.prisma.rootsStreak.findUnique({ where: { userId } }),
+      this.prisma.cowry.findUnique({ where: { userId } }),
+      this.prisma.userLanguage.findMany({
+        where: { userId, patrimonialLanguageId: { not: null } },
+        include: { patrimonialLanguage: true },
+      }),
+    ]);
+
+    // Trouver la langue patrimoniale active
+    const activeLang = userLanguages[0]?.patrimonialLanguage ?? null;
+
+    // Premier thème non terminé à continuer (si langue active)
+    let continueTheme = null;
+    if (activeLang) {
+      const firstTheme = await this.prisma.mulemTheme.findFirst({
+        where: { patrimonialLanguageId: activeLang.id },
+        orderBy: { order: 'asc' },
+      });
+      if (firstTheme) {
+        continueTheme = { id: firstTheme.id, name: firstTheme.name_fr };
+      }
+    }
+
+    const totalMinutes = Math.round((stats?.totalLearningTime ?? 0) / 60);
+    const dailyGoalMinutes = 40;
+    const progressPercent = Math.min(
+      100,
+      Math.round((totalMinutes / dailyGoalMinutes) * 100),
+    );
+
+    return {
+      streakDays: streak?.daysConnected ?? 0,
+      totalPoints: stats?.totalPrawns ?? 0,
+      progressPercent,
+      totalTimeMinutes: totalMinutes,
+      hearts: cowry?.currentCowries ?? 5,
+      continueTheme,
+    };
+  }
+
+  // =====================
   // GET PROFILE
   // =====================
   async getProfile(userId: string) {

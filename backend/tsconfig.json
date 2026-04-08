@@ -14,7 +14,9 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": [
+        "src/*"
+      ]
     },
     "incremental": true,
     "skipLibCheck": true,
@@ -23,8 +25,22 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
-    "lib": ["es2021"],
-    "typeRoots": ["./node_modules/@types", "./src/types"],
-    "types": ["node", "jest"]
-  }
+    "lib": [
+      "es2021"
+    ],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ],
+    "types": [
+      "node",
+      "jest"
+    ]
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts"
+  ]
 }
