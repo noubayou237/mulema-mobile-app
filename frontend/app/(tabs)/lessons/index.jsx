@@ -34,6 +34,38 @@ const TEXT     = "#1A1A2E";
 const TEXT_SUB = "#5A6070";
 const FAINT    = "#AAAABC";
 
+/* ── Tips par langue ────────────────────────────────────────── */
+const LANG_TIPS = {
+  duala: [
+    { title: "Le Duala 🌊", body: "Le Duala est une langue bantoue parlée par plus d'un million de personnes à Douala, la capitale économique du Cameroun. C'est la langue du commerce et de la mer !" },
+    { title: "Douala, ville monde 🏙️", body: "Douala est le principal port d'Afrique centrale. Les Duala, maîtres de la navigation, ont longtemps contrôlé le commerce fluvial." },
+    { title: "Salutation Duala 🤝", body: "En Duala, 'Mbolo' signifie bonjour. La salutation est fondamentale — on ne se croise jamais sans se saluer !" },
+  ],
+  ghomala: [
+    { title: "Le Ghomálá' 🌿", body: "Le Ghomálá' est la langue des Bamiléké des Hauts-Plateaux de l'Ouest Cameroun. Ce peuple de commerçants et d'artisans est réputé pour son sens des affaires." },
+    { title: "La chefferie 👑", body: "Chez les Bamiléké, la chefferie est sacrée. Le chef (Fo) est gardien des traditions, de la langue et de l'identité culturelle." },
+    { title: "Les Bamiléké 🎨", body: "Les Bamiléké sont connus pour leurs masques sculptés, leurs danses traditionnelles et leurs tissus aux couleurs vives. Une culture riche et vivante !" },
+  ],
+  bassa: [
+    { title: "Le Bassa 🦁", body: "Le Bassa (ou Basaa) est parlé dans les régions du Littoral et du Centre au Cameroun. C'est une langue à tons, chaque tonalité change le sens d'un mot !" },
+    { title: "Les Bassa, peuple résistant ⚔️", body: "Les Bassa sont célèbres pour leur résistance héroïque à la colonisation. Um Nyobè, figure nationale, était Bassa." },
+    { title: "La forêt sacrée 🌳", body: "Pour les Bassa, la forêt est un lieu sacré peuplé d'esprits. La nature et les ancêtres guident la vie quotidienne." },
+  ],
+  default: [
+    { title: "Langues du Cameroun 🇨🇲", body: "Le Cameroun est l'un des pays les plus multilingues du monde avec plus de 280 langues nationales. Une richesse unique !" },
+    { title: "Mulema 📚", body: "Mulema signifie 'apprendre' en langue locale. Chaque leçon te rapproche de ta culture et de tes racines." },
+    { title: "Biodiversité culturelle 🌍", body: "Chaque langue camerounaise porte une vision du monde unique. Apprendre une langue c'est découvrir une façon de penser !" },
+  ],
+};
+
+const getTips = (langName = "") => {
+  const n = langName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (n.includes("duala") || n.includes("douala")) return LANG_TIPS.duala;
+  if (n.includes("ghomala") || n.includes("ghomal") || n.includes("bamilek")) return LANG_TIPS.ghomala;
+  if (n.includes("bassa") || n.includes("basaa")) return LANG_TIPS.bassa;
+  return LANG_TIPS.default;
+};
+
 /* ── Icônes par code thème ──────────────────────────────────── */
 const ICONS = {
   salutation: "hand-left", salutations: "hand-left",
@@ -105,10 +137,16 @@ const ThemeCard = ({ theme, index, onPress }) => {
           </View>
         </View>
 
-        {/* Nom */}
+        {/* Nom FR */}
         <Text style={[s.cardName, locked && { color: FAINT }]} numberOfLines={1}>
           {theme.name ?? "—"}
         </Text>
+        {/* Nom local */}
+        {theme.nameLocal ? (
+          <Text style={[s.cardLocal, locked && { color: FAINT }]} numberOfLines={1}>
+            {theme.nameLocal}
+          </Text>
+        ) : null}
 
         {/* Sous-titre */}
         {locked
@@ -130,11 +168,21 @@ export default function ThemesScreen() {
   const { data: dash, fetchDashboard }     = useDashboardStore();
   const [refreshing, setRefreshing]        = useState(false);
 
+  const tips = getTips(activeLanguage?.name ?? "");
+  const tip  = tips[Math.floor(Date.now() / 60000) % tips.length];
+
   // Les thèmes sont liés aux langues PATRIMONIALES — toujours utiliser cet ID
   const getPatrimonialId = (lang, allLangs) => {
-    if (lang?.type === "patrimonial") return lang.id;
-    const p = (allLangs || []).find((l) => l.type === "patrimonial");
-    return p?.id ?? DUALA_ID;
+    if (!lang) return DUALA_ID;
+    if (lang.type === "patrimonial") return lang.id;
+    // Langue officielle : chercher la patrimoniale du même nom
+    const langName = (lang.name ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const match = (allLangs || []).find((l) => {
+      if (l.type !== "patrimonial") return false;
+      const n = l.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return n.includes(langName) || langName.includes(n);
+    });
+    return match?.id ?? DUALA_ID;
   };
 
   useEffect(() => {
@@ -162,7 +210,7 @@ export default function ThemesScreen() {
       fetchDashboard();
     };
     init();
-  }, []);
+  }, [activeLanguage?.id]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -245,18 +293,13 @@ export default function ThemesScreen() {
           </View>
         )}
 
-        {/* ── LE SAVIEZ-VOUS ── */}
+        {/* ── LE SAVIEZ-VOUS (dynamique selon langue) ── */}
         <View style={s.tip}>
           <View style={s.tipBadge}>
             <Text style={s.tipBadgeTxt}>LE SAVIEZ-VOUS ?</Text>
           </View>
-          <Text style={s.tipTitle}>Le Duala</Text>
-          <Text style={s.tipBody}>
-            L'hospitalité est le socle de la culture camerounaise.
-          </Text>
-          <TouchableOpacity>
-            <Text style={s.tipLink}>En savoir plus →</Text>
-          </TouchableOpacity>
+          <Text style={s.tipTitle}>{tip.title}</Text>
+          <Text style={s.tipBody}>{tip.body}</Text>
         </View>
 
         <View style={{ height: 24 }} />
@@ -279,8 +322,8 @@ const s = StyleSheet.create({
   },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
   menuBtn:    { padding: 4 },
-  headerTitle:{ fontSize: 18, fontWeight: "700", color: TEXT, lineHeight: 22 },
-  headerSub:  { fontSize: 13, fontWeight: "500", color: TEXT_SUB },
+  headerTitle:{ fontSize: 18, fontFamily: "Fredoka_600SemiBold", color: TEXT, lineHeight: 22 },
+  headerSub:  { fontSize: 13, fontFamily: "Nunito-Regular", color: TEXT_SUB },
   headerRight:{ flexDirection: "row", alignItems: "center", gap: 8 },
   badge: {
     flexDirection: "row", alignItems: "center", gap: 4,
@@ -288,7 +331,7 @@ const s = StyleSheet.create({
     borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5,
   },
   badgeHeart: { backgroundColor: "#FFF0F0" },
-  badgeXP:    { fontSize: 13, fontWeight: "700", color: "#E8A020" },
+  badgeXP:    { fontSize: 13, fontFamily: "Fredoka_600SemiBold", color: "#E8A020" },
   avatar: {
     width: 34, height: 34, borderRadius: 17,
     backgroundColor: RED,
@@ -304,8 +347,8 @@ const s = StyleSheet.create({
     position: "absolute", width: 220, height: 220, borderRadius: 110,
     backgroundColor: "rgba(255,255,255,0.07)", right: -50, top: -50,
   },
-  heroTitle: { fontSize: 28, fontWeight: "800", color: "#FFF", lineHeight: 34, marginBottom: 8 },
-  heroSub:   { fontSize: 14, color: "rgba(255,255,255,0.82)", lineHeight: 20, marginBottom: 16 },
+  heroTitle: { fontSize: 28, fontFamily: "Fredoka_700Bold", color: "#FFF", lineHeight: 34, marginBottom: 8 },
+  heroSub:   { fontSize: 14, fontFamily: "Nunito-Regular", color: "rgba(255,255,255,0.82)", lineHeight: 20, marginBottom: 16 },
   streakPill: {
     flexDirection: "row", alignItems: "center", gap: 6,
     backgroundColor: "rgba(255,255,255,0.15)",
@@ -314,7 +357,7 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: "rgba(255,255,255,0.25)",
   },
   streakIcon: { color: "#FFD166", fontSize: 12 },
-  streakTxt:  { fontSize: 12, fontWeight: "700", color: "#FFF", letterSpacing: 0.8 },
+  streakTxt:  { fontSize: 12, fontFamily: "Fredoka_600SemiBold", color: "#FFF", letterSpacing: 0.8 },
 
   /* Grille */
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 16, marginBottom: 20 },
@@ -342,19 +385,20 @@ const s = StyleSheet.create({
   },
   iconCircleLocked: { backgroundColor: "#EDEDF2" },
 
-  cardName: { fontSize: 14, fontWeight: "700", color: TEXT, marginTop: 10, textAlign: "center" },
-  cardPct:  { fontSize: 12, color: TEXT_SUB, marginTop: 3 },
-  lockMsg:  { fontSize: 11, color: FAINT, textAlign: "center", lineHeight: 16, marginTop: 3 },
+  cardName:  { fontSize: 14, fontFamily: "Fredoka_600SemiBold", color: TEXT, marginTop: 10, textAlign: "center" },
+  cardLocal: { fontSize: 11, fontFamily: "Nunito-Regular", color: TEXT_SUB, textAlign: "center", marginTop: 1 },
+  cardPct:  { fontSize: 12, fontFamily: "Nunito-Regular", color: TEXT_SUB, marginTop: 3 },
+  lockMsg:  { fontSize: 11, fontFamily: "Nunito-Regular", color: FAINT, textAlign: "center", lineHeight: 16, marginTop: 3 },
 
   /* Empty */
   empty:    { alignItems: "center", paddingVertical: 48 },
-  emptyTxt: { fontSize: 14, color: FAINT, textAlign: "center", marginTop: 12, lineHeight: 20 },
+  emptyTxt: { fontSize: 14, fontFamily: "Nunito-Regular", color: FAINT, textAlign: "center", marginTop: 12, lineHeight: 20 },
 
   /* Tip */
   tip:        { backgroundColor: "#FFF3E0", borderRadius: 20, padding: 20, marginBottom: 8 },
   tipBadge:   { backgroundColor: "#E07000", borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4, alignSelf: "flex-start", marginBottom: 10 },
-  tipBadgeTxt:{ fontSize: 11, fontWeight: "700", color: "#FFF", letterSpacing: 0.5 },
-  tipTitle:   { fontSize: 17, fontWeight: "800", color: TEXT, marginBottom: 6 },
-  tipBody:    { fontSize: 13, color: "#4A5060", lineHeight: 19, marginBottom: 8 },
-  tipLink:    { fontSize: 13, fontWeight: "700", color: "#C06000" },
+  tipBadgeTxt:{ fontSize: 11, fontFamily: "Fredoka_600SemiBold", color: "#FFF", letterSpacing: 0.5 },
+  tipTitle:   { fontSize: 17, fontFamily: "Fredoka_700Bold", color: TEXT, marginBottom: 6 },
+  tipBody:    { fontSize: 13, fontFamily: "Nunito-Regular", color: "#4A5060", lineHeight: 19, marginBottom: 8 },
+  tipLink:    { fontSize: 13, fontFamily: "Nunito-SemiBold", color: "#C06000" },
 });

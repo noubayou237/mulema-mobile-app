@@ -485,7 +485,7 @@ const s = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 12,
-    fontWeight: "700",
+    fontFamily: "Fredoka_600SemiBold",
     color: Colors.onSurface,
     letterSpacing: 0.5,
   },
@@ -520,7 +520,7 @@ const lh = StyleSheet.create({
   },
   pageTitle: {
     fontSize: 20,
-    fontWeight: "800",
+    fontFamily: "Fredoka_700Bold",
     color: Colors.onSurface,
   },
   navBadges: { flexDirection: "row", gap: Space.sm },
@@ -537,7 +537,7 @@ const lh = StyleSheet.create({
   heartBadge: {},
   badgeNum: {
     fontSize: 14,
-    fontWeight: "700",
+    fontFamily: "Fredoka_600SemiBold",
     color: Colors.onSurface,
   },
   leagueEmoji: {
@@ -546,7 +546,7 @@ const lh = StyleSheet.create({
   },
   leagueName: {
     fontSize: 22,
-    fontWeight: "800",
+    fontFamily: "Fredoka_700Bold",
     color: Colors.onSurface,
     marginTop: Space.sm,
     textAlign: "center",
@@ -558,11 +558,12 @@ const lh = StyleSheet.create({
   },
   timerLabel: {
     fontSize: 14,
+    fontFamily: "Nunito-Regular",
     color: Colors.textTertiary,
   },
   timerValue: {
     fontSize: 14,
-    fontWeight: "700",
+    fontFamily: "Fredoka_600SemiBold",
   },
 });
 
@@ -582,7 +583,7 @@ const pod = StyleSheet.create({
   },
   name: {
     fontSize: 13,
-    fontWeight: "700",
+    fontFamily: "Fredoka_600SemiBold",
     color: Colors.onSurface,
     marginTop: Space.sm,
     textAlign: "center",
@@ -595,7 +596,7 @@ const pod = StyleSheet.create({
   },
   xpText: {
     fontSize: 12,
-    fontWeight: "700",
+    fontFamily: "Fredoka_600SemiBold",
   },
 });
 
@@ -615,7 +616,7 @@ const ft = StyleSheet.create({
   },
   label: {
     fontSize: 11,
-    fontWeight: "600",
+    fontFamily: "Nunito-SemiBold",
     color: Colors.textTertiary,
   },
   labelActive: {
@@ -640,19 +641,19 @@ const rr = StyleSheet.create({
   rankNum: {
     width: 20,
     fontSize: 15,
-    fontWeight: "700",
+    fontFamily: "Fredoka_600SemiBold",
     color: Colors.textTertiary,
     textAlign: "center",
   },
   nameCol: { flex: 1 },
   name: {
     fontSize: 15,
-    fontWeight: "700",
+    fontFamily: "Fredoka_600SemiBold",
     color: Colors.onSurface,
   },
   tag: {
     fontSize: 12,
-    fontWeight: "600",
+    fontFamily: "Nunito-SemiBold",
     marginTop: 2,
   },
   currentSubtitle: {
@@ -663,12 +664,12 @@ const rr = StyleSheet.create({
   xpCol: { alignItems: "flex-end" },
   xp: {
     fontSize: 18,
-    fontWeight: "800",
+    fontFamily: "Fredoka_700Bold",
     color: Colors.primary,
   },
   xpLabel: {
     fontSize: 10,
-    fontWeight: "600",
+    fontFamily: "Nunito-SemiBold",
     color: Colors.textTertiary,
     letterSpacing: 0.3,
   },
