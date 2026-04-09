@@ -6,6 +6,7 @@
  */
 import { main as seedDuala } from './duala.seed';
 import { main as seedGhomala } from './ghomala.seed';
+import { main as seedBassa } from './bassa.seed';
 
 async function runAll() {
   console.log('═══════════════════════════════════════════════');
@@ -15,6 +16,8 @@ async function runAll() {
   await seedDuala();
   console.log('\n───────────────────────────────────────────────\n');
   await seedGhomala();
+  console.log('\n───────────────────────────────────────────────\n');
+  await seedBassa();
 
   console.log('\n🚀 Tous les seeds terminés avec succès !');
 }
