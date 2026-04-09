@@ -23,9 +23,9 @@ import { useLanguageStore }  from "../../../../../src/stores/useLanguageStore";
 const { width: SW } = Dimensions.get("window");
 const CARD_W = (SW - 40 - 12) / 2;
 
-/* ── Palette ROUGE ──────────────────────────────────────────── */
+/* ── Palette ─────────────────────────────────────────────────── */
 const C = {
-  bg:           "#FFF5F5",
+  bg:           "#FFFFFF",
   primary:      "#B71C1C",
   primaryDark:  "#7F0000",
   primaryLight: "#FFEBEE",
@@ -37,7 +37,7 @@ const C = {
   text:         "#1A1A2E",
   textSub:      "#6B7280",
   textFaint:    "#9CA3AF",
-  tipBg:        "#FFF8F8",
+  tipBg:        "#FFFBF5",
   track:        "#F5D0D0",
   border:       "#EED5D5",
 };
@@ -390,7 +390,7 @@ const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
 /* ════════════════════════════════════════════════════════════════
    TYPE 2 — TEXT QCM
    ════════════════════════════════════════════════════════════════ */
-const TextQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
+const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
   const [sel, setSel]           = useState(null);
   const [feedback, setFeedback] = useState(null);
   const scrollRef               = useRef(null);
@@ -436,7 +436,7 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
     <Animated.View style={[{ flex: 1 }, { transform: [{ translateX: shakeX }] }]}>
       <ScrollView ref={scrollRef} contentContainerStyle={qx.scroll} showsVerticalScrollIndicator={false}>
 
-        <Text style={qx.title}>Comment dit-on ce mot en Duala ?</Text>
+        <Text style={qx.title}>Comment dit-on ce mot en {langName} ?</Text>
 
         {/* Mot FR + audio */}
         <View style={qx.wordRow}>
@@ -491,7 +491,7 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
             <Text style={tipS.title}>Le saviez-vous ?</Text>
           </View>
           <Text style={tipS.body}>
-            En {activeLanguage?.name ?? "Duala"},{" "}
+            En {langName},{" "}
             <Text style={{ fontStyle: "italic" }}>"{q.target.title}"</Text> se dit{" "}
             <Text style={{ fontWeight: "700", fontStyle: "italic" }}>"{q.target.subtitle}"</Text>.
           </Text>
@@ -527,7 +527,7 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
    TYPE 3 — PAIRES
    Feedback haptic immédiat à chaque paire (style Duolingo)
    ════════════════════════════════════════════════════════════════ */
-const MatchScreen = ({ q, onCorrect, onWrong, onNext }) => {
+const MatchScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
   const [leftSel, setLeftSel]   = useState(null);
   const [matched, setMatched]   = useState({});
   const [wrongFlash, setWrong]  = useState(null);
@@ -574,7 +574,7 @@ const MatchScreen = ({ q, onCorrect, onWrong, onNext }) => {
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={mx.scroll} showsVerticalScrollIndicator={false}>
         <Text style={mx.title}>Fais les paires</Text>
-        <Text style={mx.sub}>Associe le français au Duala.</Text>
+        <Text style={mx.sub}>Associe le français au {langName}.</Text>
 
         <View style={mx.columns}>
           {/* Gauche — FR */}
@@ -616,7 +616,7 @@ const MatchScreen = ({ q, onCorrect, onWrong, onNext }) => {
                       {w.subtitle}
                     </Text>
                     <Text style={[mx.cellLang, isMatchedR && { color: "rgba(255,255,255,0.7)" }]}>
-                      DUALA
+                      {langName.toUpperCase()}
                     </Text>
                   </View>
                   {!isMatchedR && w.audioUrl && (
@@ -653,7 +653,7 @@ const MatchScreen = ({ q, onCorrect, onWrong, onNext }) => {
    TYPE 4 — ÉCRITURE
    Clavier natif + barre de caractères spéciaux Duala
    ════════════════════════════════════════════════════════════════ */
-const WriteScreen = ({ q, onCorrect, onWrong, onNext }) => {
+const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
   const [typed, setTyped]       = useState("");
   const [feedback, setFeedback] = useState(null);
   const inputRef                = useRef(null);
@@ -700,7 +700,7 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext }) => {
         showsVerticalScrollIndicator={false}
       >
         {/* Titre */}
-        <Text style={wx.title}>Traduisez ce mot en Duala</Text>
+        <Text style={wx.title}>Traduisez ce mot en {langName}</Text>
 
         {/* Carte mot + audio */}
         <View style={[wx.hintCard, SHADOW]}>
@@ -755,7 +755,7 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext }) => {
             <Text style={tipS.title}>Astuce</Text>
           </View>
           <Text style={tipS.body}>
-            Utilise la barre ci-dessous pour insérer les caractères spéciaux du Duala comme{" "}
+            Utilise la barre ci-dessous pour insérer les caractères spéciaux du {langName} comme{" "}
             <Text style={{ fontWeight: "700" }}>ɓ, ɛ, ŋ</Text>.
           </Text>
         </View>
@@ -822,6 +822,7 @@ export default function ExerciseSession() {
   const { lessons, fetchLessons } = useThemeStore();
   const { data: dash, fetchDashboard } = useDashboardStore();
   const { activeLanguage } = useLanguageStore();
+  const langName = activeLanguage?.name ?? "Duala";
 
   useEffect(() => {
     if (themeId) fetchLessons(themeId); // toujours recharger quand themeId change
@@ -946,6 +947,7 @@ export default function ExerciseSession() {
           <TextQCMScreen
             key={`tqcm-${dispIdx}`}
             q={curQ}
+            langName={langName}
             onCorrect={handleCorrect}
             onWrong={() => handleWrong(curQ)}
             onNext={advance}
@@ -955,6 +957,7 @@ export default function ExerciseSession() {
           <MatchScreen
             key={`match-${dispIdx}`}
             q={curQ}
+            langName={langName}
             onCorrect={handleCorrect}
             onWrong={() => handleWrong(null)}
             onNext={advance}
@@ -964,6 +967,7 @@ export default function ExerciseSession() {
           <WriteScreen
             key={`write-${dispIdx}`}
             q={curQ}
+            langName={langName}
             onCorrect={handleCorrect}
             onWrong={() => handleWrong(curQ)}
             onNext={advance}
