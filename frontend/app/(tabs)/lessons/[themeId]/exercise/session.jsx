@@ -18,6 +18,7 @@ import * as Haptics from "expo-haptics";
 
 import { useThemeStore }    from "../../../../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../../../../src/stores/useDashboardStore";
+import { useLanguageStore }  from "../../../../../src/stores/useLanguageStore";
 
 const { width: SW } = Dimensions.get("window");
 const CARD_W = (SW - 40 - 12) / 2;
@@ -490,7 +491,8 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
             <Text style={tipS.title}>Le saviez-vous ?</Text>
           </View>
           <Text style={tipS.body}>
-            En Duala, <Text style={{ fontStyle: "italic" }}>"{q.target.title}"</Text> se dit{" "}
+            En {activeLanguage?.name ?? "Duala"},{" "}
+            <Text style={{ fontStyle: "italic" }}>"{q.target.title}"</Text> se dit{" "}
             <Text style={{ fontWeight: "700", fontStyle: "italic" }}>"{q.target.subtitle}"</Text>.
           </Text>
         </View>
@@ -819,6 +821,7 @@ export default function ExerciseSession() {
 
   const { lessons, fetchLessons } = useThemeStore();
   const { data: dash, fetchDashboard } = useDashboardStore();
+  const { activeLanguage } = useLanguageStore();
 
   useEffect(() => {
     if (themeId) fetchLessons(themeId); // toujours recharger quand themeId change
