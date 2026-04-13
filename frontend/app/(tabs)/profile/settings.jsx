@@ -220,6 +220,12 @@ export default function SettingsScreen() {
             onPress={() => {}}
           />
           <View style={s.divider} />
+          <SettingRow
+            icon="shield-checkmark-outline"
+            label="Politique de confidentialité"
+            onPress={() => {}}
+          />
+          <View style={s.divider} />
           {/* Déconnexion */}
           <TouchableOpacity onPress={handleLogout} activeOpacity={0.7} style={s.settingRow}>
             <View style={[s.settingIcon, { backgroundColor: Colors.error + "15" }]}>
