@@ -122,4 +122,13 @@ export class UserController {
     );
     return this.userService.updateLanguage(user.userId, body.language);
   }
+
+  // =====================
+  // DELETE ACCOUNT
+  // =====================
+  @Delete()
+  async deleteAccount(@CurrentUser() user: AuthUser) {
+    this.logger.log(`Delete account request for user: ${user.userId}`);
+    return this.userService.deleteAccount(user.userId);
+  }
 }
