@@ -99,18 +99,6 @@ export class AuthController {
     return this.authService.verifyEmailAndLogin(body);
   }
 
-  // Debug endpoint - remove in production
-  @Post('test-email')
-  async testEmail(@Body('email') email: string) {
-    this.logger.log(`Test email request for: ${email}`);
-    try {
-      await this.emailService.sendTestEmail(email);
-      return { success: true, message: 'Test email sent' };
-    } catch (error) {
-      this.logger.error('Test email failed', error);
-      return { success: false, message: error.message };
-    }
-  }
 
   // Social Login Endpoints
   @Post('google')
