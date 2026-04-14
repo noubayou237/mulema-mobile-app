@@ -15,6 +15,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import * as WebBrowser from "expo-web-browser";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../../src/theme/tokens";
 import { useAuthStore } from "../../../src/stores/useAuthStore";
@@ -59,6 +60,15 @@ export default function SettingsScreen() {
       { text: "Annuler", style: "cancel" },
       { text: "Confirmer", style: "destructive", onPress: () => logout() },
     ]);
+  };
+
+  const handleOpenPrivacyPolicy = async () => {
+    const url = process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL;
+    if (url) {
+      await WebBrowser.openBrowserAsync(url);
+    } else {
+      Alert.alert("Erreur", "URL de la politique de confidentialité non configurée.");
+    }
   };
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -223,7 +233,7 @@ export default function SettingsScreen() {
           <SettingRow
             icon="shield-checkmark-outline"
             label="Politique de confidentialité"
-            onPress={() => {}}
+            onPress={handleOpenPrivacyPolicy}
           />
           <View style={s.divider} />
           {/* Déconnexion */}
