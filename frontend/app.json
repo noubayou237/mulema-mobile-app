@@ -18,7 +18,6 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.mulema.app",
       "infoPlist": {
-        "NSFaceIDUsageDescription": "Use Face ID for authentication",
         "CFBundleURLTypes": [
           {
             "CFBundleTypeRole": "Editor",

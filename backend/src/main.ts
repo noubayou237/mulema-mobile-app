@@ -11,9 +11,15 @@ async function bootstrap() {
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-  // Enable CORS for mobile apps
+  // Enable CORS with restricted origins for security
   app.enableCors({
-    origin: true,
+    origin: [
+      'https://mulema.app',
+      'https://api.mulema.app',
+      /localhost$/,
+      /^http:\/\/10\.0\.2\.2/, // Android emulator
+      /^http:\/\/192\.168\./,   // Local network
+    ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
