@@ -173,6 +173,9 @@ const SignUpScreen = () => {
 
   // ── Submit — ORIGINAL API CALL PRESERVED ──
   const handleSignUp = useCallback(async () => {
+
+    console.log("➡️ Sending request to backend...");
+    
     const error = validate();
     if (error) return Alert.alert(t("signUp.error.title"), error);
     setLoading(true);

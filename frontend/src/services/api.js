@@ -22,13 +22,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 //            http://localhost:3000/api    (iOS simulator)
 // Production: https://api.mulema.app/api
 
-const API_IP = process.env.EXPO_PUBLIC_API_IP || "172.20.10.04";
+const API_IP = process.env.EXPO_PUBLIC_API_IP || "172.20.10.3";
 const BASE_URL = __DEV__
   ? `http://${API_IP}:5001`
   : "https://api.mulema.app/api";
 
 const STORAGE_KEY = "userSession";
-const TIMEOUT = 15000;
+const TIMEOUT = 30000;
 
 // ── Instance Axios ──
 
