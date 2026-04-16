@@ -58,7 +58,7 @@ export default function SettingsScreen() {
   const [notificationsOn, setNotificationsOn] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
 
-  const { t, i18n } = useTranslation(["settings", "profile", "common", "auth"]);
+  const { t, i18n } = useTranslation();
   const [appLang, setAppLang] = useState(i18n.language || 'fr');
 
   const handleToggleLang = async () => {

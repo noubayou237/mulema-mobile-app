@@ -22,6 +22,7 @@ import { useLanguageStore } from "../../../src/stores/useLanguageStore";
 import { useDashboardStore } from "../../../src/stores/useDashboardStore";
 
 import { useTranslation } from "react-i18next";
+import Index from "@/app";
 
 // ID Duala connu — fallback si AsyncStorage vide
 const DUALA_ID = "c81daa9d-7be2-4896-91c8-7531c994aec5";
@@ -218,7 +219,7 @@ const ExerciseThemeCard = ({ theme, index, onPress, isCompleted, hasReward }) =>
    TAB SELECTOR
    ════════════════════════════════════════════════════════════════ */
 const TabSelector = ({ activeTab, onTabChange }) => {
-  const { t } = useTranslation(["nav"]);
+  const { t } = useTranslation();
   const TABS = [t("nav.lessons", "Leçons"), t("nav.exercises", "Exercices")];
   const slideAnim = useRef(new Animated.Value(activeTab === 0 ? 0 : 1)).current;
 
@@ -262,7 +263,7 @@ const TabSelector = ({ activeTab, onTabChange }) => {
             size={16}
             color={activeTab === idx ? "#FFF" : TEXT_SUB}
           />
-          <Text style={[s.tabText, activeTab === idx && s.tabTextActive]}>
+          <Text style={[s.tabText, activeTab === idx ? { color: "#ffffff" } : null]}>
             {tab}
           </Text>
         </TouchableOpacity>
@@ -276,7 +277,7 @@ const TabSelector = ({ activeTab, onTabChange }) => {
    ════════════════════════════════════════════════════════════════ */
 export default function ThemesScreen() {
   const router = useRouter();
-  const { t } = useTranslation(["lessons", "exercises", "home"]);
+  const { t } = useTranslation();
   const { activeLanguage, languages, fetchLanguages, loadActiveLanguage } = useLanguageStore();
   const { themes, isLoading, fetchThemes } = useThemeStore();
   const { data: dash, fetchDashboard } = useDashboardStore();

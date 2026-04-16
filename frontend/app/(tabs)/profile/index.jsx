@@ -30,7 +30,7 @@ const DAYS = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"];
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { t } = useTranslation(["profile", "stats", "common"]);
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const { data: dash, fetchDashboard } = useDashboardStore();
 

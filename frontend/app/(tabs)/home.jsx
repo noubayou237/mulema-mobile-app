@@ -280,21 +280,26 @@ const HomeHeader = ({ streak = 0, xp = 0, onMenuPress, currentLang, onToggleLang
     </TouchableOpacity>
 
     <View style={s.headerCenter}>
-      <Image source={require("../../assets/images/logo.png")} style={s.headerLogo} contentFit="contain" />
-      <Text style={[Typo.titleLg, { color: CAM.forest, marginLeft: Space.sm, fontWeight: "700" }]}>
-        Mulema
-      </Text>
+      <Image source={require("../../assets/images/logo.png")} style={{ width: 34, height: 34 }} contentFit="contain" />
     </View>
 
     <View style={s.headerRight}>
       <TouchableOpacity
-        onPress={onToggleLang}
+        onPress={() => {
+          Alert.alert(
+            "Language / Langue",
+            "Choose the interface language / Choisissez la langue",
+            [
+              { text: "Français", onPress: () => onToggleLang('fr') },
+              { text: "English", onPress: () => onToggleLang('en') },
+              { text: "Cancel", style: "cancel" }
+            ]
+          );
+        }}
         activeOpacity={0.7}
-        style={[s.headerBadge, { backgroundColor: CAM.forestPale, paddingHorizontal: 6, paddingVertical: 4 }]}
+        style={[s.headerBadge, { backgroundColor: CAM.forestPale, paddingHorizontal: 8, paddingVertical: 6 }]}
       >
-        <Text style={[Typo.labelMd, { color: currentLang === 'fr' ? CAM.forest : CAM.dark, fontWeight: currentLang === 'fr' ? 'bold' : 'normal' }]}>FR</Text>
-        <Text style={[Typo.labelSm, { color: CAM.forestLight, marginHorizontal: 2 }]}>|</Text>
-        <Text style={[Typo.labelMd, { color: currentLang === 'en' ? CAM.forest : CAM.dark, fontWeight: currentLang === 'en' ? 'bold' : 'normal' }]}>EN</Text>
+        <Ionicons name="globe-outline" size={18} color={CAM.forest} />
       </TouchableOpacity>
       <View style={[s.headerBadge, { backgroundColor: CAM.orangeLight, marginLeft: Space.xs }]}>
         <Ionicons name="flame" size={14} color={CAM.orange} />
@@ -331,7 +336,7 @@ const LangBanner = ({ lang, onPress }) => {
    ════════════════════════════════════════════════════════════════════ */
 
 const DashCard = ({ percent = 0, mins = 0, goal = 40, onContinue }) => {
-  const { t } = useTranslation(["home", "common"]);
+  const { t } = useTranslation();
   const bar = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(bar, {
@@ -483,11 +488,11 @@ export default function HomeScreen() {
   const [selectedTheme, setSelectedTheme] = useState(null);
   const [sheetVisible, setSheetVisible] = useState(false);
 
-  const { t, i18n } = useTranslation(["home", "common"]);
+  const { t, i18n } = useTranslation();
   const [appLang, setAppLang] = useState(i18n.language || 'fr');
 
-  const handleToggleLang = async () => {
-    const nextLang = appLang === 'fr' ? 'en' : 'fr';
+  const handleToggleLang = async (nextLang) => {
+    if (nextLang === appLang) return;
     await changeLanguage(nextLang);
     setAppLang(nextLang);
   };
