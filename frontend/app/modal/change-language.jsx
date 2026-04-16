@@ -17,6 +17,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 import { MButton, MCulturalCard } from "../../src/components/ui/MComponents";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
+
+/* ── 3 heritage languages are available ── */
+const ALLOWED_LANGUAGES = ["bassa", "duala", "ghomala"];
+const isAllowedLanguage = (lang) => {
+  const name = (lang?.name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return ALLOWED_LANGUAGES.some(allowed => name.includes(allowed));
+};
 import { useAuthStore } from "../../src/stores/useAuthStore";
 
 /* ── Language Row ── */
@@ -77,7 +84,7 @@ export default function ChangeLanguageScreen() {
     router.back();
   };
 
-  const otherLanguages = languages.filter((l) => l.id !== activeLanguage?.id);
+  const otherLanguages = languages.filter((l) => l.id !== activeLanguage?.id && isAllowedLanguage(l));
 
   return (
     <View style={s.root}>
@@ -88,9 +95,9 @@ export default function ChangeLanguageScreen() {
         <View style={s.header}>
           <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
-</TouchableOpacity>
-{/* <Text style={[Typo.titleLg, { marginLeft: Space.md, flex: 1 }]}>Mes Langues</Text> */}
-<View style={{ width: 24 }} />
+          </TouchableOpacity>
+          {/* <Text style={[Typo.titleLg, { marginLeft: Space.md, flex: 1 }]}>Mes Langues</Text> */}
+          <View style={{ width: 24 }} />
         </View>
 
         {/* ── Title ── */}

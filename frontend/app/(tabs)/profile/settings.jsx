@@ -14,7 +14,7 @@ import {
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
+// LinearGradient removed — premium banner removed per directive
 import * as WebBrowser from "expo-web-browser";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../../src/theme/tokens";
@@ -109,25 +109,7 @@ export default function SettingsScreen() {
           <Text style={[Typo.titleLg, { marginLeft: Space.md }]}>Settings</Text>
         </View>
 
-        {/* ── Premium Banner ── */}
-        <LinearGradient
-          colors={[Colors.primary, Colors.primaryContainer]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={s.premiumBanner}
-        >
-          <View style={{ flex: 1 }}>
-            <Text style={[Typo.labelSm, { color: Colors.onPrimary + "BB" }]}>PREMIUM ACCESS</Text>
-            <Text style={[Typo.headlineMd, { color: Colors.onPrimary, marginTop: Space.xs }]}>Mulema Plus</Text>
-            <Text style={[Typo.bodyMd, { color: Colors.onPrimary + "CC", marginTop: Space.sm }]}>
-              Enjoy unlimited XP boosts and exclusive cultural content.
-            </Text>
-            <TouchableOpacity activeOpacity={0.8} style={s.premiumBtn}>
-              <Text style={[Typo.labelLg, { color: Colors.onPrimary }]}>Manage Subscription</Text>
-            </TouchableOpacity>
-          </View>
-          <Ionicons name="shield-checkmark" size={40} color={Colors.onPrimary + "30"} />
-        </LinearGradient>
+        {/* Premium Banner removed per directive */}
 
         {/* ── COMPTE ── */}
         <SectionHeader title="COMPTE" />
@@ -325,20 +307,7 @@ const s = StyleSheet.create({
     paddingTop: Platform.OS === "ios" ? 60 : 44, paddingBottom: Space.xl,
   },
 
-  // Premium
-  premiumBanner: {
-    borderRadius: Radius.xl, padding: Space["2xl"],
-    flexDirection: "row", alignItems: "center",
-    overflow: "hidden",
-  },
-  premiumBtn: {
-    backgroundColor: Colors.primaryContainer,
-    borderRadius: Radius.full,
-    paddingHorizontal: Space.xl,
-    paddingVertical: Space.sm,
-    alignSelf: "flex-start",
-    marginTop: Space.lg,
-  },
+  // Premium banner styles removed
 
   // Section card (no-border rule — background shift)
   sectionCard: {
