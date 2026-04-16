@@ -35,9 +35,6 @@ import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 import {
   MInput,
   MButton,
-  MDivider,
-  MSocialButton,
-  MCulturalCard,
   MLinkText,
   MFooter,
 } from "../../src/components/ui/MComponents";
@@ -59,7 +56,6 @@ const SignInScreen = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [socialLoading, setSocialLoading] = useState(false);
 
   // ── Animations ──
   const logoAnim   = useRef(new Animated.Value(0)).current;
@@ -97,50 +93,7 @@ const SignInScreen = () => {
     }
   };
 
-  const handleSocialLogin = async (provider) => {
-    // Placeholder — wire up your actual Google / Apple / Facebook SDK here
-    setSocialLoading(true);
-    try {
-      // For Google:  call Google sign-in → get idToken → POST /auth/social
-      // For Apple:   call Apple sign-in → get identityToken → POST /auth/social
-      // For Facebook: call Facebook login → get accessToken → POST /auth/social
-      Alert.alert("Info", `${provider} login sera intégré ici.`);
-    } catch (error) {
-      console.error(`${provider} login error:`, error);
-      Alert.alert(t("common.error"), t("auth.socialLoginError"));
-    } finally {
-      setSocialLoading(false);
-    }
-  };
-
-  const handleSocialLoginSuccess = async (socialData) => {
-    try {
-      setSocialLoading(true);
-      if (!socialData?.success) {
-        Alert.alert(t("common.error"), socialData?.error || t("auth.socialLoginError"));
-        return;
-      }
-      if (socialData?.accessToken) {
-        const STORAGE_KEY = "userSession";
-        await AsyncStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({
-            accessToken: socialData.accessToken,
-            refreshToken: socialData.refreshToken,
-          })
-        );
-        await api.get("/auth/me");
-        router.replace("/(tabs)/home");
-      } else {
-        Alert.alert(t("common.error"), "Unable to complete login. Please make sure the backend server is running.");
-      }
-    } catch (error) {
-      console.error("Social login error:", error);
-      Alert.alert(t("common.error"), t("auth.socialLoginError"));
-    } finally {
-      setSocialLoading(false);
-    }
-  };
+  // Social login removed — will be implemented in a future release
 
   // ── Render helpers ──
 
@@ -232,15 +185,7 @@ const SignInScreen = () => {
               style={{ marginTop: Space.lg }}
             />
 
-            {/* Divider */}
-            <MDivider text={t("signIn or Continue With") || "OU CONTINUER AVEC"} />
-
-            {/* Social buttons row */}
-            <View style={s.socialRow}>
-              <MSocialButton provider="google"   onPress={() => handleSocialLogin("Google")} disabled={socialLoading} />
-              <View style={{ width: Space.md }} />
-              <MSocialButton provider="apple"    onPress={() => handleSocialLogin("Apple")} disabled={socialLoading} />
-            </View>
+            {/* Social login removed per directive */}
           </Animated.View>
 
           {/* ── Sign up link ── */}
@@ -252,12 +197,7 @@ const SignInScreen = () => {
             />
           </Animated.View>
 
-          {/* ── Cultural card ── */}
-          <Animated.View style={[{ width: "100%", marginTop: Space.lg }, animStyle(footerAnim, 10)]}>
-            <MCulturalCard
-              body={'Le nom Mulema signifie « cœur » dans plusieurs langues d\'Afrique Centrale. Nous mettons le cœur au centre de l\'apprentissage.'}
-            />
-          </Animated.View>
+          {/* Cultural card removed per directive */}
 
           {/* ── Footer ── */}
           <Animated.View style={animStyle(footerAnim, 5)}>
@@ -336,11 +276,7 @@ const s = StyleSheet.create({
     marginBottom: Space.sm,
   },
 
-  // Social row
-  socialRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-  },
+  // Social row removed
 });
 
 export default SignInScreen;

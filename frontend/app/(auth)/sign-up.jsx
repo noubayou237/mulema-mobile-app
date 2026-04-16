@@ -32,9 +32,6 @@ import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 import {
   MInput,
   MButton,
-  MDivider,
-  MSocialButton,
-  MCulturalCard,
   MLinkText,
 } from "../../src/components/ui/MComponents";
 
@@ -131,6 +128,7 @@ const SignUpScreen = () => {
   // ── State ──
   const [form, setForm] = useState({
     name: "",
+    username: "",
     email: "",
     password: "",
     confirm: "",
@@ -162,8 +160,8 @@ const SignUpScreen = () => {
 
   // ── Validation — ORIGINAL LOGIC PRESERVED ──
   const validate = () => {
-    if (!form.name.trim() || !form.email.trim() || !form.password || !form.confirm)
-      return t("signUp.validation.requiredFields");
+    if (!form.name.trim() || !form.username.trim() || !form.email.trim() || !form.password || !form.confirm)
+      return t("signUp.validation.requiredFields") || "Tous les champs sont requis";
     if (form.password.length < MIN_PASSWORD)
       return t("signUp.validation.passwordMinLength", { min: MIN_PASSWORD });
     if (form.password !== form.confirm)
@@ -182,8 +180,8 @@ const SignUpScreen = () => {
     try {
       await api.post("/auth/register", {
         email: form.email,
-        username: form.name,
-        name: form.name,
+        username: form.username.trim(),
+        name: form.name.trim(),
         password: form.password,
       });
       Alert.alert(t("signUp.success.title"), t("signUp.success.message"));
@@ -200,10 +198,7 @@ const SignUpScreen = () => {
     }
   }, [form, router, t]);
 
-  // ── Social ──
-  const handleSocialLogin = (provider) => {
-    Alert.alert("Info", `${provider} login sera intégré ici.`);
-  };
+  // ── Social login removed — will be implemented later ──
 
   // ── Render helpers ──
   const animStyle = (anim, yOffset = 20) => ({
@@ -265,6 +260,16 @@ const SignUpScreen = () => {
               autoCapitalize="words"
             />
 
+            {/* Pseudo / Nom d'utilisateur */}
+            <MInput
+              label="Pseudo / Nom d'utilisateur"
+              value={form.username}
+              onChangeText={onChange("username")}
+              placeholder="@monpseudo"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+
             {/* Adresse Email */}
             <MInput
               label={t("signUp.emailLabel") || "Adresse Email"}
@@ -307,16 +312,6 @@ const SignUpScreen = () => {
               disabled={loading}
               style={{ marginTop: Space.xl }}
             />
-
-            {/* Divider */}
-            <MDivider text={t("signUp.or") || "OU CONTINUER AVEC"} />
-
-            {/* Social buttons */}
-            <View style={s.socialRow}>
-              <MSocialButton provider="google" onPress={() => handleSocialLogin("Google")} disabled={loading} />
-              <View style={{ width: Space.md }} />
-              <MSocialButton provider="apple" onPress={() => handleSocialLogin("Apple")} disabled={loading} />
-            </View>
           </Animated.View>
 
           {/* ── Sign in link ── */}
@@ -328,13 +323,7 @@ const SignUpScreen = () => {
             />
           </Animated.View>
 
-          {/* ── Cultural card ── */}
-          <Animated.View style={[{ width: "100%", marginTop: Space.md }, animStyle(footerAnim, 10)]}>
-            <MCulturalCard
-              title="Le saviez-vous ?"
-              body={'"Mulema" signifie "Cœur" dans plusieurs langues bantoues. C\'est l\'essence même de notre communauté apprenante.'}
-            />
-          </Animated.View>
+          {/* Cultural card removed per directive */}
 
           {/* ── Terms ── */}
           <Animated.View style={[{ marginTop: Space.xl, paddingHorizontal: Space.lg }, animStyle(footerAnim, 5)]}>
@@ -409,11 +398,7 @@ const s = StyleSheet.create({
     marginBottom: Space.sm,
   },
 
-  // Social row
-  socialRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-  },
+  // Social row removed
 });
 
 /* ──────────────────────────────────────────────────────────────
