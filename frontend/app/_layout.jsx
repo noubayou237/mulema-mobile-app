@@ -28,6 +28,9 @@ import { useLanguageStore } from "../src/stores/useLanguageStore";
 // Tokens
 import { Colors } from "../src/theme/tokens";
 
+// Background music
+import { useBackgroundMusic } from "../src/hooks/useBackgroundMusic";
+
 function AuthGate({ children }) {
   const router = useRouter();
   const segments = useSegments();
@@ -36,6 +39,9 @@ function AuthGate({ children }) {
   const { activeLanguage, fetchLanguages, loadActiveLanguage } = useLanguageStore();
 
   const [isReady, setIsReady] = useState(false);
+
+  // ── Background music (starts once authenticated) ──
+  useBackgroundMusic();
 
   useEffect(() => { loadSession(); }, []);
 
@@ -52,7 +58,7 @@ function AuthGate({ children }) {
 
   useEffect(() => {
     if (!isReady) return;
-    const inAuth      = segments[0] === "(auth)";
+    const inAuth       = segments[0] === "(auth)";
     const inOnboarding = segments[0] === "(onboarding)";
 
     if (!isAuthenticated) {
