@@ -16,6 +16,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 
+import { useTranslation } from "react-i18next";
+
 import { Colors, Typo, Space, Radius, Shadow } from "../../../src/theme/tokens";
 import { useAuthStore } from "../../../src/stores/useAuthStore";
 import { useDashboardStore } from "../../../src/stores/useDashboardStore";
@@ -28,6 +30,7 @@ const DAYS = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"];
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { t } = useTranslation(["profile", "stats", "common"]);
   const { user } = useAuthStore();
   const { data: dash, fetchDashboard } = useDashboardStore();
 
@@ -62,7 +65,7 @@ export default function ProfileScreen() {
           <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
           </TouchableOpacity>
-          <Text style={[Typo.titleLg, { flex: 1, marginLeft: Space.md }]}>{user?.name || "Profil"}</Text>
+          <Text style={[Typo.titleLg, { flex: 1, marginLeft: Space.md }]}>{user?.name || t("profile.title", "Profil")}</Text>
           <TouchableOpacity onPress={() => router.push("/(tabs)/profile/settings")} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="settings-outline" size={24} color={Colors.onSurface} />
           </TouchableOpacity>
@@ -83,13 +86,13 @@ export default function ProfileScreen() {
               <Ionicons name="ribbon" size={14} color={Colors.secondaryContainer} />
             </View>
           </View>
-          <Text style={[Typo.labelSm, { color: Colors.secondary, marginTop: Space.lg }]}>APPRENANT ÉLITE</Text>
-          <Text style={[Typo.displayMd, { marginTop: Space.xs }]}>{user?.name || "Utilisateur"}</Text>
+          <Text style={[Typo.labelSm, { color: Colors.secondary, marginTop: Space.lg }]}>{t("profile.rank", "APPRENANT ÉLITE").toUpperCase()}</Text>
+          <Text style={[Typo.displayMd, { marginTop: Space.xs }]}>{user?.name || t("profile.name", "Utilisateur")}</Text>
 
           {/* Edit button */}
           <TouchableOpacity activeOpacity={0.8} style={s.editBtn}>
             <Ionicons name="pencil" size={16} color={Colors.onPrimary} />
-            <Text style={[Typo.titleSm, { color: Colors.onPrimary, marginLeft: Space.sm }]}>Modifier le profil</Text>
+            <Text style={[Typo.titleSm, { color: Colors.onPrimary, marginLeft: Space.sm }]}>{t("profile.editProfile", "Modifier le profil")}</Text>
           </TouchableOpacity>
         </Animated.View>
 
@@ -100,14 +103,14 @@ export default function ProfileScreen() {
               <Ionicons name="book" size={20} color={Colors.primary} />
             </View>
             <Text style={s.statValue}>{wordsLearned.toLocaleString()}</Text>
-            <Text style={[Typo.bodySm]}>Mots appris</Text>
+            <Text style={[Typo.bodySm]}>{t("stats.wordsLearned", "Mots appris")}</Text>
           </View>
           <View style={[s.statCard, Shadow.sm]}>
             <View style={[s.statIcon, { backgroundColor: Colors.secondaryContainer + "30" }]}>
               <Ionicons name="time" size={20} color={Colors.secondary} />
             </View>
             <Text style={s.statValue}>{totalHours}h</Text>
-            <Text style={[Typo.bodySm]}>Temps total</Text>
+            <Text style={[Typo.bodySm]}>{t("stats.totalTime", "Temps total")}</Text>
           </View>
         </Animated.View>
 
@@ -120,13 +123,13 @@ export default function ProfileScreen() {
             style={s.streakCard}
           >
             <View>
-              <Text style={[Typo.labelSm, { color: Colors.onPrimary }]}>SÉRIE ACTUELLE</Text>
+              <Text style={[Typo.labelSm, { color: Colors.onPrimary }]}>{t("stats.dayStreak", "SÉRIE ACTUELLE").toUpperCase()}</Text>
               <View style={{ flexDirection: "row", alignItems: "baseline", marginTop: Space.sm }}>
                 <Text style={s.streakNumber}>{streak}</Text>
                 <Text style={[Typo.titleLg, { color: Colors.onPrimary, marginLeft: Space.sm }]}>jours</Text>
               </View>
               <Text style={[Typo.bodyMd, { color: Colors.onPrimary + "CC", marginTop: Space.sm, fontStyle: "italic" }]}>
-                {streak >= 7 ? "Vous êtes en feu ! Continuez comme ça." : "Continuez votre série !"}
+                {streak >= 7 ? t("stats.streakGood", "Vous êtes en feu ! Continuez comme ça.") : t("stats.streakKeepGoing", "Continuez votre série !")}
               </Text>
             </View>
             <Ionicons name="flame" size={56} color={Colors.onPrimary + "40"} />
@@ -137,7 +140,7 @@ export default function ProfileScreen() {
         <Animated.View style={[s.activityCard, Shadow.sm, fade(a3, 15)]}>
           <View style={{ flexDirection: "row", alignItems: "center", marginBottom: Space.xl }}>
             <Ionicons name="bar-chart" size={20} color={Colors.primary} />
-            <Text style={[Typo.titleMd, { marginLeft: Space.sm }]}>Activité hebdomadaire</Text>
+            <Text style={[Typo.titleMd, { marginLeft: Space.sm }]}>{t("stats.weeklyActivity", "Activité hebdomadaire")}</Text>
           </View>
           <View style={s.barsRow}>
             {DAYS.map((day, i) => {

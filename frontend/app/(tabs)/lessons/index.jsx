@@ -1,7 +1,7 @@
 /**
  * MULEMA — Page Thèmes : Leçons & Exercices (Two-Tab Layout)
- * Correction #2: "Le saviez-vous" removed
- * Correction #4: Lessons and Exercises separated into two tabs
+ *  "Le saviez-vous" removed
+ *  Lessons and Exercises separated into two tabs
  * Correction #10: Theme completion → cultural video unlock
  */
 
@@ -17,9 +17,11 @@ import Svg, { Circle } from "react-native-svg";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { useThemeStore }     from "../../../src/stores/useThemeStore";
-import { useLanguageStore }  from "../../../src/stores/useLanguageStore";
+import { useThemeStore } from "../../../src/stores/useThemeStore";
+import { useLanguageStore } from "../../../src/stores/useLanguageStore";
 import { useDashboardStore } from "../../../src/stores/useDashboardStore";
+
+import { useTranslation } from "react-i18next";
 
 // ID Duala connu — fallback si AsyncStorage vide
 const DUALA_ID = "c81daa9d-7be2-4896-91c8-7531c994aec5";
@@ -28,33 +30,33 @@ const { width } = Dimensions.get("window");
 const CARD_W = (width - 48) / 2;
 
 /* ── Palette ────────────────────────────────────────────────── */
-const RED      = "#B71C1C";
-const RED_L    = "#FFEBEE";
-const BG       = "#F0F2F8";
-const CARD_BG  = "#FFFFFF";
-const TRACK    = "#DDE3F0";
-const TEXT     = "#1A1A2E";
+const RED = "#B71C1C";
+const RED_L = "#FFEBEE";
+const BG = "#F0F2F8";
+const CARD_BG = "#FFFFFF";
+const TRACK = "#DDE3F0";
+const TEXT = "#1A1A2E";
 const TEXT_SUB = "#5A6070";
-const FAINT    = "#AAAABC";
-const GREEN    = "#2E7D32";
-const GREEN_L  = "#E8F5E9";
-const GOLD     = "#F9A825";
+const FAINT = "#AAAABC";
+const GREEN = "#2E7D32";
+const GREEN_L = "#E8F5E9";
+const GOLD = "#F9A825";
 
-/* ── Tab constants ──────────────────────────────────────────── */
-const TABS = ["Leçons", "Exercices"];
+/* ── Tab constants ── */
+// These will be translated dynamically inside the component now
 
 /* ── Icônes par code thème ──────────────────────────────────── */
 const ICONS = {
   salutation: "hand-left", salutations: "hand-left",
-  famille: "people",       family: "people",
+  famille: "people", family: "people",
   voyage: "airplane",
   nourriture: "restaurant", cuisine: "restaurant",
   animaux: "paw",
-  vetement: "shirt",       vetements: "shirt",
-  nature: "leaf",          corps: "body",
-  maison: "home",          travail: "briefcase",
-  sport: "football",       couleurs: "color-palette",
-  chiffres: "calculator",  jours: "calendar",
+  vetement: "shirt", vetements: "shirt",
+  nature: "leaf", corps: "body",
+  maison: "home", travail: "briefcase",
+  sport: "football", couleurs: "color-palette",
+  chiffres: "calculator", jours: "calendar",
   pronoms: "chatbubble",
 };
 const icon = (code) => ICONS[(code ?? "").toLowerCase()] ?? "book-outline";
@@ -71,21 +73,21 @@ const EX_ICONS = {
    THEME CARD (Leçons tab)
    ════════════════════════════════════════════════════════════════ */
 const ThemeCard = ({ theme, index, onPress }) => {
-  const fade  = useRef(new Animated.Value(0)).current;
+  const fade = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fade,  { toValue: 1, duration: 380, delay: index * 60, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(fade, { toValue: 1, duration: 380, delay: index * 60, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
       Animated.timing(slide, { toValue: 0, duration: 380, delay: index * 60, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
     ]).start();
   }, []);
 
   const locked = theme.locked ?? false;
-  const pct    = theme.lessonsCount > 0
+  const pct = theme.lessonsCount > 0
     ? Math.round((theme.lessonsCompleted / theme.lessonsCount) * 100) : 0;
 
-  const R  = 34;
+  const R = 34;
   const C2 = 2 * Math.PI * R;
 
   return (
@@ -140,12 +142,12 @@ const ThemeCard = ({ theme, index, onPress }) => {
    EXERCISE CARD (Exercices tab)
    ════════════════════════════════════════════════════════════════ */
 const ExerciseThemeCard = ({ theme, index, onPress, isCompleted, hasReward }) => {
-  const fade  = useRef(new Animated.Value(0)).current;
+  const fade = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fade,  { toValue: 1, duration: 380, delay: index * 60, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(fade, { toValue: 1, duration: 380, delay: index * 60, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
       Animated.timing(slide, { toValue: 0, duration: 380, delay: index * 60, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
     ]).start();
   }, []);
@@ -216,6 +218,8 @@ const ExerciseThemeCard = ({ theme, index, onPress, isCompleted, hasReward }) =>
    TAB SELECTOR
    ════════════════════════════════════════════════════════════════ */
 const TabSelector = ({ activeTab, onTabChange }) => {
+  const { t } = useTranslation(["nav"]);
+  const TABS = [t("nav.lessons", "Leçons"), t("nav.exercises", "Exercices")];
   const slideAnim = useRef(new Animated.Value(activeTab === 0 ? 0 : 1)).current;
 
   useEffect(() => {
@@ -272,11 +276,12 @@ const TabSelector = ({ activeTab, onTabChange }) => {
    ════════════════════════════════════════════════════════════════ */
 export default function ThemesScreen() {
   const router = useRouter();
+  const { t } = useTranslation(["lessons", "exercises", "home"]);
   const { activeLanguage, languages, fetchLanguages, loadActiveLanguage } = useLanguageStore();
   const { themes, isLoading, fetchThemes } = useThemeStore();
-  const { data: dash, fetchDashboard }     = useDashboardStore();
-  const [refreshing, setRefreshing]        = useState(false);
-  const [activeTab, setActiveTab]          = useState(0);
+  const { data: dash, fetchDashboard } = useDashboardStore();
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
 
   // Theme completion tracking for cultural video unlock
   const [completedThemes, setCompletedThemes] = useState({});
@@ -287,7 +292,7 @@ export default function ThemesScreen() {
       try {
         const stored = await AsyncStorage.getItem("completed_themes");
         if (stored) setCompletedThemes(JSON.parse(stored));
-      } catch {}
+      } catch { }
     };
     loadCompleted();
   }, []);
@@ -314,12 +319,12 @@ export default function ThemesScreen() {
       }
       try {
         const langs = await fetchLanguages();
-        const lang  = await loadActiveLanguage();
+        const lang = await loadActiveLanguage();
         const langId = getPatrimonialId(lang, langs);
         fetchThemes(langId);
         fetchDashboard();
         return;
-      } catch {}
+      } catch { }
       fetchThemes(DUALA_ID);
       fetchDashboard();
     };
@@ -360,8 +365,8 @@ export default function ThemesScreen() {
             <Ionicons name="menu" size={24} color={TEXT} />
           </TouchableOpacity>
           <View>
-            <Text style={s.headerTitle}>Thèmes</Text>
-            <Text style={s.headerSub}>de {activeLanguage?.name ?? "Duala"}</Text>
+            <Text style={s.headerTitle}>{t("lessons.title", "Thèmes")}</Text>
+            <Text style={s.headerSub}>{activeLanguage?.name ?? "Duala"}</Text>
           </View>
         </View>
 
@@ -392,12 +397,12 @@ export default function ThemesScreen() {
         <View style={s.hero}>
           <View style={s.heroBlob} />
           <Text style={s.heroTitle}>
-            {activeTab === 0 ? "Apprentissage\nQuotidien" : "Exercices\nPratiques"}
+            {activeTab === 0 ? t("home.continueLearning", "Apprentissage\nQuotidien") : t("exercises.title", "Exercices\nPratiques")}
           </Text>
           <Text style={s.heroSub}>
             {activeTab === 0
-              ? "Continuez votre voyage linguistique\nà travers la culture Camerounaise."
-              : "Testez vos connaissances et\ndébloquez du contenu culturel."}
+              ? t("lessons.stepByStep", "Continuez votre voyage linguistique\nà travers la culture Camerounaise.")
+              : t("exercises.introText", "Testez vos connaissances et\ndébloquez du contenu culturel.")}
           </Text>
           <View style={s.streakPill}>
             <Text style={s.streakIcon}>✦</Text>
@@ -414,7 +419,7 @@ export default function ThemesScreen() {
           <View style={s.empty}>
             <Ionicons name="book-outline" size={44} color={FAINT} />
             <Text style={s.emptyTxt}>
-              Aucun thème disponible.{"\n"}Tire vers le bas pour actualiser.
+              {t("exercises.noThemes", "Aucun thème disponible.\nTire vers le bas pour actualiser.")}
             </Text>
           </View>
         ) : activeTab === 0 ? (
@@ -422,7 +427,7 @@ export default function ThemesScreen() {
           <View>
             <View style={s.sectionHeader}>
               <Ionicons name="book" size={18} color={RED} />
-              <Text style={s.sectionTitle}>Leçons disponibles</Text>
+              <Text style={s.sectionTitle}>{t("lessons.title", "Leçons disponibles")}</Text>
             </View>
             <View style={s.grid}>
               {themes.map((theme, idx) => (
@@ -440,10 +445,10 @@ export default function ThemesScreen() {
           <View>
             <View style={s.sectionHeader}>
               <Ionicons name="barbell" size={18} color={RED} />
-              <Text style={s.sectionTitle}>Exercices par thème</Text>
+              <Text style={s.sectionTitle}>{t("exercises.title", "Exercices par thème")}</Text>
             </View>
             <Text style={s.sectionSubtitle}>
-              Complétez tous les exercices d'un thème pour débloquer une vidéo culturelle 🎬
+              {t("exercises.introText", "Complétez tous les exercices d'un thème pour débloquer une vidéo culturelle 🎬")}
             </Text>
             {themes.map((theme, idx) => {
               const allDone = (theme.exercisesCompleted ?? 0) >= (theme.exercisesCount ?? 3) && (theme.exercisesCount ?? 3) > 0;
@@ -477,7 +482,7 @@ export default function ThemesScreen() {
 
 /* ── Styles ─────────────────────────────────────────────────── */
 const s = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: BG },
+  safe: { flex: 1, backgroundColor: BG },
   scroll: { paddingHorizontal: 16, paddingTop: 8 },
 
   /* Header */
@@ -488,17 +493,17 @@ const s = StyleSheet.create({
     backgroundColor: BG,
   },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
-  menuBtn:    { padding: 4 },
-  headerTitle:{ fontSize: 18, fontFamily: "Fredoka_600SemiBold", color: TEXT, lineHeight: 22 },
-  headerSub:  { fontSize: 13, fontFamily: "Nunito-Regular", color: TEXT_SUB },
-  headerRight:{ flexDirection: "row", alignItems: "center", gap: 8 },
+  menuBtn: { padding: 4 },
+  headerTitle: { fontSize: 18, fontFamily: "Fredoka_600SemiBold", color: TEXT, lineHeight: 22 },
+  headerSub: { fontSize: 13, fontFamily: "Nunito-Regular", color: TEXT_SUB },
+  headerRight: { flexDirection: "row", alignItems: "center", gap: 8 },
   badge: {
     flexDirection: "row", alignItems: "center", gap: 4,
     backgroundColor: "#FFF7E6",
     borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5,
   },
   badgeHeart: { backgroundColor: "#FFF0F0" },
-  badgeXP:    { fontSize: 13, fontFamily: "Fredoka_600SemiBold", color: "#E8A020" },
+  badgeXP: { fontSize: 13, fontFamily: "Fredoka_600SemiBold", color: "#E8A020" },
   avatar: {
     width: 34, height: 34, borderRadius: 17,
     backgroundColor: RED,
@@ -543,7 +548,7 @@ const s = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.07)", right: -50, top: -50,
   },
   heroTitle: { fontSize: 28, fontFamily: "Fredoka_700Bold", color: "#FFF", lineHeight: 34, marginBottom: 8 },
-  heroSub:   { fontSize: 14, fontFamily: "Nunito-Regular", color: "rgba(255,255,255,0.82)", lineHeight: 20, marginBottom: 16 },
+  heroSub: { fontSize: 14, fontFamily: "Nunito-Regular", color: "rgba(255,255,255,0.82)", lineHeight: 20, marginBottom: 16 },
   streakPill: {
     flexDirection: "row", alignItems: "center", gap: 6,
     backgroundColor: "rgba(255,255,255,0.15)",
@@ -552,7 +557,7 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: "rgba(255,255,255,0.25)",
   },
   streakIcon: { color: "#FFD166", fontSize: 12 },
-  streakTxt:  { fontSize: 12, fontFamily: "Fredoka_600SemiBold", color: "#FFF", letterSpacing: 0.8 },
+  streakTxt: { fontSize: 12, fontFamily: "Fredoka_600SemiBold", color: "#FFF", letterSpacing: 0.8 },
 
   /* Section Headers */
   sectionHeader: {
@@ -593,10 +598,10 @@ const s = StyleSheet.create({
   },
   iconCircleLocked: { backgroundColor: "#EDEDF2" },
 
-  cardName:  { fontSize: 14, fontFamily: "Fredoka_600SemiBold", color: TEXT, marginTop: 10, textAlign: "center" },
+  cardName: { fontSize: 14, fontFamily: "Fredoka_600SemiBold", color: TEXT, marginTop: 10, textAlign: "center" },
   cardLocal: { fontSize: 11, fontFamily: "Nunito-Regular", color: TEXT_SUB, textAlign: "center", marginTop: 1 },
-  cardPct:  { fontSize: 12, fontFamily: "Nunito-Regular", color: TEXT_SUB, marginTop: 3 },
-  lockMsg:  { fontSize: 11, fontFamily: "Nunito-Regular", color: FAINT, textAlign: "center", lineHeight: 16, marginTop: 3 },
+  cardPct: { fontSize: 12, fontFamily: "Nunito-Regular", color: TEXT_SUB, marginTop: 3 },
+  lockMsg: { fontSize: 11, fontFamily: "Nunito-Regular", color: FAINT, textAlign: "center", lineHeight: 16, marginTop: 3 },
 
   /* Exercise Theme Card */
   exCard: {
@@ -639,6 +644,6 @@ const s = StyleSheet.create({
   },
 
   /* Empty */
-  empty:    { alignItems: "center", paddingVertical: 48 },
+  empty: { alignItems: "center", paddingVertical: 48 },
   emptyTxt: { fontSize: 14, fontFamily: "Nunito-Regular", color: FAINT, textAlign: "center", marginTop: 12, lineHeight: 20 },
 });

@@ -31,7 +31,7 @@ const LOCAL_VIDEOS = {
   duala: [
     require("../assets/DualaVideos/IMG_5666.MOV"),
     require("../assets/DualaVideos/IMG_5747.MOV"),
-    require("../assets/DualaVideos/IMG_5927.MOV"),
+    require("../assets/DualaVideos/IMG_5727.MOV"),
     require("../assets/DualaVideos/IMG_5666.MOV"), // Repeated as requested since Duala has fewer videos
   ],
   ghomala: [

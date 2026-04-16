@@ -21,6 +21,9 @@ import { Colors, Typo, Space, Radius, Shadow } from "../../../src/theme/tokens";
 import { useAuthStore } from "../../../src/stores/useAuthStore";
 import api from "../../../src/services/api";
 
+import { useTranslation } from "react-i18next";
+import { changeLanguage } from "../../../src/i18n";
+
 /* ── Reusable Setting Row ── */
 const SettingRow = ({ icon, iconColor, label, subtitle, right, onPress }) => (
   <TouchableOpacity
@@ -55,9 +58,18 @@ export default function SettingsScreen() {
   const [notificationsOn, setNotificationsOn] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
 
+  const { t, i18n } = useTranslation(["settings", "profile", "common", "auth"]);
+  const [appLang, setAppLang] = useState(i18n.language || 'fr');
+
+  const handleToggleLang = async () => {
+    const nextLang = appLang.startsWith('fr') ? 'en' : 'fr';
+    await changeLanguage(nextLang);
+    setAppLang(nextLang);
+  };
+
   const handleLogout = () => {
-    Alert.alert("Déconnexion", "Êtes-vous sûr de vouloir vous déconnecter ?", [
-      { text: "Annuler", style: "cancel" },
+    Alert.alert(t("profile.logout", "Déconnexion"), t("profile.logoutConfirm", "Êtes-vous sûr de vouloir vous déconnecter ?"), [
+      { text: t("common.cancel", "Annuler"), style: "cancel" },
       { text: "Confirmer", style: "destructive", onPress: () => logout() },
     ]);
   };
@@ -106,43 +118,43 @@ export default function SettingsScreen() {
           <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
           </TouchableOpacity>
-          <Text style={[Typo.titleLg, { marginLeft: Space.md }]}>Settings</Text>
+          <Text style={[Typo.titleLg, { marginLeft: Space.md }]}>{t("settings.title", "Paramètres")}</Text>
         </View>
 
         {/* Premium Banner removed per directive */}
 
         {/* ── COMPTE ── */}
-        <SectionHeader title="COMPTE" />
+        <SectionHeader title={t("auth.account", "COMPTE").toUpperCase()} />
         <View style={[s.sectionCard, Shadow.sm]}>
           <SettingRow
             icon="person-circle"
-            label="Profile edit"
+            label={t("profile.editProfile", "Profile edit")}
             subtitle="Update your avatar and bio"
             onPress={() => {}}
           />
           <View style={s.divider} />
           <SettingRow
             icon="mail"
-            label="Email"
+            label={t("auth.email", "Email")}
             subtitle={user?.email || "mulema.learner@example.com"}
             onPress={() => {}}
           />
           <View style={s.divider} />
           <SettingRow
             icon="lock-closed"
-            label="Password"
+            label={t("auth.password", "Password")}
             subtitle="••••••••••"
             onPress={() => {}}
           />
         </View>
 
         {/* ── APPRENTISSAGE ── */}
-        <SectionHeader title="APPRENTISSAGE" />
+        <SectionHeader title={t("nav.lessons", "APPRENTISSAGE").toUpperCase()} />
         <View style={[s.sectionCard, Shadow.sm]}>
           <SettingRow
             icon="notifications"
             iconColor={Colors.primary}
-            label="Notifications"
+            label={t("settings.notifications", "Notifications")}
             right={
               <Switch
                 value={notificationsOn}
@@ -171,7 +183,7 @@ export default function SettingsScreen() {
         <View style={[s.sectionCard, Shadow.sm]}>
           <SettingRow
             icon="moon"
-            label="Mode sombre"
+            label={t("settings.darkMode", "Mode sombre")}
             right={
               <Switch
                 value={darkMode}
@@ -184,14 +196,16 @@ export default function SettingsScreen() {
           <View style={s.divider} />
           <SettingRow
             icon="globe"
-            label="Langue de l'interface"
+            label={t("settings.language", "Langue de l'interface")}
             right={
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text style={[Typo.bodyMd, { color: Colors.textSecondary }]}>Français</Text>
-                <Ionicons name="chevron-down" size={14} color={Colors.textTertiary} style={{ marginLeft: Space.xs }} />
+                <Text style={[Typo.bodyMd, { color: Colors.textSecondary, fontWeight: "bold" }]}>
+                  {appLang.startsWith('fr') ? 'Français' : 'English'}
+                </Text>
+                <Ionicons name="swap-horizontal" size={16} color={Colors.primary} style={{ marginLeft: Space.sm }} />
               </View>
             }
-            onPress={() => {}}
+            onPress={handleToggleLang}
           />
         </View>
 
@@ -201,20 +215,20 @@ export default function SettingsScreen() {
           <SettingRow
             icon="help-circle"
             iconColor={Colors.secondary}
-            label="Aide"
+            label={t("settings.helpSupport", "Aide")}
             right={<Ionicons name="open-outline" size={16} color={Colors.textTertiary} />}
             onPress={() => {}}
           />
           <View style={s.divider} />
           <SettingRow
             icon="document-text"
-            label="Conditions d'utilisation"
+            label={t("settings.terms", "Conditions d'utilisation")}
             onPress={() => {}}
           />
           <View style={s.divider} />
           <SettingRow
             icon="shield-checkmark-outline"
-            label="Politique de confidentialité"
+            label={t("settings.privacy", "Politique de confidentialité")}
             onPress={handleOpenPrivacyPolicy}
           />
           <View style={s.divider} />
@@ -223,7 +237,7 @@ export default function SettingsScreen() {
             <View style={[s.settingIcon, { backgroundColor: Colors.error + "15" }]}>
               <Ionicons name="log-out-outline" size={20} color={Colors.error} />
             </View>
-            <Text style={[Typo.titleSm, { color: Colors.error, marginLeft: Space.lg }]}>Déconnexion</Text>
+            <Text style={[Typo.titleSm, { color: Colors.error, marginLeft: Space.lg }]}>{t("profile.logout", "Déconnexion")}</Text>
           </TouchableOpacity>
           <View style={s.divider} />
           {/* Supprimer le compte */}
@@ -231,7 +245,7 @@ export default function SettingsScreen() {
             <View style={[s.settingIcon, { backgroundColor: Colors.error + "10" }]}>
               <Ionicons name="trash-outline" size={20} color={Colors.error} />
             </View>
-            <Text style={[Typo.titleSm, { color: Colors.error, marginLeft: Space.lg }]}>Supprimer le compte</Text>
+            <Text style={[Typo.titleSm, { color: Colors.error, marginLeft: Space.lg }]}>{t("common.delete", "Supprimer le compte")}</Text>
           </TouchableOpacity>
         </View>
 

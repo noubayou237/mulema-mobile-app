@@ -31,38 +31,41 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
-import { MButton, MCulturalCard } from "../../src/components/ui/MComponents";
+import { MCulturalCard } from "../../src/components/ui/MComponents";
 import { useAuthStore } from "../../src/stores/useAuthStore";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
 import { useThemeStore } from "../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../src/stores/useDashboardStore";
 
+import { useTranslation } from "react-i18next";
+import { changeLanguage, getCurrentLanguage } from "../../src/i18n";
+
 /* ── Palette camerounaise ── */
 const CAM = {
-  forest:      "#2D6A4F",
+  forest: "#2D6A4F",
   forestLight: "#40916C",
-  forestPale:  "#D8F3DC",
-  orange:      "#F4A261",
+  forestPale: "#D8F3DC",
+  orange: "#F4A261",
   orangeLight: "#FFDDD2",
-  gold:        "#F4C430",
-  goldLight:   "#FFF3C4",
-  dark:        "#1B2D2A",
-  surface:     "#F9FBFA",
+  gold: "#F4C430",
+  goldLight: "#FFF3C4",
+  dark: "#1B2D2A",
+  surface: "#F9FBFA",
 };
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
-const DRAWER_WIDTH  = SCREEN_W * 0.78;
-const CARD_W        = (SCREEN_W - Space["2xl"] * 2 - Space.md) / 2;
-const SHEET_HEIGHT  = SCREEN_H * 0.72;
+const DRAWER_WIDTH = SCREEN_W * 0.78;
+const CARD_W = (SCREEN_W - Space["2xl"] * 2 - Space.md) / 2;
+const SHEET_HEIGHT = SCREEN_H * 0.72;
 
 /* ── Icônes de thème ── */
 const THEME_ICONS = {
   salutation: "hand-left",
-  famille:    "people",
-  voyage:     "airplane",
+  famille: "people",
+  voyage: "airplane",
   nourriture: "restaurant",
-  animaux:    "paw",
-  vetement:   "shirt",
+  animaux: "paw",
+  vetement: "shirt",
 };
 const getIcon = (name) => {
   const n = (name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -72,9 +75,9 @@ const getIcon = (name) => {
 
 /* ── Exercices du jour (données statiques / à brancher sur API) ── */
 const DAILY_EXOS = [
-  { id: "e1", label: "Salutations de base",    icon: "hand-left",  route: "exercices/salutation/exos1", done: true  },
-  { id: "e2", label: "Ma famille en Ghomálá'", icon: "people",     route: "exercices/famille/exos1",    done: false },
-  { id: "e3", label: "Les animaux du village", icon: "paw",        route: "exercices/animaux/exos1",    done: false },
+  { id: "e1", label: "Salutations de base", icon: "hand-left", route: "exercices/salutation/exos1", done: true },
+  { id: "e2", label: "Ma famille en Ghomálá'", icon: "people", route: "exercices/famille/exos1", done: false },
+  { id: "e3", label: "Les animaux du village", icon: "paw", route: "exercices/animaux/exos1", done: false },
 ];
 
 /* ════════════════════════════════════════════════════════════════════
@@ -150,10 +153,10 @@ const DrawerContent = ({ user, dashboard, onClose, onNav, onLogout }) => (
       ACCÈS RAPIDE
     </Text>
 
-    <DrawerItem icon="ribbon-outline"   label="Quêtes du jour"     onPress={() => onNav("quests")} />
-    <DrawerItem icon="notifications-outline" label="Notifications"  onPress={() => onNav("notifications")} />
-    <DrawerItem icon="language-outline" label="Changer de langue"   onPress={() => onNav("change-language")} />
-    <DrawerItem icon="settings-outline" label="Paramètres"          onPress={() => onNav("settings")} highlighted />
+    <DrawerItem icon="ribbon-outline" label="Quêtes du jour" onPress={() => onNav("quests")} />
+    <DrawerItem icon="notifications-outline" label="Notifications" onPress={() => onNav("notifications")} />
+    <DrawerItem icon="language-outline" label="Changer de langue" onPress={() => onNav("change-language")} />
+    <DrawerItem icon="settings-outline" label="Paramètres" onPress={() => onNav("settings")} highlighted />
 
     <View style={{ flex: 1 }} />
 
@@ -270,7 +273,7 @@ const BottomSheet = ({ theme, onClose, onSelectLesson }) => {
    HOME HEADER
    ════════════════════════════════════════════════════════════════════ */
 
-const HomeHeader = ({ streak = 0, xp = 0, onMenuPress }) => (
+const HomeHeader = ({ streak = 0, xp = 0, onMenuPress, currentLang, onToggleLang }) => (
   <View style={s.header}>
     <TouchableOpacity onPress={onMenuPress} activeOpacity={0.7} style={s.menuBtn}>
       <Ionicons name="menu" size={22} color={CAM.forest} />
@@ -284,7 +287,16 @@ const HomeHeader = ({ streak = 0, xp = 0, onMenuPress }) => (
     </View>
 
     <View style={s.headerRight}>
-      <View style={[s.headerBadge, { backgroundColor: CAM.orangeLight }]}>
+      <TouchableOpacity
+        onPress={onToggleLang}
+        activeOpacity={0.7}
+        style={[s.headerBadge, { backgroundColor: CAM.forestPale, paddingHorizontal: 6, paddingVertical: 4 }]}
+      >
+        <Text style={[Typo.labelMd, { color: currentLang === 'fr' ? CAM.forest : CAM.dark, fontWeight: currentLang === 'fr' ? 'bold' : 'normal' }]}>FR</Text>
+        <Text style={[Typo.labelSm, { color: CAM.forestLight, marginHorizontal: 2 }]}>|</Text>
+        <Text style={[Typo.labelMd, { color: currentLang === 'en' ? CAM.forest : CAM.dark, fontWeight: currentLang === 'en' ? 'bold' : 'normal' }]}>EN</Text>
+      </TouchableOpacity>
+      <View style={[s.headerBadge, { backgroundColor: CAM.orangeLight, marginLeft: Space.xs }]}>
         <Ionicons name="flame" size={14} color={CAM.orange} />
         <Text style={[Typo.labelLg, { color: CAM.dark, marginLeft: 4 }]}>{streak}</Text>
       </View>
@@ -319,6 +331,7 @@ const LangBanner = ({ lang, onPress }) => {
    ════════════════════════════════════════════════════════════════════ */
 
 const DashCard = ({ percent = 0, mins = 0, goal = 40, onContinue }) => {
+  const { t } = useTranslation(["home", "common"]);
   const bar = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(bar, {
@@ -337,10 +350,10 @@ const DashCard = ({ percent = 0, mins = 0, goal = 40, onContinue }) => {
       <View style={s.dashDeco2} />
 
       <Text style={[Typo.labelSm, { color: CAM.forestPale + "CC", marginBottom: Space.xs }]}>
-        TABLEAU DE BORD
+        {t("home.yourProgress").toUpperCase()}
       </Text>
       <Text style={[Typo.headlineLg, { color: "#fff", marginBottom: Space["2xl"] }]}>
-        Ta progression{"\n"}aujourd'hui
+        {t("home.welcome")}
       </Text>
 
       <View style={s.goalRow}>
@@ -376,7 +389,7 @@ const DashCard = ({ percent = 0, mins = 0, goal = 40, onContinue }) => {
       <TouchableOpacity onPress={onContinue} activeOpacity={0.85} style={s.continueBtn}>
         <Ionicons name="play" size={16} color={CAM.forest} />
         <Text style={[Typo.titleSm, { color: CAM.forest, marginLeft: Space.sm }]}>
-          Continuer l'apprentissage
+          {t("home.continueLearning")}
         </Text>
       </TouchableOpacity>
     </View>
@@ -388,12 +401,12 @@ const DashCard = ({ percent = 0, mins = 0, goal = 40, onContinue }) => {
    ════════════════════════════════════════════════════════════════════ */
 
 const ThemeCard = ({ theme, onPress }) => {
-  const pct    = theme.lessonsCount > 0 ? Math.round((theme.lessonsCompleted / theme.lessonsCount) * 100) : 0;
+  const pct = theme.lessonsCount > 0 ? Math.round((theme.lessonsCompleted / theme.lessonsCount) * 100) : 0;
   const locked = theme.locked;
-  const scale  = useRef(new Animated.Value(1)).current;
+  const scale = useRef(new Animated.Value(1)).current;
 
-  const pressIn  = () => Animated.spring(scale, { toValue: 0.95, useNativeDriver: true }).start();
-  const pressOut = () => Animated.spring(scale, { toValue: 1,    useNativeDriver: true }).start();
+  const pressIn = () => Animated.spring(scale, { toValue: 0.95, useNativeDriver: true }).start();
+  const pressOut = () => Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start();
 
   return (
     <Animated.View style={{ transform: [{ scale }] }}>
@@ -468,7 +481,16 @@ export default function HomeScreen() {
   const { data: dash, isLoading: dLoading, fetchDashboard } = useDashboardStore();
 
   const [selectedTheme, setSelectedTheme] = useState(null);
-  const [sheetVisible,  setSheetVisible]  = useState(false);
+  const [sheetVisible, setSheetVisible] = useState(false);
+
+  const { t, i18n } = useTranslation(["home", "common"]);
+  const [appLang, setAppLang] = useState(i18n.language || 'fr');
+
+  const handleToggleLang = async () => {
+    const nextLang = appLang === 'fr' ? 'en' : 'fr';
+    await changeLanguage(nextLang);
+    setAppLang(nextLang);
+  };
 
   const getPatrimonialId = (lang, allLangs) => {
     if (lang?.type === "patrimonial") return lang.id;
@@ -484,7 +506,7 @@ export default function HomeScreen() {
         return;
       }
       const langs = await fetchLanguages().catch(() => []);
-      const lang  = await loadActiveLanguage();
+      const lang = await loadActiveLanguage();
       fetchThemes(getPatrimonialId(lang, langs));
       fetchDashboard();
     };
@@ -493,20 +515,20 @@ export default function HomeScreen() {
 
   /* ── Drawer ── */
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const drawerAnim  = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
+  const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const overlayAnim = useRef(new Animated.Value(0)).current;
 
   const openDrawer = useCallback(() => {
     setDrawerOpen(true);
     Animated.parallel([
-      Animated.spring(drawerAnim,  { toValue: 0, tension: 65, friction: 11, useNativeDriver: true }),
+      Animated.spring(drawerAnim, { toValue: 0, tension: 65, friction: 11, useNativeDriver: true }),
       Animated.timing(overlayAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
     ]).start();
   }, []);
 
   const closeDrawer = useCallback(() => {
     Animated.parallel([
-      Animated.spring(drawerAnim,  { toValue: -DRAWER_WIDTH, tension: 65, friction: 11, useNativeDriver: true }),
+      Animated.spring(drawerAnim, { toValue: -DRAWER_WIDTH, tension: 65, friction: 11, useNativeDriver: true }),
       Animated.timing(overlayAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
     ]).start(() => setDrawerOpen(false));
   }, []);
@@ -517,8 +539,8 @@ export default function HomeScreen() {
       onMoveShouldSetPanResponder: (_, g) =>
         Math.abs(g.dx) > 20 && Math.abs(g.dx) > Math.abs(g.dy),
       onPanResponderRelease: (_, g) => {
-        if (g.dx >  50 && !drawerOpen) openDrawer();
-        if (g.dx < -50 &&  drawerOpen) closeDrawer();
+        if (g.dx > 50 && !drawerOpen) openDrawer();
+        if (g.dx < -50 && drawerOpen) closeDrawer();
       },
     })
   ).current;
@@ -528,10 +550,10 @@ export default function HomeScreen() {
     closeDrawer();
     setTimeout(() => {
       switch (target) {
-        case "quests":          router.push("/modal/quests");                    break;
-        case "notifications":   router.push("/(tabs)/profile/notifications");    break;
-        case "change-language": router.push("/modal/change-language");           break;
-        case "settings":        router.push("/(tabs)/profile/settings");         break;
+        case "quests": router.push("/modal/quests"); break;
+        case "notifications": router.push("/(tabs)/profile/notifications"); break;
+        case "change-language": router.push("/modal/change-language"); break;
+        case "settings": router.push("/(tabs)/profile/settings"); break;
       }
     }, 300);
   };
@@ -543,7 +565,7 @@ export default function HomeScreen() {
         "Déconnexion",
         "Êtes-vous sûr de vouloir vous déconnecter ?",
         [
-          { text: "Annuler",   style: "cancel" },
+          { text: "Annuler", style: "cancel" },
           { text: "Confirmer", style: "destructive", onPress: () => logout() },
         ]
       );
@@ -606,6 +628,8 @@ export default function HomeScreen() {
               streak={dash?.streakDays || 0}
               xp={dash?.totalPoints || 0}
               onMenuPress={openDrawer}
+              currentLang={appLang}
+              onToggleLang={handleToggleLang}
             />
           </Animated.View>
 
@@ -629,12 +653,12 @@ export default function HomeScreen() {
           {/* Thèmes */}
           <Animated.View style={[s.section, fadeUp(anims[2], 22)]}>
             <View style={s.sectionHead}>
-              <Text style={[Typo.headlineMd, { color: CAM.dark }]}>Thèmes à explorer</Text>
+              <Text style={[Typo.headlineMd, { color: CAM.dark }]}>{t("home.themesToExplore", "Thèmes à explorer")}</Text>
               <TouchableOpacity
                 onPress={() => router.push("/(tabs)/lessons")}
                 activeOpacity={0.7}
               >
-                <Text style={[Typo.titleSm, { color: CAM.forest }]}>Voir tout</Text>
+                <Text style={[Typo.titleSm, { color: CAM.forest }]}>{t("home.seeAll", "Voir tout")}</Text>
               </TouchableOpacity>
             </View>
 
@@ -648,7 +672,7 @@ export default function HomeScreen() {
               <View style={s.empty}>
                 <Ionicons name="book-outline" size={38} color={Colors.textTertiary} />
                 <Text style={[Typo.bodyMd, { textAlign: "center", marginTop: Space.md }]}>
-                  Aucun thème disponible.
+                  {t("home.noThemes", "Aucun thème disponible.")}
                 </Text>
               </View>
             ) : (
@@ -663,7 +687,7 @@ export default function HomeScreen() {
           {/* Exercices du jour */}
           <Animated.View style={[s.section, fadeUp(anims[3], 22)]}>
             <View style={s.sectionHead}>
-              <Text style={[Typo.headlineMd, { color: CAM.dark }]}>Exercices du jour</Text>
+              <Text style={[Typo.headlineMd, { color: CAM.dark }]}>{t("home.exercises", "Exercices du jour")}</Text>
               <View style={s.exoBadgeCount}>
                 <Text style={[Typo.labelMd, { color: CAM.forest }]}>
                   {DAILY_EXOS.filter((e) => e.done).length}/{DAILY_EXOS.length}
@@ -734,16 +758,16 @@ export default function HomeScreen() {
    ══════════════════════════════════════════════════════════════════════ */
 
 const s = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: CAM.surface },
+  root: { flex: 1, backgroundColor: CAM.surface },
   scroll: { paddingHorizontal: Space["2xl"], paddingBottom: Space["2xl"] },
 
   /* Header */
   header: {
-    flexDirection:  "row",
-    alignItems:     "center",
+    flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    paddingTop:     Platform.OS === "ios" ? 58 : 40,
-    paddingBottom:  Space.lg,
+    paddingTop: Platform.OS === "ios" ? 58 : 40,
+    paddingBottom: Space.lg,
   },
   menuBtn: {
     width: 40, height: 40,
@@ -752,25 +776,25 @@ const s = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
   },
   headerCenter: { flexDirection: "row", alignItems: "center" },
-  headerLogo:   { width: 26, height: 26 },
-  headerRight:  { flexDirection: "row", alignItems: "center" },
-  headerBadge:  {
-    flexDirection:  "row",
-    alignItems:     "center",
+  headerLogo: { width: 26, height: 26 },
+  headerRight: { flexDirection: "row", alignItems: "center" },
+  headerBadge: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: Space.md,
-    paddingVertical:   Space.xs,
-    borderRadius:   Radius.full,
+    paddingVertical: Space.xs,
+    borderRadius: Radius.full,
   },
 
   /* Lang banner */
   langBanner: {
-    flexDirection:   "row",
-    alignItems:      "center",
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: CAM.forestPale,
-    borderRadius:    Radius.lg,
+    borderRadius: Radius.lg,
     paddingHorizontal: Space.lg,
-    paddingVertical:   Space.md,
-    marginBottom:    Space.lg,
+    paddingVertical: Space.md,
+    marginBottom: Space.lg,
   },
   langDot: {
     width: 8, height: 8,
@@ -781,99 +805,99 @@ const s = StyleSheet.create({
   /* Dashboard card */
   dashCard: {
     backgroundColor: CAM.forest,
-    borderRadius:    Radius.xl,
-    padding:         Space["2xl"],
-    marginBottom:    Space["2xl"],
-    overflow:        "hidden",
-    position:        "relative",
+    borderRadius: Radius.xl,
+    padding: Space["2xl"],
+    marginBottom: Space["2xl"],
+    overflow: "hidden",
+    position: "relative",
   },
   dashDeco1: {
-    position:     "absolute",
-    top:          -30,
-    right:        -30,
-    width:        100,
-    height:       100,
+    position: "absolute",
+    top: -30,
+    right: -30,
+    width: 100,
+    height: 100,
     borderRadius: 50,
     backgroundColor: CAM.forestLight + "50",
   },
   dashDeco2: {
-    position:     "absolute",
-    bottom:       -20,
-    left:         60,
-    width:        70,
-    height:       70,
+    position: "absolute",
+    bottom: -20,
+    left: 60,
+    width: 70,
+    height: 70,
     borderRadius: 35,
     backgroundColor: CAM.gold + "22",
   },
   goalRow: {
-    flexDirection:  "row",
+    flexDirection: "row",
     justifyContent: "space-between",
-    alignItems:     "center",
-    marginBottom:   Space.md,
+    alignItems: "center",
+    marginBottom: Space.md,
   },
   progressTrack: {
-    height:          28,
+    height: 28,
     backgroundColor: "rgba(255,255,255,0.18)",
-    borderRadius:    Radius.full,
-    overflow:        "hidden",
-    position:        "relative",
-    justifyContent:  "center",
+    borderRadius: Radius.full,
+    overflow: "hidden",
+    position: "relative",
+    justifyContent: "center",
   },
   progressFill: {
-    position:        "absolute",
+    position: "absolute",
     left: 0, top: 0, bottom: 0,
     backgroundColor: CAM.gold,
-    borderRadius:    Radius.full,
+    borderRadius: Radius.full,
   },
   progressLabel: {
-    position:  "absolute",
+    position: "absolute",
     left: 0, right: 0,
     alignItems: "center",
   },
   statsRow: {
-    flexDirection:  "row",
+    flexDirection: "row",
     justifyContent: "space-between",
-    marginTop:      Space.lg,
-    marginBottom:   Space["2xl"],
+    marginTop: Space.lg,
+    marginBottom: Space["2xl"],
   },
   statItem: { flexDirection: "row", alignItems: "center" },
   continueBtn: {
-    flexDirection:  "row",
-    alignItems:     "center",
+    flexDirection: "row",
+    alignItems: "center",
     justifyContent: "center",
     backgroundColor: CAM.gold,
-    borderRadius:   Radius.full,
-    paddingVertical:   Space.lg,
+    borderRadius: Radius.full,
+    paddingVertical: Space.lg,
     paddingHorizontal: Space["2xl"],
   },
 
   /* Section */
-  section:     { marginTop: Space.sm },
+  section: { marginTop: Space.sm },
   sectionHead: {
-    flexDirection:  "row",
+    flexDirection: "row",
     justifyContent: "space-between",
-    alignItems:     "center",
-    marginBottom:   Space.xl,
+    alignItems: "center",
+    marginBottom: Space.xl,
   },
 
   /* Theme grid */
   grid: { flexDirection: "row", flexWrap: "wrap", gap: Space.md },
   themeCard: {
-    width:            CARD_W,
-    backgroundColor:  "#fff",
-    borderRadius:     Radius.xl,
-    padding:          Space.lg,
-    overflow:         "hidden",
-    position:         "relative",
+    width: CARD_W,
+    backgroundColor: "#fff",
+    borderRadius: Radius.xl,
+    padding: Space.lg,
+    overflow: "hidden",
+    position: "relative",
   },
   themeProgress: {
-    position:   "absolute",
-    bottom:     0, left: 0,
-    height:     3,
+    position: "absolute",
+    bottom: 0, left: 0,
+    height: 3,
     backgroundColor: CAM.forest,
-    borderRadius:    Radius.full,
+    borderRadius: Radius.full,
   },
-  themeTop:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  themeTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   themeIcon: {
     width: 46, height: 46,
     borderRadius: 23,
@@ -881,30 +905,30 @@ const s = StyleSheet.create({
   },
   pctBadge: {
     backgroundColor: CAM.forestPale,
-    borderRadius:    Radius.full,
+    borderRadius: Radius.full,
     paddingHorizontal: Space.md,
-    paddingVertical:   2,
+    paddingVertical: 2,
   },
   empty: { alignItems: "center", paddingVertical: Space["4xl"] },
 
   /* Exercices */
   exoBadgeCount: {
     backgroundColor: CAM.forestPale,
-    borderRadius:    Radius.full,
+    borderRadius: Radius.full,
     paddingHorizontal: Space.md,
-    paddingVertical:   2,
+    paddingVertical: 2,
   },
   exoList: {
     backgroundColor: "#fff",
-    borderRadius:    Radius.xl,
-    overflow:        "hidden",
+    borderRadius: Radius.xl,
+    overflow: "hidden",
     ...Shadow.sm,
   },
   exoRow: {
-    flexDirection:  "row",
-    alignItems:     "center",
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: Space.lg,
-    paddingVertical:   Space.lg,
+    paddingVertical: Space.lg,
     borderBottomWidth: 0.5,
     borderBottomColor: Colors.surfaceVariant,
   },
@@ -914,18 +938,18 @@ const s = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
   },
   doneBadge: {
-    flexDirection:   "row",
-    alignItems:      "center",
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: CAM.forest,
-    borderRadius:    Radius.full,
+    borderRadius: Radius.full,
     paddingHorizontal: Space.md,
-    paddingVertical:   4,
+    paddingVertical: 4,
   },
   todoBadge: {
     backgroundColor: CAM.orangeLight,
-    borderRadius:    Radius.full,
+    borderRadius: Radius.full,
     paddingHorizontal: Space.md,
-    paddingVertical:   4,
+    paddingVertical: 4,
   },
 });
 
@@ -935,42 +959,42 @@ const s = StyleSheet.create({
 
 const dr = StyleSheet.create({
   drawer: {
-    position:        "absolute",
+    position: "absolute",
     left: 0, top: 0, bottom: 0,
-    width:           DRAWER_WIDTH,
+    width: DRAWER_WIDTH,
     backgroundColor: "#fff",
-    zIndex:          100,
+    zIndex: 100,
     ...Shadow.lg,
   },
   topStripe: {
-    position:        "absolute",
+    position: "absolute",
     top: 0, left: 0, right: 0,
-    height:          4,
+    height: 4,
     backgroundColor: CAM.forest,
   },
   container: {
-    flex:              1,
-    paddingTop:        Platform.OS === "ios" ? 64 : 48,
+    flex: 1,
+    paddingTop: Platform.OS === "ios" ? 64 : 48,
     paddingHorizontal: Space["2xl"],
-    paddingBottom:     Platform.OS === "ios" ? 40 : 24,
+    paddingBottom: Platform.OS === "ios" ? 40 : 24,
   },
   closeBtn: {
-    position:        "absolute",
-    top:             Platform.OS === "ios" ? 58 : 42,
-    right:           Space.lg,
-    width:           36,
-    height:          36,
-    borderRadius:    18,
+    position: "absolute",
+    top: Platform.OS === "ios" ? 58 : 42,
+    right: Space.lg,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: Colors.surfaceContainerLow,
-    alignItems:      "center",
-    justifyContent:  "center",
-    zIndex:          10,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
   },
   profileRow: {
     flexDirection: "row",
-    alignItems:    "center",
-    marginBottom:  Space.lg,
-    marginTop:     Space.md,
+    alignItems: "center",
+    marginBottom: Space.lg,
+    marginTop: Space.md,
   },
   avatarRing: {
     width: 60, height: 60,
@@ -982,40 +1006,40 @@ const dr = StyleSheet.create({
   },
   avatar: { width: 55, height: 55, borderRadius: 27.5 },
   levelBadge: {
-    flexDirection:   "row",
-    alignItems:      "center",
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: CAM.goldLight,
-    borderRadius:    Radius.full,
+    borderRadius: Radius.full,
     paddingHorizontal: Space.md,
-    paddingVertical:   2,
-    alignSelf:       "flex-start",
-    marginTop:       4,
+    paddingVertical: 2,
+    alignSelf: "flex-start",
+    marginTop: 4,
   },
   streakBadge: {
-    flexDirection:   "row",
-    alignItems:      "center",
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: CAM.orangeLight,
-    borderRadius:    Radius.full,
+    borderRadius: Radius.full,
     paddingHorizontal: Space.lg,
-    paddingVertical:   Space.sm,
-    alignSelf:       "flex-start",
-    marginBottom:    Space.md,
+    paddingVertical: Space.sm,
+    alignSelf: "flex-start",
+    marginBottom: Space.md,
   },
   divider: {
-    height:          0.5,
+    height: 0.5,
     backgroundColor: Colors.surfaceVariant,
-    marginVertical:  Space.xl,
+    marginVertical: Space.xl,
   },
   menuItem: {
     flexDirection: "row",
-    alignItems:    "center",
+    alignItems: "center",
     paddingVertical: Space.lg,
   },
   menuItemHL: {
-    backgroundColor:  CAM.forestPale,
-    borderRadius:     Radius.xl,
+    backgroundColor: CAM.forestPale,
+    borderRadius: Radius.xl,
     paddingHorizontal: Space.lg,
-    marginHorizontal:  -Space.lg,
+    marginHorizontal: -Space.lg,
   },
   menuIcon: {
     width: 40, height: 40,
@@ -1025,7 +1049,7 @@ const dr = StyleSheet.create({
   },
   logoutBtn: {
     flexDirection: "row",
-    alignItems:    "center",
+    alignItems: "center",
     paddingVertical: Space.lg,
   },
 });
@@ -1040,29 +1064,29 @@ const bs = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.4)",
   },
   sheet: {
-    position:        "absolute",
+    position: "absolute",
     bottom: 0, left: 0, right: 0,
-    height:          SHEET_HEIGHT,
+    height: SHEET_HEIGHT,
     backgroundColor: "#fff",
-    borderTopLeftRadius:  24,
+    borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    overflow:        "hidden",
+    overflow: "hidden",
     ...Shadow.lg,
   },
   handle: {
-    alignSelf:       "center",
-    width:           40,
-    height:          4,
-    borderRadius:    2,
+    alignSelf: "center",
+    width: 40,
+    height: 4,
+    borderRadius: 2,
     backgroundColor: Colors.surfaceVariant,
-    marginTop:       Space.lg,
-    marginBottom:    Space.md,
+    marginTop: Space.lg,
+    marginBottom: Space.md,
   },
   sheetHeader: {
-    flexDirection:     "row",
-    alignItems:        "center",
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: Space["2xl"],
-    paddingVertical:   Space.lg,
+    paddingVertical: Space.lg,
   },
   sheetIcon: {
     width: 48, height: 48,
@@ -1076,21 +1100,21 @@ const bs = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
   },
   progressTrack: {
-    height:           4,
-    backgroundColor:  Colors.surfaceVariant,
+    height: 4,
+    backgroundColor: Colors.surfaceVariant,
     marginHorizontal: Space["2xl"],
-    marginBottom:     Space.xl,
-    borderRadius:     Radius.full,
-    overflow:         "hidden",
+    marginBottom: Space.xl,
+    borderRadius: Radius.full,
+    overflow: "hidden",
   },
   progressFill: {
-    height:           4,
-    backgroundColor:  CAM.forest,
-    borderRadius:     Radius.full,
+    height: 4,
+    backgroundColor: CAM.forest,
+    borderRadius: Radius.full,
   },
   lessonRow: {
-    flexDirection:  "row",
-    alignItems:     "center",
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: Space.lg,
     borderBottomWidth: 0.5,
     borderBottomColor: Colors.surfaceVariant,

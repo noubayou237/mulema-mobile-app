@@ -9,6 +9,12 @@
     "scheme": "mulema",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "updates": {
+      "url": "https://u.expo.dev/34e3ccd6-55a9-4abe-9cbd-de8441d88ad3"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "extra": {
       "eas": {
         "projectId": "34e3ccd6-55a9-4abe-9cbd-de8441d88ad3"
@@ -18,6 +24,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.mulema.app",
       "infoPlist": {
+        "NSFaceIDUsageDescription": "Use Face ID for authentication",
         "CFBundleURLTypes": [
           {
             "CFBundleTypeRole": "Editor",
