@@ -17,7 +17,6 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../../src/theme/tokens";
-import { MCulturalCard } from "../../../src/components/ui/MComponents";
 import { useAuthStore } from "../../../src/stores/useAuthStore";
 import { useDashboardStore } from "../../../src/stores/useDashboardStore";
 
@@ -154,13 +153,7 @@ export default function ProfileScreen() {
           </View>
         </Animated.View>
 
-        {/* ── Pro Tip ── */}
-        <Animated.View style={[{ marginTop: Space.xl }, fade(a3, 10)]}>
-          <MCulturalCard
-            title="ASTUCE DE PRO"
-            body={'"La répétition est la clé de la maîtrise. Pratiquez 5 minutes par jour, chaque jour."'}
-          />
-        </Animated.View>
+        {/* Pro Tip card removed per directive */}
 
         <View style={{ height: Space["4xl"] }} />
       </ScrollView>

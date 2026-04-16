@@ -1,9 +1,11 @@
 /**
- * MULEMA — Page Thèmes / Leçons
- * Design fidèle à la maquette
+ * MULEMA — Page Thèmes : Leçons & Exercices (Two-Tab Layout)
+ * Correction #2: "Le saviez-vous" removed
+ * Correction #4: Lessons and Exercises separated into two tabs
+ * Correction #10: Theme completion → cultural video unlock
  */
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, Dimensions, StatusBar,
@@ -13,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useThemeStore }     from "../../../src/stores/useThemeStore";
 import { useLanguageStore }  from "../../../src/stores/useLanguageStore";
@@ -33,38 +36,12 @@ const TRACK    = "#DDE3F0";
 const TEXT     = "#1A1A2E";
 const TEXT_SUB = "#5A6070";
 const FAINT    = "#AAAABC";
+const GREEN    = "#2E7D32";
+const GREEN_L  = "#E8F5E9";
+const GOLD     = "#F9A825";
 
-/* ── Tips par langue ────────────────────────────────────────── */
-const LANG_TIPS = {
-  duala: [
-    { title: "Le Duala 🌊", body: "Le Duala est une langue bantoue parlée par plus d'un million de personnes à Douala, la capitale économique du Cameroun. C'est la langue du commerce et de la mer !" },
-    { title: "Douala, ville monde 🏙️", body: "Douala est le principal port d'Afrique centrale. Les Duala, maîtres de la navigation, ont longtemps contrôlé le commerce fluvial." },
-    { title: "Salutation Duala 🤝", body: "En Duala, 'Mbolo' signifie bonjour. La salutation est fondamentale — on ne se croise jamais sans se saluer !" },
-  ],
-  ghomala: [
-    { title: "Le Ghomálá' 🌿", body: "Le Ghomálá' est la langue des Bamiléké des Hauts-Plateaux de l'Ouest Cameroun. Ce peuple de commerçants et d'artisans est réputé pour son sens des affaires." },
-    { title: "La chefferie 👑", body: "Chez les Bamiléké, la chefferie est sacrée. Le chef (Fo) est gardien des traditions, de la langue et de l'identité culturelle." },
-    { title: "Les Bamiléké 🎨", body: "Les Bamiléké sont connus pour leurs masques sculptés, leurs danses traditionnelles et leurs tissus aux couleurs vives. Une culture riche et vivante !" },
-  ],
-  bassa: [
-    { title: "Le Bassa 🦁", body: "Le Bassa (ou Basaa) est parlé dans les régions du Littoral et du Centre au Cameroun. C'est une langue à tons, chaque tonalité change le sens d'un mot !" },
-    { title: "Les Bassa, peuple résistant ⚔️", body: "Les Bassa sont célèbres pour leur résistance héroïque à la colonisation. Um Nyobè, figure nationale, était Bassa." },
-    { title: "La forêt sacrée 🌳", body: "Pour les Bassa, la forêt est un lieu sacré peuplé d'esprits. La nature et les ancêtres guident la vie quotidienne." },
-  ],
-  default: [
-    { title: "Langues du Cameroun 🇨🇲", body: "Le Cameroun est l'un des pays les plus multilingues du monde avec plus de 280 langues nationales. Une richesse unique !" },
-    { title: "Mulema 📚", body: "Mulema signifie 'apprendre' en langue locale. Chaque leçon te rapproche de ta culture et de tes racines." },
-    { title: "Biodiversité culturelle 🌍", body: "Chaque langue camerounaise porte une vision du monde unique. Apprendre une langue c'est découvrir une façon de penser !" },
-  ],
-};
-
-const getTips = (langName = "") => {
-  const n = langName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  if (n.includes("duala") || n.includes("douala")) return LANG_TIPS.duala;
-  if (n.includes("ghomala") || n.includes("ghomal") || n.includes("bamilek")) return LANG_TIPS.ghomala;
-  if (n.includes("bassa") || n.includes("basaa")) return LANG_TIPS.bassa;
-  return LANG_TIPS.default;
-};
+/* ── Tab constants ──────────────────────────────────────────── */
+const TABS = ["Leçons", "Exercices"];
 
 /* ── Icônes par code thème ──────────────────────────────────── */
 const ICONS = {
@@ -82,8 +59,16 @@ const ICONS = {
 };
 const icon = (code) => ICONS[(code ?? "").toLowerCase()] ?? "book-outline";
 
+/* ── Exercise type icons ────────────────────────────────────── */
+const EX_ICONS = {
+  matching: "grid-outline",
+  complete: "create-outline",
+  listen_write: "ear-outline",
+  listen_select: "images-outline",
+};
+
 /* ════════════════════════════════════════════════════════════════
-   THEME CARD
+   THEME CARD (Leçons tab)
    ════════════════════════════════════════════════════════════════ */
 const ThemeCard = ({ theme, index, onPress }) => {
   const fade  = useRef(new Animated.Value(0)).current;
@@ -113,9 +98,7 @@ const ThemeCard = ({ theme, index, onPress }) => {
         {/* Anneau SVG + icône */}
         <View style={s.ringWrap}>
           <Svg width={80} height={80} style={StyleSheet.absoluteFill}>
-            {/* Track */}
             <Circle cx={40} cy={40} r={R} stroke={locked ? "#E0E0EA" : TRACK} strokeWidth={5} fill="none" />
-            {/* Arc progression */}
             {!locked && pct > 0 && (
               <Circle
                 cx={40} cy={40} r={R}
@@ -127,8 +110,6 @@ const ThemeCard = ({ theme, index, onPress }) => {
               />
             )}
           </Svg>
-
-          {/* Cercle icône */}
           <View style={[s.iconCircle, locked && s.iconCircleLocked]}>
             {locked
               ? <Ionicons name="lock-closed" size={20} color={FAINT} />
@@ -137,24 +118,152 @@ const ThemeCard = ({ theme, index, onPress }) => {
           </View>
         </View>
 
-        {/* Nom FR */}
         <Text style={[s.cardName, locked && { color: FAINT }]} numberOfLines={1}>
           {theme.name ?? "—"}
         </Text>
-        {/* Nom local */}
         {theme.nameLocal ? (
           <Text style={[s.cardLocal, locked && { color: FAINT }]} numberOfLines={1}>
             {theme.nameLocal}
           </Text>
         ) : null}
 
-        {/* Sous-titre */}
         {locked
           ? <Text style={s.lockMsg} numberOfLines={2}>{theme.lockHint ?? "Verrouillé"}</Text>
           : <Text style={s.cardPct}>{pct}% Complété</Text>
         }
       </TouchableOpacity>
     </Animated.View>
+  );
+};
+
+/* ════════════════════════════════════════════════════════════════
+   EXERCISE CARD (Exercices tab)
+   ════════════════════════════════════════════════════════════════ */
+const ExerciseThemeCard = ({ theme, index, onPress, isCompleted, hasReward }) => {
+  const fade  = useRef(new Animated.Value(0)).current;
+  const slide = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fade,  { toValue: 1, duration: 380, delay: index * 60, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(slide, { toValue: 0, duration: 380, delay: index * 60, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  const locked = theme.locked ?? false;
+  const exercisesDone = theme.exercisesCompleted ?? 0;
+  const exercisesTotal = theme.exercisesCount ?? 3;
+  const pct = exercisesTotal > 0 ? Math.round((exercisesDone / exercisesTotal) * 100) : 0;
+  const allDone = pct >= 100;
+
+  return (
+    <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }] }}>
+      <TouchableOpacity
+        onPress={() => !locked && onPress(theme)}
+        activeOpacity={locked ? 1 : 0.75}
+        style={[s.exCard, locked && s.cardLocked, allDone && s.exCardDone]}
+      >
+        <View style={s.exCardTop}>
+          <View style={[s.exIconCircle, locked && s.iconCircleLocked, allDone && { backgroundColor: GREEN_L }]}>
+            {locked
+              ? <Ionicons name="lock-closed" size={20} color={FAINT} />
+              : allDone
+                ? <Ionicons name="checkmark-circle" size={24} color={GREEN} />
+                : <Ionicons name={icon(theme.code)} size={24} color={RED} />
+            }
+          </View>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={[s.exCardName, locked && { color: FAINT }]} numberOfLines={1}>
+              {theme.name ?? "—"}
+            </Text>
+            <Text style={[s.exCardSub, locked && { color: FAINT }]}>
+              {locked
+                ? (theme.lockHint ?? "Terminez le thème précédent")
+                : allDone
+                  ? "✅ Tous les exercices terminés"
+                  : `${exercisesDone}/${exercisesTotal} exercices`
+              }
+            </Text>
+          </View>
+          {/* Reward indicator */}
+          {allDone && hasReward && (
+            <View style={s.rewardBadge}>
+              <Ionicons name="videocam" size={14} color="#FFF" />
+            </View>
+          )}
+          {!locked && (
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={allDone ? GREEN : TEXT_SUB}
+              style={{ marginLeft: 8 }}
+            />
+          )}
+        </View>
+
+        {/* Progress bar */}
+        {!locked && (
+          <View style={s.exProgress}>
+            <View style={[s.exProgressFill, { width: `${Math.max(pct, 2)}%`, backgroundColor: allDone ? GREEN : RED }]} />
+          </View>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
+/* ════════════════════════════════════════════════════════════════
+   TAB SELECTOR
+   ════════════════════════════════════════════════════════════════ */
+const TabSelector = ({ activeTab, onTabChange }) => {
+  const slideAnim = useRef(new Animated.Value(activeTab === 0 ? 0 : 1)).current;
+
+  useEffect(() => {
+    Animated.spring(slideAnim, {
+      toValue: activeTab,
+      tension: 68,
+      friction: 12,
+      useNativeDriver: false,
+    }).start();
+  }, [activeTab]);
+
+  const tabWidth = (width - 32) / 2;
+
+  return (
+    <View style={s.tabBar}>
+      {/* Animated pill behind active tab */}
+      <Animated.View
+        style={[
+          s.tabPill,
+          {
+            width: tabWidth,
+            transform: [{
+              translateX: slideAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, tabWidth],
+              }),
+            }],
+          },
+        ]}
+      />
+      {TABS.map((tab, idx) => (
+        <TouchableOpacity
+          key={tab}
+          onPress={() => onTabChange(idx)}
+          activeOpacity={0.7}
+          style={[s.tabItem, { width: tabWidth }]}
+        >
+          <Ionicons
+            name={idx === 0 ? "book" : "barbell"}
+            size={16}
+            color={activeTab === idx ? "#FFF" : TEXT_SUB}
+          />
+          <Text style={[s.tabText, activeTab === idx && s.tabTextActive]}>
+            {tab}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
   );
 };
 
@@ -167,15 +276,25 @@ export default function ThemesScreen() {
   const { themes, isLoading, fetchThemes } = useThemeStore();
   const { data: dash, fetchDashboard }     = useDashboardStore();
   const [refreshing, setRefreshing]        = useState(false);
+  const [activeTab, setActiveTab]          = useState(0);
 
-  const tips = getTips(activeLanguage?.name ?? "");
-  const tip  = tips[Math.floor(Date.now() / 60000) % tips.length];
+  // Theme completion tracking for cultural video unlock
+  const [completedThemes, setCompletedThemes] = useState({});
 
-  // Les thèmes sont liés aux langues PATRIMONIALES — toujours utiliser cet ID
+  // Load completed theme state from AsyncStorage
+  useEffect(() => {
+    const loadCompleted = async () => {
+      try {
+        const stored = await AsyncStorage.getItem("completed_themes");
+        if (stored) setCompletedThemes(JSON.parse(stored));
+      } catch {}
+    };
+    loadCompleted();
+  }, []);
+
   const getPatrimonialId = (lang, allLangs) => {
     if (!lang) return DUALA_ID;
     if (lang.type === "patrimonial") return lang.id;
-    // Langue officielle : chercher la patrimoniale du même nom
     const langName = (lang.name ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const match = (allLangs || []).find((l) => {
       if (l.type !== "patrimonial") return false;
@@ -187,15 +306,12 @@ export default function ThemesScreen() {
 
   useEffect(() => {
     const init = async () => {
-      // 1. Langue déjà dans le store
       if (activeLanguage) {
         const langId = getPatrimonialId(activeLanguage, languages);
         fetchThemes(langId);
         fetchDashboard();
         return;
       }
-
-      // 2. Charger depuis l'API
       try {
         const langs = await fetchLanguages();
         const lang  = await loadActiveLanguage();
@@ -204,8 +320,6 @@ export default function ThemesScreen() {
         fetchDashboard();
         return;
       } catch {}
-
-      // 3. Fallback final : ID Duala connu
       fetchThemes(DUALA_ID);
       fetchDashboard();
     };
@@ -218,6 +332,22 @@ export default function ThemesScreen() {
     await Promise.all([fetchThemes(langId), fetchDashboard()]);
     setRefreshing(false);
   };
+
+  // Handle exercise theme press → navigate to exercise
+  const handleExerciseThemePress = useCallback((theme) => {
+    const code = (theme.code ?? theme.name ?? "").toLowerCase();
+    // Navigate to the exercise for this theme
+    router.push(`/exercices/${code}/exos1`);
+  }, [router]);
+
+  // Handle theme completion video
+  const handleWatchRewardVideo = useCallback((theme) => {
+    const langName = (activeLanguage?.name ?? "").toLowerCase();
+    router.push({
+      pathname: "/PageVideo",
+      params: { lang: langName, themeId: theme.id, themeName: theme.name },
+    });
+  }, [activeLanguage, router]);
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
@@ -248,6 +378,9 @@ export default function ThemesScreen() {
         </View>
       </View>
 
+      {/* ── TAB SELECTOR ── */}
+      <TabSelector activeTab={activeTab} onTabChange={setActiveTab} />
+
       <ScrollView
         contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
@@ -258,9 +391,13 @@ export default function ThemesScreen() {
         {/* ── HERO CARD ── */}
         <View style={s.hero}>
           <View style={s.heroBlob} />
-          <Text style={s.heroTitle}>Apprentissage{"\n"}Quotidien</Text>
+          <Text style={s.heroTitle}>
+            {activeTab === 0 ? "Apprentissage\nQuotidien" : "Exercices\nPratiques"}
+          </Text>
           <Text style={s.heroSub}>
-            Continuez votre voyage linguistique{"\n"}à travers la culture Camerounaise.
+            {activeTab === 0
+              ? "Continuez votre voyage linguistique\nà travers la culture Camerounaise."
+              : "Testez vos connaissances et\ndébloquez du contenu culturel."}
           </Text>
           <View style={s.streakPill}>
             <Text style={s.streakIcon}>✦</Text>
@@ -270,7 +407,7 @@ export default function ThemesScreen() {
           </View>
         </View>
 
-        {/* ── GRILLE THÈMES ── */}
+        {/* ── CONTENT BASED ON ACTIVE TAB ── */}
         {isLoading && themes.length === 0 ? (
           <ActivityIndicator size="large" color={RED} style={{ marginVertical: 48 }} />
         ) : !isLoading && themes.length === 0 ? (
@@ -280,27 +417,57 @@ export default function ThemesScreen() {
               Aucun thème disponible.{"\n"}Tire vers le bas pour actualiser.
             </Text>
           </View>
+        ) : activeTab === 0 ? (
+          /* ── LEÇONS TAB ── */
+          <View>
+            <View style={s.sectionHeader}>
+              <Ionicons name="book" size={18} color={RED} />
+              <Text style={s.sectionTitle}>Leçons disponibles</Text>
+            </View>
+            <View style={s.grid}>
+              {themes.map((theme, idx) => (
+                <ThemeCard
+                  key={theme.id}
+                  theme={theme}
+                  index={idx}
+                  onPress={(t) => router.push(`/(tabs)/lessons/${t.id}`)}
+                />
+              ))}
+            </View>
+          </View>
         ) : (
-          <View style={s.grid}>
-            {themes.map((theme, idx) => (
-              <ThemeCard
-                key={theme.id}
-                theme={theme}
-                index={idx}
-                onPress={(t) => router.push(`/(tabs)/lessons/${t.id}`)}
-              />
-            ))}
+          /* ── EXERCICES TAB ── */
+          <View>
+            <View style={s.sectionHeader}>
+              <Ionicons name="barbell" size={18} color={RED} />
+              <Text style={s.sectionTitle}>Exercices par thème</Text>
+            </View>
+            <Text style={s.sectionSubtitle}>
+              Complétez tous les exercices d'un thème pour débloquer une vidéo culturelle 🎬
+            </Text>
+            {themes.map((theme, idx) => {
+              const allDone = (theme.exercisesCompleted ?? 0) >= (theme.exercisesCount ?? 3) && (theme.exercisesCount ?? 3) > 0;
+              const hasReward = allDone; // Cultural video available when theme is complete
+              return (
+                <ExerciseThemeCard
+                  key={theme.id}
+                  theme={theme}
+                  index={idx}
+                  isCompleted={allDone}
+                  hasReward={hasReward}
+                  onPress={(t) => {
+                    if (allDone && hasReward) {
+                      // Theme completed → offer to watch cultural video or redo
+                      handleWatchRewardVideo(t);
+                    } else {
+                      handleExerciseThemePress(t);
+                    }
+                  }}
+                />
+              );
+            })}
           </View>
         )}
-
-        {/* ── LE SAVIEZ-VOUS (dynamique selon langue) ── */}
-        <View style={s.tip}>
-          <View style={s.tipBadge}>
-            <Text style={s.tipBadgeTxt}>LE SAVIEZ-VOUS ?</Text>
-          </View>
-          <Text style={s.tipTitle}>{tip.title}</Text>
-          <Text style={s.tipBody}>{tip.body}</Text>
-        </View>
 
         <View style={{ height: 24 }} />
       </ScrollView>
@@ -337,6 +504,34 @@ const s = StyleSheet.create({
     backgroundColor: RED,
   },
 
+  /* Tab Bar */
+  tabBar: {
+    flexDirection: "row",
+    marginHorizontal: 16, marginBottom: 8,
+    backgroundColor: "#E2E6F0",
+    borderRadius: 16, padding: 4,
+    position: "relative",
+  },
+  tabPill: {
+    position: "absolute",
+    top: 4, left: 4,
+    height: 40, borderRadius: 12,
+    backgroundColor: RED,
+    shadowColor: RED, shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3, shadowRadius: 6, elevation: 4,
+  },
+  tabItem: {
+    height: 40, borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center", justifyContent: "center",
+    gap: 6, zIndex: 1,
+  },
+  tabText: {
+    fontSize: 14, fontFamily: "Fredoka_600SemiBold",
+    color: TEXT_SUB,
+  },
+  tabTextActive: { color: "#FFF" },
+
   /* Hero */
   hero: {
     backgroundColor: RED,
@@ -359,10 +554,23 @@ const s = StyleSheet.create({
   streakIcon: { color: "#FFD166", fontSize: 12 },
   streakTxt:  { fontSize: 12, fontFamily: "Fredoka_600SemiBold", color: "#FFF", letterSpacing: 0.8 },
 
-  /* Grille */
+  /* Section Headers */
+  sectionHeader: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    marginBottom: 6,
+  },
+  sectionTitle: {
+    fontSize: 16, fontFamily: "Fredoka_600SemiBold", color: TEXT,
+  },
+  sectionSubtitle: {
+    fontSize: 13, fontFamily: "Nunito-Regular", color: TEXT_SUB,
+    marginBottom: 16, lineHeight: 18,
+  },
+
+  /* Grille (Leçons) */
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 16, marginBottom: 20 },
 
-  /* Card */
+  /* Card (Leçons) */
   card: {
     width: CARD_W, backgroundColor: CARD_BG,
     borderRadius: 20, alignItems: "center",
@@ -390,15 +598,47 @@ const s = StyleSheet.create({
   cardPct:  { fontSize: 12, fontFamily: "Nunito-Regular", color: TEXT_SUB, marginTop: 3 },
   lockMsg:  { fontSize: 11, fontFamily: "Nunito-Regular", color: FAINT, textAlign: "center", lineHeight: 16, marginTop: 3 },
 
+  /* Exercise Theme Card */
+  exCard: {
+    backgroundColor: CARD_BG,
+    borderRadius: 16,
+    paddingVertical: 16, paddingHorizontal: 16,
+    marginBottom: 12,
+    shadowColor: "#A0A8C0", shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1, shadowRadius: 8, elevation: 2,
+  },
+  exCardDone: {
+    borderLeftWidth: 4, borderLeftColor: GREEN,
+  },
+  exCardTop: {
+    flexDirection: "row", alignItems: "center",
+  },
+  exIconCircle: {
+    width: 48, height: 48, borderRadius: 24,
+    backgroundColor: RED_L,
+    alignItems: "center", justifyContent: "center",
+  },
+  exCardName: {
+    fontSize: 15, fontFamily: "Fredoka_600SemiBold", color: TEXT,
+  },
+  exCardSub: {
+    fontSize: 12, fontFamily: "Nunito-Regular", color: TEXT_SUB, marginTop: 2,
+  },
+  exProgress: {
+    height: 6, backgroundColor: TRACK,
+    borderRadius: 3, marginTop: 12, overflow: "hidden",
+  },
+  exProgressFill: {
+    height: "100%", borderRadius: 3,
+  },
+  rewardBadge: {
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: GOLD,
+    alignItems: "center", justifyContent: "center",
+    marginLeft: 8,
+  },
+
   /* Empty */
   empty:    { alignItems: "center", paddingVertical: 48 },
   emptyTxt: { fontSize: 14, fontFamily: "Nunito-Regular", color: FAINT, textAlign: "center", marginTop: 12, lineHeight: 20 },
-
-  /* Tip */
-  tip:        { backgroundColor: "#FFF3E0", borderRadius: 20, padding: 20, marginBottom: 8 },
-  tipBadge:   { backgroundColor: "#E07000", borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4, alignSelf: "flex-start", marginBottom: 10 },
-  tipBadgeTxt:{ fontSize: 11, fontFamily: "Fredoka_600SemiBold", color: "#FFF", letterSpacing: 0.5 },
-  tipTitle:   { fontSize: 17, fontFamily: "Fredoka_700Bold", color: TEXT, marginBottom: 6 },
-  tipBody:    { fontSize: 13, fontFamily: "Nunito-Regular", color: "#4A5060", lineHeight: 19, marginBottom: 8 },
-  tipLink:    { fontSize: 13, fontFamily: "Nunito-SemiBold", color: "#C06000" },
 });

@@ -10,7 +10,9 @@ import {
   Dimensions,
   Alert,
   ScrollView,
-  ActivityIndicator
+  ActivityIndicator,
+  Animated,
+  Easing
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Audio } from "expo-av";
@@ -427,22 +429,24 @@ const ExerciseScreen = ({ navigation }) => {
     const isMatched = matchedPairs.includes(item.id);
     const isError = errorIds.includes(item.id) && isSelected;
 
-    let backgroundColor = "#E0E0E0"; // Gris par défaut
-    let textColor = "#000";
-    let borderColor = "#E0E0E0"; // Gris pour la bordure "non active"
+    let backgroundColor = "#F0F2F8";
+    let textColor = "#1A1A2E";
+    let borderColor = "#E2E6F0";
+    let shadowStyle = {};
 
     if (isMatched) {
-      backgroundColor = "#34C759"; // Vert iOS
-      textColor = "#FFF";
-      borderColor = "#34C759";
+      backgroundColor = "#E8F5E9";
+      textColor = "#2E7D32";
+      borderColor = "#66BB6A";
     } else if (isError) {
-      backgroundColor = "#FFCDD2"; // Rouge clair
-      borderColor = "#C62828";
+      backgroundColor = "#FFEBEE";
+      borderColor = "#EF5350";
       textColor = "#C62828";
     } else if (isSelected) {
-      backgroundColor = "#E3F2FD"; // Bleu clair sélection
-      borderColor = "#2196F3";
-      textColor = "#2196F3";
+      backgroundColor = "#FFF3E0";
+      borderColor = "#E8A020";
+      textColor = "#E65100";
+      shadowStyle = { shadowColor: "#E8A020", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 4 };
     }
 
     // Pour assurer la stabilité de la position, tous les boutons doivent avoir une bordure de 2px
@@ -455,11 +459,13 @@ const ExerciseScreen = ({ navigation }) => {
           {
             backgroundColor,
             borderColor: borderColor,
-            borderWidth: 2 // <-- Bordure fixe pour empêcher le décalage de layout
+            borderWidth: 2,
+            ...shadowStyle,
           }
         ]}
         onPress={() => handlePress(item, side)}
         disabled={isMatched}
+        activeOpacity={0.7}
       >
         <Text style={[styles.optionText, { color: textColor }]}>
           {item.text}
@@ -468,7 +474,6 @@ const ExerciseScreen = ({ navigation }) => {
           <TouchableOpacity
             style={styles.audioIconContainer}
             onPress={async () => {
-              // Try to play word audio
               const success = await playWordAudio(item.id);
               if (!success) {
                 Alert.alert(
@@ -478,8 +483,11 @@ const ExerciseScreen = ({ navigation }) => {
               }
             }}
           >
-            <Ionicons name='volume-high' size={20} color={textColor} />
+            <Ionicons name='volume-high' size={18} color={textColor} />
           </TouchableOpacity>
+        )}
+        {isMatched && (
+          <Ionicons name='checkmark-circle' size={20} color={textColor} style={{ marginLeft: 4 }} />
         )}
       </TouchableOpacity>
     );
@@ -612,7 +620,7 @@ const ExerciseScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#F5F5F5"
+    backgroundColor: "#F0F2F8"
   },
   container: {
     flex: 1,
@@ -622,33 +630,36 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#F0F2F8",
     padding: 20
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: "#666"
+    color: "#5A6070",
+    fontFamily: "Nunito-Regular"
   },
   pageTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "bold",
-    color: "#C81E2F",
-    textAlign: "left"
+    color: "#B71C1C",
+    textAlign: "left",
+    fontFamily: "Fredoka_700Bold"
   },
   headerLine: {
-    height: 2,
-    backgroundColor: "#000",
+    height: 3,
+    backgroundColor: "#B71C1C",
     width: "100%",
-    marginTop: 5,
-    marginBottom: 20
+    marginTop: 6,
+    marginBottom: 20,
+    borderRadius: 2
   },
   imageContainer: {
     width: "100%",
-    height: 120,
+    height: 110,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 10
+    marginBottom: 12
   },
   illustrationImage: {
     width: 100,
@@ -658,19 +669,28 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 10
+    marginBottom: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    shadowColor: "#A0A8C0",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2
   },
   progressBarContainer: {
-    height: 12,
+    height: 10,
     flex: 1,
-    backgroundColor: "#E0E0E0",
-    borderRadius: 6,
+    backgroundColor: "#E2E6F0",
+    borderRadius: 5,
     marginRight: 15
   },
   progressBarFill: {
     height: "100%",
-    backgroundColor: "#C81E2F",
-    borderRadius: 6
+    backgroundColor: "#B71C1C",
+    borderRadius: 5
   },
   livesContainer: {
     flexDirection: "row",
@@ -679,51 +699,59 @@ const styles = StyleSheet.create({
   livesText: {
     fontSize: 18,
     fontWeight: "bold",
-    marginRight: 5
+    marginRight: 5,
+    color: "#1A1A2E",
+    fontFamily: "Fredoka_600SemiBold"
   },
   timerContainer: {
-    marginBottom: 15
+    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
   },
   timerText: {
-    color: "#C81E2F",
+    color: "#B71C1C",
     fontSize: 14,
-    fontWeight: "600"
+    fontWeight: "600",
+    fontFamily: "Fredoka_600SemiBold"
   },
   rechargeText: {
-    color: "#4CAF50",
+    color: "#2E7D32",
     fontSize: 12,
     fontWeight: "500",
-    marginTop: 4
+    fontFamily: "Nunito-Regular"
   },
   instructionCard: {
-    backgroundColor: "#FFF",
-    borderRadius: 15,
-    padding: 15,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 18,
     alignItems: "center",
     marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: "#A0A8C0",
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5
+    shadowRadius: 10,
+    elevation: 3
   },
   instructionTitle: {
-    color: "#C81E2F",
+    color: "#B71C1C",
     fontWeight: "bold",
     fontSize: 16,
-    marginBottom: 5
+    marginBottom: 6,
+    fontFamily: "Fredoka_600SemiBold"
   },
   instructionLine: {
     height: 1,
     width: "80%",
-    backgroundColor: "#DDD",
+    backgroundColor: "#E2E6F0",
     marginBottom: 8
   },
   instructionText: {
     textAlign: "center",
     fontSize: 14,
-    color: "#000",
-    fontWeight: "500"
+    color: "#1A1A2E",
+    fontWeight: "500",
+    fontFamily: "Nunito-Regular"
   },
   gameArea: {
     flexGrow: 1,
@@ -737,23 +765,27 @@ const styles = StyleSheet.create({
     width: "48%"
   },
   optionBtn: {
-    height: 50,
-    borderRadius: 8,
+    minHeight: 52,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 15,
-    paddingHorizontal: 5,
+    marginBottom: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     flexDirection: "row"
   },
   optionText: {
     fontSize: 14,
     fontWeight: "600",
     textAlign: "center",
-    flex: 1
+    flex: 1,
+    fontFamily: "Fredoka_600SemiBold"
   },
   audioIconContainer: {
-    padding: 8,
-    marginLeft: 5
+    padding: 6,
+    marginLeft: 4,
+    borderRadius: 12,
+    backgroundColor: "rgba(0,0,0,0.05)"
   },
   errorContainer: {
     marginBottom: 10,
@@ -761,9 +793,10 @@ const styles = StyleSheet.create({
     paddingLeft: 10
   },
   errorText: {
-    color: "#C81E2F",
-    fontSize: 16,
-    fontStyle: "italic"
+    color: "#B71C1C",
+    fontSize: 14,
+    fontStyle: "italic",
+    fontFamily: "Nunito-Regular"
   },
   fallbackText: {
     marginTop: 8,
@@ -772,15 +805,21 @@ const styles = StyleSheet.create({
     fontStyle: "italic"
   },
   nextButton: {
-    height: 50,
-    borderRadius: 25,
+    height: 52,
+    borderRadius: 26,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 10
+    marginBottom: 10,
+    shadowColor: "#B71C1C",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4
   },
   nextButtonText: {
     fontSize: 18,
-    fontWeight: "bold"
+    fontWeight: "bold",
+    fontFamily: "Fredoka_700Bold"
   }
 });
 
