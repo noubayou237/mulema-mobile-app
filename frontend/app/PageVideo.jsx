@@ -20,13 +20,31 @@ import { authStyles } from "../assets/styles/auth.styles"; // adapte le chemin s
 const HAS_SEEN_INTRO = "hasSeenIntro";
 const HAS_SELECTED_LANGUAGE = "hasSelectedLanguage";
 
-// mapping langue -> url de la vidéo (ici exemples ; remplace par tes URLs réelles)
-const VIDEO_BY_LANG = {
-  bassa: "https://example.com/videos/bassa/intro.m3u8",
-  duala: "https://example.com/videos/duala/intro.m3u8",
-  ghomala: "https://example.com/videos/ghomala/intro.m3u8",
-  default: "https://example.com/videos/default/intro.m3u8",
+// Mapping langue -> local videos for theme completion and intro
+const LOCAL_VIDEOS = {
+  bassa: [
+    require("../assets/BassaVideos/video_2026-04-15_13-47-01.mp4"),
+    require("../assets/BassaVideos/video_2026-04-15_13-47-23.mp4"),
+    require("../assets/BassaVideos/video_2026-04-15_13-47-35.mp4"),
+    require("../assets/BassaVideos/video_2026-04-15_13-47-49.mp4"),
+  ],
+  duala: [
+    require("../assets/DualaVideos/IMG_5666.MOV"),
+    require("../assets/DualaVideos/IMG_5747.MOV"),
+    require("../assets/DualaVideos/IMG_5927.MOV"),
+    require("../assets/DualaVideos/IMG_5666.MOV"), // Repeated as requested since Duala has fewer videos
+  ],
+  ghomala: [
+    require("../assets/GhomalaVidoes/IMG_5927.MOV"),
+    require("../assets/GhomalaVidoes/IMG_5941.MOV"),
+    require("../assets/GhomalaVidoes/IMG_5962.MOV"),
+    require("../assets/GhomalaVidoes/IMG_5980.MOV"),
+  ],
+  default: [],
 };
+
+const REMOTE_FALLBACK = "https://d23dyxeqlo5psv.cloudfront.net/big_buck_bunny.mp4";
+
 
 export default function PageVideo() {
   const router = useRouter();
@@ -35,6 +53,8 @@ export default function PageVideo() {
   // Si ton expo-router est ancien et n'expose pas ce hook, mets à jour expo-router.
   const params = useLocalSearchParams?.() ?? {};
   const paramLang = params?.lang ?? null;
+  const paramThemeId = params?.themeId ?? null;
+  const paramThemeName = params?.themeName ?? null;
 
   const videoRef = useRef(null);
 
@@ -83,8 +103,24 @@ export default function PageVideo() {
     };
   }, [paramLang, router]);
 
-  // choose videoUri based on resolved language
-  const videoUri = VIDEO_BY_LANG[langResolved] ?? VIDEO_BY_LANG.default;
+  // choose videoSource based on resolved language and theme logic
+  let videoSource = { uri: REMOTE_FALLBACK };
+
+  if (langResolved && LOCAL_VIDEOS[langResolved] && LOCAL_VIDEOS[langResolved].length > 0) {
+    const videos = LOCAL_VIDEOS[langResolved];
+    let index = 0;
+    
+    // Deterministically pick a video based on themeId if present
+    if (paramThemeId) {
+      let hash = 0;
+      for (let i = 0; i < paramThemeId.length; i++) {
+          hash = String(paramThemeId).charCodeAt(i) + ((hash << 5) - hash);
+      }
+      index = Math.abs(hash) % videos.length;
+    }
+    
+    videoSource = videos[index];
+  }
 
   useEffect(() => {
     // Reset player state when language changes (utile si l'utilisateur revient)
@@ -110,13 +146,23 @@ export default function PageVideo() {
     }
   };
 
-  // Navigation to home with lang param (replace by default)
+  // Navigation to home (or back to lessons) after video
   const navigateHomeWithLang = async (replace = true) => {
     const langToUse = langResolved ?? "default";
     await persistLangAndSeen(langToUse);
-    const target = `/home?lang=${encodeURIComponent(langToUse)}`;
-    if (replace) router.replace(target);
-    else router.push(target);
+    
+    // If coming from a theme completion, go back to lessons instead of home
+    if (paramThemeId) {
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace("/(tabs)/lessons");
+      }
+    } else {
+      const target = `/home?lang=${encodeURIComponent(langToUse)}`;
+      if (replace) router.replace(target);
+      else router.push(target);
+    }
   };
 
   // Skip handler
@@ -187,7 +233,7 @@ export default function PageVideo() {
         <View style={[styles.videoWrapper, { height: videoBlockHeight }]}>
           <Video
             ref={videoRef}
-            source={{ uri: videoUri }}
+            source={videoSource}
             style={styles.video}
             resizeMode="cover"
             useNativeControls={false}
@@ -228,7 +274,7 @@ export default function PageVideo() {
 
         {/* Bottom content + Continue button */}
         <View style={styles.bottom}>
-          <Text style={styles.description}>{getDescriptionForLang(langResolved)}</Text>
+          <Text style={styles.description}>{getDescriptionForLang(langResolved, paramThemeName)}</Text>
 
           <TouchableOpacity style={[authStyles.authButton, styles.continueBtn]} activeOpacity={0.85} onPress={handleContinue}>
             <Text style={authStyles.buttonText}>Continue</Text>
@@ -239,18 +285,13 @@ export default function PageVideo() {
   );
 }
 
-// small helper for localized description (you can replace / i18n)
-function getDescriptionForLang(lang) {
-  switch ((lang || "").toLowerCase()) {
-    case "bassa":
-      return "Vidéo d'introduction - Bassa";
-    case "duala":
-      return "Vidéo d'introduction - Duala";
-    case "ghomala":
-      return "Vidéo d'introduction - Ghomala";
-    default:
-      return "Vidéo d'introduction";
+// small helper for localized description
+function getDescriptionForLang(lang, themeName) {
+  const langTitle = lang ? lang.charAt(0).toUpperCase() + lang.slice(1) : "";
+  if (themeName) {
+    return `Vidéo culturelle - Thème ${themeName} (${langTitle})`;
   }
+  return `Vidéo d'introduction - ${langTitle}`;
 }
 
 const styles = StyleSheet.create({

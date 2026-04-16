@@ -76,7 +76,7 @@ const initializeAudio = async () => {
 };
 
 // Initialize audio on module load
-initializeAudio().catch(() => {});
+initializeAudio().catch(() => { });
 
 // Audio playback function with error handling
 const playWordAudio = async (wordKey) => {
@@ -100,7 +100,7 @@ const playWordAudio = async (wordKey) => {
 
     const audioSource = audioMap[wordKey];
     if (!audioSource) {
-      console.log(`Audio not available for: ${wordKey}`);
+      // console.log(`Audio not available for: ${wordKey}`);
       return false;
     }
 
@@ -145,10 +145,10 @@ const playFeedbackSound = async (isCorrect, language = "fr") => {
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     } catch (hapticsError) {
-      console.log("Haptics not available:", hapticsError.message);
+      // console.log("Haptics not available:", hapticsError.message);
     }
   } catch (error) {
-    console.log("Feedback error:", error);
+    // console.log("Feedback error:", error);
   }
 };
 
