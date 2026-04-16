@@ -304,4 +304,43 @@ export class UserService {
     this.logger.log(`Language updated to ${language} for user ${userId}`);
     return user;
   }
+
+  // =====================
+  // DELETE ACCOUNT
+  // =====================
+  async deleteAccount(userId: string) {
+    this.logger.log(`Delete account request for user: ${userId}`);
+
+    // Check if user exists and get avatar info
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { avatar: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // 1. Delete avatar from R2 if it exists
+    if (user.avatar?.imageUrl) {
+      try {
+        const key = this.r2Storage.extractKey(user.avatar.imageUrl);
+        await this.r2Storage.deleteFile(key);
+      } catch (error) {
+        // Log but don't fail account deletion if file deletion fails
+        this.logger.warn(
+          `Failed to delete avatar from R2 during account deletion: ${error}`,
+        );
+      }
+    }
+
+    // 2. Delete user from Prisma
+    // (Cascading deletes handle Statistics, RootsStreak, UserLanguage, UserProgress, Cowry, Avatar, Settings, RefreshToken, Otp)
+    await this.prisma.user.delete({
+      where: { id: userId },
+    });
+
+    this.logger.log(`Account deleted successfully for user: ${userId}`);
+    return { success: true };
+  }
 }

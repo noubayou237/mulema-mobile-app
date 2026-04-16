@@ -62,14 +62,14 @@ model Statistics {
   exercisesCompleted Int
   totalPrawns        Int
   userId             String @unique
-  user               User   @relation(fields: [userId], references: [id])
+  user               User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model RootsStreak {
   id            String @id @default(uuid())
   daysConnected Int
   userId        String @unique
-  user          User   @relation(fields: [userId], references: [id])
+  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Settings {
@@ -113,7 +113,7 @@ model UserLanguage {
   patrimonialLanguageId String?
   officialLanguage      OfficialLanguage?    @relation(fields: [officialLanguageId], references: [id])
   patrimonialLanguage   PatrimonialLanguage? @relation(fields: [patrimonialLanguageId], references: [id])
-  user                  User                 @relation(fields: [userId], references: [id])
+  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Community {
@@ -233,7 +233,7 @@ model UserProgress {
   userId      String
   lessonId    String
   lesson      Lesson  @relation(fields: [lessonId], references: [id])
-  user        User    @relation(fields: [userId], references: [id])
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
 }
@@ -274,7 +274,7 @@ model Cowry {
   currentCowries Int
   rechargeTime   Int
   userId         String @unique
-  user           User   @relation(fields: [userId], references: [id])
+  user           User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model MulemTheme {
