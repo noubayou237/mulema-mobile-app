@@ -25,12 +25,12 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../../src/services/api";
 import { useTranslation } from "react-i18next";
 
 // ── Design system ──
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
+import { useAuthStore } from "../../src/stores/useAuthStore";
+import api from "../../src/services/api";
 import { MButton, MCulturalCard } from "../../src/components/ui/MComponents";
 
 const RESEND_COOLDOWN = 60;
@@ -141,11 +141,12 @@ const VerifyEmail = () => {
     }, 1000);
   };
 
-  // ── Auto login — ORIGINAL LOGIC ──
+  // ── Auto login — FIX: Using Auth Store ──
   const autoLogin = async (responseData) => {
     const { accessToken, refreshToken } = responseData;
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ accessToken, refreshToken }));
-    router.replace("/ChoiceLanguage");
+    const { loginWithTokens } = useAuthStore.getState();
+    await loginWithTokens({ accessToken, refreshToken });
+    router.replace("/(onboarding)/ChoiceLanguage");
   };
 
   // ── Verify — ORIGINAL LOGIC ──

@@ -115,7 +115,15 @@ export const useAuthStore = create((set, get) => ({
     const { data } = await api.put("/user/profile-picture", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    get().updateUser(data);
+    get().updateUser({ avatar: data.imageUrl });
+    return data;
+  },
+
+  changePassword: async (oldPassword, newPassword) => {
+    const { data } = await api.put("/user/change-password", {
+      oldPassword,
+      newPassword,
+    });
     return data;
   },
 

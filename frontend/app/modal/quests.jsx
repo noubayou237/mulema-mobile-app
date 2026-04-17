@@ -79,20 +79,19 @@ export default function QuestsScreen() {
   return (
     <View style={s.root}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.surface} />
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-
-        {/* ── Header ── */}
-        <View style={s.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
-          </TouchableOpacity>
-          <Text style={[Typo.titleLg, { marginLeft: Space.md, flex: 1 }]}>{t("quests.title")}</Text>
-          <View style={s.streakBadge}>
-            <Ionicons name="flame" size={16} color={Colors.secondary} />
-            <Text style={[Typo.labelLg, { marginLeft: 4 }]}>{dash?.streakDays || 0}</Text>
-          </View>
+      {/* ── Header ── */}
+      <View style={[s.header, { paddingHorizontal: Space["2xl"] }]}>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
+        </TouchableOpacity>
+        <Text style={[Typo.titleLg, { marginLeft: Space.md, flex: 1 }]}>{t("quests.title")}</Text>
+        <View style={s.streakBadge}>
+          <Ionicons name="flame" size={16} color={Colors.secondary} />
+          <Text style={[Typo.labelLg, { marginLeft: 4 }]}>{dash?.streakDays || 0}</Text>
         </View>
+      </View>
 
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         {/* ── Daily Progress Banner ── */}
         <LinearGradient
           colors={[Colors.primaryContainer, Colors.primary]}

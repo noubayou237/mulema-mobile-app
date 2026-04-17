@@ -11,6 +11,7 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
+  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
@@ -24,12 +25,19 @@ import { useAuthStore } from "../../../src/stores/useAuthStore";
 export default function EditProfileScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { user, updateProfile, updateProfilePicture } = useAuthStore();
+  const { user, updateProfile, updateProfilePicture, changePassword } = useAuthStore();
 
   const [name, setName] = useState(user?.name || "");
   const [avatarUri, setAvatarUri] = useState(user?.avatar || null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Password state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPass, setIsChangingPass] = useState(false);
 
   const handlePickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -90,6 +98,36 @@ export default function EditProfileScreen() {
       Alert.alert(t("common.error"), t("errors.updateFailed", "Failed to update profile."));
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      Alert.alert(t("common.error"), t("errors.allFieldsRequired", "All fields are required."));
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert(t("common.error"), t("errors.passwordMismatch", "Passwords do not match."));
+      return;
+    }
+    if (newPassword.length < 6) {
+      Alert.alert(t("common.error"), t("errors.passwordShort", "Password must be at least 6 characters."));
+      return;
+    }
+
+    setIsChangingPass(true);
+    try {
+      await changePassword(oldPassword, newPassword);
+      Alert.alert(t("common.success"), t("profile.passwordUpdated", "Password updated successfully."));
+      setShowPasswordModal(false);
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      console.warn("Change password error", err);
+      Alert.alert(t("common.error"), err.response?.data?.message || t("errors.updateFailed"));
+    } finally {
+      setIsChangingPass(false);
     }
   };
 
@@ -158,6 +196,18 @@ export default function EditProfileScreen() {
             </View>
             <Text style={s.inputHint}>{t("profile.emailFixedHint", "Email address cannot be changed here.")}</Text>
             
+            {/* Password Section */}
+            {!user?.isSocial && (
+              <TouchableOpacity 
+                style={s.passwordBtn} 
+                onPress={() => setShowPasswordModal(true)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="lock-closed-outline" size={20} color={Colors.primary} />
+                <Text style={s.passwordBtnText}>{t("profile.changePassword", "Change Password")}</Text>
+                <Ionicons name="chevron-forward" size={16} color={Colors.textTertiary} />
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Footer */}
@@ -174,11 +224,79 @@ export default function EditProfileScreen() {
               )}
             </TouchableOpacity>
           </View>
+
+          <PasswordModal
+            visible={showPasswordModal}
+            onClose={() => setShowPasswordModal(false)}
+            onSave={handlePasswordChange}
+            loading={isChangingPass}
+            states={{ old: oldPassword, new: newPassword, confirm: confirmPassword }}
+            setStates={({ old, new: n, confirm }) => {
+              if (old !== undefined) setOldPassword(old);
+              if (n !== undefined) setNewPassword(n);
+              if (confirm !== undefined) setConfirmPassword(confirm);
+            }}
+            t={t}
+          />
         </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }
+
+const PasswordModal = ({ visible, onClose, onSave, loading, states, setStates, t }) => (
+  <Modal visible={visible} animationType="slide" transparent>
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={s.modalOverlay}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={s.modalContainer}>
+          <View style={s.modalHeader}>
+            <Text style={s.modalTitle}>{t("profile.changePassword")}</Text>
+            <TouchableOpacity onPress={onClose}>
+              <Ionicons name="close" size={24} color={Colors.onSurface} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={s.modalBody}>
+            <Text style={s.modalLabel}>{t("profile.currentPassword", "Current Password")}</Text>
+            <TextInput
+              secureTextEntry
+              value={states.old}
+              onChangeText={(v) => setStates({ ...states, old: v })}
+              style={s.modalInput}
+              placeholder="••••••••"
+            />
+
+            <Text style={[s.modalLabel, { marginTop: Space.lg }]}>{t("profile.newPassword", "New Password")}</Text>
+            <TextInput
+              secureTextEntry
+              value={states.new}
+              onChangeText={(v) => setStates({ ...states, new: v })}
+              style={s.modalInput}
+              placeholder="••••••••"
+            />
+
+            <Text style={[s.modalLabel, { marginTop: Space.lg }]}>{t("profile.confirmNewPassword", "Confirm New Password")}</Text>
+            <TextInput
+              secureTextEntry
+              value={states.confirm}
+              onChangeText={(v) => setStates({ ...states, confirm: v })}
+              style={s.modalInput}
+              placeholder="••••••••"
+            />
+          </View>
+
+          <TouchableOpacity 
+            style={[s.modalSaveBtn, loading && { opacity: 0.7 }]} 
+            onPress={onSave}
+            disabled={loading}
+          >
+            {loading ? <ActivityIndicator color="#FFF" /> : <Text style={s.modalSaveBtnText}>{t("common.save")}</Text>}
+          </TouchableOpacity>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
+  </Modal>
+);
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.surface },
@@ -234,4 +352,32 @@ const s = StyleSheet.create({
     borderRadius: Radius.full, justifyContent: "center", alignItems: "center",
   },
   saveBtnText: { ...Typo.titleSm, color: "#fff" },
+
+  passwordBtn: {
+    flexDirection: "row", alignItems: "center",
+    marginTop: Space["2xl"], paddingVertical: Space.lg,
+    borderTopWidth: 1, borderBottomWidth: 1, borderColor: Colors.border,
+  },
+  passwordBtnText: { ...Typo.bodyLg, color: Colors.primary, flex: 1, marginLeft: Space.md },
+
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
+  modalContainer: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: Radius["3xl"], borderTopRightRadius: Radius["3xl"],
+    padding: Space["2xl"], paddingBottom: Platform.OS === "ios" ? 48 : Space["2xl"],
+  },
+  modalHeader: { flexDirection: "row", justifyContent: "space-between", marginBottom: Space.xl },
+  modalTitle: { ...Typo.titleLg, color: Colors.onSurface },
+  modalBody: { marginBottom: Space["2xl"] },
+  modalLabel: { ...Typo.labelMd, color: Colors.textSecondary, marginBottom: Space.xs },
+  modalInput: {
+    height: 50, backgroundColor: Colors.surfaceContainerLowest,
+    borderWidth: 1, borderColor: Colors.border, borderRadius: Radius.md,
+    paddingHorizontal: Space.md, ...Typo.bodyLg,
+  },
+  modalSaveBtn: {
+    height: 56, backgroundColor: Colors.primary,
+    borderRadius: Radius.full, justifyContent: "center", alignItems: "center",
+  },
+  modalSaveBtnText: { ...Typo.titleSm, color: "#FFF" },
 });

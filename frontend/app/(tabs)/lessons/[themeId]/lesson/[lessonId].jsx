@@ -32,18 +32,16 @@ import { pauseBackgroundMusic, resumeBackgroundMusic } from "../../../../../src/
 const playAudio = async (url) => {
   if (!url) return;
   try {
-    await pauseBackgroundMusic();
     await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
     const { sound } = await Audio.loadAsync({ uri: url });
     await sound.playAsync();
     sound.setOnPlaybackStatusUpdate((s) => {
       if (s.didJustFinish) {
         sound.unloadAsync();
-        resumeBackgroundMusic();
       }
     });
-  } catch {
-    resumeBackgroundMusic();
+  } catch (e) {
+    console.warn("Audio play error", e);
   }
 };
 
@@ -204,6 +202,13 @@ export default function LessonScreen() {
       Animated.timing(slideAnim, { toValue: 0, duration: 450, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
     ]).start();
   }, [lessonId]);
+
+  useEffect(() => {
+    pauseBackgroundMusic();
+    return () => {
+      resumeBackgroundMusic();
+    };
+  }, []);
 
   /* Navigation */
   const goNext = () => {

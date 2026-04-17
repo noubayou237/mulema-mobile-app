@@ -74,7 +74,7 @@ export default function ChoiceLanguage() {
       // Mettre à jour le store (synchronise AsyncStorage + state)
       await setActiveLanguage(language);
 
-      router.replace(`/PageVideo?lang=${encodeURIComponent(language.code)}`);
+      router.replace(`/(onboarding)/PageVideo?lang=${encodeURIComponent(language.code)}`);
     } catch (e) {
       console.error("Error saving language:", e);
       Alert.alert(t("common.error"), t("errors.languageNotSelected"));

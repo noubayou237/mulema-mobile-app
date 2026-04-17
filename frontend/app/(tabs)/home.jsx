@@ -344,7 +344,7 @@ const LangBanner = ({ lang, onPress }) => {
    DASHBOARD CARD — gradient vert forêt
    ════════════════════════════════════════════════════════════════════ */
 
-const DashCard = ({ percent = 0, mins = 0, goal = 40, onContinue }) => {
+const DashCard = ({ user, percent = 0, mins = 0, goal = 40, onContinue }) => {
   const { t } = useTranslation();
   const bar = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -367,7 +367,7 @@ const DashCard = ({ percent = 0, mins = 0, goal = 40, onContinue }) => {
         {t("home.yourProgress").toUpperCase()}
       </Text>
       <Text style={[Typo.headlineLg, { color: "#fff", marginBottom: Space["2xl"] }]}>
-        {t("home.welcome")}
+        {user?.name ? t("home.welcomeUser", { name: user.name, defaultValue: `Bienvenue, ${user.name} ` }) : t("home.welcome")}
       </Text>
 
       <View style={s.goalRow}>
@@ -592,8 +592,7 @@ export default function HomeScreen() {
 
   /* ── Bottom Sheet ── */
   const openSheet = (theme) => {
-    setSelectedTheme(theme);
-    setSheetVisible(true);
+    router.push(`/(tabs)/lessons/${theme.id}`);
   };
 
   const handleSelectLesson = (lesson, index) => {
@@ -606,7 +605,7 @@ export default function HomeScreen() {
   /* ── Continuer ── */
   const handleContinue = () => {
     if (dash?.continueTheme) router.push(`/(tabs)/lessons/${dash.continueTheme.id}`);
-    else if (themes.length > 0) openSheet(themes[0]);
+    else if (themes?.length > 0) router.push(`/(tabs)/lessons/${themes[0].id}`);
     else router.push("/(tabs)/lessons");
   };
 
@@ -661,6 +660,7 @@ export default function HomeScreen() {
           {/* Dashboard */}
           <Animated.View style={fadeUp(anims[1], 22)}>
             <DashCard
+              user={user}
               percent={dash?.progressPercent || 0}
               mins={dash?.totalTimeMinutes || 0}
               onContinue={handleContinue}
@@ -832,7 +832,7 @@ const s = StyleSheet.create({
   dashCard: {
     backgroundColor: CAM.forest,
     borderRadius: Radius.xl,
-    padding: Space["2xl"],
+    padding: Space["4xl"],
     marginBottom: Space["2xl"],
     overflow: "hidden",
     position: "relative",

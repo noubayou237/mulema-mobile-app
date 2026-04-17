@@ -72,18 +72,16 @@ const normalize = (s = "") =>
 const playWordAudio = async (audioUrl) => {
   if (!audioUrl) return;
   try {
-    await pauseBackgroundMusic();
     await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
     const { sound } = await Audio.loadAsync({ uri: audioUrl });
     await sound.playAsync();
     sound.setOnPlaybackStatusUpdate((status) => {
       if (status.didJustFinish) {
         sound.unloadAsync();
-        resumeBackgroundMusic();
       }
     });
-  } catch {
-    resumeBackgroundMusic();
+  } catch (e) {
+    console.warn("Audio play error", e);
   }
 };
 
@@ -840,6 +838,13 @@ export default function ExerciseSession() {
     if (themeId) fetchLessons(themeId); // toujours recharger quand themeId change
     fetchDashboard();
   }, [themeId]);
+
+  useEffect(() => {
+    pauseBackgroundMusic();
+    return () => {
+      resumeBackgroundMusic();
+    };
+  }, []);
 
   // Reconstruire les questions quand les leçons changent (nouvelle langue ou nouveau thème)
   const lessonsKey = lessons.map((l) => l.id).join(",");

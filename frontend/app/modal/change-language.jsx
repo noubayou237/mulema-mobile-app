@@ -92,16 +92,16 @@ export default function ChangeLanguageScreen() {
   return (
     <View style={s.root}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.surface} />
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+      {/* ── Header ── */}
+      <View style={[s.header, { paddingHorizontal: Space["2xl"] }]}>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
+        </TouchableOpacity>
+        {/* <Text style={[Typo.titleLg, { marginLeft: Space.md, flex: 1 }]}>Mes Langues</Text> */}
+        <View style={{ width: 24 }} />
+      </View>
 
-        {/* ── Header ── */}
-        <View style={s.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
-          </TouchableOpacity>
-          {/* <Text style={[Typo.titleLg, { marginLeft: Space.md, flex: 1 }]}>Mes Langues</Text> */}
-          <View style={{ width: 24 }} />
-        </View>
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
         {/* ── Title ── */}
         <Text style={Typo.displayMd}>{t("settingsModal.myLanguages")}</Text>

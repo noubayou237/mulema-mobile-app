@@ -131,4 +131,16 @@ export class UserController {
     this.logger.log(`Delete account request for user: ${user.userId}`);
     return this.userService.deleteAccount(user.userId);
   }
+
+  // =====================
+  // CHANGE PASSWORD
+  // =====================
+  @Put('change-password')
+  async changePassword(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { oldPassword?: string; newPassword?: string },
+  ) {
+    this.logger.log(`Change password request for user: ${user.userId}`);
+    return this.userService.changePassword(user.userId, body);
+  }
 }

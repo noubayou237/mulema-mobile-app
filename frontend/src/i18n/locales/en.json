@@ -119,6 +119,7 @@
   "home": {
     "title": "Home",
     "welcome": "Welcome",
+    "welcomeUser": "Welcome, {{name}}",
     "continueLearning": "Continue Learning",
     "startLearning": "Start Learning",
     "yourProgress": "Your Progress",

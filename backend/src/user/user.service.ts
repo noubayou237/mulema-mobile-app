@@ -2,8 +2,10 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  UnauthorizedException,
   Logger,
 } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../auth/prisma/prisma.service';
 import { R2StorageService } from '../storage/r2-storage.service';
 
@@ -110,7 +112,7 @@ export class UserService {
 
     return {
       ...user,
-      avatar: avatarWithSignedUrl,
+      avatar: typeof avatarWithSignedUrl === 'string' ? avatarWithSignedUrl : avatarWithSignedUrl?.imageUrl || null,
     };
   }
 
@@ -167,7 +169,10 @@ export class UserService {
       },
     });
 
-    return updatedUser;
+    return {
+      ...updatedUser,
+      avatar: updatedUser.avatar?.imageUrl || null,
+    };
   }
 
   // =====================
@@ -341,6 +346,48 @@ export class UserService {
     });
 
     this.logger.log(`Account deleted successfully for user: ${userId}`);
+    return { success: true };
+  }
+
+  // =====================
+  // CHANGE PASSWORD
+  // =====================
+  async changePassword(
+    userId: string,
+    data: { oldPassword?: string; newPassword?: string },
+  ) {
+    const { oldPassword, newPassword } = data;
+    if (!oldPassword || !newPassword) {
+      throw new BadRequestException('Old and new passwords are required');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Social users don't have passwords in Mulema usually, or should manage it via provider
+    if (user.isSocial) {
+      throw new BadRequestException(
+        'Social accounts cannot change password here.',
+      );
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.passwordHash);
+    if (!isMatch) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: newHash },
+    });
+
+    this.logger.log(`Password updated for user ${userId}`);
     return { success: true };
   }
 }
