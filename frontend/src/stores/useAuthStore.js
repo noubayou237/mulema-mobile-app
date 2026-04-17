@@ -98,6 +98,27 @@ export const useAuthStore = create((set, get) => ({
     set({ user: { ...current, ...updates } });
   },
 
+  updateProfile: async (name) => {
+    const { data } = await api.put("/user/profile", { name });
+    get().updateUser(data);
+    return data;
+  },
+
+  updateProfilePicture: async (uri, type, fileName) => {
+    const formData = new FormData();
+    formData.append("file", {
+      uri,
+      type: type || "image/jpeg",
+      name: fileName || "avatar.jpg",
+    });
+
+    const { data } = await api.put("/user/profile-picture", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    get().updateUser(data);
+    return data;
+  },
+
   logout: async () => {
     try {
       await api.post("/auth/logout").catch(() => {});

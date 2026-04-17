@@ -27,17 +27,24 @@ import { Colors, Typo, Space, Radius, Shadow } from "../../../../../src/theme/to
 import { useThemeStore } from "../../../../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../../../../src/stores/useDashboardStore";
 import { useLanguageStore } from "../../../../../src/stores/useLanguageStore";
+import { pauseBackgroundMusic, resumeBackgroundMusic } from "../../../../../src/hooks/useBackgroundMusic";
 
 const playAudio = async (url) => {
   if (!url) return;
   try {
+    await pauseBackgroundMusic();
     await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
     const { sound } = await Audio.loadAsync({ uri: url });
     await sound.playAsync();
     sound.setOnPlaybackStatusUpdate((s) => {
-      if (s.didJustFinish) sound.unloadAsync();
+      if (s.didJustFinish) {
+        sound.unloadAsync();
+        resumeBackgroundMusic();
+      }
     });
-  } catch {}
+  } catch {
+    resumeBackgroundMusic();
+  }
 };
 
 /* ── Conseils culturels par langue et par thème ─────────────── */

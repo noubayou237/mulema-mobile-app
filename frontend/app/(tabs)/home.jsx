@@ -176,7 +176,7 @@ const DrawerContent = ({ user, dashboard, onClose, onNav, onLogout }) => {
    BOTTOM SHEET — Leçons d'un thème
    ════════════════════════════════════════════════════════════════════ */
 
-const BottomSheet = ({ theme, onClose, onSelectLesson }) => {
+const BottomSheet = ({ theme, onClose, onSelectLesson, appLang }) => {
   const { t } = useTranslation();
   const slideAnim = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const overlayAnim = useRef(new Animated.Value(0)).current;
@@ -256,7 +256,7 @@ const BottomSheet = ({ theme, onClose, onSelectLesson }) => {
               </View>
               <View style={{ flex: 1, marginLeft: Space.lg }}>
                 <Text style={[Typo.titleSm, { color: CAM.dark }]}>
-                  {activeLanguage?.appLang === 'en' && item.title_en ? item.title_en : item.title}
+                  {appLang === 'en' && item.title_en ? item.title_en : item.title}
                 </Text>
                 {item.subtitle && (
                   <Text style={[Typo.labelSm, { color: Colors.textTertiary }]}>{item.subtitle}</Text>
@@ -761,6 +761,7 @@ export default function HomeScreen() {
           theme={selectedTheme}
           onClose={() => setSheetVisible(false)}
           onSelectLesson={handleSelectLesson}
+          appLang={appLang}
         />
       )}
     </View>

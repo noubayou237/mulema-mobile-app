@@ -58,9 +58,9 @@ export default function ProfileScreen() {
   return (
     <View style={s.root}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.surface} />
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* ── Header ── */}
+      {/* ── Sticky Header ── */}
+      <View style={s.stickyHeader}>
         <View style={s.header}>
           <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
@@ -70,6 +70,9 @@ export default function ProfileScreen() {
             <Ionicons name="settings-outline" size={24} color={Colors.onSurface} />
           </TouchableOpacity>
         </View>
+      </View>
+
+      <ScrollView contentContainerStyle={[s.scroll, { paddingTop: 100 }]} showsVerticalScrollIndicator={false}>
 
         {/* ── Avatar + Name ── */}
         <Animated.View style={[s.avatarSection, fade(a1, 20)]}>
@@ -90,7 +93,7 @@ export default function ProfileScreen() {
           <Text style={[Typo.displayMd, { marginTop: Space.xs }]}>{user?.name || t("profile.name", "Utilisateur")}</Text>
 
           {/* Edit button */}
-          <TouchableOpacity activeOpacity={0.8} style={s.editBtn}>
+          <TouchableOpacity activeOpacity={0.8} style={s.editBtn} onPress={() => router.push("/(tabs)/profile/edit")}>
             <Ionicons name="pencil" size={16} color={Colors.onPrimary} />
             <Text style={[Typo.titleSm, { color: Colors.onPrimary, marginLeft: Space.sm }]}>{t("profile.editProfile", "Modifier le profil")}</Text>
           </TouchableOpacity>
@@ -167,10 +170,18 @@ export default function ProfileScreen() {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.surface },
   scroll: { paddingHorizontal: Space["2xl"], paddingBottom: Space["2xl"] },
-
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 50,
+    backgroundColor: Colors.surface,
+  },
   header: {
     flexDirection: "row", alignItems: "center",
     paddingTop: Platform.OS === "ios" ? 60 : 44, paddingBottom: Space.lg,
+    paddingHorizontal: Space["2xl"],
   },
 
   // Avatar

@@ -20,6 +20,7 @@ import { useTranslation } from "react-i18next";
 import { useThemeStore }    from "../../../../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../../../../src/stores/useDashboardStore";
 import { useLanguageStore }  from "../../../../../src/stores/useLanguageStore";
+import { pauseBackgroundMusic, resumeBackgroundMusic } from "../../../../../src/hooks/useBackgroundMusic";
 
 const { width: SW } = Dimensions.get("window");
 const CARD_W = (SW - 40 - 12) / 2;
@@ -71,13 +72,19 @@ const normalize = (s = "") =>
 const playWordAudio = async (audioUrl) => {
   if (!audioUrl) return;
   try {
+    await pauseBackgroundMusic();
     await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
     const { sound } = await Audio.loadAsync({ uri: audioUrl });
     await sound.playAsync();
     sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.didJustFinish) sound.unloadAsync();
+      if (status.didJustFinish) {
+        sound.unloadAsync();
+        resumeBackgroundMusic();
+      }
     });
-  } catch {}
+  } catch {
+    resumeBackgroundMusic();
+  }
 };
 
 /* ── Vibration + Son feedback ───────────────────────────────── */

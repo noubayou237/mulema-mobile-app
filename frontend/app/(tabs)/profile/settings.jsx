@@ -111,15 +111,18 @@ export default function SettingsScreen() {
   return (
     <View style={s.root}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.surface} />
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* ── Header ── */}
+      {/* ── Sticky Header ── */}
+      <View style={s.stickyHeader}>
         <View style={s.header}>
           <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
           </TouchableOpacity>
           <Text style={[Typo.titleLg, { marginLeft: Space.md }]}>{t("settings.title", "Paramètres")}</Text>
         </View>
+      </View>
+
+      <ScrollView contentContainerStyle={[s.scroll, { paddingTop: 90 }]} showsVerticalScrollIndicator={false}>
 
         {/* Premium Banner removed per directive */}
 
@@ -130,7 +133,7 @@ export default function SettingsScreen() {
             icon="person-circle"
             label={t("profile.editProfile")}
             subtitle={t("profile.editSubtitle")}
-            onPress={() => router.push("/(tabs)/profile")}
+            onPress={() => router.push("/(tabs)/profile/edit")}
           />
           <View style={s.divider} />
           <SettingRow
@@ -316,9 +319,18 @@ const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.surface },
   scroll: { paddingHorizontal: Space["2xl"], paddingBottom: Space["2xl"] },
 
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 50,
+    backgroundColor: Colors.surface,
+  },
   header: {
     flexDirection: "row", alignItems: "center",
     paddingTop: Platform.OS === "ios" ? 60 : 44, paddingBottom: Space.xl,
+    paddingHorizontal: Space["2xl"],
   },
 
   // Premium banner styles removed
