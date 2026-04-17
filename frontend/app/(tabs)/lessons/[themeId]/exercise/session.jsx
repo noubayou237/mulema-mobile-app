@@ -839,13 +839,6 @@ export default function ExerciseSession() {
     fetchDashboard();
   }, [themeId]);
 
-  useEffect(() => {
-    pauseBackgroundMusic();
-    return () => {
-      resumeBackgroundMusic();
-    };
-  }, []);
-
   // Reconstruire les questions quand les leçons changent (nouvelle langue ou nouveau thème)
   const lessonsKey = lessons.map((l) => l.id).join(",");
   const questions  = useMemo(() => buildSession(lessons), [lessonsKey]);

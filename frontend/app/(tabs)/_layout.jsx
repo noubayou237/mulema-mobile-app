@@ -92,6 +92,12 @@ export default function TabsLayout() {
             <TabIcon name="profile" focused={focused} color={color} />
           ),
         }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            // Force reset to index when clicking the profile tab
+            navigation.navigate("profile", { screen: "index" });
+          },
+        })}
       />
     </Tabs>
   );

@@ -106,7 +106,10 @@ export function useBackgroundMusic() {
 /** Call this to stop music permanently (e.g. when entering an exercise with audio) */
 export async function pauseBackgroundMusic() {
   if (globalSound) {
-    try { await globalSound.setVolumeAsync(0); } catch {}
+    try { 
+      await globalSound.setVolumeAsync(0);
+      await globalSound.pauseAsync();
+    } catch {}
   }
 }
 

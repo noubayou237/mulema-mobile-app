@@ -184,7 +184,13 @@
     "percentCompleted": "{{percent}}% Completed",
     "available": "Available Lessons",
     "dailyLearning": "Daily\nLearning",
-    "lessonNum": "Lesson {{num}}"
+    "lessonNum": "Lesson {{num}}",
+    "whatDoesThisMean": "What does this word mean?",
+    "frenchLabel": "FRENCH",
+    "translationIn": "TRANSLATION IN {{lang}}",
+    "listenPronunciation": "Listen to pronunciation",
+    "noAudioAvailable": "No audio available",
+    "finishLessons": "Finish lessons"
   },
   "exercises": {
     "title": "Exercises",
@@ -414,5 +420,97 @@
     "otherLanguages": "OTHER LANGUAGES",
     "exploreLanguages": "Explore new languages",
     "languageChangeWarning": "Changing languages never erases your progress in other sessions!"
+  },
+  "culturalTips": {
+    "duala": {
+      "famille": [
+        "In Duala, the family is at the heart of all social relations. Addressing elders correctly is a fundamental sign of respect.",
+        "The term 'Mbia' (family) also includes cousins and close neighbors. Family solidarity is a cardinal value.",
+        "In Duala, paternal and maternal uncles/aunts are distinguished by different terms, reflecting the importance of blood ties.",
+        "The grandparents 'Ɓambámbɛ́' are guardians of traditions and the collective memory of the Duala people.",
+        "In Duala culture, 'Makɔ́m' (close friends) are often treated as family members."
+      ],
+      "animaux": [
+        "The lion 'Ŋgila' is a symbol of bravery and royalty in the traditions of the Duala people.",
+        "The Wouri River is home to many 'Súe' (fish) which are a vital resource for the Duala, a fishing people.",
+        "The elephant 'Njɔu' is respected for its wisdom. Duala elders lent it an unfailing memory.",
+        "The monkey 'Kéma' often appears in Duala tales, a symbol of cunning and intelligence.",
+        "The 'Ndɔ́mbí' (bees) are associated with collective work and prosperity in Duala culture."
+      ],
+      "cuisine": [
+        "Water 'Madíɓá' and fire 'Wéá' are the two fundamental elements of traditional Duala cuisine.",
+        "Salt 'Wáŋga' was once a precious exchange currency along the coast of Cameroon.",
+        "The fish 'Súe' is at the heart of Duala gastronomy. The Duala people are historically a fishing people.",
+        "The pestle and mortar 'Mbɔlɔki na eɓokí' are sacred utensils in every traditional Duala home.",
+        "Duala cuisine makes extensive use of palm oil 'Mǔla', extracted locally for generations."
+      ],
+      "vetements": [
+        "The 'Ɓé ɓebuɓá' (robes) are worn during major ceremonies and reflect social status in Duala country.",
+        "The tie 'Kɔ́la' illustrates the blend of modernity and tradition in the urban fashion of Douala.",
+        "The traditional 'Yé ekótó' hat is often adorned with symbols representing the clan or family.",
+        "In Duala, clothing is meaningful. Colors and patterns communicate belonging and rank.",
+        "Handcrafted 'Yé etámbí' shoes remain a symbol of Duala cultural pride."
+      ]
+    },
+    "ghomala": {
+      "famille": [
+        "In Ghomálá', the head of the family (Fo) is the guardian of the memory and honor of the Bamileke clan.",
+        "The Bamileke carefully distinguish between paternal and maternal uncles — each link carries a specific term.",
+        "The birth of twins is a sacred event among the Bamileke, celebrated with special rituals.",
+        "Among the Bamileke, family solidarity ('tontine') is an economic and social pillar passed down through generations.",
+        "In Ghomálá', greeting elders before entering a house is an essential mark of respect."
+      ],
+      "animaux": [
+        "The lion is the royal symbol among the Bamileke — only the Fo (chief) can wear its skin during ceremonies.",
+        "The elephant represents wisdom and power. Bamileke secret societies pay it a particular cult.",
+        "The python is a sacred animal in several Bamileke chiefdoms — killing it is considered a serious act.",
+        "Bees 'Nyǐ' symbolize collective work and prosperity in the culture of the Highlands.",
+        "The monkey appears in many Ghomálá' tales as a figure of cunning in the face of brute force."
+      ],
+      "cuisine": [
+        "Corn is the basis of the Bamileke diet — it is used in the preparation of 'koki', an emblematic traditional dish.",
+        "Raphia wine is a sacred drink among the Bamileke, offered to ancestors during ceremonies.",
+        "Beans and plantain form the traditional daily meal of Highlands families.",
+        "Rock salt (natron) was once a rare and precious commodity in the markets of West Cameroon.",
+        "Bamileke cuisine is known for its spicy sauces and generous use of leaf vegetables."
+      ],
+      "vetements": [
+        "Multicolored beads adorn Bamileke royal outfits — each color carries a precise meaning.",
+        "The embroidered robe is worn by dignitaries during major traditional dances like the 'Nkeng'.",
+        "Hand-woven wraps are a precious artisanal heritage passed down by Bamileke women.",
+        "The Fo's feathered headdress symbolizes his link with the world of ancestors and protective spirits.",
+        "In Ghomálá', dressing cleanly to meet a chief is an imperative cultural obligation."
+      ]
+    },
+    "bassa": {
+      "famille": [
+        "In Bassa, the 'Hiala' extended family often lives under the same roof or in neighboring huts, strengthening community ties.",
+        "The father (itâ) is the head of the house, but it is often the mother (inī) who passes on values and language to children.",
+        "The Bassa practice the dowry as a sign of mutual respect between families — it is not a purchase but an alliance.",
+        "Grandparents 'màjò' play a central role in children's education, passing on tales and traditional wisdom.",
+        "Solidarity ('hiala') is fundamental in Bassa culture: no one is abandoned by their community in times of need."
+      ],
+      "animaux": [
+        "The lion 'hɔsì' is a symbol of strength and bravery in traditional Bassa stories.",
+        "The fish 'nyɔɔ' is central to the Bassa diet — the rivers of the Littoral are true pantries.",
+        "The elephant 'Njɔk' represents calm power and long memory in Bassa proverbs.",
+        "The snake 'nyàgà' is often an ambivalent character in Bassa tales: dangerous but wise.",
+        "Bees 'Nyǒy' embody collective harmony — their organization is cited as an example in children's education."
+      ],
+      "cuisine": [
+        "Salt 'ɓás' was once extracted from the salt springs of the Littoral and served as a currency of exchange.",
+        "Water 'màlép' is sacred in Bassa culture — springs and rivers are places of meditation.",
+        "Smoked fish is a Bassa specialty prepared on a 'hyèé bí ŋkwàs' (wood fire) according to ancestral recipes.",
+        "The terracotta 'Hìɓɛɛ' pot is the traditional Bassa utensil par excellence, passed from mother to daughter.",
+        "Vegetables 'bìkáy bí jɛ́' harvested in the forest are part of many traditional Bassa dishes."
+      ],
+      "vetements": [
+        "The traditional Bassa 'mbɔt' (clothing) is often made of raffia fabric or hand-woven cotton during ceremonies.",
+        "Bright colors in Bassa outfits symbolize the joy of living and cultural pride.",
+        "Handcrafted 'támb' shoes are made of tanned leather using techniques passed down by Bassa shoemakers.",
+        "The 'ɓùba' (robe) is worn during weddings and funerals — each color communicates a precise social message.",
+        "Among the Bassa, women wear wraps (ŋkāndā) with symbolic patterns during passage ceremonies."
+      ]
+    }
   }
 }
