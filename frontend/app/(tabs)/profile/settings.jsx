@@ -130,21 +130,21 @@ export default function SettingsScreen() {
             icon="person-circle"
             label={t("profile.editProfile")}
             subtitle={t("profile.editSubtitle")}
-            onPress={() => {}}
+            onPress={() => router.push("/(tabs)/profile")}
           />
           <View style={s.divider} />
           <SettingRow
             icon="mail"
             label={t("auth.email", "Email")}
             subtitle={user?.email || "mulema.learner@example.com"}
-            onPress={() => {}}
+            onPress={() => Alert.alert(t("auth.email"), t("settings.emailChangeHint", "Contact support to change your email address."))}
           />
           <View style={s.divider} />
           <SettingRow
             icon="lock-closed"
             label={t("auth.password", "Password")}
             subtitle="••••••••••"
-            onPress={() => {}}
+            onPress={() => Alert.alert(t("auth.password"), t("settings.passwordChangeHint", "Use 'Forgot Password' on the login screen to reset your password."))}
           />
         </View>
 

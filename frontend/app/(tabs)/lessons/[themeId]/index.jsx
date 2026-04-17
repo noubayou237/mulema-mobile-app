@@ -242,6 +242,7 @@ const LessonNode = ({ lesson, index, onPress, lt }) => {
    NŒUD EXERCICE FINAL (étoile brillante style score-hero)
    ═══════════════════════════════════════════════════════════════ */
 const ExerciseNode = ({ onPress, lt }) => {
+  const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const rotAnim   = useRef(new Animated.Value(0)).current;
   const glowAnim  = useRef(new Animated.Value(0)).current;

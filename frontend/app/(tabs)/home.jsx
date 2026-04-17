@@ -283,12 +283,11 @@ const HomeHeader = ({ streak = 0, xp = 0, onMenuPress, currentLang, onToggleLang
   const { t } = useTranslation();
   return (
     <View style={s.header}>
-      <TouchableOpacity onPress={onMenuPress} activeOpacity={0.7} style={s.menuBtn}>
-        <Ionicons name="menu" size={22} color={CAM.forest} />
-      </TouchableOpacity>
-
-      <View style={s.headerCenter}>
-        <Image source={require("../../assets/images/logo.png")} style={{ width: 34, height: 34 }} contentFit="contain" />
+      <View style={s.headerLeft}>
+        <TouchableOpacity onPress={onMenuPress} activeOpacity={0.7} style={s.menuBtn}>
+          <Ionicons name="menu" size={22} color={CAM.forest} />
+        </TouchableOpacity>
+        <Image source={require("../../assets/images/logo.png")} style={{ width: 72, height: 72, marginLeft: Space.sm }} contentFit="contain" />
       </View>
 
       <View style={s.headerRight}>
@@ -637,28 +636,27 @@ export default function HomeScreen() {
 
       {/* ══ CONTENU PRINCIPAL ══ */}
       <View style={{ flex: 1 }} {...panRef.panHandlers}>
-        <ScrollView
-          contentContainerStyle={s.scroll}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Header */}
-          <Animated.View style={fadeUp(anims[0], 8)}>
-            <HomeHeader
-              streak={dash?.streakDays || 0}
-              xp={dash?.totalPoints || 0}
-              onMenuPress={openDrawer}
-              currentLang={appLang}
-              onToggleLang={handleToggleLang}
-            />
-          </Animated.View>
-
-          {/* Bannière langue */}
-          <Animated.View style={fadeUp(anims[0], 8)}>
+        {/* ── Sticky Header + Lang Banner ── */}
+        <View style={s.stickySection}>
+          <HomeHeader
+            streak={dash?.streakDays || 0}
+            xp={dash?.totalPoints || 0}
+            onMenuPress={openDrawer}
+            currentLang={appLang}
+            onToggleLang={handleToggleLang}
+          />
+          <View style={{ paddingHorizontal: Space["2xl"] }}>
             <LangBanner
               lang={activeLanguage}
               onPress={() => router.push("/modal/change-language")}
             />
-          </Animated.View>
+          </View>
+        </View>
+
+        <ScrollView
+          contentContainerStyle={[s.scroll, { paddingTop: 140 }]}
+          showsVerticalScrollIndicator={false}
+        >
 
           {/* Dashboard */}
           <Animated.View style={fadeUp(anims[1], 22)}>
@@ -783,8 +781,19 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingTop: Platform.OS === "ios" ? 58 : 40,
-    paddingBottom: Space.lg,
+    paddingBottom: Space.md,
+    paddingHorizontal: Space["2xl"],
   },
+  stickySection: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 50,
+    backgroundColor: CAM.surface,
+    paddingBottom: Space.sm,
+  },
+  headerLeft: { flexDirection: "row", alignItems: "center" },
   menuBtn: {
     width: 40, height: 40,
     borderRadius: 20,
@@ -792,7 +801,7 @@ const s = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
   },
   headerCenter: { flexDirection: "row", alignItems: "center" },
-  headerLogo: { width: 26, height: 26 },
+  headerLogo: { width: 42, height: 42 },
   headerRight: { flexDirection: "row", alignItems: "center" },
   headerBadge: {
     flexDirection: "row",
