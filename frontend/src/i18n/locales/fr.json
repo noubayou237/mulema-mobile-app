@@ -11,14 +11,32 @@
     "back": "Retour",
     "next": "Suivant",
     "done": "Terminé",
-    "saving": "Enregistrement..."
+    "saving": "Enregistrement...",
+    "didYouKnow": "LE SAVIEZ-VOUS ?",
+    "clear": "Effacer",
+    "user": "Utilisateur",
+    "quickAccess": "ACCÈS RAPIDE",
+    "change": "Changer",
+    "days": "jours",
+    "daysShort": "LUN,MAR,MER,JEU,VEN,SAM,DIM",
+    "ok": "OK",
+    "currentWeek": "Semaine actuelle",
+    "thisMonth": "Ce mois",
+    "total": "Total",
+    "continue": "Continuer",
+    "theLanguage": "Le {{name}}",
+    "percentCompleted": "{{percent}}% complété",
+    "oops": "Oups !",
+    "theme": "Thème",
+    "timerFormat": "{{days}}j {{hours}}h"
   },
   "nav": {
     "lessons": "Leçons",
     "exercises": "Exercices",
     "home": "Accueil",
     "community": "Communauté",
-    "profile": "Profil"
+    "profile": "Profil",
+    "quests": "Quêtes"
   },
   "auth": {
     "signIn": "Connexion",
@@ -35,12 +53,12 @@
     "alreadyHaveAccount": "Vous avez déjà un compte ?",
     "createAccount": "Créer un compte",
     "verifyEmail": "Vérifier l'email",
-    "verifyCode": "Vérifier le code",
+    "verifyCode": "Vérifier",
     "enterOtp": "Entrer le code OTP",
     "resendOtp": "Renvoyer le code OTP",
     "welcomeBack": "Bon retour",
     "loginSubtitle": "Connectez-vous pour continuer votre parcours d'apprentissage",
-    "codeSentTo": "Code envoyé à:",
+    "codeSentTo": "Code envoyé à :",
     "requiredFields": "Complète tous les champs.",
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
     "passwordMinLength": "Le mot de passe doit contenir au moins {{min}} caractères.",
@@ -48,12 +66,14 @@
     "passwordResetSuccess": "Mot de passe mis à jour. Tu peux maintenant te connecter.",
     "passwordResetError": "Impossible de réinitialiser le mot de passe.",
     "account": "Compte",
-    "saving": "Enregistrement...",
     "orContinueWith": "ou continuer avec",
     "signInWithGoogle": "Se connecter avec Google",
     "signInWithFacebook": "Se connecter avec Facebook",
     "signInWithApple": "Se connecter avec Apple",
-    "socialLoginError": "Erreur lors de la connexion sociale. Veuillez réessayer."
+    "socialLoginError": "Erreur lors de la connexion sociale. Veuillez réessayer.",
+    "dontHaveCode": "Vous n'avez pas reçu de code ?",
+    "resendOtpIn": "Renvoyer dans {{count}}s",
+    "welcome": "Bienvenue"
   },
   "profile": {
     "title": "Profil",
@@ -66,16 +86,18 @@
     "chooseFromGallery": "Choisir dans la galerie",
     "points": "Points",
     "completed": "Terminé",
-    "rank": "Rang",
+    "rank": "Apprenant Élite",
     "logout": "Déconnexion",
     "logoutConfirm": "Êtes-vous sûr de vouloir vous déconnecter ?",
     "profileUpdated": "Profil mis à jour avec succès",
-    "profilePictureUpdated": "Photo de profil mise à jour avec succès"
+    "profilePictureUpdated": "Photo de profil mise à jour avec succès",
+    "editSubtitle": "Mettez à jour votre avatar et votre bio"
   },
   "settings": {
     "title": "Paramètres",
     "language": "Langue",
     "selectLanguage": "Sélectionner la langue",
+    "selectLanguageDesc": "Choisissez la langue de l'interface",
     "english": "Anglais",
     "french": "Français",
     "notifications": "Notifications",
@@ -84,7 +106,15 @@
     "helpSupport": "Aide et support",
     "about": "À propos",
     "privacy": "Politique de confidentialité",
-    "terms": "Conditions d'utilisation"
+    "terms": "Conditions d'utilisation",
+    "dailyReminders": "Rappels quotidiens",
+    "preferences": "PRÉFÉRENCES",
+    "interfaceLanguage": "Langue de l'interface",
+    "supportLegal": "SUPPORT & LEGAL",
+    "madeWithLove": "FAIT AVEC AMOUR POUR LA CULTURE",
+    "deleteAccountTitle": "Supprimer mon compte ?",
+    "deleteAccountDesc": "Cette action est irréversible. Toutes vos données seront effacées.",
+    "typeDeleteToConfirm": "Tapez DELETE pour confirmer :"
   },
   "home": {
     "title": "Accueil",
@@ -102,7 +132,39 @@
     "levelIV": "NIVEAU IV",
     "start": "COMMENCER",
     "unlockMessage": "Debloquez les niveaux suivant en resolvant les exercices de ceux précédent",
-    "niveau": "Niveau"
+    "niveau": "Niveau",
+    "themesToExplore": "Thèmes à explorer",
+    "seeAll": "Voir tout",
+    "noThemes": "Aucun thème disponible.",
+    "dailyGoal": "OBJECTIF QUOTIDIEN",
+    "goalReached": "Objectif atteint !",
+    "remainingPercent": "{{count}}% restants",
+    "levels": {
+      "level": "NIVEAU",
+      "unlocked": "Débloqué",
+      "startAdventure": "Commencer l'aventure",
+      "completePrevious": "Termine le niveau précédent pour débloquer",
+      "startPoint": "POINT DE DÉPART",
+      "locked": "Verrouillé",
+      "completed": "Terminé",
+      "progression": "Progression",
+      "levelsUnlocked": "{{unlocked}}/{{total}} niveaux",
+      "masterAwaits": "Maître {{language}} t'attend !",
+      "completeAll": "Complète tous les niveaux pour décrocher le certificat {{language}}.",
+      "lessonsCompleted": "{{completed}}/{{total}} leçons complétées"
+    },
+    "scholarLevel": "SCHOLAR LV {{level}}",
+    "universDuala": "UNIVERS DUALA",
+    "universGhomala": "UNIVERS GHOMÁLÁ",
+    "universBassa": "UNIVERS BASSA",
+    "finalChallenge": "⚡ DÉFI FINAL",
+    "exerciseCount": "{{count}} questions · {{types}} types",
+    "xpPotential": "+{{points}} XP",
+    "masteryStats": "{{count}} leçons · {{percent}}% maîtrisé",
+    "completed": "complétées",
+    "remainingNodes": "restantes",
+    "mastery": "maîtrise",
+    "noLessons": "Aucune leçon disponible."
   },
   "lessons": {
     "title": "Leçons",
@@ -116,7 +178,12 @@
     "stepByStep": "Étape par étape, vous construisez vos connaissances",
     "completeToUnlock": "Complétez cette leçon pour débloquer la suivante",
     "locked": "Verrouillé",
-    "unlocked": "Déverrouillé"
+    "unlocked": "Déverrouillé",
+    "lessonsCount": "{{count}} LEÇONS",
+    "percentCompleted": "{{percent}}% Complété",
+    "available": "Leçons disponibles",
+    "dailyLearning": "Apprentissage\nQuotidien",
+    "lessonNum": "Leçon {{num}}"
   },
   "exercises": {
     "title": "Exercices",
@@ -131,7 +198,46 @@
       "clothingDesc": "Entraîne-toi à reconnaître et utiliser le vocabulaire des habits et accessoires du quotidien",
       "faunaFlora": "FAUNE & FLORE",
       "faunaFloraDesc": "Entraîne-toi à reconnaître et utiliser le vocabulaire des..."
-    }
+    },
+    "checkAnswer": "Vérifier la réponse",
+    "nextQuestion": "Question suivante",
+    "correct": "Correct !",
+    "incorrect": "Incorrect",
+    "tryAgain": "Réessayer",
+    "continue": "Continuer",
+    "completed": "Terminé !",
+    "score": "Votre score : {{score}}",
+    "questionOf": "Question {{current}} sur {{total}}",
+    "done": "Fait",
+    "todo": "À faire",
+    "allDone": "✅ Tous les exercices terminés",
+    "practice": "Exercices\nPratiques",
+    "byTheme": "Exercices par thème",
+    "rewardHint": "Complétez tous les exercices pour débloquer une vidéo culturelle 🎬",
+    "count": "{{count}}/{{total}} exercices",
+    "excellent": "Excellent !",
+    "daily": {
+      "salutations": "Salutations de base",
+      "family": "Ma famille en Ghomálá'",
+      "animals": "Les animaux du village"
+    },
+    "correctAnswerIs": "C'était : ",
+    "progressingFast": "Tu progresses rapidement !",
+    "explanation": "EXPLICATION",
+    "pickImageFor": "Sélectionne l'image pour :",
+    "howToSayIn": "Comment dit-on ce mot en {{lang}} ?",
+    "matchingPairs": "Fais les paires",
+    "matchFrToLang": "Associe le français au {{lang}}.",
+    "translateTo": "Traduisez ce mot en {{lang}}",
+    "howToSay": "Comment dit-on…",
+    "typeTranslation": "Tapez la traduction…",
+    "keyboardInstruction": "Utilise la barre ci-dessous pour insérer les caractères spéciaux du {{lang}} comme {{chars}}.",
+    "correct_label": "Correct",
+    "errors_label": "Erreurs",
+    "continueAdventure": "🎉 Continuer l'aventure",
+    "reviewLessons": "Revoir les leçons",
+    "retry": "Recommencer les exercices",
+    "backToThemes": "Retour aux thèmes"
   },
   "errors": {
     "networkError": "Erreur réseau. Veuillez vérifier votre connexion.",
@@ -147,39 +253,63 @@
     "enterCode": "Veuillez entrer votre code de vérification.",
     "audioError": "Erreur audio",
     "audioNotAvailable": "L'audio n'est pas disponible. Veuillez réessayer.",
-    "languageNotSelected": "Langue non définie. Veuillez sélectionner une langue depuis les paramètres."
+    "languageNotSelected": "Langue non définie. Veuillez sélectionner une langue depuis les paramètres.",
+    "verifyFailed": "Échec de la vérification.",
+    "privacyUrlNotSet": "URL de la politique de confidentialité non configurée.",
+    "deleteConfirmType": "Veuillez saisir 'DELETE' pour confirmer.",
+    "deleteFailed": "Impossible de supprimer le compte. Réessayez plus tard.",
+    "noThemesRefresh": "Aucun thème disponible.\nTire vers le bas pour actualiser."
   },
   "messages": {
     "accountCreated": "Compte créé avec succès !",
     "emailVerified": "Email vérifié avec succès !",
     "passwordReset": "Mot de passe réinitialisé avec succès !",
     "languageChanged": "Langue modifiée avec succès !",
-    "profileSaved": "Profil enregistré avec succès !"
+    "profileSaved": "Profil enregistré avec succès !",
+    "mulemaMeaning": "Mulema signifie 'Cœur' dans plusieurs langues bantoues. Nous protégeons le vôtre.",
+    "mulemaMeaningLong": "Le mot 'Mulema' signifie 'Cœur' dans plusieurs langues bantoues d'Afrique centrale. Apprendre une langue, c'est toucher le cœur d'une culture."
   },
   "stats": {
     "title": "Statistiques",
     "myStats": "Mes statistiques",
     "weeklyGoal": "des objectifs atteints cette semaine",
     "dayStreak": "Série de jours",
+    "dayStreakCount": "{{count}} jours de suite",
+    "streakDaysShort": "SÉRIE DE {{count}} JOURS",
     "daysMin": "7 jours",
     "daysMax": "30 jours",
     "detailedProgress": "Progression détaillée",
     "dailyGoal": "Ton objectif du jour",
     "learnWords": "Apprends {{count}} mots",
-    "completedCount": "déjà {{completed}}/{{goal}} faits"
-  },
-  "nav": {
-    "home": "Accueil",
-    "lessons": "Leçons",
-    "exercises": "Exercices",
-    "community": "Communauté"
+    "completedCount": "déjà {{completed}}/{{goal}} faits",
+    "wordsLearned": "Mots appris",
+    "totalTime": "Temps total",
+    "weeklyActivity": "Activité hebdomadaire",
+    "streakGood": "Vous êtes en feu ! Continuez comme ça.",
+    "streakKeepGoing": "Continuez votre série !"
   },
   "community": {
     "title": "Communauté",
     "subtitle": "Apprends ensemble, progresse ensemble",
     "activityFeed": "Fil d'activité",
-    "viewStats": "📊 Voir mes statistiques",
+    "viewStats": "Voir mes statistiques",
     "points": "points",
+    "completedTheme": "a terminé le thème {{theme}}",
+    "streak": "a atteint {{days}} jours consécutifs",
+    "learnedWords": "a appris {{count}} nouveaux mots aujourd'hui",
+    "completedExercise": "a terminé l'exercice '{{exercise}}'",
+    "earnedPoints": "a gagné {{count}} points de défi",
+    "isYou": "C'est vous !",
+    "xpToNextRank": "Plus que {{xp}} XP pour monter",
+    "yourScore": "VOTRE SCORE",
+    "endsIn": "Se termine dans ",
+    "otherPlayers": "LE RESTE DE LA MEUTE",
+    "ranks": {
+      "rising": "Vient de monter",
+      "top10": "Top 10% cette semaine",
+      "streak": "Série de {{count}} jours",
+      "newcomer": "Nouveau"
+    },
     "actions": {
       "completedTheme": "a terminé le thème Famille",
       "streak10": "a atteint 10 jours consécutifs",
@@ -187,9 +317,6 @@
       "completedExercise": "a terminé l'exercice 'Les Verbes'",
       "earnedPoints": "a gagné {{count}} points de défi"
     }
-  },
-  "header": {
-    "welcome": "Bienvenue"
   },
   "signIn": {
     "title": "Connexion",
@@ -250,93 +377,41 @@
       "profile": "Profil",
       "email": "Email",
       "security": "Sécurité"
-    }
-  },
-  "home": {
-    "levels": {
-      "level": "NIVEAU",
-      "unlocked": "Débloqué",
-      "startAdventure": "Commencer l'aventure",
-      "completePrevious": "Termine le niveau précédent pour débloquer",
-      "startPoint": "POINT DE DÉPART",
-      "locked": "Verrouillé",
-      "completed": "Terminé",
-      "progression": "Progression",
-      "levelsUnlocked": "{{unlocked}}/{{total}} niveaux",
-      "masterAwaits": "Maître {{language}} t'attend !",
-      "completeAll": "Complète tous les niveaux pour décrocher le certificat {{language}}."
     },
-    "welcome": "Bienvenue",
-    "continueLearning": "Continuer l'apprentissage",
-    "yourProgress": "Votre progression"
+    "joinAdventure": "Rejoignez l'aventure Mulema"
   },
-  "lessons": {
-    "title": "Leçons",
-    "lesson": "Leçon",
-    "exercise": "Exercice",
-    "startLesson": "Commencer la leçon",
-    "continueLesson": "Continuer la leçon",
-    "completeLesson": "Terminer la leçon",
-    "lessonCompleted": "Leçon terminée !",
-    "tryAgain": "Réessayer",
-    "stepByStep": "Étape par étape, vous construisez vos connaissances",
-    "completeToUnlock": "Complétez cette leçon pour débloquer la suivante",
-    "locked": "Verrouillé",
-    "unlocked": "Déverrouillé"
+  "onboarding": {
+    "welcome": "Bienvenue sur Mulema",
+    "subtitle": "Apprenez les langues locales camerounaises",
+    "selectLanguage": "Quelle langue voulez-vous apprendre ?",
+    "noLanguages": "Aucune langue disponible. Vérifiez votre connexion.",
+    "choiceRequired": "Choix requis",
+    "pleaseSelect": "Veuillez sélectionner une langue.",
+    "videoDesc": "Découvrez Mulema en action — {{lang}}",
+    "videoDescDefault": "Découvrez Mulema en action"
   },
-  "exercises": {
-    "title": "Exercices",
-    "introText": "Choisis un thème et entraîne-toi à apprendre de nouveaux mots et expressions. Plus tu pratiques, plus tu progresses !",
-    "start": "Commencer",
-    "checkAnswer": "Vérifier la réponse",
-    "nextQuestion": "Question suivante",
-    "correct": "Correct !",
-    "incorrect": "Incorrect",
-    "tryAgain": "Réessayer",
-    "continue": "Continuer",
-    "completed": "Terminé !",
-    "score": "Votre score : {{score}}",
-    "questionOf": "Question {{current}} sur {{total}}"
+  "leagues": {
+    "diamond": "Ligue Diamant"
   },
-  "community": {
-    "title": "Communauté",
-    "subtitle": "Apprends ensemble, progresse ensemble",
-    "activityFeed": "Fil d'activité",
-    "viewStats": "Voir mes statistiques",
-    "points": "points",
-    "completedTheme": "a terminé le thème {{theme}}",
-    "streak": "a atteint {{days}} jours consécutifs",
-    "learnedWords": "a appris {{count}} nouveaux mots aujourd'hui",
-    "completedExercise": "a terminé l'exercice '{{exercise}}'",
-    "earnedPoints": "a gagné {{count}} points de défi"
+  "quests": {
+    "title": "Quêtes du jour",
+    "dailyProgress": "PROGRESSION DU JOUR",
+    "remainingDefis": "Encore {{count}} défi{{plural}} pour le coffre mythique !",
+    "challenges": "Défis Quotidiens",
+    "resetIn": "RESET EN {{hours}}H",
+    "learnWords": "Apprendre 5 nouveaux mots",
+    "learnWordsSub": "Continuez votre série d'apprentissage",
+    "finishLessons": "Terminer 2 leçons",
+    "finishLessonsSub": "Maîtrisez les concepts fondamentaux",
+    "practiceTime": "Pratiquer 10 minutes",
+    "practiceTimeSub": "La régularité est la clé du succès"
   },
-  "profile": {
-    "title": "Profil",
-    "editProfile": "Modifier le profil",
-    "name": "Nom",
-    "username": "Nom d'utilisateur",
-    "email": "Email",
-    "changeProfilePicture": "Changer la photo de profil",
-    "takePhoto": "Prendre une photo",
-    "chooseFromGallery": "Choisir dans la galerie",
-    "points": "Points",
-    "completed": "Terminé",
-    "rank": "Rang",
-    "logout": "Déconnexion",
-    "logoutConfirm": "Êtes-vous sûr de vouloir vous déconnecter ?",
-    "profileUpdated": "Profil mis à jour avec succès",
-    "profilePictureUpdated": "Photo de profil mise à jour avec succès"
-  },
-  "stats": {
-    "title": "Statistiques",
-    "myStats": "Mes statistiques",
-    "weeklyGoal": "des objectifs atteints cette semaine",
-    "dayStreak": "Série de jours",
-    "daysMin": "7 jours",
-    "daysMax": "30 jours",
-    "detailedProgress": "Progression détaillée",
-    "dailyGoal": "Ton objectif du jour",
-    "learnWords": "Apprends {{count}} mots",
-    "completedCount": "déjà {{completed}}/{{goal}} faits"
+  "settingsModal": {
+    "myLanguages": "Mes Langues",
+    "manageLearning": "Gérez votre parcours d'apprentissage",
+    "activeSession": "SESSION ACTIVE",
+    "otherLanguages": "AUTRES LANGUES",
+    "exploreLanguages": "Explorer de nouvelles langues",
+    "languageChangeWarning": "Changer de langue n'efface jamais votre progression dans vos autres sessions !"
   }
 }

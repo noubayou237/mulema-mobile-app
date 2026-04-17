@@ -73,11 +73,11 @@ const getIcon = (name) => {
   return "book";
 };
 
-/* ── Exercices du jour (données statiques / à brancher sur API) ── */
-const DAILY_EXOS = [
-  { id: "e1", label: "Salutations de base", icon: "hand-left", route: "exercices/salutation/exos1", done: true },
-  { id: "e2", label: "Ma famille en Ghomálá'", icon: "people", route: "exercices/famille/exos1", done: false },
-  { id: "e3", label: "Les animaux du village", icon: "paw", route: "exercices/animaux/exos1", done: false },
+/* ── Exercices du jour ── */
+const getDailyExos = (t) => [
+  { id: "e1", label: t("exercises.daily.salutations"), icon: "hand-left", route: "exercices/salutation/exos1", done: true },
+  { id: "e2", label: t("exercises.daily.family"), icon: "people", route: "exercices/famille/exos1", done: false },
+  { id: "e3", label: t("exercises.daily.animals"), icon: "paw", route: "exercices/animaux/exos1", done: false },
 ];
 
 /* ════════════════════════════════════════════════════════════════════
@@ -106,74 +106,78 @@ const DrawerItem = ({ icon, label, onPress, highlighted }) => (
   </TouchableOpacity>
 );
 
-const DrawerContent = ({ user, dashboard, onClose, onNav, onLogout }) => (
-  <View style={dr.container}>
-    {/* Bande décorative verte en haut */}
-    <View style={dr.topStripe} />
+const DrawerContent = ({ user, dashboard, onClose, onNav, onLogout }) => {
+  const { t } = useTranslation();
+  return (
+    <View style={dr.container}>
+      {/* Bande décorative verte en haut */}
+      <View style={dr.topStripe} />
 
-    <TouchableOpacity onPress={onClose} activeOpacity={0.7} style={dr.closeBtn}>
-      <Ionicons name="close" size={22} color={Colors.onSurface} />
-    </TouchableOpacity>
+      <TouchableOpacity onPress={onClose} activeOpacity={0.7} style={dr.closeBtn}>
+        <Ionicons name="close" size={22} color={Colors.onSurface} />
+      </TouchableOpacity>
 
-    {/* Profil */}
-    <View style={dr.profileRow}>
-      <View style={dr.avatarRing}>
-        {user?.avatar ? (
-          <Image source={{ uri: user.avatar }} style={dr.avatar} contentFit="cover" />
-        ) : (
-          <View style={[dr.avatar, { backgroundColor: CAM.forestPale, alignItems: "center", justifyContent: "center" }]}>
-            <Ionicons name="person" size={28} color={CAM.forest} />
-          </View>
-        )}
-      </View>
-      <View style={{ marginLeft: Space.lg, flex: 1 }}>
-        <Text style={[Typo.titleLg, { color: Colors.onSurface }]} numberOfLines={1}>
-          {user?.name || "Utilisateur"}
-        </Text>
-        <View style={dr.levelBadge}>
-          <Ionicons name="star" size={11} color={CAM.gold} />
-          <Text style={[Typo.labelSm, { color: CAM.forest, marginLeft: 4 }]}>
-            SCHOLAR LV {Math.floor((dashboard?.totalPoints || 0) / 100)}
+      {/* Profil */}
+      <View style={dr.profileRow}>
+        <View style={dr.avatarRing}>
+          {user?.avatar ? (
+            <Image source={{ uri: user.avatar }} style={dr.avatar} contentFit="cover" />
+          ) : (
+            <View style={[dr.avatar, { backgroundColor: CAM.forestPale, alignItems: "center", justifyContent: "center" }]}>
+              <Ionicons name="person" size={28} color={CAM.forest} />
+            </View>
+          )}
+        </View>
+        <View style={{ marginLeft: Space.lg, flex: 1 }}>
+          <Text style={[Typo.titleLg, { color: Colors.onSurface }]} numberOfLines={1}>
+            {user?.name || t("common.user", "Utilisateur")}
           </Text>
+          <View style={dr.levelBadge}>
+            <Ionicons name="star" size={11} color={CAM.gold} />
+            <Text style={[Typo.labelSm, { color: CAM.forest, marginLeft: 4 }]}>
+              {t("home.scholarLevel", { level: Math.floor((dashboard?.totalPoints || 0) / 100) })}
+            </Text>
+          </View>
         </View>
       </View>
-    </View>
 
-    {/* Streak */}
-    <View style={dr.streakBadge}>
-      <Ionicons name="flame" size={15} color={CAM.orange} />
-      <Text style={[Typo.labelLg, { color: CAM.dark, marginLeft: Space.sm }]}>
-        {dashboard?.streakDays || 0} jours de suite
+      {/* Streak */}
+      <View style={dr.streakBadge}>
+        <Ionicons name="flame" size={15} color={CAM.orange} />
+        <Text style={[Typo.labelLg, { color: CAM.dark, marginLeft: Space.sm }]}>
+          {t("stats.dayStreakCount", { count: dashboard?.streakDays || 0 })}
+        </Text>
+      </View>
+
+      <View style={dr.divider} />
+
+      <Text style={[Typo.labelSm, { color: Colors.textTertiary, marginBottom: Space.md }]}>
+        {t("common.quickAccess")}
       </Text>
+
+      <DrawerItem icon="ribbon-outline" label={t("nav.quests")} onPress={() => onNav("quests")} />
+      <DrawerItem icon="notifications-outline" label={t("settings.notifications")} onPress={() => onNav("notifications")} />
+      <DrawerItem icon="language-outline" label={t("settings.language")} onPress={() => onNav("change-language")} />
+      <DrawerItem icon="settings-outline" label={t("settings.title")} onPress={() => onNav("settings")} highlighted />
+
+      <View style={{ flex: 1 }} />
+
+      <TouchableOpacity onPress={onLogout} activeOpacity={0.7} style={dr.logoutBtn}>
+        <Ionicons name="log-out-outline" size={18} color={CAM.forest} />
+        <Text style={[Typo.titleSm, { color: CAM.forest, marginLeft: Space.md }]}>
+          {t("profile.logout")}
+        </Text>
+      </TouchableOpacity>
     </View>
-
-    <View style={dr.divider} />
-
-    <Text style={[Typo.labelSm, { color: Colors.textTertiary, marginBottom: Space.md }]}>
-      ACCÈS RAPIDE
-    </Text>
-
-    <DrawerItem icon="ribbon-outline" label="Quêtes du jour" onPress={() => onNav("quests")} />
-    <DrawerItem icon="notifications-outline" label="Notifications" onPress={() => onNav("notifications")} />
-    <DrawerItem icon="language-outline" label="Changer de langue" onPress={() => onNav("change-language")} />
-    <DrawerItem icon="settings-outline" label="Paramètres" onPress={() => onNav("settings")} highlighted />
-
-    <View style={{ flex: 1 }} />
-
-    <TouchableOpacity onPress={onLogout} activeOpacity={0.7} style={dr.logoutBtn}>
-      <Ionicons name="log-out-outline" size={18} color={CAM.forest} />
-      <Text style={[Typo.titleSm, { color: CAM.forest, marginLeft: Space.md }]}>
-        Déconnexion
-      </Text>
-    </TouchableOpacity>
-  </View>
-);
+  );
+};
 
 /* ════════════════════════════════════════════════════════════════════
    BOTTOM SHEET — Leçons d'un thème
    ════════════════════════════════════════════════════════════════════ */
 
 const BottomSheet = ({ theme, onClose, onSelectLesson }) => {
+  const { t } = useTranslation();
   const slideAnim = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const overlayAnim = useRef(new Animated.Value(0)).current;
 
@@ -194,8 +198,8 @@ const BottomSheet = ({ theme, onClose, onSelectLesson }) => {
   /* Génère des leçons fictives si pas de données */
   const lessons = theme?.lessons || Array.from({ length: theme?.lessonsCount || 4 }, (_, i) => ({
     id: `lesson-${i + 1}`,
-    title: `Leçon ${i + 1}`,
-    subtitle: `${theme?.name || "Thème"} · Niveau ${i + 1}`,
+    title: t("lessons.lessonNum", { num: i + 1 }),
+    subtitle: `${theme?.name || t("common.theme")} · ${t("home.levels.level")} ${i + 1}`,
     done: i < (theme?.lessonsCompleted || 0),
   }));
 
@@ -217,7 +221,7 @@ const BottomSheet = ({ theme, onClose, onSelectLesson }) => {
           <View style={{ flex: 1, marginLeft: Space.lg }}>
             <Text style={[Typo.headlineMd, { color: CAM.dark }]}>{theme?.name}</Text>
             <Text style={[Typo.labelSm, { color: CAM.forest }]}>
-              {theme?.lessonsCompleted || 0}/{theme?.lessonsCount || lessons.length} leçons complétées
+              {t("home.levels.lessonsCompleted", { completed: theme?.lessonsCompleted || 0, total: theme?.lessonsCount || lessons.length })}
             </Text>
           </View>
           <TouchableOpacity onPress={dismiss} style={bs.closeBtn} activeOpacity={0.7}>
@@ -251,7 +255,9 @@ const BottomSheet = ({ theme, onClose, onSelectLesson }) => {
                 }
               </View>
               <View style={{ flex: 1, marginLeft: Space.lg }}>
-                <Text style={[Typo.titleSm, { color: CAM.dark }]}>{item.title}</Text>
+                <Text style={[Typo.titleSm, { color: CAM.dark }]}>
+                  {activeLanguage?.appLang === 'en' && item.title_en ? item.title_en : item.title}
+                </Text>
                 {item.subtitle && (
                   <Text style={[Typo.labelSm, { color: Colors.textTertiary }]}>{item.subtitle}</Text>
                 )}
@@ -273,51 +279,55 @@ const BottomSheet = ({ theme, onClose, onSelectLesson }) => {
    HOME HEADER
    ════════════════════════════════════════════════════════════════════ */
 
-const HomeHeader = ({ streak = 0, xp = 0, onMenuPress, currentLang, onToggleLang }) => (
-  <View style={s.header}>
-    <TouchableOpacity onPress={onMenuPress} activeOpacity={0.7} style={s.menuBtn}>
-      <Ionicons name="menu" size={22} color={CAM.forest} />
-    </TouchableOpacity>
-
-    <View style={s.headerCenter}>
-      <Image source={require("../../assets/images/logo.png")} style={{ width: 34, height: 34 }} contentFit="contain" />
-    </View>
-
-    <View style={s.headerRight}>
-      <TouchableOpacity
-        onPress={() => {
-          Alert.alert(
-            "Language / Langue",
-            "Choose the interface language / Choisissez la langue",
-            [
-              { text: "Français", onPress: () => onToggleLang('fr') },
-              { text: "English", onPress: () => onToggleLang('en') },
-              { text: "Cancel", style: "cancel" }
-            ]
-          );
-        }}
-        activeOpacity={0.7}
-        style={[s.headerBadge, { backgroundColor: CAM.forestPale, paddingHorizontal: 8, paddingVertical: 6 }]}
-      >
-        <Ionicons name="globe-outline" size={18} color={CAM.forest} />
+const HomeHeader = ({ streak = 0, xp = 0, onMenuPress, currentLang, onToggleLang }) => {
+  const { t } = useTranslation();
+  return (
+    <View style={s.header}>
+      <TouchableOpacity onPress={onMenuPress} activeOpacity={0.7} style={s.menuBtn}>
+        <Ionicons name="menu" size={22} color={CAM.forest} />
       </TouchableOpacity>
-      <View style={[s.headerBadge, { backgroundColor: CAM.orangeLight, marginLeft: Space.xs }]}>
-        <Ionicons name="flame" size={14} color={CAM.orange} />
-        <Text style={[Typo.labelLg, { color: CAM.dark, marginLeft: 4 }]}>{streak}</Text>
+
+      <View style={s.headerCenter}>
+        <Image source={require("../../assets/images/logo.png")} style={{ width: 34, height: 34 }} contentFit="contain" />
       </View>
-      <View style={[s.headerBadge, { backgroundColor: CAM.goldLight, marginLeft: Space.sm }]}>
-        <Ionicons name="flash" size={13} color={CAM.gold} />
-        <Text style={[Typo.labelLg, { color: CAM.dark, marginLeft: 3 }]}>{xp} XP</Text>
+
+      <View style={s.headerRight}>
+        <TouchableOpacity
+          onPress={() => {
+            Alert.alert(
+              t("settings.selectLanguage"),
+              t("settings.selectLanguageDesc", "Choose the interface language / Choisissez la langue"),
+              [
+                { text: "Français", onPress: () => onToggleLang('fr') },
+                { text: "English", onPress: () => onToggleLang('en') },
+                { text: t("common.cancel"), style: "cancel" }
+              ]
+            );
+          }}
+          activeOpacity={0.7}
+          style={[s.headerBadge, { backgroundColor: CAM.forestPale, paddingHorizontal: 8, paddingVertical: 6 }]}
+        >
+          <Ionicons name="globe-outline" size={18} color={CAM.forest} />
+        </TouchableOpacity>
+        <View style={[s.headerBadge, { backgroundColor: CAM.orangeLight, marginLeft: Space.xs }]}>
+          <Ionicons name="flame" size={14} color={CAM.orange} />
+          <Text style={[Typo.labelLg, { color: CAM.dark, marginLeft: 4 }]}>{streak}</Text>
+        </View>
+        <View style={[s.headerBadge, { backgroundColor: CAM.goldLight, marginLeft: Space.sm }]}>
+          <Ionicons name="flash" size={13} color={CAM.gold} />
+          <Text style={[Typo.labelLg, { color: CAM.dark, marginLeft: 3 }]}>{xp} XP</Text>
+        </View>
       </View>
     </View>
-  </View>
-);
+  );
+};
 
 /* ════════════════════════════════════════════════════════════════════
    LANGUAGE BANNER
    ════════════════════════════════════════════════════════════════════ */
 
 const LangBanner = ({ lang, onPress }) => {
+  const { t } = useTranslation();
   if (!lang) return null;
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={s.langBanner}>
@@ -325,7 +335,7 @@ const LangBanner = ({ lang, onPress }) => {
       <Text style={[Typo.labelLg, { color: CAM.forest, marginLeft: Space.md, flex: 1 }]}>
         {lang.name}
       </Text>
-      <Text style={[Typo.bodySm, { color: CAM.forestLight }]}>Changer</Text>
+      <Text style={[Typo.bodySm, { color: CAM.forestLight }]}>{t("common.edit")}</Text>
       <Ionicons name="chevron-forward" size={13} color={CAM.forestLight} style={{ marginLeft: 2 }} />
     </TouchableOpacity>
   );
@@ -362,7 +372,7 @@ const DashCard = ({ percent = 0, mins = 0, goal = 40, onContinue }) => {
       </Text>
 
       <View style={s.goalRow}>
-        <Text style={[Typo.labelLg, { color: CAM.forestPale }]}>OBJECTIF QUOTIDIEN</Text>
+        <Text style={[Typo.labelLg, { color: CAM.forestPale }]}>{t("home.dailyGoal")}</Text>
         <Text style={[Typo.bodyMd, { color: "#fff" }]}>{mins}/{goal} min</Text>
       </View>
 
@@ -386,7 +396,7 @@ const DashCard = ({ percent = 0, mins = 0, goal = 40, onContinue }) => {
         <View style={s.statItem}>
           <Ionicons name="trophy-outline" size={16} color={CAM.gold} />
           <Text style={[Typo.labelSm, { color: CAM.gold, marginLeft: 6 }]}>
-            {percent >= 100 ? "Objectif atteint !" : `${100 - percent}% restants`}
+            {percent >= 100 ? t("home.goalReached") : t("home.remaining", { count: 100 - percent })}
           </Text>
         </View>
       </View>
@@ -406,6 +416,7 @@ const DashCard = ({ percent = 0, mins = 0, goal = 40, onContinue }) => {
    ════════════════════════════════════════════════════════════════════ */
 
 const ThemeCard = ({ theme, onPress }) => {
+  const { t } = useTranslation();
   const pct = theme.lessonsCount > 0 ? Math.round((theme.lessonsCompleted / theme.lessonsCount) * 100) : 0;
   const locked = theme.locked;
   const scale = useRef(new Animated.Value(1)).current;
@@ -439,10 +450,10 @@ const ThemeCard = ({ theme, onPress }) => {
         </View>
 
         <Text style={[Typo.titleSm, { marginTop: Space.md, color: CAM.dark }]} numberOfLines={1}>
-          {theme.name}
+          {t("common.theLanguage") === "en" && theme.name_en ? theme.name_en : theme.name}
         </Text>
         <Text style={[Typo.labelSm, { marginTop: Space.xs, color: Colors.textTertiary }]}>
-          {String(theme.lessonsCount).padStart(2, "0")} LEÇONS
+          {t("lessons.lessonsCount", { count: theme.lessonsCount })}
         </Text>
       </TouchableOpacity>
     </Animated.View>
@@ -453,26 +464,29 @@ const ThemeCard = ({ theme, onPress }) => {
    EXERCICES DU JOUR
    ════════════════════════════════════════════════════════════════════ */
 
-const ExerciseRow = ({ exo, onPress }) => (
-  <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={s.exoRow}>
-    <View style={[s.exoIcon, { backgroundColor: exo.done ? CAM.forestPale : CAM.orangeLight }]}>
-      <Ionicons name={exo.icon} size={18} color={exo.done ? CAM.forest : CAM.orange} />
-    </View>
-    <Text style={[Typo.titleSm, { flex: 1, marginLeft: Space.lg, color: CAM.dark }]} numberOfLines={1}>
-      {exo.label}
-    </Text>
-    {exo.done ? (
-      <View style={s.doneBadge}>
-        <Ionicons name="checkmark" size={12} color="#fff" />
-        <Text style={[Typo.labelMd, { color: "#fff", marginLeft: 3 }]}>Fait</Text>
+const ExerciseRow = ({ exo, onPress }) => {
+  const { t } = useTranslation();
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={s.exoRow}>
+      <View style={[s.exoIcon, { backgroundColor: exo.done ? CAM.forestPale : CAM.orangeLight }]}>
+        <Ionicons name={exo.icon} size={18} color={exo.done ? CAM.forest : CAM.orange} />
       </View>
-    ) : (
-      <View style={s.todoBadge}>
-        <Text style={[Typo.labelMd, { color: CAM.orange }]}>À faire</Text>
-      </View>
-    )}
-  </TouchableOpacity>
-);
+      <Text style={[Typo.titleSm, { flex: 1, marginLeft: Space.lg, color: CAM.dark }]} numberOfLines={1}>
+        {exo.label}
+      </Text>
+      {exo.done ? (
+        <View style={s.doneBadge}>
+          <Ionicons name="checkmark" size={12} color="#fff" />
+          <Text style={[Typo.labelMd, { color: "#fff", marginLeft: 3 }]}>{t("exercises.done")}</Text>
+        </View>
+      ) : (
+        <View style={s.todoBadge}>
+          <Text style={[Typo.labelMd, { color: CAM.orange }]}>{t("exercises.todo")}</Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+};
 
 /* ════════════════════════════════════════════════════════════════════
    MAIN SCREEN
@@ -567,11 +581,11 @@ export default function HomeScreen() {
     closeDrawer();
     setTimeout(() => {
       Alert.alert(
-        "Déconnexion",
-        "Êtes-vous sûr de vouloir vous déconnecter ?",
+        t("profile.logout"),
+        t("profile.logoutConfirm"),
         [
-          { text: "Annuler", style: "cancel" },
-          { text: "Confirmer", style: "destructive", onPress: () => logout() },
+          { text: t("common.cancel"), style: "cancel" },
+          { text: t("common.confirm"), style: "destructive", onPress: () => logout() },
         ]
       );
     }, 300);
@@ -658,12 +672,12 @@ export default function HomeScreen() {
           {/* Thèmes */}
           <Animated.View style={[s.section, fadeUp(anims[2], 22)]}>
             <View style={s.sectionHead}>
-              <Text style={[Typo.headlineMd, { color: CAM.dark }]}>{t("home.themesToExplore", "Thèmes à explorer")}</Text>
+              <Text style={[Typo.headlineMd, { color: CAM.dark }]}>{t("home.themesToExplore")}</Text>
               <TouchableOpacity
                 onPress={() => router.push("/(tabs)/lessons")}
                 activeOpacity={0.7}
               >
-                <Text style={[Typo.titleSm, { color: CAM.forest }]}>{t("home.seeAll", "Voir tout")}</Text>
+                <Text style={[Typo.titleSm, { color: CAM.forest }]}>{t("home.seeAll")}</Text>
               </TouchableOpacity>
             </View>
 
@@ -677,7 +691,7 @@ export default function HomeScreen() {
               <View style={s.empty}>
                 <Ionicons name="book-outline" size={38} color={Colors.textTertiary} />
                 <Text style={[Typo.bodyMd, { textAlign: "center", marginTop: Space.md }]}>
-                  {t("home.noThemes", "Aucun thème disponible.")}
+                  {t("home.noThemes")}
                 </Text>
               </View>
             ) : (
@@ -692,16 +706,16 @@ export default function HomeScreen() {
           {/* Exercices du jour */}
           <Animated.View style={[s.section, fadeUp(anims[3], 22)]}>
             <View style={s.sectionHead}>
-              <Text style={[Typo.headlineMd, { color: CAM.dark }]}>{t("home.exercises", "Exercices du jour")}</Text>
+              <Text style={[Typo.headlineMd, { color: CAM.dark }]}>{t("home.exercises")}</Text>
               <View style={s.exoBadgeCount}>
                 <Text style={[Typo.labelMd, { color: CAM.forest }]}>
-                  {DAILY_EXOS.filter((e) => e.done).length}/{DAILY_EXOS.length}
+                  {getDailyExos(t).filter((e) => e.done).length}/{getDailyExos(t).length}
                 </Text>
               </View>
             </View>
 
             <View style={s.exoList}>
-              {DAILY_EXOS.map((exo) => (
+              {getDailyExos(t).map((exo) => (
                 <ExerciseRow
                   key={exo.id}
                   exo={exo}
@@ -711,13 +725,10 @@ export default function HomeScreen() {
             </View>
           </Animated.View>
 
-          {/* Carte culturelle */}
           <Animated.View style={[{ marginTop: Space.xl }, fadeUp(anims[4], 15)]}>
             <MCulturalCard
-              body={
-                'Le mot "Mulema" signifie "Cœur" dans plusieurs langues bantoues d\'Afrique centrale. ' +
-                "Apprendre une langue, c'est toucher le cœur d'une culture."
-              }
+              title={t("common.didYouKnow")}
+              body={t("messages.mulemaMeaningLong")}
             />
           </Animated.View>
 

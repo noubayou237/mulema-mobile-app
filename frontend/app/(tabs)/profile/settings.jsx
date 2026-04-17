@@ -68,9 +68,9 @@ export default function SettingsScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert(t("profile.logout", "Déconnexion"), t("profile.logoutConfirm", "Êtes-vous sûr de vouloir vous déconnecter ?"), [
-      { text: t("common.cancel", "Annuler"), style: "cancel" },
-      { text: "Confirmer", style: "destructive", onPress: () => logout() },
+    Alert.alert(t("profile.logout"), t("profile.logoutConfirm"), [
+      { text: t("common.cancel"), style: "cancel" },
+      { text: t("common.confirm"), style: "destructive", onPress: () => logout() },
     ]);
   };
 
@@ -79,7 +79,7 @@ export default function SettingsScreen() {
     if (url) {
       await WebBrowser.openBrowserAsync(url);
     } else {
-      Alert.alert("Erreur", "URL de la politique de confidentialité non configurée.");
+      Alert.alert(t("common.error"), t("errors.privacyUrlNotSet"));
     }
   };
 
@@ -97,12 +97,12 @@ export default function SettingsScreen() {
     try {
       await api.delete("/user");
       setShowDeleteModal(false);
-      Alert.alert("Succès", "Votre compte a été supprimé definitivement.", [
-        { text: "OK", onPress: () => logout() }
+      Alert.alert(t("common.success"), t("messages.accountDeleted"), [
+        { text: t("common.ok"), onPress: () => logout() }
       ]);
     } catch (error) {
       console.error("Delete account error:", error);
-      Alert.alert("Erreur", "Impossible de supprimer le compte. Réessayez plus tard.");
+      Alert.alert(t("common.error"), t("errors.deleteFailed"));
     } finally {
       setIsDeleting(false);
     }
@@ -128,8 +128,8 @@ export default function SettingsScreen() {
         <View style={[s.sectionCard, Shadow.sm]}>
           <SettingRow
             icon="person-circle"
-            label={t("profile.editProfile", "Profile edit")}
-            subtitle="Update your avatar and bio"
+            label={t("profile.editProfile")}
+            subtitle={t("profile.editSubtitle")}
             onPress={() => {}}
           />
           <View style={s.divider} />
@@ -167,7 +167,7 @@ export default function SettingsScreen() {
           <View style={s.divider} />
           <SettingRow
             icon="alarm"
-            label="Rappels quotidiens"
+            label={t("settings.dailyReminders")}
             right={
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <Text style={[Typo.bodyMd, { color: Colors.textSecondary }]}>20:00</Text>
@@ -179,7 +179,7 @@ export default function SettingsScreen() {
         </View>
 
         {/* ── PRÉFÉRENCES ── */}
-        <SectionHeader title="PRÉFÉRENCES" />
+        <SectionHeader title={t("settings.preferences")} />
         <View style={[s.sectionCard, Shadow.sm]}>
           <SettingRow
             icon="moon"
@@ -196,7 +196,7 @@ export default function SettingsScreen() {
           <View style={s.divider} />
           <SettingRow
             icon="globe"
-            label={t("settings.language", "Langue de l'interface")}
+            label={t("settings.interfaceLanguage")}
             right={
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <Text style={[Typo.bodyMd, { color: Colors.textSecondary, fontWeight: "bold" }]}>
@@ -210,7 +210,7 @@ export default function SettingsScreen() {
         </View>
 
         {/* ── SUPPORT & LEGAL ── */}
-        <SectionHeader title="SUPPORT & LEGAL" />
+        <SectionHeader title={t("settings.supportLegal")} />
         <View style={[s.sectionCard, Shadow.sm]}>
           <SettingRow
             icon="help-circle"
@@ -252,7 +252,7 @@ export default function SettingsScreen() {
         {/* ── Footer ── */}
         <View style={s.footer}>
           <Text style={[Typo.labelSm, { color: Colors.textTertiary }]}>MULEMA APP V2.4.1 (622)</Text>
-          <Text style={[Typo.bodySm, { color: Colors.textTertiary, marginTop: Space.xs }]}>MADE WITH LOVE FOR CULTURE</Text>
+          <Text style={[Typo.bodySm, { color: Colors.textTertiary, marginTop: Space.xs }]}>{t("settings.madeWithLove")}</Text>
         </View>
 
         <View style={{ height: Space["4xl"] }} />
@@ -267,12 +267,12 @@ export default function SettingsScreen() {
       >
         <View style={s.modalOverlay}>
           <View style={s.modalContent}>
-            <Text style={[Typo.titleMd, { color: Colors.error, textAlign: "center" }]}>Supprimer mon compte ?</Text>
+            <Text style={[Typo.titleMd, { color: Colors.error, textAlign: "center" }]}>{t("settings.deleteAccountTitle")}</Text>
             <Text style={[Typo.bodyMd, { textAlign: "center", marginTop: Space.md, color: Colors.textSecondary }]}>
-              Cette action est irréversible. Toutes vos données seront effacées.
+              {t("settings.deleteAccountDesc")}
             </Text>
             <Text style={[Typo.labelLg, { textAlign: "center", marginTop: Space.lg, color: Colors.onSurface }]}>
-              Tapez <Text style={{ fontWeight: "700", color: Colors.error }}>DELETE</Text> pour confirmer :
+              {t("settings.typeDeleteToConfirm")} <Text style={{ fontWeight: "700", color: Colors.error }}>DELETE</Text>
             </Text>
             
             <TextInput
@@ -290,7 +290,7 @@ export default function SettingsScreen() {
                 disabled={isDeleting}
                 style={[s.modalBtn, { backgroundColor: Colors.surfaceVariant }]}
               >
-                <Text style={[Typo.labelLg, { color: Colors.onSurfaceVariant }]}>Annuler</Text>
+                <Text style={[Typo.labelLg, { color: Colors.onSurfaceVariant }]}>{t("common.cancel")}</Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
@@ -301,7 +301,7 @@ export default function SettingsScreen() {
                 {isDeleting ? (
                   <ActivityIndicator color="#FFF" size="small" />
                 ) : (
-                  <Text style={[Typo.labelLg, { color: "#FFF" }]}>Supprimer</Text>
+                  <Text style={[Typo.labelLg, { color: "#FFF" }]}>{t("common.delete")}</Text>
                 )}
               </TouchableOpacity>
             </View>

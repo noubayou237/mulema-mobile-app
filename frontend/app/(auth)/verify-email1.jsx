@@ -11,6 +11,7 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useSignUp } from "@clerk/clerk-expo";
 import { Image } from "expo-image";
+import { useTranslation } from "react-i18next";
 
 import ScreenWrapper from "../components/ui/ScreenWrapper";
 import AppTitle from "../components/ui/AppTitle";
@@ -21,26 +22,27 @@ export default function VerifyEmailScreen() {
   const { isLoaded, signUp } = useSignUp();
   const params = useLocalSearchParams();
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [code, setCode] = useState("");
   const email = params?.email || "";
 
   const handleVerify = async () => {
     if (!code.trim()) {
-      return Alert.alert("Erreur", "Entre le code reçu par email.");
+      return Alert.alert(t("common.error"), t("errors.enterCode"));
     }
 
     if (!isLoaded || !signUp) {
-      return Alert.alert("Erreur", "Service d'authentification non prêt.");
+      return Alert.alert(t("common.error"), t("errors.somethingWentWrong"));
     }
 
     try {
       await signUp.attemptEmailAddressVerification({ code });
 
-      Alert.alert("Succès", "Email vérifié.");
+      Alert.alert(t("common.success"), t("messages.emailVerified"));
       router.replace("/ChoiceLanguage");
     } catch (err) {
-      Alert.alert("Erreur", err?.message || "Échec de la vérification.");
+      Alert.alert(t("common.error"), err?.message || t("errors.verifyFailed"));
     }
   };
 
@@ -50,9 +52,9 @@ export default function VerifyEmailScreen() {
         strategy: "email_code"
       });
 
-      Alert.alert("Envoyé", `Un nouveau code a été envoyé à ${email}`);
+      Alert.alert(t("common.success"), `${t("auth.codeSentTo")} ${email}`);
     } catch (e) {
-      Alert.alert("Erreur", "Impossible de renvoyer le code.");
+      Alert.alert(t("common.error"), t("errors.somethingWentWrong"));
     }
   };
 
@@ -78,11 +80,11 @@ export default function VerifyEmailScreen() {
           </View>
 
           <AppTitle className='mb-2 text-center'>
-            Vérifier l&apos;email
+            {t("auth.verifyEmail")}
           </AppTitle>
 
           <AppText variant='muted' className='text-center mb-6'>
-            Code envoyé à : {email}
+            {t("auth.codeSentTo")} {email}
           </AppText>
 
           {/* OTP Input */}
@@ -95,11 +97,11 @@ export default function VerifyEmailScreen() {
             maxLength={6}
           />
 
-          <Button title='Vérifier' onPress={handleVerify} />
+          <Button title={t("auth.verifyCode")} onPress={handleVerify} />
 
           <TouchableOpacity onPress={resend} className='mt-4 items-center'>
             <AppText className='text-primary font-semibold'>
-              Renvoyer le code
+              {t("auth.resendOtp")}
             </AppText>
           </TouchableOpacity>
 

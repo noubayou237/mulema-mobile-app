@@ -15,6 +15,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Audio } from "expo-av";
 import * as Haptics from "expo-haptics";
+import { useTranslation } from "react-i18next";
 
 import { useThemeStore }    from "../../../../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../../../../src/stores/useDashboardStore";
@@ -208,6 +209,7 @@ const TopBar = ({ current, total, hearts, onClose }) => {
    FEEDBACK BANNER — glisse du bas, invisible jusqu'au VÉRIFIER
    ════════════════════════════════════════════════════════════════ */
 const FeedbackBanner = ({ correct, correctAnswer, onNext }) => {
+  const { t } = useTranslation();
   const slideY = useRef(new Animated.Value(240)).current;
 
   useEffect(() => {
@@ -229,14 +231,14 @@ const FeedbackBanner = ({ correct, correctAnswer, onNext }) => {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[fb.title, { color: correct ? C.correctDark : C.primaryDark }]}>
-            {correct ? "Excellent !" : "Oups !"}
+            {correct ? t("exercises.excellent") : t("common.oops")}
           </Text>
           {!correct && correctAnswer ? (
             <Text style={fb.sub}>
-              C'était : <Text style={fb.answer}>"{correctAnswer}"</Text>
+              {t("exercises.correctAnswerIs")}<Text style={fb.answer}>"{correctAnswer}"</Text>
             </Text>
           ) : (
-            <Text style={fb.sub}>Tu progresses rapidement !</Text>
+            <Text style={fb.sub}>{t("exercises.progressingFast")}</Text>
           )}
         </View>
       </View>
@@ -244,7 +246,7 @@ const FeedbackBanner = ({ correct, correctAnswer, onNext }) => {
       {!correct && (
         <TouchableOpacity style={fb.explainBtn} activeOpacity={0.8}>
           <Ionicons name="information-circle" size={18} color={C.primary} />
-          <Text style={fb.explainTxt}>EXPLICATION</Text>
+          <Text style={fb.explainTxt}>{t("exercises.explanation")}</Text>
         </TouchableOpacity>
       )}
 
@@ -253,7 +255,7 @@ const FeedbackBanner = ({ correct, correctAnswer, onNext }) => {
         style={[fb.continueBtn, correct ? fb.continueBtnGreen : fb.continueBtnRed]}
         activeOpacity={0.88}
       >
-        <Text style={fb.continueTxt}>CONTINUER</Text>
+        <Text style={fb.continueTxt}>{t("common.continue")}</Text>
         <Ionicons name="arrow-forward" size={18} color="#FFF" />
       </TouchableOpacity>
     </Animated.View>
@@ -265,6 +267,7 @@ const FeedbackBanner = ({ correct, correctAnswer, onNext }) => {
    Sélectionne → VÉRIFIER → Feedback
    ════════════════════════════════════════════════════════════════ */
 const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
+  const { t } = useTranslation();
   const [sel, setSel]           = useState(null);
   const [feedback, setFeedback] = useState(null);
   const scrollRef               = useRef(null);
@@ -300,7 +303,7 @@ const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
     <Animated.View style={[{ flex: 1 }, { transform: [{ translateX: shakeX }] }]}>
       <ScrollView ref={scrollRef} contentContainerStyle={iq.scroll} showsVerticalScrollIndicator={false}>
 
-        <Text style={iq.title}>Sélectionne l'image pour :</Text>
+        <Text style={iq.title}>{t("exercises.pickImageFor")}</Text>
 
         {/* Mot Duala + bouton audio */}
         <View style={iq.wordRow}>
@@ -372,7 +375,7 @@ const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
             disabled={!sel}
             activeOpacity={0.85}
           >
-            <Text style={footer.verifyTxt}>VÉRIFIER</Text>
+            <Text style={footer.verifyTxt}>{t("common.verify")}</Text>
             <Ionicons name="arrow-forward" size={18} color="#FFF" />
           </TouchableOpacity>
         </View>
@@ -391,6 +394,7 @@ const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
    TYPE 2 — TEXT QCM
    ════════════════════════════════════════════════════════════════ */
 const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
+  const { t } = useTranslation();
   const [sel, setSel]           = useState(null);
   const [feedback, setFeedback] = useState(null);
   const scrollRef               = useRef(null);
@@ -436,7 +440,7 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
     <Animated.View style={[{ flex: 1 }, { transform: [{ translateX: shakeX }] }]}>
       <ScrollView ref={scrollRef} contentContainerStyle={qx.scroll} showsVerticalScrollIndicator={false}>
 
-        <Text style={qx.title}>Comment dit-on ce mot en {langName} ?</Text>
+        <Text style={qx.title}>{t("exercises.howToSayIn", { lang: langName })}</Text>
 
         {/* Mot FR + audio */}
         <View style={qx.wordRow}>
@@ -488,7 +492,7 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
         <View style={tipS.card}>
           <View style={tipS.row}>
             <Ionicons name="bulb" size={16} color={C.orange} />
-            <Text style={tipS.title}>Le saviez-vous ?</Text>
+            <Text style={tipS.title}>{t("common.didYouKnow")}</Text>
           </View>
           <Text style={tipS.body}>
             En {langName},{" "}
@@ -508,7 +512,7 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
             disabled={!sel}
             activeOpacity={0.85}
           >
-            <Text style={footer.verifyTxt}>VÉRIFIER</Text>
+            <Text style={footer.verifyTxt}>{t("common.verify")}</Text>
             <Ionicons name="arrow-forward" size={18} color="#FFF" />
           </TouchableOpacity>
         </View>
@@ -528,6 +532,7 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
    Feedback haptic immédiat à chaque paire (style Duolingo)
    ════════════════════════════════════════════════════════════════ */
 const MatchScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
+  const { t } = useTranslation();
   const [leftSel, setLeftSel]   = useState(null);
   const [matched, setMatched]   = useState({});
   const [wrongFlash, setWrong]  = useState(null);
@@ -573,8 +578,8 @@ const MatchScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={mx.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={mx.title}>Fais les paires</Text>
-        <Text style={mx.sub}>Associe le français au {langName}.</Text>
+        <Text style={mx.title}>{t("exercises.matchingPairs")}</Text>
+        <Text style={mx.sub}>{t("exercises.matchFrToLang", { lang: langName })}</Text>
 
         <View style={mx.columns}>
           {/* Gauche — FR */}
@@ -641,7 +646,7 @@ const MatchScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
           disabled={!done}
           activeOpacity={0.85}
         >
-          <Text style={footer.verifyTxt}>CONTINUER</Text>
+          <Text style={footer.verifyTxt}>{t("common.continue")}</Text>
           <Ionicons name="arrow-forward" size={20} color="#FFF" />
         </TouchableOpacity>
       </View>
@@ -654,6 +659,7 @@ const MatchScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
    Clavier natif + barre de caractères spéciaux Duala
    ════════════════════════════════════════════════════════════════ */
 const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
+  const { t } = useTranslation();
   const [typed, setTyped]       = useState("");
   const [feedback, setFeedback] = useState(null);
   const inputRef                = useRef(null);
@@ -700,7 +706,7 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
         showsVerticalScrollIndicator={false}
       >
         {/* Titre */}
-        <Text style={wx.title}>Traduisez ce mot en {langName}</Text>
+        <Text style={wx.title}>{t("exercises.translateTo", { lang: langName })}</Text>
 
         {/* Carte mot + audio */}
         <View style={[wx.hintCard, SHADOW]}>
@@ -708,7 +714,7 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
             <Ionicons name="chatbubble-ellipses" size={22} color={C.primary} />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={wx.hintLabel}>Comment dit-on…</Text>
+            <Text style={wx.hintLabel}>{t("exercises.howToSay")}</Text>
             <Text style={wx.hintWord}>"{q.target.title}"</Text>
           </View>
           <AudioBtn url={q.target.audioUrl} size={22} />
@@ -732,7 +738,7 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
             autoCapitalize="none"
             autoCorrect={false}
             spellCheck={false}
-            placeholder="Tapez la traduction…"
+            placeholder={t("exercises.typeTranslation")}
             placeholderTextColor={C.textFaint}
             editable={!feedback}
             returnKeyType="done"
@@ -752,11 +758,10 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
         <View style={tipS.card}>
           <View style={tipS.row}>
             <Ionicons name="information-circle" size={16} color={C.orange} />
-            <Text style={tipS.title}>Astuce</Text>
+            <Text style={tipS.title}>{t("common.tip")}</Text>
           </View>
           <Text style={tipS.body}>
-            Utilise la barre ci-dessous pour insérer les caractères spéciaux du {langName} comme{" "}
-            <Text style={{ fontWeight: "700" }}>ɓ, ɛ, ŋ</Text>.
+            {t("exercises.keyboardInstruction", { lang: langName, chars: "ɓ, ɛ, ŋ" })}
           </Text>
         </View>
 
@@ -795,7 +800,7 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
             disabled={!typed.trim()}
             activeOpacity={0.85}
           >
-            <Text style={footer.verifyTxt}>VÉRIFIER</Text>
+            <Text style={footer.verifyTxt}>{t("common.verify")}</Text>
             <Ionicons name="arrow-forward" size={18} color="#FFF" />
           </TouchableOpacity>
         </View>

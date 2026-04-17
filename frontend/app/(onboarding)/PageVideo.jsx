@@ -38,10 +38,10 @@ const HAS_SEEN_INTRO = "hasSeenIntro";
 const HAS_SELECTED_LANGUAGE = "selectedLanguage";
 
 const VIDEO_BY_LANG = {
-  bassa: "https://example.com/videos/bassa/intro.m3u8",
-  duala: "https://example.com/videos/duala/intro.m3u8",
-  ghomala: "https://example.com/videos/ghomala/intro.m3u8",
-  default: "https://example.com/videos/default/intro.m3u8",
+  bassa: require("../../assets/BassaVideos/video_2026-04-15_13-47-01.mp4"),
+  duala: require("../../assets/DualaVideos/IMG_5666.MOV"),
+  ghomala: require("../../assets/GhomalaVidoes/IMG_5927.MOV"),
+  default: require("../../assets/DualaVideos/IMG_5666.MOV"),
 };
 
 const { width, height } = Dimensions.get("window");
@@ -171,11 +171,12 @@ const persistAndGoHome = async () => {
 
   // ── Get description — ORIGINAL LOGIC ──
   const getDescription = (lang) => {
-    switch ((lang || "").toLowerCase()) {
-      case "bassa": return "Découvrez Mulema en action — Bassa";
-      case "duala": return "Découvrez Mulema en action — Duala";
-      case "ghomala": return "Découvrez Mulema en action — Ghomala";
-      default: return "Découvrez Mulema en action";
+    const l = (lang || "").toLowerCase();
+    switch (l) {
+      case "bassa": return t("onboarding.videoDesc", { lang: "Bassa" });
+      case "duala": return t("onboarding.videoDesc", { lang: "Duala" });
+      case "ghomala": return t("onboarding.videoDesc", { lang: "Ghomala" });
+      default: return t("onboarding.videoDescDefault", "Découvrez Mulema en action");
     }
   };
 
@@ -278,7 +279,7 @@ const persistAndGoHome = async () => {
 
           {/* Continue button */}
           <MButton
-            title="Continuer"
+            title={t("common.continue")}
             onPress={persistAndGoHome}
             // icon="arrow-forward"
             style={{ width: "100%" }}

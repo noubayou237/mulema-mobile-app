@@ -16,6 +16,7 @@ import {
 
 // i18n
 import "../src/i18n";
+import { initializeLanguage } from "../src/i18n";
 
 // Providers
 import { LanguageProvider } from "../src/context/LanguageContext";
@@ -43,7 +44,9 @@ function AuthGate({ children }) {
   // ── Background music (starts once authenticated) ──
   useBackgroundMusic();
 
-  useEffect(() => { loadSession(); }, []);
+  useEffect(() => { 
+    initializeLanguage().then(() => loadSession());
+  }, []);
 
   useEffect(() => {
     if (!isSessionLoaded) return;

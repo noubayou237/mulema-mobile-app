@@ -74,7 +74,7 @@ const StrengthBar = ({ password, t }) => {
     <View style={{ marginTop: Space.sm, marginBottom: Space.xs }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: Space.xs }}>
         <Text style={[Typo.labelSm, { color: Colors.textTertiary, textTransform: "none" }]}>
-          {t("signUp.passwordStrength") || "Force du mot de passe"}
+          {t("signUp.passwordStrength")}
         </Text>
         <Text style={[Typo.labelSm, { color, fontWeight: "700", textTransform: "none" }]}>
           {label}
@@ -106,8 +106,8 @@ const MatchIndicator = ({ password, confirm, t }) => {
   const color = isMatch ? Colors.primary : Colors.error;
   const icon = isMatch ? "checkmark-circle" : "close-circle";
   const text = isMatch
-    ? (t("signUp.validation.passwordsMatch") || "Les mots de passe correspondent")
-    : (t("signUp.validation.passwordsDoNotMatch") || "Les mots de passe ne correspondent pas");
+    ? t("signUp.validation.passwordsMatch")
+    : t("signUp.validation.passwordsDoNotMatch");
 
   return (
     <View style={[styles.matchRow, { backgroundColor: color + "0A" }]}>
@@ -161,7 +161,7 @@ const SignUpScreen = () => {
   // ── Validation — ORIGINAL LOGIC PRESERVED ──
   const validate = () => {
     if (!form.name.trim() || !form.username.trim() || !form.email.trim() || !form.password || !form.confirm)
-      return t("signUp.validation.requiredFields") || "Tous les champs sont requis";
+      return t("signUp.validation.requiredFields");
     if (form.password.length < MIN_PASSWORD)
       return t("signUp.validation.passwordMinLength", { min: MIN_PASSWORD });
     if (form.password !== form.confirm)
@@ -225,7 +225,7 @@ const SignUpScreen = () => {
             <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
               <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
             </TouchableOpacity>
-            <Text style={[Typo.titleMd, { flex: 1, textAlign: "center" }]}>Create Account</Text>
+            <Text style={[Typo.titleMd, { flex: 1, textAlign: "center" }]}>{t("auth.createAccount")}</Text>
             <View style={{ width: 24 }} />
           </View>
 
@@ -242,9 +242,9 @@ const SignUpScreen = () => {
 
           {/* ── Title block ── */}
           <Animated.View style={[s.titleBlock, animStyle(titleAnim, 15)]}>
-            <Text style={Typo.displayMd}>Rejoignez Mulema</Text>
+            <Text style={Typo.displayMd}>{t("signUp.joinAdventure")}</Text>
             <Text style={[Typo.bodyLg, { textAlign: "center", marginTop: Space.sm }]}>
-              Commencez votre voyage culturel{"\n"}aujourd'hui.
+              {t("signUp.subtitle")}
             </Text>
           </Animated.View>
 
@@ -253,7 +253,7 @@ const SignUpScreen = () => {
 
             {/* Nom Complet */}
             <MInput
-              label={t("Name") || "Nom Complet"}
+              label={t("profile.name")}
               value={form.name}
               onChangeText={onChange("name")}
               placeholder="John Doe"
@@ -262,7 +262,7 @@ const SignUpScreen = () => {
 
             {/* Pseudo / Nom d'utilisateur */}
             <MInput
-              label="Pseudo / Nom d'utilisateur"
+              label={t("signUp.usernameLabel")}
               value={form.username}
               onChangeText={onChange("username")}
               placeholder="@monpseudo"
@@ -272,17 +272,17 @@ const SignUpScreen = () => {
 
             {/* Adresse Email */}
             <MInput
-              label={t("signUp.emailLabel") || "Adresse Email"}
+              label={t("signUp.emailLabel")}
               value={form.email}
               onChangeText={onChange("email")}
-              placeholder={t("signUp.emailPlaceholder") || "nom@exemple.com"}
+              placeholder={t("signUp.emailPlaceholder")}
               keyboardType="email-address"
               autoCapitalize="none"
             />
 
             {/* Mot de passe */}
             <MInput
-              label={t("signUp.passwordLabel") || "Mot de passe"}
+              label={t("signUp.passwordLabel")}
               value={form.password}
               onChangeText={onChange("password")}
               placeholder="••••••••"
@@ -294,7 +294,7 @@ const SignUpScreen = () => {
 
             {/* Confirmer le mot de passe */}
             <MInput
-              label={t("signUp.confirmPasswordLabel") || "Confirmer le mot de passe"}
+              label={t("signUp.confirmPasswordLabel")}
               value={form.confirm}
               onChangeText={onChange("confirm")}
               placeholder="••••••••"
@@ -306,7 +306,7 @@ const SignUpScreen = () => {
 
             {/* CTA Button */}
             <MButton
-              title={t("signUp.signUpButton") || "Créer mon compte"}
+              title={t("signUp.signUpButton")}
               onPress={handleSignUp}
               loading={loading}
               disabled={loading}
@@ -317,8 +317,8 @@ const SignUpScreen = () => {
           {/* ── Sign in link ── */}
           <Animated.View style={animStyle(footerAnim, 10)}>
             <MLinkText
-              text={t("signUp.alreadyAccount") || "Vous avez déjà un compte ?"}
-              linkText={t("signUp.signInLink") || "Se connecter"}
+              text={t("signUp.alreadyAccount")}
+              linkText={t("signUp.signInLink")}
               onPress={() => router.replace("/(auth)/sign-in")}
             />
           </Animated.View>
@@ -328,10 +328,9 @@ const SignUpScreen = () => {
           {/* ── Terms ── */}
           <Animated.View style={[{ marginTop: Space.xl, paddingHorizontal: Space.lg }, animStyle(footerAnim, 5)]}>
             <Text style={[Typo.bodySm, { textAlign: "center", lineHeight: 18 }]}>
-              En créant un compte, tu acceptes nos{" "}
-              <Text style={{ color: Colors.primary, fontWeight: "600" }}>Conditions d'utilisation</Text>
-              {" "}et notre{" "}
-              <Text style={{ color: Colors.primary, fontWeight: "600" }}>Politique de confidentialité</Text>
+              {t("signUp.terms")}{" "}
+              <Text style={{ color: Colors.primary, fontWeight: "600" }}>{t("signUp.conditions")}</Text>
+              {" "}{t("signUp.or")}{" "}{t("signUp.privacy")}
             </Text>
           </Animated.View>
 

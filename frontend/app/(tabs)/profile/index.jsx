@@ -24,13 +24,13 @@ import { useDashboardStore } from "../../../src/stores/useDashboardStore";
 
 const { width } = Dimensions.get("window");
 const STAT_W = (width - Space["2xl"] * 2 - Space.md) / 2;
-const DAYS = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"];
 
 /* ══════════════════════════════════════════════════════════════ */
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const DAYS = t("common.daysShort", { defaultValue: "LUN,MAR,MER,JEU,VEN,SAM,DIM" }).split(",");
   const { user } = useAuthStore();
   const { data: dash, fetchDashboard } = useDashboardStore();
 
@@ -126,10 +126,10 @@ export default function ProfileScreen() {
               <Text style={[Typo.labelSm, { color: Colors.onPrimary }]}>{t("stats.dayStreak", "SÉRIE ACTUELLE").toUpperCase()}</Text>
               <View style={{ flexDirection: "row", alignItems: "baseline", marginTop: Space.sm }}>
                 <Text style={s.streakNumber}>{streak}</Text>
-                <Text style={[Typo.titleLg, { color: Colors.onPrimary, marginLeft: Space.sm }]}>jours</Text>
+                <Text style={[Typo.titleLg, { color: Colors.onPrimary, marginLeft: Space.sm }]}>{t("common.days")}</Text>
               </View>
               <Text style={[Typo.bodyMd, { color: Colors.onPrimary + "CC", marginTop: Space.sm, fontStyle: "italic" }]}>
-                {streak >= 7 ? t("stats.streakGood", "Vous êtes en feu ! Continuez comme ça.") : t("stats.streakKeepGoing", "Continuez votre série !")}
+                {streak >= 7 ? t("stats.streakGood") : t("stats.streakKeepGoing")}
               </Text>
             </View>
             <Ionicons name="flame" size={56} color={Colors.onPrimary + "40"} />

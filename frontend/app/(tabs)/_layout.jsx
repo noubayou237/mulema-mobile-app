@@ -1,13 +1,15 @@
 import { Platform, Text, View } from "react-native";
 import { Tabs } from "expo-router";
 import { Colors } from "../../src/theme/tokens";
+import { useTranslation } from "react-i18next";
 
 /* Icônes emoji enfantines (Duolingo-style) */
 const TAB_ICONS = {
-  home:      { active: "🏡", inactive: "🏠" },
-  lessons:   { active: "🗺️", inactive: "📖" },
+  home: { active: "🏡", inactive: "🏠" },
+  lessons: { active: "🗺️", inactive: "📖" },
   community: { active: "🏆", inactive: "🥈" },
-  profile:   { active: "🦸", inactive: "🙂" },
+  profile: { active: "🦸", inactive: "👤" },
+
 };
 
 const TabIcon = ({ name, focused, color }) => {
@@ -18,6 +20,7 @@ const TabIcon = ({ name, focused, color }) => {
         fontSize: focused ? 26 : 22,
         lineHeight: focused ? 30 : 26,
         transform: [{ scale: focused ? 1.1 : 1 }],
+        opacity: focused ? 1 : 0.7,
       }}>
         {focused ? icons.active : icons.inactive}
       </Text>
@@ -26,6 +29,8 @@ const TabIcon = ({ name, focused, color }) => {
 };
 
 export default function TabsLayout() {
+  const { t } = useTranslation();
+
   return (
     <Tabs
       screenOptions={{
@@ -40,9 +45,9 @@ export default function TabsLayout() {
           shadowOpacity: 0.08,
           shadowRadius: 12,
           shadowOffset: { width: 0, height: -4 },
-          height: Platform.OS === "ios" ? 90 : 70,
-          paddingBottom: Platform.OS === "ios" ? 28 : 10,
-          paddingTop: 8,
+          height: Platform.OS === "ios" ? 100 : 80,
+          paddingBottom: Platform.OS === "ios" ? 36 : 14,
+          paddingTop: 10,
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
         },
@@ -55,7 +60,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: "Accueil",
+          title: t("nav.home"),
           tabBarIcon: ({ focused, color }) => (
             <TabIcon name="home" focused={focused} color={color} />
           ),
@@ -64,7 +69,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="lessons"
         options={{
-          title: "Aventure",
+          title: t("nav.lessons"),
           tabBarIcon: ({ focused, color }) => (
             <TabIcon name="lessons" focused={focused} color={color} />
           ),
@@ -73,7 +78,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="community"
         options={{
-          title: "Classement",
+          title: t("nav.community"),
           tabBarIcon: ({ focused, color }) => (
             <TabIcon name="community" focused={focused} color={color} />
           ),
@@ -82,7 +87,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profil",
+          title: t("nav.profile"),
           tabBarIcon: ({ focused, color }) => (
             <TabIcon name="profile" focused={focused} color={color} />
           ),

@@ -122,7 +122,7 @@ const SignInScreen = () => {
             <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
               <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
             </TouchableOpacity>
-            <Text style={[Typo.titleMd, { flex: 1, textAlign: "center" }]}>Connexion</Text>
+            <Text style={[Typo.titleMd, { flex: 1, textAlign: "center" }]}>{t("auth.signIn")}</Text>
             <View style={{ width: 24 }} />
           </View>
 
@@ -139,9 +139,9 @@ const SignInScreen = () => {
 
           {/* ── Title block ── */}
           <Animated.View style={[s.titleBlock, animStyle(titleAnim, 15)]}>
-            <Text style={Typo.displayMd}>Bienvenue</Text>
+            <Text style={Typo.displayMd}>{t("auth.welcomeBack")}</Text>
             <Text style={[Typo.bodyLg, { textAlign: "center", marginTop: Space.sm }]}>
-              Continuez votre voyage culturel avec Mulema
+              {t("signIn.continueAdventure")}
             </Text>
           </Animated.View>
 
@@ -150,20 +150,20 @@ const SignInScreen = () => {
 
             {/* Email */}
             <MInput
-              label={t("signIn.emailLabel") || "Email ou Nom d'utilisateur"}
+              label={t("signIn.emailLabel")}
               value={email}
               onChangeText={setEmail}
-              placeholder={t("signIn.emailPlaceholder") || "nom@exemple.com"}
+              placeholder={t("signIn.emailPlaceholder")}
               keyboardType="email-address"
               autoCapitalize="none"
             />
 
             {/* Password — label row with "Mot de passe oublié ?" */}
             <View style={s.passwordLabelRow}>
-              <Text style={[Typo.labelLg]}>{t("signIn.passwordLabel") || "Mot de passe"}</Text>
+              <Text style={[Typo.labelLg]}>{t("signIn.passwordLabel")}</Text>
               <TouchableOpacity onPress={() => router.push("/forgotpass")} activeOpacity={0.7}>
                 <Text style={[Typo.labelMd, { color: Colors.primary }]}>
-                  {t("signIn.forgotPassword") || "Mot de passe oublié ?"}
+                  {t("signIn.forgotPassword")}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -178,7 +178,7 @@ const SignInScreen = () => {
 
             {/* Sign in button */}
             <MButton
-              title="Se connecter"
+              title={t("signIn.signInButton")}
               onPress={handleSignIn}
               loading={loading}
               disabled={loading}
@@ -191,8 +191,8 @@ const SignInScreen = () => {
           {/* ── Sign up link ── */}
           <Animated.View style={animStyle(footerAnim, 10)}>
             <MLinkText
-              text={t("signIn.noAccount") || "Pas encore de compte ?"}
-              linkText={t("signIn.signUpFree") || "S'inscrire"}
+              text={t("signIn.noAccount")}
+              linkText={t("signIn.signUpFree")}
               onPress={() => router.push("/sign-up")}
             />
           </Animated.View>

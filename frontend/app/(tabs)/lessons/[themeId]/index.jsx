@@ -19,6 +19,7 @@ import { Shadow } from "../../../../src/theme/tokens";
 import { useThemeStore }    from "../../../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../../../src/stores/useDashboardStore";
 import { useLanguageStore }  from "../../../../src/stores/useLanguageStore";
+import { useTranslation } from "react-i18next";
 
 const { width: SW } = Dimensions.get("window");
 
@@ -266,7 +267,7 @@ const ExerciseNode = ({ onPress, lt }) => {
       {/* Séparateur */}
       <View style={[ex.divider, { borderColor: lt.accent + "50" }]}>
         <View style={[ex.divLine, { backgroundColor: lt.accent + "30" }]} />
-        <Text style={[ex.divTxt, { color: lt.accent }]}>⚡ DÉFI FINAL</Text>
+        <Text style={[ex.divTxt, { color: lt.accent }]}>{t("lessons.finalChallenge")}</Text>
         <View style={[ex.divLine, { backgroundColor: lt.accent + "30" }]} />
       </View>
 
@@ -283,15 +284,15 @@ const ExerciseNode = ({ onPress, lt }) => {
             style={ex.btn}
           >
             <Text style={ex.emoji}>🎯</Text>
-            <Text style={[ex.title, { color: "#FFF" }]}>Exercices</Text>
-            <Text style={ex.sub}>15 questions · 3 types</Text>
+            <Text style={[ex.title, { color: "#FFF" }]}>{t("nav.exercises")}</Text>
+            <Text style={ex.sub}>{t("lessons.exerciseCount", { count: 15, types: 3 })}</Text>
           </LinearGradient>
         </TouchableOpacity>
       </Animated.View>
 
       {/* Badge XP potentiel */}
       <View style={[ex.xpBadge, { backgroundColor: lt.accent + "20", borderColor: lt.accent + "50" }]}>
-        <Text style={[ex.xpTxt, { color: lt.accent }]}>+100 XP</Text>
+        <Text style={[ex.xpTxt, { color: lt.accent }]}>{t("lessons.xpPotential", { points: 100 })}</Text>
       </View>
     </View>
   );
@@ -303,6 +304,7 @@ const ExerciseNode = ({ onPress, lt }) => {
 export default function ThemeDetailScreen() {
   const router      = useRouter();
   const { themeId } = useLocalSearchParams();
+  const { t }       = useTranslation();
 
   const { fetchLessons, getThemeById, lessons, lessonsLoading, clearTheme } = useThemeStore();
   const { data: dash } = useDashboardStore();
@@ -316,7 +318,7 @@ export default function ThemeDetailScreen() {
   }, [themeId]);
 
   const theme     = getThemeById(themeId);
-  const themeName = theme?.name_fr ?? theme?.name ?? "Thème";
+  const themeName = theme?.name_fr ?? theme?.name ?? t("common.theme");
   const themeCode = (theme?.code ?? "").toLowerCase();
   const emoji     = getEmoji(themeCode);
 
@@ -369,13 +371,18 @@ export default function ThemeDetailScreen() {
           <View style={[s.blob, { backgroundColor: lt.accent + "12", top: -30, right: -40 }]} />
 
           {/* Label unité */}
-          <Text style={[s.unitLabel, { color: lt.accent }]}>{lt.unitLabel}</Text>
+          <Text style={[s.unitLabel, { color: lt.accent }]}>
+            {activeLanguage?.name?.toLowerCase().includes("duala") ? t("lessons.universDuala") :
+             activeLanguage?.name?.toLowerCase().includes("ghomala") ? t("lessons.universGhomala") :
+             activeLanguage?.name?.toLowerCase().includes("bassa") ? t("lessons.universBassa") :
+             t("home.levels.level")}
+          </Text>
 
           {/* Emoji + titre */}
           <Text style={s.headerEmoji}>{emoji}</Text>
           <Text style={s.headerTitle}>{themeName}</Text>
           <Text style={s.headerSub}>
-            {totalL} leçons · {pct}% maîtrisé
+            {t("lessons.masteryStats", { count: totalL, percent: pct })}
           </Text>
 
           {/* Barre de progression */}
@@ -387,17 +394,17 @@ export default function ThemeDetailScreen() {
           <View style={s.statsRow}>
             <View style={s.statItem}>
               <Text style={[s.statNum, { color: lt.accent }]}>{completed}</Text>
-              <Text style={s.statLbl}>complétées</Text>
+              <Text style={s.statLbl}>{t("lessons.completed")}</Text>
             </View>
             <View style={[s.statDivider, { backgroundColor: lt.accent + "30" }]} />
             <View style={s.statItem}>
               <Text style={[s.statNum, { color: lt.accent }]}>{totalL - completed}</Text>
-              <Text style={s.statLbl}>restantes</Text>
+              <Text style={s.statLbl}>{t("lessons.remainingNodes")}</Text>
             </View>
             <View style={[s.statDivider, { backgroundColor: lt.accent + "30" }]} />
             <View style={s.statItem}>
               <Text style={[s.statNum, { color: lt.accent }]}>{pct}%</Text>
-              <Text style={s.statLbl}>maîtrise</Text>
+              <Text style={s.statLbl}>{t("lessons.mastery")}</Text>
             </View>
           </View>
         </LinearGradient>
@@ -408,7 +415,7 @@ export default function ThemeDetailScreen() {
         ) : lessons.length === 0 ? (
           <View style={s.empty}>
             <Text style={{ fontSize: 48 }}>📭</Text>
-            <Text style={[s.emptyTxt, { color: lt.accent + "80" }]}>Aucune leçon disponible.</Text>
+            <Text style={[s.emptyTxt, { color: lt.accent + "80" }]}>{t("lessons.noLessons")}</Text>
           </View>
         ) : (
           <View style={s.path}>

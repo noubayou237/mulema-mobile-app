@@ -13,6 +13,7 @@ import {
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useTranslation } from "react-i18next";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 import { MButton, MCulturalCard } from "../../src/components/ui/MComponents";
@@ -28,6 +29,7 @@ import { useAuthStore } from "../../src/stores/useAuthStore";
 
 /* ── Language Row ── */
 const LanguageRow = ({ language, isActive, onPress }) => {
+  const { t } = useTranslation();
   // Placeholder progress — will come from backend per-language stats
   const progress = Math.floor(Math.random() * 100);
 
@@ -44,7 +46,7 @@ const LanguageRow = ({ language, isActive, onPress }) => {
 
       <View style={{ flex: 1, marginLeft: Space.lg }}>
         <Text style={Typo.titleMd}>{language.name}</Text>
-        <Text style={[Typo.bodySm, { marginTop: 2 }]}>{progress}% complété</Text>
+        <Text style={[Typo.bodySm, { marginTop: 2 }]}>{t("common.percentCompleted", { percent: progress })}</Text>
       </View>
 
       {/* Mini progress bar */}
@@ -71,6 +73,7 @@ const getFlag = (code) => {
 
 export default function ChangeLanguageScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const { activeLanguage, languages, isLoading, fetchLanguages, setActiveLanguage } = useLanguageStore();
 
@@ -101,9 +104,9 @@ export default function ChangeLanguageScreen() {
         </View>
 
         {/* ── Title ── */}
-        <Text style={Typo.displayMd}>Mes Langues</Text>
+        <Text style={Typo.displayMd}>{t("settingsModal.myLanguages")}</Text>
         <Text style={[Typo.bodyLg, { marginTop: Space.sm, marginBottom: Space["2xl"] }]}>
-          Gérez votre parcours d'apprentissage
+          {t("settingsModal.manageLearning")}
         </Text>
 
         {/* ── Active Session Card ── */}
@@ -115,7 +118,7 @@ export default function ChangeLanguageScreen() {
           >
             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: Space.lg }}>
               <View style={s.activeDot} />
-              <Text style={[Typo.labelSm, { color: Colors.onPrimary, marginLeft: Space.sm }]}>SESSION ACTIVE</Text>
+              <Text style={[Typo.labelSm, { color: Colors.onPrimary, marginLeft: Space.sm }]}>{t("settingsModal.activeSession")}</Text>
             </View>
 
             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: Space.lg }}>
@@ -139,13 +142,13 @@ export default function ChangeLanguageScreen() {
               activeOpacity={0.8}
               style={s.continueBtn}
             >
-              <Text style={[Typo.titleSm, { color: Colors.primary }]}>Continuer</Text>
+              <Text style={[Typo.titleSm, { color: Colors.primary }]}>{t("common.continue")}</Text>
             </TouchableOpacity>
           </LinearGradient>
         )}
 
         {/* ── Autres Langues ── */}
-        <Text style={[Typo.labelSm, { marginTop: Space["3xl"], marginBottom: Space.lg }]}>AUTRES LANGUES</Text>
+        <Text style={[Typo.labelSm, { marginTop: Space["3xl"], marginBottom: Space.lg }]}>{t("settingsModal.otherLanguages")}</Text>
 
         {isLoading ? (
           <ActivityIndicator size="large" color={Colors.primary} style={{ marginVertical: Space["3xl"] }} />
@@ -166,14 +169,14 @@ export default function ChangeLanguageScreen() {
             <Ionicons name="add" size={28} color={Colors.primary} />
           </View>
           <Text style={[Typo.titleSm, { color: Colors.primary, marginTop: Space.md }]}>
-            Explorer de nouvelles langues
+            {t("settingsModal.exploreLanguages")}
           </Text>
         </TouchableOpacity>
 
         {/* ── Cultural Card ── */}
         <View style={{ marginTop: Space["2xl"] }}>
           <MCulturalCard
-            body={"Changer de langue n'efface jamais votre progression dans vos autres sessions !"}
+            body={t("settingsModal.languageChangeWarning")}
           />
         </View>
 

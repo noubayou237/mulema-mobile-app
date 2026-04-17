@@ -74,6 +74,7 @@ const EX_ICONS = {
    THEME CARD (Leçons tab)
    ════════════════════════════════════════════════════════════════ */
 const ThemeCard = ({ theme, index, onPress }) => {
+  const { t } = useTranslation();
   const fade = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(20)).current;
 
@@ -122,7 +123,7 @@ const ThemeCard = ({ theme, index, onPress }) => {
         </View>
 
         <Text style={[s.cardName, locked && { color: FAINT }]} numberOfLines={1}>
-          {theme.name ?? "—"}
+          {t("common.theLanguage") === "en" && theme.name_en ? theme.name_en : theme.name ?? "—"}
         </Text>
         {theme.nameLocal ? (
           <Text style={[s.cardLocal, locked && { color: FAINT }]} numberOfLines={1}>
@@ -131,8 +132,8 @@ const ThemeCard = ({ theme, index, onPress }) => {
         ) : null}
 
         {locked
-          ? <Text style={s.lockMsg} numberOfLines={2}>{theme.lockHint ?? "Verrouillé"}</Text>
-          : <Text style={s.cardPct}>{pct}% Complété</Text>
+          ? <Text style={s.lockMsg} numberOfLines={2}>{theme.lockHint || t("lessons.locked")}</Text>
+          : <Text style={s.cardPct}>{t("lessons.percentCompleted", { percent: pct })}</Text>
         }
       </TouchableOpacity>
     </Animated.View>
@@ -143,6 +144,7 @@ const ThemeCard = ({ theme, index, onPress }) => {
    EXERCISE CARD (Exercices tab)
    ════════════════════════════════════════════════════════════════ */
 const ExerciseThemeCard = ({ theme, index, onPress, isCompleted, hasReward }) => {
+  const { t } = useTranslation();
   const fade = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(20)).current;
 
@@ -177,14 +179,14 @@ const ExerciseThemeCard = ({ theme, index, onPress, isCompleted, hasReward }) =>
           </View>
           <View style={{ flex: 1, marginLeft: 12 }}>
             <Text style={[s.exCardName, locked && { color: FAINT }]} numberOfLines={1}>
-              {theme.name ?? "—"}
+              {t("common.theLanguage") === "en" && theme.name_en ? theme.name_en : theme.name ?? "—"}
             </Text>
             <Text style={[s.exCardSub, locked && { color: FAINT }]}>
               {locked
-                ? (theme.lockHint ?? "Terminez le thème précédent")
+                ? (theme.lockHint || t("lessons.completeToUnlock"))
                 : allDone
-                  ? "✅ Tous les exercices terminés"
-                  : `${exercisesDone}/${exercisesTotal} exercices`
+                  ? t("exercises.allDone")
+                  : t("exercises.count", { count: exercisesDone, total: exercisesTotal })
               }
             </Text>
           </View>
@@ -408,7 +410,7 @@ export default function ThemesScreen() {
           <View style={s.streakPill}>
             <Text style={s.streakIcon}>✦</Text>
             <Text style={s.streakTxt}>
-              SÉRIE DE {dash?.streakDays ?? 0} JOUR{(dash?.streakDays ?? 0) !== 1 ? "S" : ""}
+              {t("stats.streakDaysShort", { count: dash?.streakDays || 0 })}
             </Text>
           </View>
         </View>
@@ -420,7 +422,7 @@ export default function ThemesScreen() {
           <View style={s.empty}>
             <Ionicons name="book-outline" size={44} color={FAINT} />
             <Text style={s.emptyTxt}>
-              {t("exercises.noThemes", "Aucun thème disponible.\nTire vers le bas pour actualiser.")}
+              {t("errors.noThemesRefresh")}
             </Text>
           </View>
         ) : activeTab === 0 ? (
@@ -428,7 +430,7 @@ export default function ThemesScreen() {
           <View>
             <View style={s.sectionHeader}>
               <Ionicons name="book" size={18} color={RED} />
-              <Text style={s.sectionTitle}>{t("lessons.title", "Leçons disponibles")}</Text>
+              <Text style={s.sectionTitle}>{t("lessons.available")}</Text>
             </View>
             <View style={s.grid}>
               {themes.map((theme, idx) => (
@@ -446,10 +448,10 @@ export default function ThemesScreen() {
           <View>
             <View style={s.sectionHeader}>
               <Ionicons name="barbell" size={18} color={RED} />
-              <Text style={s.sectionTitle}>{t("exercises.title", "Exercices par thème")}</Text>
+              <Text style={s.sectionTitle}>{t("exercises.byTheme")}</Text>
             </View>
             <Text style={s.sectionSubtitle}>
-              {t("exercises.introText", "Complétez tous les exercices d'un thème pour débloquer une vidéo culturelle 🎬")}
+              {t("exercises.rewardHint")}
             </Text>
             {themes.map((theme, idx) => {
               const allDone = (theme.exercisesCompleted ?? 0) >= (theme.exercisesCount ?? 3) && (theme.exercisesCount ?? 3) > 0;

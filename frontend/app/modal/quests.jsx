@@ -14,6 +14,7 @@ import {
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useTranslation } from "react-i18next";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 import { MCulturalCard } from "../../src/components/ui/MComponents";
@@ -21,6 +22,7 @@ import { useDashboardStore } from "../../src/stores/useDashboardStore";
 
 /* ── Quest Card ── */
 const QuestCard = ({ icon, iconBg, title, subtitle, xp, current, total }) => {
+  const { t } = useTranslation();
   const pct = total > 0 ? current / total : 0;
   const barAnim = useRef(new Animated.Value(0)).current;
 
@@ -46,7 +48,7 @@ const QuestCard = ({ icon, iconBg, title, subtitle, xp, current, total }) => {
       </View>
       <View style={{ marginTop: Space.lg }}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: Space.sm }}>
-          <Text style={[Typo.labelSm, { color: Colors.primary }]}>PROGRESSION</Text>
+          <Text style={[Typo.labelSm, { color: Colors.primary }]}>{t("common.progress")}</Text>
           <Text style={[Typo.labelLg, { color: Colors.onSurface }]}>{current} / {total}</Text>
         </View>
         <View style={s.progressTrack}>
@@ -61,12 +63,13 @@ const QuestCard = ({ icon, iconBg, title, subtitle, xp, current, total }) => {
 
 export default function QuestsScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { data: dash } = useDashboardStore();
 
   const quests = [
-    { icon: "book", iconBg: Colors.primary + "12", title: "Apprendre 5 nouveaux mots", subtitle: "Continuez votre série d'apprentissage", xp: 10, current: 3, total: 5 },
-    { icon: "school", iconBg: Colors.secondaryContainer + "30", title: "Terminer 2 leçons", subtitle: "Maîtrisez les concepts fondamentaux", xp: 20, current: 1, total: 2 },
-    { icon: "time", iconBg: Colors.primary + "12", title: "Pratiquer 10 minutes", subtitle: "La régularité est la clé du succès", xp: 15, current: 4, total: 10 },
+    { icon: "book", iconBg: Colors.primary + "12", title: t("quests.learnWords"), subtitle: t("quests.learnWordsSub"), xp: 10, current: 3, total: 5 },
+    { icon: "school", iconBg: Colors.secondaryContainer + "30", title: t("quests.finishLessons"), subtitle: t("quests.finishLessonsSub"), xp: 20, current: 1, total: 2 },
+    { icon: "time", iconBg: Colors.primary + "12", title: t("quests.practiceTime"), subtitle: t("quests.practiceTimeSub"), xp: 15, current: 4, total: 10 },
   ];
 
   const totalDone = quests.reduce((sum, q) => sum + (q.current >= q.total ? 1 : 0), 0);
@@ -83,7 +86,7 @@ export default function QuestsScreen() {
           <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
           </TouchableOpacity>
-          <Text style={[Typo.titleLg, { marginLeft: Space.md, flex: 1 }]}>Quêtes du jour</Text>
+          <Text style={[Typo.titleLg, { marginLeft: Space.md, flex: 1 }]}>{t("quests.title")}</Text>
           <View style={s.streakBadge}>
             <Ionicons name="flame" size={16} color={Colors.secondary} />
             <Text style={[Typo.labelLg, { marginLeft: 4 }]}>{dash?.streakDays || 0}</Text>
@@ -97,11 +100,11 @@ export default function QuestsScreen() {
           style={s.dailyBanner}
         >
           <View style={{ flex: 1 }}>
-            <Text style={[Typo.labelSm, { color: Colors.onPrimary }]}>PROGRESSION DU JOUR</Text>
+            <Text style={[Typo.labelSm, { color: Colors.onPrimary }]}>{t("quests.dailyProgress")}</Text>
             <Text style={s.dailyPct}>{dailyPct}%</Text>
             <View style={s.dailyHint}>
               <Text style={[Typo.bodySm, { color: Colors.onPrimary }]}>
-                Encore {remaining} défi{remaining > 1 ? "s" : ""} pour le coffre mythique !
+                {t("quests.remainingDefis", { count: remaining, plural: remaining > 1 ? "s" : "" })}
               </Text>
             </View>
           </View>
@@ -114,9 +117,9 @@ export default function QuestsScreen() {
 
         {/* ── Défis Quotidiens ── */}
         <View style={s.sectionHead}>
-          <Text style={Typo.headlineMd}>Défis Quotidiens</Text>
+          <Text style={Typo.headlineMd}>{t("quests.challenges")}</Text>
           <View style={s.resetBadge}>
-            <Text style={[Typo.labelSm, { color: Colors.onSurface }]}>RESET EN 14H</Text>
+            <Text style={[Typo.labelSm, { color: Colors.onSurface }]}>{t("quests.resetIn", { hours: 14 })}</Text>
           </View>
         </View>
 
@@ -126,7 +129,7 @@ export default function QuestsScreen() {
 
         <View style={{ marginTop: Space["2xl"] }}>
           <MCulturalCard
-            title="LE SAVIEZ-VOUS ?"
+            title={t("common.didYouKnow")}
             body={'Mulema signifie "Cœur". Dans de nombreuses langues bantoues, l\'apprentissage vient du cœur avant de passer par l\'esprit.'}
           />
         </View>

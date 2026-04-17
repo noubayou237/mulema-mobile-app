@@ -35,24 +35,26 @@ import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 // ── Stores ──
 import { useAuthStore } from "../../src/stores/useAuthStore";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
+import { useTranslation } from "react-i18next";
 // import { useCommunityStore } from "../../src/stores/useCommunityStore";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
 // ── Ligue tiers (inspiré Duolingo) ──
-const LEAGUE_TIERS = [
-  { id: "crevette", name: "Ligue des Crevettes", icon: "🦐", color: "#FF9800", minXP: 0 },
-  { id: "bronze", name: "Ligue Bronze", icon: "🥉", color: "#CD7F32", minXP: 500 },
-  { id: "argent", name: "Ligue Argent", icon: "🥈", color: "#9E9E9E", minXP: 1000 },
-  { id: "or", name: "Ligue Or", icon: "🥇", color: "#FFC107", minXP: 2000 },
-  { id: "diamant", name: "Ligue Diamant", icon: "💎", color: "#00BCD4", minXP: 5000 },
+const getLeagueTiers = (t) => [
+  { id: "crevette", name: t("leagues.shrimp"), icon: "🦐", color: "#FF9800", minXP: 0 },
+  { id: "bronze", name: t("leagues.bronze"), icon: "🥉", color: "#CD7F32", minXP: 500 },
+  { id: "argent", name: t("leagues.silver"), icon: "🥈", color: "#9E9E9E", minXP: 1000 },
+  { id: "or", name: t("leagues.gold"), icon: "🥇", color: "#FFC107", minXP: 2000 },
+  { id: "diamant", name: t("leagues.diamond"), icon: "💎", color: "#00BCD4", minXP: 5000 },
 ];
 
-const getLeagueTier = (xp = 0) => {
-  for (let i = LEAGUE_TIERS.length - 1; i >= 0; i--) {
-    if (xp >= LEAGUE_TIERS[i].minXP) return LEAGUE_TIERS[i];
+const getLeagueTier = (xp = 0, t) => {
+  const tiers = getLeagueTiers(t);
+  for (let i = tiers.length - 1; i >= 0; i--) {
+    if (xp >= tiers[i].minXP) return tiers[i];
   }
-  return LEAGUE_TIERS[0];
+  return tiers[0];
 };
 
 /* ══════════════════════════════════════════════════════════════
@@ -167,10 +169,11 @@ const Podium = ({ top3 = [], leagueColor = "#FF9800" }) => {
    FILTER TABS
    ══════════════════════════════════════════════════════════════ */
 const FilterTabs = ({ active, onChange }) => {
+  const { t } = useTranslation();
   const tabs = [
-    { key: "week", label: "Semaine actuelle" },
-    { key: "month", label: "Ce mois" },
-    { key: "all", label: "Total" },
+    { key: "week", label: t("common.currentWeek") },
+    { key: "month", label: t("common.thisMonth") },
+    { key: "all", label: t("common.total") },
   ];
   return (
     <View style={ft.container}>
@@ -194,16 +197,19 @@ const FilterTabs = ({ active, onChange }) => {
    RANK ROW (joueurs 4+)
    ══════════════════════════════════════════════════════════════ */
 
-const RANK_TAGS = {
-  rising: { label: "Vient de monter", color: Colors.primary },
-  top10: { label: "Top 10% cette semaine", color: "#FF9800" },
-  streak: (days) => ({ label: `Série de ${days} jours`, color: "#E53935" }),
-  newcomer: { label: "Nouveau", color: "#9C27B0" },
-};
+const getRankTags = (t) => ({
+  rising: { label: t("community.ranks.rising"), color: Colors.primary },
+  top10: { label: t("community.ranks.top10"), color: "#FF9800" },
+  streak: (days) => ({ label: t("community.ranks.streak", { count: days }), color: "#E53935" }),
+  newcomer: { label: t("community.ranks.newcomer"), color: "#9C27B0" },
+});
 
 const RankRow = ({ item, isCurrentUser = false }) => {
+  const { t } = useTranslation();
+  const RANK_TAGS = getRankTags(t);
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -250,11 +256,11 @@ const RankRow = ({ item, isCurrentUser = false }) => {
         {/* Name + tag */}
         <View style={rr.nameCol}>
           <Text style={[rr.name, isCurrentUser && { color: "#FFF" }]} numberOfLines={1}>
-            {isCurrentUser ? "C'est vous !" : item.name}
+            {isCurrentUser ? t("community.isYou") : item.name}
           </Text>
           {isCurrentUser ? (
             <Text style={rr.currentSubtitle}>
-              Plus que {item.xpToNextRank || 50} XP pour monter
+              {t("community.xpToNextRank", { xp: item.xpToNextRank || 50 })}
             </Text>
           ) : tag ? (
             <Text style={[rr.tag, { color: tag.color }]}>{tag.label}</Text>
@@ -265,7 +271,7 @@ const RankRow = ({ item, isCurrentUser = false }) => {
         <View style={rr.xpCol}>
           <Text style={[rr.xp, isCurrentUser && { color: "#FFF" }]}>{item.totalXP}</Text>
           <Text style={[rr.xpLabel, isCurrentUser && { color: "rgba(255,255,255,0.7)" }]}>
-            {isCurrentUser ? "VOTRESCORE" : "XP"}
+            {isCurrentUser ? t("community.yourScore") : t("stats.xp", { defaultValue: "XP" })}
           </Text>
         </View>
       </View>
@@ -277,6 +283,7 @@ const RankRow = ({ item, isCurrentUser = false }) => {
    LEAGUE HEADER CARD
    ══════════════════════════════════════════════════════════════ */
 const LeagueHeader = ({ league, timeLeft, onMenuPress, streak, hearts }) => {
+  const { t } = useTranslation();
   const pulseAnim = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     Animated.loop(
@@ -294,7 +301,7 @@ const LeagueHeader = ({ league, timeLeft, onMenuPress, streak, hearts }) => {
         <TouchableOpacity onPress={onMenuPress} activeOpacity={0.7} style={lh.menuBtn}>
           <Ionicons name="menu" size={22} color={Colors.onSurface} />
         </TouchableOpacity>
-        <Text style={lh.pageTitle}>Classement</Text>
+        <Text style={lh.pageTitle}>{t("nav.community")}</Text>
         <View style={lh.navBadges}>
           <View style={lh.badge}>
             <Ionicons name="flame" size={16} color={Colors.secondary} />
@@ -313,12 +320,12 @@ const LeagueHeader = ({ league, timeLeft, onMenuPress, streak, hearts }) => {
       </Animated.Text>
 
       {/* League name */}
-      <Text style={lh.leagueName}>{league?.name || "Ligue des Crevettes"}</Text>
+      <Text style={lh.leagueName}>{league?.name}</Text>
 
       {/* Timer */}
       {timeLeft && (
         <View style={lh.timerRow}>
-          <Text style={lh.timerLabel}>Se termine dans </Text>
+          <Text style={lh.timerLabel}>{t("community.endsIn")}</Text>
           <Text style={[lh.timerValue, { color: league?.color || Colors.secondary }]}>
             {timeLeft}
           </Text>
@@ -346,6 +353,7 @@ const MOCK_RANKING = [
 
 export default function CommunityScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const { activeLanguage } = useLanguageStore();
 
@@ -354,7 +362,7 @@ export default function CommunityScreen() {
   const [currentUserRank, setCurrentUserRank] = useState({
     id: "me",
     rank: 42,
-    name: user?.name || "Vous",
+    name: user?.name || t("community.isYou"),
     totalXP: 310,
     avatar: user?.avatar,
     streakDays: 0,
@@ -374,7 +382,7 @@ export default function CommunityScreen() {
     if (store?.useCommunityStore) {
       // Would use store here
     }
-  } catch (_) {}
+  } catch (_) { }
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -383,7 +391,7 @@ export default function CommunityScreen() {
 
   const top3 = ranking.slice(0, 3);
   const rest = ranking.slice(3);
-  const league = getLeagueTier(currentUserRank.totalXP);
+  const league = getLeagueTier(currentUserRank.totalXP, t);
 
   return (
     <View style={s.root}>
@@ -414,7 +422,7 @@ export default function CommunityScreen() {
 
         {/* ── Filter + Section label ── */}
         <View style={s.filterRow}>
-          <Text style={s.sectionLabel}>LE RESTE DE LA MEUTE</Text>
+          <Text style={s.sectionLabel}>{t("community.otherPlayers")}</Text>
           <FilterTabs active={filter} onChange={setFilter} />
         </View>
 
@@ -451,14 +459,14 @@ export default function CommunityScreen() {
             borderColor="#FFF"
           />
           <View style={cu.textCol}>
-            <Text style={cu.name}>C'est vous !</Text>
+            <Text style={cu.name}>{t("community.isYou")}</Text>
             <Text style={cu.hint}>
-              Plus que {currentUserRank.xpToNextRank} XP pour monter
+              {t("community.xpToNextRank", { xp: currentUserRank.xpToNextRank })}
             </Text>
           </View>
           <View style={cu.xpCol}>
             <Text style={cu.xp}>{currentUserRank.totalXP}</Text>
-            <Text style={cu.xpLabel}>VOTRESCORE</Text>
+            <Text style={cu.xpLabel}>{t("community.yourScore")}</Text>
           </View>
         </View>
       </View>

@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 import { Colors, Space, Radius, Shadow } from "../../../../../src/theme/tokens";
 import { useThemeStore } from "../../../../../src/stores/useThemeStore";
@@ -25,12 +26,12 @@ const getStars = (score) => {
   return 0;
 };
 
-const getMessage = (score) => {
-  if (score >= 90) return { title: "Excellent !", sub: "Tu maîtrises parfaitement ce thème !" };
+const getMessage = (score, t) => {
+  if (score >= 90) return { title: t("exercises.excellent"), sub: t("exercises.progressingFast") };
   if (score >= 70) return { title: "Très bien !", sub: "Continue sur cette lancée, tu progresses vite." };
   if (score >= 50) return { title: "Pas mal !", sub: "Encore quelques révisions et tu vas maîtriser ça." };
   if (score >= 30) return { title: "Courage !", sub: "Revois les leçons et réessaie, tu peux faire mieux !" };
-  return { title: "Recommençons !", sub: "Pas d'inquiétude, la pratique mène à la perfection." };
+  return { title: t("exercises.retry"), sub: t("exercises.progressingFast") }; // Placeholder sub
 };
 
 /* ── Anneau de score animé ─────────────────────────────────── */
@@ -108,6 +109,7 @@ const StarIcon = ({ filled, delay }) => {
    ────────────────────────────────────────────────────────────── */
 export default function ExerciseResults() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { themeId, score: scoreStr, correct: correctStr, total: totalStr } = useLocalSearchParams();
   const { completeTheme } = useThemeStore();
 
@@ -115,7 +117,7 @@ export default function ExerciseResults() {
   const correct = parseInt(correctStr ?? "0", 10);
   const total   = parseInt(totalStr  ?? "15", 10);
   const stars   = getStars(score);
-  const msg     = getMessage(score);
+  const msg     = getMessage(score, t);
   const success = score >= 60;
 
   /* Compléter le thème + débloquer le suivant si score suffisant */
@@ -191,17 +193,17 @@ export default function ExerciseResults() {
           <View style={[s.statCard, Shadow.sm]}>
             <Ionicons name="checkmark-circle" size={24} color="#2ECC71" />
             <Text style={s.statNum}>{correct}</Text>
-            <Text style={s.statLabel}>Correctes</Text>
+            <Text style={s.statLabel}>{t("exercises.correct_label")}</Text>
           </View>
           <View style={[s.statCard, Shadow.sm]}>
             <Ionicons name="close-circle" size={24} color={Colors.error} />
             <Text style={s.statNum}>{total - correct}</Text>
-            <Text style={s.statLabel}>Erreurs</Text>
+            <Text style={s.statLabel}>{t("exercises.errors_label")}</Text>
           </View>
           <View style={[s.statCard, Shadow.sm]}>
             <Ionicons name="list" size={24} color={Colors.primary} />
             <Text style={s.statNum}>{total}</Text>
-            <Text style={s.statLabel}>Total</Text>
+            <Text style={s.statLabel}>{t("common.total")}</Text>
           </View>
         </View>
 
@@ -209,19 +211,19 @@ export default function ExerciseResults() {
         <View style={s.buttons}>
           <TouchableOpacity onPress={handleContinue} style={s.primaryBtn} activeOpacity={0.85}>
             <Text style={s.primaryTxt}>
-              {success ? "🎉 Continuer l'aventure" : "Revoir les leçons"}
+              {success ? t("exercises.continueAdventure") : t("exercises.reviewLessons")}
             </Text>
             <Ionicons name="arrow-forward" size={18} color="#FFF" />
           </TouchableOpacity>
 
           <TouchableOpacity onPress={handleRetry} style={s.secondaryBtn} activeOpacity={0.8}>
             <Ionicons name="refresh" size={16} color={Colors.primary} />
-            <Text style={s.secondaryTxt}>Recommencer les exercices</Text>
+            <Text style={s.secondaryTxt}>{t("exercises.retry")}</Text>
           </TouchableOpacity>
 
           {success && (
             <TouchableOpacity onPress={handleHome} style={s.ghostBtn} activeOpacity={0.7}>
-              <Text style={s.ghostTxt}>Retour aux thèmes</Text>
+              <Text style={s.ghostTxt}>{t("exercises.backToThemes")}</Text>
             </TouchableOpacity>
           )}
         </View>

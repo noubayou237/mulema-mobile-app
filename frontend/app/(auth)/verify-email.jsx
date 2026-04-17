@@ -163,12 +163,12 @@ const VerifyEmail = () => {
           email,
           otpCode: code.trim(),
         });
-        Alert.alert("Succès", "Email vérifié ! Connexion en cours...");
+        Alert.alert(t("common.success"), t("messages.emailVerified"));
         await autoLogin(response.data);
       }
     } catch (err) {
       const msg = err?.response?.data?.message || err?.message || "Échec de la vérification.";
-      Alert.alert("Erreur", msg);
+      Alert.alert(t("common.error"), msg);
     } finally {
       setLoading(false);
     }
@@ -180,10 +180,10 @@ const VerifyEmail = () => {
     setResendLoading(true);
     try {
       await api.post("/auth/request-otp", { email });
-      Alert.alert("Envoyé", `Nouveau code envoyé à ${email}`);
+      Alert.alert(t("common.success"), `${t("auth.codeSentTo")} ${email}`);
       startCountdown();
     } catch (err) {
-      Alert.alert("Erreur", err?.response?.data?.message || "Impossible de renvoyer le code.");
+      Alert.alert(t("common.error"), err?.response?.data?.message || t("errors.serverError"));
     } finally {
       setResendLoading(false);
     }
@@ -231,7 +231,7 @@ const VerifyEmail = () => {
             <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
               <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
             </TouchableOpacity>
-            <Text style={[Typo.titleMd, { flex: 1, textAlign: "center" }]}>Vérification</Text>
+            <Text style={[Typo.titleMd, { flex: 1, textAlign: "center" }]}>{t("auth.verifyEmail")}</Text>
             <View style={{ width: 24 }} />
           </View>
 
@@ -252,9 +252,9 @@ const VerifyEmail = () => {
 
           {/* ── Title block ── */}
           <Animated.View style={[s.titleBlock, animStyle(titleAnim, 15)]}>
-            <Text style={Typo.displayMd}>Vérification</Text>
+            <Text style={Typo.displayMd}>{t("auth.verifyEmail")}</Text>
             <Text style={[Typo.bodyLg, { textAlign: "center", marginTop: Space.md, lineHeight: 24 }]}>
-              Nous avons envoyé un code à votre email pour sécuriser votre compte Mulema.
+              {t("auth.loginSubtitle")}
             </Text>
           </Animated.View>
 
@@ -273,7 +273,7 @@ const VerifyEmail = () => {
             {code.length > 0 && (
               <TouchableOpacity onPress={() => setCode("")} style={s.clearBtn}>
                 <Ionicons name="close-circle" size={14} color={Colors.textTertiary} />
-                <Text style={[Typo.bodySm, { color: Colors.textTertiary, marginLeft: Space.xs }]}>Effacer</Text>
+                <Text style={[Typo.bodySm, { color: Colors.textTertiary, marginLeft: Space.xs }]}>{t("common.clear")}</Text>
               </TouchableOpacity>
             )}
           </Animated.View>
@@ -281,7 +281,7 @@ const VerifyEmail = () => {
           {/* ── Verify button ── */}
           <Animated.View style={[{ width: "100%", marginBottom: Space["2xl"] }, animStyle(formAnim, 15)]}>
             <MButton
-              title="Vérifier"
+              title={t("auth.verifyCode")}
               onPress={handleVerification}
               loading={loading}
               disabled={loading || !isReady}
@@ -309,8 +309,8 @@ const VerifyEmail = () => {
           {/* ── Cultural card ── */}
           <Animated.View style={[{ width: "100%" }, animStyle(footerAnim, 10)]}>
             <MCulturalCard
-              title="LE SAVIEZ-VOUS ?"
-              body={'Mulema signifie "Cœur" dans plusieurs langues bantoues. Nous protégeons le vôtre.'}
+              title={t("common.didYouKnow")}
+              body={t("messages.mulemaMeaning")}
             />
           </Animated.View>
 
