@@ -13,6 +13,7 @@ const STORAGE_KEY_TYPE = "selectedLanguageType";
 
 export const useLanguageStore = create((set, get) => ({
   activeLanguage: null,
+  hasSeenIntro: false,
   languages: [],
   isLoading: false,
   isLoaded: false,
@@ -53,15 +54,21 @@ export const useLanguageStore = create((set, get) => ({
       const found = findLang(storedId);
       if (found) {
         set({ activeLanguage: found });
-        return found;
       }
 
-      const storedName = await AsyncStorage.getItem("selectedLanguageName");
-      const foundByName = findLang(storedName);
-      if (foundByName) {
-        set({ activeLanguage: foundByName });
-        return foundByName;
+      if (!found) {
+        const storedName = await AsyncStorage.getItem("selectedLanguageName");
+        const foundByName = findLang(storedName);
+        if (foundByName) {
+          set({ activeLanguage: foundByName });
+        }
       }
+
+      // Load intro video seen flag — important: this must ALWAYS run
+      const storedIntro = await AsyncStorage.getItem("hasSeenIntro");
+      set({ hasSeenIntro: storedIntro === "true" });
+
+      return get().activeLanguage;
     } catch {}
 
     return null;
@@ -86,6 +93,13 @@ export const useLanguageStore = create((set, get) => ({
     return language;
   },
 
+  setHasSeenIntro: async (val) => {
+    set({ hasSeenIntro: val });
+    try {
+      await AsyncStorage.setItem("hasSeenIntro", val ? "true" : "false");
+    } catch {}
+  },
+
   hasLanguage: () => get().activeLanguage !== null,
 
   getSpecialCharacters: () => get().activeLanguage?.specialCharacters || [],
@@ -95,8 +109,9 @@ export const useLanguageStore = create((set, get) => ({
       await AsyncStorage.removeItem(STORAGE_KEY);
       await AsyncStorage.removeItem("selectedLanguageName");
       await AsyncStorage.removeItem(STORAGE_KEY_TYPE);
+      await AsyncStorage.removeItem("hasSeenIntro");
     } catch {}
-    set({ activeLanguage: null, languages: [], isLoaded: false });
+    set({ activeLanguage: null, hasSeenIntro: false, languages: [], isLoaded: false });
   },
 }));
 

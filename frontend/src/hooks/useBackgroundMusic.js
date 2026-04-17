@@ -9,12 +9,13 @@ import { AppState } from "react-native";
 import { Audio } from "expo-av";
 
 const SONG = require("../../assets/appthemesong/GENERIK MAKOUNE short.mp3.mpeg");
-const VOLUME = 0.25; // gentle background level
+const VOLUME = 0.1; // gentle background level
 
 let globalSound = null; // singleton so only one instance plays
+let globalIsMuted = false;
 
 export function useBackgroundMusic() {
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(globalIsMuted);
   const appState = useRef(AppState.currentState);
   const soundRef = useRef(null);
 
@@ -73,7 +74,7 @@ export function useBackgroundMusic() {
         try { await sound.pauseAsync(); } catch {}
       } else if (appState.current.match(/inactive|background/) && nextState === "active") {
         // App coming to foreground — resume unless muted
-        if (!isMuted) {
+        if (!isMuted && !globalIsMuted) {
           try { await sound.playAsync(); } catch {}
         }
       }
@@ -91,9 +92,11 @@ export function useBackgroundMusic() {
         await sound.setVolumeAsync(VOLUME);
         await sound.playAsync();
         setIsMuted(false);
+        globalIsMuted = false;
       } else {
         await sound.setVolumeAsync(0);
         setIsMuted(true);
+        globalIsMuted = true;
       }
     } catch (err) {
       console.warn("[BackgroundMusic] toggleMute error:", err.message);
@@ -115,7 +118,7 @@ export async function pauseBackgroundMusic() {
 
 /** Resume after exercise ends */
 export async function resumeBackgroundMusic() {
-  if (globalSound) {
+  if (globalSound && !globalIsMuted) {
     try {
       await globalSound.setVolumeAsync(VOLUME);
       await globalSound.playAsync();

@@ -97,8 +97,11 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Si ce n'est pas un 401 ou si c'est déjà un retry → rejeter
-    if (error.response?.status !== 401 || originalRequest._retry) {
+    // Ignorer les requêtes d'authentification pour éviter de déclencher l'interceptor sur login/register
+    const isAuthRequest = originalRequest.url?.includes('auth/login') || originalRequest.url?.includes('auth/refresh') || originalRequest.url?.includes('auth/register');
+
+    // Si ce n'est pas un 401, si c'est déjà un retry, ou si c'est une route d'auth → rejeter
+    if (error.response?.status !== 401 || originalRequest._retry || isAuthRequest) {
       return Promise.reject(error);
     }
 

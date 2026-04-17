@@ -22,26 +22,26 @@ import { useLanguageStore } from "../../../src/stores/useLanguageStore";
 import { useDashboardStore } from "../../../src/stores/useDashboardStore";
 
 import { useTranslation } from "react-i18next";
-import Index from "@/app";
+import { Colors, Typo, Space, Radius, Shadow } from "../../../src/theme/tokens";
 
 // ID Duala connu — fallback si AsyncStorage vide
 const DUALA_ID = "c81daa9d-7be2-4896-91c8-7531c994aec5";
 
 const { width } = Dimensions.get("window");
-const CARD_W = (width - 48) / 2;
+const CARD_W = (width - Space["2xl"] * 2 - Space.lg) / 2;
 
-/* ── Palette ────────────────────────────────────────────────── */
-const RED = "#B71C1C";
-const RED_L = "#FFEBEE";
-const BG = "#F0F2F8";
-const CARD_BG = "#FFFFFF";
-const TRACK = "#DDE3F0";
-const TEXT = "#1A1A2E";
-const TEXT_SUB = "#5A6070";
-const FAINT = "#AAAABC";
-const GREEN = "#2E7D32";
-const GREEN_L = "#E8F5E9";
-const GOLD = "#F9A825";
+/* ── Palette — Adjusted to use design tokens where possible ── */
+const RED = Colors.primary;
+const RED_L = Colors.primary + "15";
+const BG = Colors.surface;
+const CARD_BG = Colors.surfaceContainerLowest;
+const TRACK = Colors.surfaceContainerHigh;
+const TEXT = Colors.onSurface;
+const TEXT_SUB = Colors.textTertiary;
+const FAINT = Colors.textTertiary + "80";
+const GREEN = Colors.success || "#2E7D32";
+const GREEN_L = (Colors.success || "#2E7D32") + "15";
+const GOLD = Colors.secondary || "#F9A825";
 
 /* ── Tab constants ── */
 // These will be translated dynamically inside the component now

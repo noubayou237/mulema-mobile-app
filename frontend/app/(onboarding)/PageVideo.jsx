@@ -29,6 +29,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 // ── Design system ──
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
@@ -92,6 +93,7 @@ const ProgressDots = ({ active = 0, total = 3 }) => (
 
 export default function PageVideo() {
   const router = useRouter();
+  const { t } = useTranslation();
   const params = useLocalSearchParams?.() ?? {};
   const paramLang = params?.lang ?? null;
 
@@ -139,20 +141,22 @@ export default function PageVideo() {
   // ── Persist & navigate — ORIGINAL LOGIC ──
 // ✅ NOUVEAU — utilise le store pour que le root layout détecte la langue
 const persistAndGoHome = async () => {
-  // Trouver l'objet langue complet dans le store
-  const { languages, setActiveLanguage } = useLanguageStore.getState();
+  const { languages, setActiveLanguage, setHasSeenIntro } = useLanguageStore.getState();
+  
+  // 1. S'assurer que la langue est bien active dans le store
   const lang = languages.find(
     (l) => l.code === langResolved || l.name.toLowerCase() === langResolved
   );
-  
   if (lang) {
     await setActiveLanguage(lang);
   } else {
-    // Fallback si la langue n'est pas trouvée dans le store
     await AsyncStorage.setItem(HAS_SELECTED_LANGUAGE, langResolved);
   }
   
-  await AsyncStorage.setItem(HAS_SEEN_INTRO, "true");
+  // 2. Marquer l'intro comme vue (déclenche la redirection dans RootLayout)
+  await setHasSeenIntro(true);
+  
+  // 3. Navigation explicite au cas où
   router.replace("/(tabs)/home");
 };
 

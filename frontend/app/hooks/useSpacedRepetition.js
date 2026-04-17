@@ -16,7 +16,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   getWordsForReview as apiGetWordsForReview,
   updateWordProgress as apiUpdateWordProgress
-} from "../src/services/ExerciseApiService";
+} from "../../src/services/ExerciseApiService";
 
 const STORAGE_KEY = "spaced_repetition_state";
 

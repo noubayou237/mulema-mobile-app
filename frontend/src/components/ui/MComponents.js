@@ -20,7 +20,9 @@ import {
   StyleSheet,
   ActivityIndicator,
   Platform,
+  Vibration,
 } from "react-native";
+import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Colors, Typo, Space, Radius, Shadow } from "../../theme/tokens";
@@ -151,6 +153,7 @@ export const MButton = ({
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const onPressIn = () => {
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
     Animated.spring(scaleAnim, {
       toValue: 0.97,
       tension: 300,
@@ -282,7 +285,10 @@ export const MSocialButton = ({ provider, onPress, disabled = false }) => {
 
   return (
     <TouchableOpacity
-      onPress={onPress}
+      onPress={() => {
+        try { Haptics.selectionAsync(); } catch {}
+        onPress?.();
+      }}
       disabled={disabled}
       activeOpacity={0.7}
       style={[styles.socialBtn, { backgroundColor: c.bg }, Shadow.sm]}

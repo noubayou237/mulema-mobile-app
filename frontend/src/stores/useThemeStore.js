@@ -131,21 +131,37 @@ export const useThemeStore = create((set, get) => ({
   // ═════════════════════════════════════════════════════════════
 
   getExerciseAccess: (themeId) => {
-    const { themes, lessons } = get();
+    const { themes } = get();
     const theme = themes.find((t) => t.id === themeId);
 
     if (!theme) return { e1: false, e2: false, e3: false };
 
-    // Toutes les leçons du thème doivent être terminées pour accéder aux exercices
-    const allLessonsCompleted =
-      theme.lessonsCount > 0 &&
-      theme.lessonsCompleted >= theme.lessonsCount;
+    // Directive: Exercises available after 2 lessons are completed
+    const enoughLessonsCompleted = theme.lessonsCompleted >= Math.min(2, theme.lessonsCount);
 
     return {
-      e1: allLessonsCompleted,
-      e2: allLessonsCompleted && theme.e1Completed && theme.e1Score >= 60,
-      e3: allLessonsCompleted && theme.e2Completed && theme.e2Score >= 60,
+      e1: enoughLessonsCompleted,
+      e2: enoughLessonsCompleted && theme.e1Completed && theme.e1Score >= 60,
+      e3: enoughLessonsCompleted && theme.e2Completed && theme.e2Score >= 60,
     };
+  },
+
+  // ═════════════════════════════════════════════════════════════
+  // isLessonLocked — Vérifie si une leçon est verrouillée
+  // Directive : 2 premières leçons débloquées, le reste via exercices
+  // ═════════════════════════════════════════════════════════════
+
+  isLessonLocked: (lessonId, order) => {
+    // Les 2 premières leçons (order 0 et 1) sont toujours débloquées
+    if (order < 2) return false;
+
+    const { lessons } = get();
+    const lesson = lessons.find((l) => l.id === lessonId);
+    
+    // Si déjà marquée débloquée dans la DB (par userProgress.isUnlocked)
+    if (lesson?.userProgress?.[0]?.isUnlocked) return false;
+
+    return true;
   },
 
   // ═════════════════════════════════════════════════════════════

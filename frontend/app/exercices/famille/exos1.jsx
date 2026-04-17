@@ -21,7 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import useCowrie from "../../hooks/useCowrie";
 import { THEME_FAMILLE_WORDS } from "../../data/themeData";
-import { generateBlockExercises } from "../../src/services/ExerciseApiService";
+import { generateBlockExercises } from "../../../src/services/ExerciseApiService";
 
 // Audio state flags
 let audioInitialized = false;

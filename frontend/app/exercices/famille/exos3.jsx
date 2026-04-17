@@ -17,7 +17,7 @@ import { useTranslation } from "react-i18next";
 import { Audio } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { THEME_FAMILLE_WORDS, getWrongOptions } from "../../data/themeData";
-import { generateBlockExercises } from "../../src/services/ExerciseApiService";
+import { generateBlockExercises } from "../../../src/services/ExerciseApiService";
 
 const { width } = Dimensions.get("window");
 

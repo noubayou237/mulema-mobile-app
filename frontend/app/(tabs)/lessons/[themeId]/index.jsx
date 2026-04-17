@@ -141,14 +141,14 @@ const DashedPath = ({ fromX, fromY, toX, toY, color }) => (
 /* ═══════════════════════════════════════════════════════════════
    NŒUD LEÇON (cercle)
    ═══════════════════════════════════════════════════════════════ */
-const LessonNode = ({ lesson, index, onPress, lt }) => {
+const LessonNode = ({ lesson, index, onPress, lt, isLocked }) => {
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim  = useRef(new Animated.Value(0)).current;
 
   const completed = lesson.userProgress?.isCompleted ?? false;
   const stars     = lesson.userProgress?.stars ?? 0;
-  const isCurrent = !completed && index === 0;
+  const isCurrent = !completed && !isLocked && index === 0;
 
   // Zigzag positions
   const POSITIONS = [SW * 0.5, SW * 0.65, SW * 0.75, SW * 0.65, SW * 0.5, SW * 0.35, SW * 0.25, SW * 0.35];
@@ -206,11 +206,13 @@ const LessonNode = ({ lesson, index, onPress, lt }) => {
       ]}>
         <TouchableOpacity onPress={() => onPress(lesson)} activeOpacity={0.8}>
           <LinearGradient
-            colors={completed ? [lt.nodeDone, lt.nodeDone] : [lt.nodeActive, lt.nodeDone]}
+            colors={isLocked ? ["#333", "#111"] : completed ? [lt.nodeDone, lt.nodeDone] : [lt.nodeActive, lt.nodeDone]}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            style={[nd.circle, completed && nd.circleDone]}
+            style={[nd.circle, completed && nd.circleDone, isLocked && { opacity: 0.5 }]}
           >
-            {completed
+            {isLocked ? (
+              <Ionicons name="lock-closed" size={24} color="rgba(255,255,255,0.4)" />
+            ) : completed
               ? <Ionicons name="checkmark" size={28} color="#FFF" />
               : isCurrent
               ? <Text style={nd.num}>{index + 1}</Text>
@@ -241,7 +243,7 @@ const LessonNode = ({ lesson, index, onPress, lt }) => {
 /* ═══════════════════════════════════════════════════════════════
    NŒUD EXERCICE FINAL (étoile brillante style score-hero)
    ═══════════════════════════════════════════════════════════════ */
-const ExerciseNode = ({ onPress, lt }) => {
+const ExerciseNode = ({ onPress, lt, isLocked }) => {
   const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const rotAnim   = useRef(new Animated.Value(0)).current;
@@ -278,15 +280,15 @@ const ExerciseNode = ({ onPress, lt }) => {
 
       {/* Bouton étoile */}
       <Animated.View style={[ex.btnWrap, { transform: [{ scale: scaleAnim }] }]}>
-        <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
+        <TouchableOpacity onPress={onPress} activeOpacity={isLocked ? 1 : 0.85}>
           <LinearGradient
-            colors={[lt.nodeActive, lt.nodeDone]}
+            colors={isLocked ? ["#333", "#222"] : [lt.nodeActive, lt.nodeDone]}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            style={ex.btn}
+            style={[ex.btn, isLocked && { opacity: 0.6 }]}
           >
-            <Text style={ex.emoji}>🎯</Text>
-            <Text style={[ex.title, { color: "#FFF" }]}>{t("nav.exercises")}</Text>
-            <Text style={ex.sub}>{t("lessons.exerciseCount", { count: 15, types: 3 })}</Text>
+            <Text style={[ex.emoji, isLocked && { opacity: 0.3 }]}>{isLocked ? "🔒" : "🎯"}</Text>
+            <Text style={[ex.title, { color: isLocked ? "rgba(255,255,255,0.4)" : "#FFF" }]}>{isLocked ? t("common.locked") : t("nav.exercises")}</Text>
+            <Text style={[ex.sub, isLocked && { color: "rgba(255,255,255,0.2)" }]}>{t("lessons.exerciseCount", { count: 15, types: 3 })}</Text>
           </LinearGradient>
         </TouchableOpacity>
       </Animated.View>
@@ -307,7 +309,7 @@ export default function ThemeDetailScreen() {
   const { themeId } = useLocalSearchParams();
   const { t }       = useTranslation();
 
-  const { fetchLessons, getThemeById, lessons, lessonsLoading, clearTheme } = useThemeStore();
+  const { fetchLessons, getThemeById, lessons, lessonsLoading, clearTheme, isLessonLocked, getExerciseAccess } = useThemeStore();
   const { data: dash } = useDashboardStore();
   const { activeLanguage } = useLanguageStore();
 
@@ -427,12 +429,21 @@ export default function ThemeDetailScreen() {
                 index={idx}
                 totalLessons={totalL}
                 lt={lt}
-                onPress={(l) => router.push(`/(tabs)/lessons/${themeId}/lesson/${l.id}`)}
+                onPress={(l) => {
+                  if (isLessonLocked(l.id, idx)) return;
+                  router.push(`/(tabs)/lessons/${themeId}/lesson/${l.id}`);
+                }}
+                isLocked={isLessonLocked(lesson.id, idx)}
               />
             ))}
             <ExerciseNode
               lt={lt}
-              onPress={() => router.push(`/(tabs)/lessons/${themeId}/exercise/session`)}
+              isLocked={!getExerciseAccess(themeId).e1}
+              onPress={() => {
+                const access = getExerciseAccess(themeId);
+                if (!access.e1) return;
+                router.push(`/(tabs)/lessons/${themeId}/exercise/session`);
+              }}
             />
           </View>
         )}

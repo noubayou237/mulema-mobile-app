@@ -37,7 +37,7 @@ function AuthGate({ children }) {
   const segments = useSegments();
 
   const { isAuthenticated, isSessionLoaded, loadSession } = useAuthStore();
-  const { activeLanguage, fetchLanguages, loadActiveLanguage } = useLanguageStore();
+  const { activeLanguage, hasSeenIntro, fetchLanguages, loadActiveLanguage } = useLanguageStore();
 
   const [isReady, setIsReady] = useState(false);
 
@@ -68,10 +68,14 @@ function AuthGate({ children }) {
       if (!inAuth) router.replace("/(auth)/sign-in");
     } else if (!activeLanguage) {
       if (!inOnboarding) router.replace("/(onboarding)/ChoiceLanguage");
+    } else if (!hasSeenIntro) {
+      if (segments[1] !== "PageVideo") {
+        router.replace(`/(onboarding)/PageVideo?lang=${encodeURIComponent(activeLanguage.code)}`);
+      }
     } else {
       if (inAuth || inOnboarding) router.replace("/(tabs)/home");
     }
-  }, [isReady, isAuthenticated, activeLanguage, segments]);
+  }, [isReady, isAuthenticated, activeLanguage, hasSeenIntro, segments]);
 
   if (!isReady) {
     return (

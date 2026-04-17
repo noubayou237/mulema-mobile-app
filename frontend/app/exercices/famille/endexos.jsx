@@ -19,7 +19,7 @@ import {
   calculateAccuracy,
   calculateXP,
   getScoringBreakdown
-} from "../../src/utils/scoring";
+} from "../../../src/utils/scoring";
 import { THEME_FAMILLE_WORDS } from "../../data/themeData";
 
 const { width, height } = Dimensions.get("window");
