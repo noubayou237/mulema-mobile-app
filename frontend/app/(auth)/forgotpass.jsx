@@ -195,7 +195,8 @@ const ForgotPasswordScreen = () => {
         >
           {/* ── Header ── */}
           <View style={s.header}>
-            <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <TouchableOpacity onPress={() => { if (router.canGoBack()) router.back(); }} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+
               <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
             </TouchableOpacity>
             <Text style={[Typo.titleMd, { flex: 1, textAlign: "center" }]}>Account Recovery</Text>

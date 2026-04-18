@@ -72,7 +72,12 @@ const normalize = (s = "") =>
 const playWordAudio = async (audioUrl) => {
   if (!audioUrl) return;
   try {
-    await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+    // setAudioModeAsync may throw "Unable to activate keep awake" on some devices — safe to ignore
+    try {
+      await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
+    } catch (modeErr) {
+      if (!String(modeErr?.message).includes("keep awake")) throw modeErr;
+    }
     const { sound } = await Audio.loadAsync({ uri: audioUrl });
     await sound.playAsync();
     sound.setOnPlaybackStatusUpdate((status) => {
@@ -84,6 +89,7 @@ const playWordAudio = async (audioUrl) => {
     console.warn("Audio play error", e);
   }
 };
+
 
 /* ── Vibration + Son feedback ───────────────────────────────── */
 const triggerFeedback = (correct) => {
@@ -115,35 +121,42 @@ const triggerFeedback = (correct) => {
 
 /* ── Génération des questions ───────────────────────────────── */
 const buildSession = (words) => {
-  if (!words || words.length < 3) return [];
-  const sw = shuffle(words);
-  const PER = 4; // 4 questions par type
+  if (!words || words.length < 1) return [];
+  const sw  = shuffle(words);
+  const PER = 4; // 4 questions per type
 
+  // QCM — works with as few as 1 word (binary choice with 2 options minimum)
+  const maxOpts = Math.min(4, sw.length); // use however many words we have (up to 4)
   const qcm = Array.from({ length: PER }, (_, i) => {
     const target = sw[i % sw.length];
     const others = sw.filter((w) => w.id !== target.id);
-    const opts   = shuffle([target, ...shuffle(others).slice(0, 3)]);
+    const opts   = shuffle([target, ...shuffle(others).slice(0, maxOpts - 1)]);
     const hasImg = opts.every((o) => o.imageUrl);
-    // LISTEN_SELECT_IMAGE si image, sinon TEXT_QCM
     return { type: hasImg ? "image_qcm" : "text_qcm", target, options: opts };
   });
 
-  const match = Array.from({ length: PER }, (_, i) => {
-    const pairs = [0, 1, 2].map((k) => sw[(i * 3 + k) % sw.length]);
-    return { type: "match", pairs, right: shuffle([...pairs]) };
-  });
+  // Match — requires at least 2 words; use however many pairs are available (up to 3)
+  const matchPairCount = Math.min(3, sw.length);
+  const match = sw.length >= 2
+    ? Array.from({ length: PER }, (_, i) => {
+        const pairs = Array.from({ length: matchPairCount }, (_, k) =>
+          sw[(i * matchPairCount + k) % sw.length]
+        );
+        return { type: "match", pairs, right: shuffle([...pairs]) };
+      })
+    : [];
 
   const write = Array.from({ length: PER }, (_, i) => ({
-    type: "write", // LISTEN_WRITE
+    type: "write",
     target: sw[i % sw.length],
   }));
 
-  // On peut ajouter un type "complete" ou réutiliser "write" avec une consigne différente
   const complete = Array.from({ length: PER }, (_, i) => ({
-    type: "write", // COMPLETE_PHRASE
-    target: sw[(i + 2) % sw.length],
+    type: "write",
+    target: sw[(i + Math.floor(sw.length / 2)) % sw.length],
     isComplete: true,
   }));
+
 
   return shuffle([...qcm, ...match, ...write, ...complete]);
 };
