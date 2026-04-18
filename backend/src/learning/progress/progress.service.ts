@@ -93,6 +93,27 @@ export class ProgressService {
     themeId: string,
     completedLessonOrder: number,
   ) {
+    // 1) Mark the CURRENT lesson as completed
+    const currentWord = await this.prisma.mulemWord.findFirst({
+      where: { themeId, order: completedLessonOrder + 1 },
+      orderBy: { order: 'asc' },
+    });
+
+    if (currentWord) {
+      await this.prisma.userProgress.upsert({
+        where: { userId_mulemWordId: { userId, mulemWordId: currentWord.id } },
+        update: { isCompleted: true, stars: 3 }, // Give full stars if exercise was passed
+        create: {
+          userId,
+          mulemWordId: currentWord.id,
+          isUnlocked: true,
+          isCompleted: true,
+          stars: 3,
+        },
+      });
+    }
+
+    // 2) Unlock the NEXT lesson
     const nextWord = await this.prisma.mulemWord.findFirst({
       where: { themeId, order: completedLessonOrder + 2 },
       orderBy: { order: 'asc' },

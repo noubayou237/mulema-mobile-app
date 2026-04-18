@@ -376,9 +376,9 @@ export default function ThemeDetailScreen() {
 
           {/* Label unité */}
           <Text style={[s.unitLabel, { color: lt.accent }]}>
-            {activeLanguage?.name?.toLowerCase().includes("duala") ? t("lessons.universDuala") :
-             activeLanguage?.name?.toLowerCase().includes("ghomala") ? t("lessons.universGhomala") :
-             activeLanguage?.name?.toLowerCase().includes("bassa") ? t("lessons.universBassa") :
+            {activeLanguage?.name?.toLowerCase().includes("duala") ? t("home.universDuala") :
+             activeLanguage?.name?.toLowerCase().includes("ghomala") ? t("home.universGhomala") :
+             activeLanguage?.name?.toLowerCase().includes("bassa") ? t("home.universBassa") :
              t("home.levels.level")}
           </Text>
 
@@ -386,7 +386,7 @@ export default function ThemeDetailScreen() {
           <Text style={s.headerEmoji}>{emoji}</Text>
           <Text style={s.headerTitle}>{themeName}</Text>
           <Text style={s.headerSub}>
-            {t("lessons.masteryStats", { count: totalL, percent: pct })}
+            {t("home.masteryStats", { count: totalL, percent: pct })}
           </Text>
 
           {/* Barre de progression */}
@@ -398,17 +398,17 @@ export default function ThemeDetailScreen() {
           <View style={s.statsRow}>
             <View style={s.statItem}>
               <Text style={[s.statNum, { color: lt.accent }]}>{completed}</Text>
-              <Text style={s.statLbl}>{t("lessons.completed")}</Text>
+              <Text style={s.statLbl}>{t("home.completed")}</Text>
             </View>
             <View style={[s.statDivider, { backgroundColor: lt.accent + "30" }]} />
             <View style={s.statItem}>
               <Text style={[s.statNum, { color: lt.accent }]}>{totalL - completed}</Text>
-              <Text style={s.statLbl}>{t("lessons.remainingNodes")}</Text>
+              <Text style={s.statLbl}>{t("home.remainingNodes")}</Text>
             </View>
             <View style={[s.statDivider, { backgroundColor: lt.accent + "30" }]} />
             <View style={s.statItem}>
               <Text style={[s.statNum, { color: lt.accent }]}>{pct}%</Text>
-              <Text style={s.statLbl}>{t("lessons.mastery")}</Text>
+              <Text style={s.statLbl}>{t("home.mastery")}</Text>
             </View>
           </View>
         </LinearGradient>
