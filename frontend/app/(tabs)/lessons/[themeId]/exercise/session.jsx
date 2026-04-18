@@ -859,7 +859,9 @@ export default function ExerciseSession() {
   const { lessons, fetchLessons } = useThemeStore();
   const { data: dash, fetchDashboard } = useDashboardStore();
   const { activeLanguage } = useLanguageStore();
+  const { t } = useTranslation();
   const langName = activeLanguage?.name ?? "Duala";
+
 
   useEffect(() => {
     if (themeId) fetchLessons(themeId);
