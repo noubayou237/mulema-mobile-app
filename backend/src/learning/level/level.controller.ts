@@ -1,8 +1,10 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, UseGuards, Req } from '@nestjs/common';
 import { LevelService } from './level.service';
 import { CreateLevelDto } from './dto/create-level.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 @Controller('levels')
+@UseGuards(JwtAuthGuard)
 export class LevelController {
   constructor(private readonly service: LevelService) {}
 
@@ -17,12 +19,14 @@ export class LevelController {
   }
 
   @Get('themes/language/:id')
-  findThemesByLanguage(@Param('id') languageId: string) {
-    return this.service.findThemesByLanguage(languageId);
+  findThemesByLanguage(@Req() req: any, @Param('id') languageId: string) {
+    const userId = req.user.userId;
+    return this.service.findThemesByLanguage(languageId, userId);
   }
 
   @Get(':themeId/words')
-  getThemeWords(@Param('themeId') themeId: string) {
-    return this.service.getThemeWords(themeId);
+  getThemeWords(@Req() req: any, @Param('themeId') themeId: string) {
+    const userId = req.user.userId;
+    return this.service.getThemeWords(themeId, userId);
   }
 }

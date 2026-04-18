@@ -43,11 +43,7 @@ export const themesService = {
       hint: w.hint,
       audioUrl: w.audio_url,
       imageUrl: w.image_url,
-      userProgress: {
-        isCompleted: false,
-        isUnlocked: idx === 0, // première leçon toujours débloquée
-        stars: 0,
-      },
+      userProgress: w.userProgress || [],
     }));
   },
 

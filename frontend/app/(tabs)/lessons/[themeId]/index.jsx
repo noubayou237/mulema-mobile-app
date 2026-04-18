@@ -146,9 +146,10 @@ const LessonNode = ({ lesson, index, onPress, lt, isLocked }) => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim  = useRef(new Animated.Value(0)).current;
 
-  const completed = lesson.userProgress?.isCompleted ?? false;
-  const stars     = lesson.userProgress?.stars ?? 0;
-  const isCurrent = !completed && !isLocked && index === 0;
+  const prog      = lesson.userProgress?.[0];
+  const completed = prog?.isCompleted ?? false;
+  const stars     = prog?.stars ?? 0;
+  const isCurrent = !completed && !isLocked && (prog?.isUnlocked || index < 2);
 
   // Zigzag positions
   const POSITIONS = [SW * 0.5, SW * 0.65, SW * 0.75, SW * 0.65, SW * 0.5, SW * 0.35, SW * 0.25, SW * 0.35];
@@ -325,7 +326,7 @@ export default function ThemeDetailScreen() {
   const themeCode = (theme?.code ?? "").toLowerCase();
   const emoji     = getEmoji(themeCode);
 
-  const completed = lessons.filter((l) => l.userProgress?.isCompleted).length;
+  const completed = lessons.filter((l) => l.userProgress?.[0]?.isCompleted).length;
   const totalL    = lessons.length || 0;
   const pct       = totalL > 0 ? Math.round((completed / totalL) * 100) : 0;
 
