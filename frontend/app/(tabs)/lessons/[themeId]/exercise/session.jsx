@@ -828,14 +828,20 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
   );
 };
 
+
 /* ════════════════════════════════════════════════════════════════
    ÉCRAN PRINCIPAL — Session
    ════════════════════════════════════════════════════════════════ */
-const TOTAL = 15;
+
 
 export default function ExerciseSession() {
-  const router      = useRouter();
-  const { themeId } = useLocalSearchParams();
+  const router = useRouter();
+  const { themeId, wordCount: wordCountStr, lessonIdx: lessonIdxStr } = useLocalSearchParams();
+
+  // wordCount: how many words to include (cumulative lessons so far)
+  // lessonIdx: 0-based index of the lesson just completed (for unlock)
+  const wordCount      = wordCountStr  ? parseInt(wordCountStr,  10) : null;
+  const lessonIdxParam = lessonIdxStr  != null ? parseInt(lessonIdxStr, 10) : null;
 
   const { lessons, fetchLessons } = useThemeStore();
   const { data: dash, fetchDashboard } = useDashboardStore();
@@ -843,13 +849,18 @@ export default function ExerciseSession() {
   const langName = activeLanguage?.name ?? "Duala";
 
   useEffect(() => {
-    if (themeId) fetchLessons(themeId); // toujours recharger quand themeId change
+    if (themeId) fetchLessons(themeId);
     fetchDashboard();
   }, [themeId]);
 
-  // Reconstruire les questions quand les leçons changent (nouvelle langue ou nouveau thème)
-  const lessonsKey = lessons.map((l) => l.id).join(",");
-  const questions  = useMemo(() => buildSession(lessons), [lessonsKey]);
+  // Slice lessons to cumulative word count (or all if no wordCount param)
+  const lessonsKey      = lessons.map((l) => l.id).join(",");
+  const wordsForSession = useMemo(
+    () => (wordCount ? lessons.slice(0, wordCount) : lessons),
+    [lessonsKey, wordCount]
+  );
+  const questions = useMemo(() => buildSession(wordsForSession), [lessonsKey, wordCount]);
+
 
   const [idx, setIdx]           = useState(0);
   const [retryQ, setRetryQ]     = useState([]);
@@ -864,9 +875,11 @@ export default function ExerciseSession() {
     if (dash?.hearts != null) setHearts(dash.hearts);
   }, [dash?.hearts]);
 
+  const totalQ  = questions.length || 1;
   const curQ    = isRetry ? retryQ[retryIdx] : questions[idx];
-  const dispIdx = isRetry ? TOTAL + retryIdx + 1 : idx + 1;
-  const dispTot = isRetry ? TOTAL + retryQ.length : TOTAL;
+  const dispIdx = isRetry ? totalQ + retryIdx + 1 : idx + 1;
+  const dispTot = isRetry ? totalQ + retryQ.length : totalQ;
+
 
   const handleCorrect = useCallback(() => {
     setCorrect((c) => c + 1);
@@ -881,10 +894,12 @@ export default function ExerciseSession() {
 
   const goResults = useCallback(() => {
     const score = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+    const extra  = lessonIdxParam != null ? `&lessonIdx=${lessonIdxParam}` : "";
     router.replace(
-      `/(tabs)/lessons/${themeId}/exercise/results?score=${score}&correct=${correct}&total=${answered}`
+      `/(tabs)/lessons/${themeId}/exercise/results?score=${score}&correct=${correct}&total=${answered}${extra}`
     );
-  }, [correct, answered, themeId]);
+  }, [correct, answered, themeId, lessonIdxParam]);
+
 
   const crossFade = (cb) => {
     Animated.timing(fadeAnim, { toValue: 0, duration: 150, useNativeDriver: true }).start(() => {

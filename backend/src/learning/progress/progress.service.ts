@@ -68,6 +68,40 @@ export class ProgressService {
     }
   }
 
+  /**
+   * Débloque uniquement la leçon suivante après réussite d'un exercice.
+   * @param completedLessonOrder - Index 0-based de la dernière leçon terminée
+   *   DB order is 1-indexed, so next lesson = completedLessonOrder + 2
+   */
+  async unlockNextLessonAfterExercise(
+    userId: string,
+    themeId: string,
+    completedLessonOrder: number,
+  ) {
+    const nextWord = await this.prisma.mulemWord.findFirst({
+      where: { themeId, order: completedLessonOrder + 2 },
+      orderBy: { order: 'asc' },
+    });
+
+    if (!nextWord) {
+      return { message: 'Theme complete — no next lesson to unlock', unlockedWordId: null };
+    }
+
+    await this.prisma.userProgress.upsert({
+      where: { userId_mulemWordId: { userId, mulemWordId: nextWord.id } },
+      update: { isUnlocked: true },
+      create: {
+        userId,
+        mulemWordId: nextWord.id,
+        isUnlocked: true,
+        isCompleted: false,
+        stars: 0,
+      },
+    });
+
+    return { unlockedWordId: nextWord.id, order: nextWord.order };
+  }
+
   async getProgressForTheme(userId: string, themeId: string) {
     const words = await this.prisma.mulemWord.findMany({
       where: { themeId },

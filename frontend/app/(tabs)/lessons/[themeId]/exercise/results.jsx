@@ -17,6 +17,8 @@ import { useTranslation } from "react-i18next";
 
 import { Colors, Space, Radius, Shadow } from "../../../../../src/theme/tokens";
 import { useThemeStore } from "../../../../../src/stores/useThemeStore";
+import api from "../../../../../src/services/api";
+
 
 /* ── Étoiles selon le score ────────────────────────────────── */
 const getStars = (score) => {
@@ -110,20 +112,40 @@ const StarIcon = ({ filled, delay }) => {
 export default function ExerciseResults() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { themeId, score: scoreStr, correct: correctStr, total: totalStr } = useLocalSearchParams();
+  const {
+    themeId,
+    score: scoreStr,
+    correct: correctStr,
+    total: totalStr,
+    lessonIdx: lessonIdxStr,
+  } = useLocalSearchParams();
   const { completeTheme } = useThemeStore();
 
-  const score   = parseInt(scoreStr  ?? "0",  10);
-  const correct = parseInt(correctStr ?? "0", 10);
-  const total   = parseInt(totalStr  ?? "15", 10);
-  const stars   = getStars(score);
-  const msg     = getMessage(score, t);
-  const success = score >= 60;
+  const score          = parseInt(scoreStr   ?? "0",  10);
+  const correct        = parseInt(correctStr ?? "0", 10);
+  const total          = parseInt(totalStr   ?? "0",  10);
+  const lessonIdxParam = lessonIdxStr != null ? parseInt(lessonIdxStr, 10) : null;
+  const stars          = getStars(score);
+  const msg            = getMessage(score, t);
+  const success        = score >= 60;
 
-  /* Compléter le thème + débloquer le suivant si score suffisant */
+  /* Compléter le thème en local + débloquer la leçon suivante en base si score suffisant */
   useEffect(() => {
-    if (themeId) completeTheme(themeId, score);
+    if (themeId) {
+      completeTheme(themeId, score);
+      // Persist unlock to DB only when the user passed (score >= 60)
+      if (success && lessonIdxParam != null) {
+        api
+          .post(`/progress/unlock-next-lesson/${themeId}`, {
+            completedLessonOrder: lessonIdxParam,
+          })
+          .catch((err) =>
+            console.warn("[Unlock] Could not unlock next lesson:", err?.message)
+          );
+      }
+    }
   }, []);
+
 
   /* Animations d'entrée */
   const fadeAnim  = useRef(new Animated.Value(0)).current;
@@ -140,15 +162,12 @@ export default function ExerciseResults() {
     router.replace(`/(tabs)/lessons/${themeId}/exercise/session`);
   };
 
-  // Succès → retour aux thèmes (le prochain est débloqué)
-  // Échec → retour au détail du thème pour réessayer les leçons
+  // Succès → retour au détail du thème pour voir la leçon débloquée
+  // Échec → pareil, pour réessayer les leçons
   const handleContinue = () => {
-    if (success) {
-      router.replace("/(tabs)/lessons");
-    } else {
-      router.push(`/(tabs)/lessons/${themeId}`);
-    }
+    router.replace(`/(tabs)/lessons/${themeId}`);
   };
+
 
   const handleHome = () => {
     router.replace("/(tabs)/lessons");

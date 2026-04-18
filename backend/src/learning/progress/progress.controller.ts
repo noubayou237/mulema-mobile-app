@@ -100,4 +100,31 @@ export class ProgressController {
       return this.progressService.completeLesson(userId, body.lessonId, body.stars);
     }
   }
+
+  /**
+   * 🔹 Débloquer la leçon suivante après réussite d'un exercice
+   * completedLessonOrder = index 0-based de la dernière leçon terminée
+   */
+  @Post('unlock-next-lesson/:themeId')
+  @ApiOperation({ summary: 'Débloquer la prochaine leçon après exercice réussi' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        completedLessonOrder: { type: 'number', description: '0-based index of the last completed lesson' },
+      },
+    },
+  })
+  async unlockNextLesson(
+    @Req() req: any,
+    @Param('themeId') themeId: string,
+    @Body() body: { completedLessonOrder: number },
+  ) {
+    const userId = req.user.userId;
+    return this.progressService.unlockNextLessonAfterExercise(
+      userId,
+      themeId,
+      body.completedLessonOrder,
+    );
+  }
 }

@@ -341,12 +341,11 @@ export default function ThemesScreen() {
     setRefreshing(false);
   };
 
-  // Handle exercise theme press → navigate to exercise
   const handleExerciseThemePress = useCallback((theme) => {
-    const code = (theme.code ?? theme.name ?? "").toLowerCase();
-    // Navigate to the exercise for this theme
-    router.push(`/exercices/${code}/exos1`);
+    // Navigate to the new exercise session using themeId (UUID)
+    router.push(`/(tabs)/lessons/${theme.id}/exercise/session`);
   }, [router]);
+
 
   // Handle theme completion video
   const handleWatchRewardVideo = useCallback((theme) => {
@@ -463,15 +462,9 @@ export default function ThemesScreen() {
                   index={idx}
                   isCompleted={allDone}
                   hasReward={hasReward}
-                  onPress={(t) => {
-                    if (allDone && hasReward) {
-                      // Theme completed → offer to watch cultural video or redo
-                      handleWatchRewardVideo(t);
-                    } else {
-                      handleExerciseThemePress(t);
-                    }
-                  }}
+                  onPress={(t) => handleExerciseThemePress(t)}
                 />
+
               );
             })}
           </View>

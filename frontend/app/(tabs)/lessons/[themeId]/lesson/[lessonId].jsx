@@ -136,21 +136,27 @@ export default function LessonScreen() {
   /* Navigation */
   const goNext = () => {
     if (isLast) {
-      router.back();
+      // Last lesson → exercise with ALL words (no wordCount limit)
+      router.replace(
+        `/(tabs)/lessons/${themeId}/exercise/session?lessonIdx=${lessonIdx}`
+      );
       return;
     }
 
     const nextLesson = lessons[lessonIdx + 1];
-    // Check if the next lesson is locked before proceeding
-    if (isLessonLocked(nextLesson.id, nextLesson.order)) {
-      // If locked, return to theme path (Learning Path)
-      router.back();
+
+    // First lesson (index 0) → go directly to lesson 2 (no exercise yet)
+    if (lessonIdx === 0) {
+      cardAnim.setValue(0);
+      slideAnim.setValue(30);
+      router.replace(`/(tabs)/lessons/${themeId}/lesson/${nextLesson.id}`);
       return;
     }
 
-    cardAnim.setValue(0);
-    slideAnim.setValue(30);
-    router.replace(`/(tabs)/lessons/${themeId}/lesson/${nextLesson.id}`);
+    // Lesson 2+ → exercise with cumulative words (lessons 1 through lessonIdx+1)
+    router.replace(
+      `/(tabs)/lessons/${themeId}/exercise/session?wordCount=${lessonIdx + 1}&lessonIdx=${lessonIdx}`
+    );
   };
 
   const goPrev = () => {
