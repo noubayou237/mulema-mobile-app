@@ -84,7 +84,12 @@ export default function ChangeLanguageScreen() {
   const handleSelectLanguage = async (language) => {
     if (language.id === activeLanguage?.id) return; // déjà active
     await setActiveLanguage(language);
-    router.back();
+    
+    // Au lieu de router.back(), on va vers la vidéo d'onboarding
+    router.replace({
+      pathname: "/modal/onboarding-video",
+      params: { langCode: language.code }
+    });
   };
 
   const otherLanguages = languages.filter((l) => l.id !== activeLanguage?.id && isAllowedLanguage(l));

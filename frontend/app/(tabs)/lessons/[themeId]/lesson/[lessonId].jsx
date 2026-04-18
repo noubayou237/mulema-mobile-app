@@ -85,7 +85,7 @@ export default function LessonScreen() {
   const { t } = useTranslation();
   const { themeId, lessonId } = useLocalSearchParams();
 
-  const { lessons, fetchLessons, themes } = useThemeStore();
+  const { lessons, fetchLessons, themes, isLessonLocked } = useThemeStore();
   const { data: dash } = useDashboardStore();
   const { activeLanguage } = useLanguageStore();
 
@@ -135,13 +135,22 @@ export default function LessonScreen() {
 
   /* Navigation */
   const goNext = () => {
-    cardAnim.setValue(0);
-    slideAnim.setValue(30);
     if (isLast) {
       router.back();
-    } else {
-      router.replace(`/(tabs)/lessons/${themeId}/lesson/${lessons[lessonIdx + 1].id}`);
+      return;
     }
+
+    const nextLesson = lessons[lessonIdx + 1];
+    // Check if the next lesson is locked before proceeding
+    if (isLessonLocked(nextLesson.id, nextLesson.order)) {
+      // If locked, return to theme path (Learning Path)
+      router.back();
+      return;
+    }
+
+    cardAnim.setValue(0);
+    slideAnim.setValue(30);
+    router.replace(`/(tabs)/lessons/${themeId}/lesson/${nextLesson.id}`);
   };
 
   const goPrev = () => {

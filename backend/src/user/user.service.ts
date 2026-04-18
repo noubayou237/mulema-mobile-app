@@ -54,14 +54,85 @@ export class UserService {
       Math.round((totalMinutes / dailyGoalMinutes) * 100),
     );
 
+    const updatedStreak = await this.updateStreak(userId);
+
     return {
-      streakDays: streak?.daysConnected ?? 0,
+      streakDays: updatedStreak.daysConnected,
       totalPoints: stats?.totalPrawns ?? 0,
       progressPercent,
       totalTimeMinutes: totalMinutes,
       hearts: cowry?.currentCowries ?? 5,
       continueTheme,
     };
+  }
+
+  // =====================
+  // UPDATE STREAK (ROOTS)
+  // =====================
+  private async updateStreak(userId: string) {
+    const now = new Date();
+    let streak;
+    try {
+      streak = await this.prisma.rootsStreak.upsert({
+        where: { userId },
+        update: {},
+        create: {
+          userId,
+          daysConnected: 0,
+          // @ts-ignore
+          lastConnectedAt: new Date(Date.now() - 48 * 60 * 60 * 1000), // simulate 2 days ago for new users
+        },
+      });
+    } catch (error) {
+      if (error.code === 'P2002') {
+        streak = await this.prisma.rootsStreak.findUnique({ where: { userId } });
+      } else {
+        throw error;
+      }
+    }
+
+    // @ts-ignore
+    const lastDate = new Date(streak.lastConnectedAt);
+    
+    // Normalize dates to midnight for comparison
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastMidnight = new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate());
+    
+    const diffDays = Math.floor((todayMidnight.getTime() - lastMidnight.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) {
+      // Prochain jour : on incrémente
+      return this.prisma.rootsStreak.update({
+        where: { userId },
+        data: {
+          daysConnected: { increment: 1 },
+          // @ts-ignore
+          lastConnectedAt: now,
+        },
+      });
+    } else if (diffDays > 1) {
+      // Jour sauté : on reset à 1
+      return this.prisma.rootsStreak.update({
+        where: { userId },
+        data: {
+          daysConnected: 1,
+          // @ts-ignore
+          lastConnectedAt: now,
+        },
+      });
+    } else if (streak.daysConnected === 0) {
+      // Premier jour
+      return this.prisma.rootsStreak.update({
+        where: { userId },
+        data: {
+          daysConnected: 1,
+          // @ts-ignore
+          lastConnectedAt: now,
+        },
+      });
+    }
+
+    return streak; // Déjà connecté aujourd'hui
   }
 
   // =====================

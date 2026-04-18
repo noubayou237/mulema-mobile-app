@@ -160,7 +160,7 @@
     "universBassa": "UNIVERS BASSA",
     "finalChallenge": "⚡ DÉFI FINAL",
     "exerciseCount": "{{count}} questions · {{types}} types",
-    "xpPotential": "+{{points}} XP",
+    "xpPotential": "+{{points}} Crevettes",
     "masteryStats": "{{count}} leçons · {{percent}}% maîtrisé",
     "completed": "complétées",
     "remainingNodes": "restantes",
@@ -280,9 +280,10 @@
     "title": "Statistiques",
     "myStats": "Mes statistiques",
     "weeklyGoal": "des objectifs atteints cette semaine",
-    "dayStreak": "Série de jours",
-    "dayStreakCount": "{{count}} jours de suite",
-    "streakDaysShort": "SÉRIE DE {{count}} JOURS",
+    "dayStreak": "Racines (Série)",
+    "dayStreakCount": "{{count}} racines",
+    "rootsCount": "{{count}} racines",
+    "streakDaysShort": "RACINES : {{count}}",
     "daysMin": "7 jours",
     "daysMax": "30 jours",
     "detailedProgress": "Progression détaillée",
@@ -307,7 +308,7 @@
     "completedExercise": "a terminé l'exercice '{{exercise}}'",
     "earnedPoints": "a gagné {{count}} points de défi",
     "isYou": "C'est vous !",
-    "xpToNextRank": "Plus que {{xp}} XP pour monter",
+    "xpToNextRank": "Plus que {{xp}} Crevettes pour monter",
     "yourScore": "VOTRE SCORE",
     "endsIn": "Se termine dans ",
     "otherPlayers": "LE RESTE DE LA MEUTE",
@@ -385,7 +386,9 @@
       "email": "Email",
       "security": "Sécurité"
     },
-    "joinAdventure": "Rejoignez l'aventure Mulema"
+    "joinAdventure": "Rejoignez l'aventure Mulema",
+    "preferredOfficialLanguage": "Langue officielle préférée",
+    "prawns": "Crevettes"
   },
   "onboarding": {
     "welcome": "Bienvenue sur Mulema",

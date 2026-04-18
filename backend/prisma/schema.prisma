@@ -66,10 +66,11 @@ model Statistics {
 }
 
 model RootsStreak {
-  id            String @id @default(uuid())
-  daysConnected Int
-  userId        String @unique
-  user          User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String   @id @default(uuid())
+  daysConnected   Int      @default(0)
+  userId          String   @unique
+  lastConnectedAt DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Settings {
@@ -226,16 +227,19 @@ model Lesson {
 }
 
 model UserProgress {
-  id          String  @id @default(uuid())
-  isUnlocked  Boolean @default(false)
-  isCompleted Boolean @default(false)
-  stars       Int     @default(0)
+  id          String     @id @default(uuid())
+  isUnlocked  Boolean    @default(false)
+  isCompleted Boolean    @default(false)
+  stars       Int        @default(0)
   userId      String
-  lessonId    String
-  lesson      Lesson  @relation(fields: [lessonId], references: [id])
-  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    String?
+  mulemWordId String?
+  lesson      Lesson?    @relation(fields: [lessonId], references: [id])
+  mulemWord   MulemWord? @relation(fields: [mulemWordId], references: [id])
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
+  @@unique([userId, mulemWordId])
 }
 
 model Exercise {
@@ -298,19 +302,21 @@ model MulemTheme {
 }
 
 model MulemWord {
-  id         String     @id @default(uuid())
-  themeId    String
-  order      Int        @default(0)
-  word_fr    String
-  word_local String
-  hint       String?
-  audio_key  String?
-  audio_url  String?
-  image_key  String?
-  image_url  String?
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  theme      MulemTheme @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  id           String         @id @default(uuid())
+  themeId      String
+  order        Int            @default(0)
+  word_fr      String
+  word_local   String
+  category     String?        @default("basics")
+  hint         String?
+  audio_key    String?
+  audio_url    String?
+  image_key    String?
+  image_url    String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  theme        MulemTheme     @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  userProgress UserProgress[]
 
   @@index([themeId])
 }

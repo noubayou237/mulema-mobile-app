@@ -132,6 +132,7 @@ const SignUpScreen = () => {
     email: "",
     password: "",
     confirm: "",
+    officialLanguage: "fr", // Default to French
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -183,6 +184,7 @@ const SignUpScreen = () => {
         username: form.username.trim(),
         name: form.name.trim(),
         password: form.password,
+        language: form.officialLanguage,
       });
       Alert.alert(t("signUp.success.title"), t("signUp.success.message"));
       router.replace({
@@ -303,6 +305,25 @@ const SignUpScreen = () => {
               onRightPress={() => setShowConfirm(!showConfirm)}
             />
             <MatchIndicator password={form.password} confirm={form.confirm} t={t} />
+
+            {/* Langue Officielle */}
+            <Text style={[Typo.labelSm, { color: Colors.textTertiary, marginBottom: Space.sm, marginTop: Space.md }]}>
+              {t("signUp.preferredOfficialLanguage", "Langue préférée (French/English)")}
+            </Text>
+            <View style={{ flexDirection: "row", gap: Space.md, marginBottom: Space.lg }}>
+              <TouchableOpacity
+                onPress={() => onChange("officialLanguage")("fr")}
+                style={[s.langToggle, form.officialLanguage === "fr" && s.langToggleActive]}
+              >
+                <Text style={[s.langToggleTxt, form.officialLanguage === "fr" && s.langToggleTxtActive]}>Français</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => onChange("officialLanguage")("en")}
+                style={[s.langToggle, form.officialLanguage === "en" && s.langToggleActive]}
+              >
+                <Text style={[s.langToggleTxt, form.officialLanguage === "en" && s.langToggleTxtActive]}>English</Text>
+              </TouchableOpacity>
+            </View>
 
             {/* CTA Button */}
             <MButton
@@ -426,6 +447,30 @@ const styles = StyleSheet.create({
     paddingVertical: Space.sm,
     marginTop: -Space.sm,
     marginBottom: Space.md,
+  },
+  
+  // Official Language toggle
+  langToggle: {
+    flex: 1,
+    paddingVertical: Space.md,
+    borderRadius: Radius.lg,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: Colors.surfaceVariant,
+    backgroundColor: Colors.surface,
+  },
+  langToggleActive: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primary + "10",
+  },
+  langToggleTxt: {
+    fontFamily: "Nunito-SemiBold",
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
+  langToggleTxtActive: {
+    color: Colors.primary,
+    fontFamily: "Fredoka_600SemiBold",
   },
 });
 

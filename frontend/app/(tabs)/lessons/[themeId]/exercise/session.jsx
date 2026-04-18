@@ -117,13 +117,14 @@ const triggerFeedback = (correct) => {
 const buildSession = (words) => {
   if (!words || words.length < 3) return [];
   const sw = shuffle(words);
-  const PER = 5;
+  const PER = 4; // 4 questions par type
 
   const qcm = Array.from({ length: PER }, (_, i) => {
     const target = sw[i % sw.length];
     const others = sw.filter((w) => w.id !== target.id);
     const opts   = shuffle([target, ...shuffle(others).slice(0, 3)]);
     const hasImg = opts.every((o) => o.imageUrl);
+    // LISTEN_SELECT_IMAGE si image, sinon TEXT_QCM
     return { type: hasImg ? "image_qcm" : "text_qcm", target, options: opts };
   });
 
@@ -133,11 +134,18 @@ const buildSession = (words) => {
   });
 
   const write = Array.from({ length: PER }, (_, i) => ({
-    type: "write",
+    type: "write", // LISTEN_WRITE
     target: sw[i % sw.length],
   }));
 
-  return shuffle([...qcm, ...match, ...write]);
+  // On peut ajouter un type "complete" ou réutiliser "write" avec une consigne différente
+  const complete = Array.from({ length: PER }, (_, i) => ({
+    type: "write", // COMPLETE_PHRASE
+    target: sw[(i + 2) % sw.length],
+    isComplete: true,
+  }));
+
+  return shuffle([...qcm, ...match, ...write, ...complete]);
 };
 
 /* ════════════════════════════════════════════════════════════════
@@ -939,7 +947,7 @@ export default function ExerciseSession() {
       {isRetry && retryIdx === 0 && (
         <View style={s.reviewBanner}>
           <Ionicons name="refresh-circle" size={16} color={C.primary} />
-          <Text style={s.reviewTxt}>Révision des exercices ratés !</Text>
+          <Text style={s.reviewTxt}>{t("exercises.retryMistakes", "Let's go back to your mistakes")}</Text>
         </View>
       )}
 
@@ -1039,6 +1047,7 @@ const tb = StyleSheet.create({
     ...SHADOW,
   },
   badgeNum: { fontSize: 14, fontWeight: "800", color: C.text },
+  cowryIcon: { width: 18, height: 18 }, // Placeholder pour l'icône cauri
 });
 
 /* FeedbackBanner */

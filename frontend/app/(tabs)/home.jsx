@@ -141,11 +141,11 @@ const DrawerContent = ({ user, dashboard, onClose, onNav, onLogout }) => {
         </View>
       </View>
 
-      {/* Streak */}
+      {/* Streak (Racines) */}
       <View style={dr.streakBadge}>
-        <Ionicons name="flame" size={15} color={CAM.orange} />
+        <Ionicons name="leaf" size={15} color={CAM.forest} />
         <Text style={[Typo.labelLg, { color: CAM.dark, marginLeft: Space.sm }]}>
-          {t("stats.dayStreakCount", { count: dashboard?.streakDays || 0 })}
+          {t("stats.rootsCount", { count: dashboard?.streakDays || 0 })}
         </Text>
       </View>
 
@@ -308,13 +308,13 @@ const HomeHeader = ({ streak = 0, xp = 0, onMenuPress, currentLang, onToggleLang
         >
           <Ionicons name="globe-outline" size={18} color={CAM.forest} />
         </TouchableOpacity>
-        <View style={[s.headerBadge, { backgroundColor: CAM.orangeLight, marginLeft: Space.xs }]}>
-          <Ionicons name="flame" size={14} color={CAM.orange} />
+        <View style={[s.headerBadge, { backgroundColor: CAM.forestPale, marginLeft: Space.xs }]}>
+          <Ionicons name="leaf" size={14} color={CAM.forest} />
           <Text style={[Typo.labelLg, { color: CAM.dark, marginLeft: 4 }]}>{streak}</Text>
         </View>
         <View style={[s.headerBadge, { backgroundColor: CAM.goldLight, marginLeft: Space.sm }]}>
-          <Ionicons name="flash" size={13} color={CAM.gold} />
-          <Text style={[Typo.labelLg, { color: CAM.dark, marginLeft: 3 }]}>{xp} XP</Text>
+          <Ionicons name="restaurant" size={13} color={CAM.gold} />
+          <Text style={[Typo.labelLg, { color: CAM.dark, marginLeft: 3 }]}>{xp} {t("common.prawns", "Crevettes")}</Text>
         </View>
       </View>
     </View>

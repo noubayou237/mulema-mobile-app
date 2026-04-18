@@ -52,6 +52,7 @@ export class AuthService {
     username: string;
     name: string;
     password: string;
+    language?: string; // Ajouté
   }) {
     if (!body?.email || !body?.password || !body?.username || !body?.name) {
       throw new BadRequestException('Missing fields');
@@ -66,6 +67,29 @@ export class AuthService {
           username: body.username,
           name: body.name,
           passwordHash,
+          language: body.language || 'fr', // Par défaut français
+          // Initialiser les records liés
+          statistics: {
+            create: {
+              totalLearningTime: 0,
+              lessonsCompleted: 0,
+              exercisesCompleted: 0,
+              totalPrawns: 0,
+            },
+          },
+          rootsStreak: {
+            create: {
+              daysConnected: 0,
+              lastConnectedAt: new Date(Date.now() - 48 * 60 * 60 * 1000), // 2 days ago
+            },
+          },
+          cowry: {
+            create: {
+              maxCowries: 5,
+              currentCowries: 5,
+              rechargeTime: 0,
+            },
+          },
         },
       });
 

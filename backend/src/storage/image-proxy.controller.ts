@@ -11,7 +11,7 @@ export class ImageProxyController {
   // =====================
   // PROXY IMAGE ENDPOINT - catch all routes
   // =====================
-  @Get('*')
+  @Get('*path')
   async getImage(@Req() req: Request, @Res() res: Response) {
     // Extract the path from the URL (remove /image/ prefix)
     const fullPath = req.path;

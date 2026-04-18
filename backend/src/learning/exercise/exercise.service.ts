@@ -2,12 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../auth/prisma/prisma.service';
 import { CreateExerciseDto } from './dto/create-exercise.dto';
 import { LessonService } from '../lesson/lesson.service';
+import { ProgressService } from '../progress/progress.service';
 
 @Injectable()
 export class ExerciseService {
   constructor(
     private prisma: PrismaService,
     private lessonService: LessonService,
+    private progressService: ProgressService,
   ) {}
 
   //1- Creation d'une lesson
@@ -43,40 +45,46 @@ export class ExerciseService {
     if (accuracy === 59) return fast ? 390 : 340;
     return fast ? 270 : 230;
   }
+
   //4-Terminer un exercice
   async completeExercise(
     exerciseId: string,
     userId: string,
     accuracy: number,
     timeSpent: number,
+    themeId?: string, // Ajouté pour le système Mulem
   ) {
     const scoreValue = this.calculateScore(accuracy, timeSpent);
 
-    // Récupérer l'exercice pour vérifier s'il est lié à une leçon
-    const exercise = await this.findOne(exerciseId);
-    if (!exercise) throw new NotFoundException('Exercice introuvable');
+    // Si c'est un thème Mulem et que le score est suffisant, on débloque la suite
+    if (themeId && accuracy >= 60) {
+      await this.progressService.unlockLessonsAfterExercise(userId, themeId);
+    }
 
-    if (exercise.lessonId) {
+    // Récupérer l'exercice pour vérifier s'il est lié à une leçon (Legacy)
+    const exercise = await this.findOne(exerciseId);
+    if (!exercise && !themeId) throw new NotFoundException('Exercice introuvable');
+
+    if (exercise?.lessonId) {
       await this.lessonService.unlockNextLesson(userId, exercise.lessonId);
     }
 
     return this.prisma.$transaction(async (tx) => {
-      // 1. Update exercise
-      const exercise = await tx.exercise.update({
-        where: { id: exerciseId },
-        data: {
-          accuracy,
-          timeSpent,
-        },
-      });
+      // 1. Update exercise (si existant dans la table Exercise legacy)
+      if (exercise) {
+        await tx.exercise.update({
+          where: { id: exerciseId },
+          data: { accuracy, timeSpent },
+        });
 
-      // 2. Save score
-      await tx.score.create({
-        data: {
-          scoreValue,
-          exerciseId,
-        },
-      });
+        // 2. Save score
+        await tx.score.create({
+          data: {
+            scoreValue,
+            exerciseId,
+          },
+        });
+      }
 
       // 3. Add prawns to user
       await tx.user.update({
