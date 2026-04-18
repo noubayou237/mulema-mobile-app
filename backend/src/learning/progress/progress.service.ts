@@ -43,6 +43,21 @@ export class ProgressService {
       },
     });
 
+    await this.prisma.statistics.upsert({
+      where: { userId },
+      update: {
+        totalLearningTime: { increment: 120 },
+        lessonsCompleted: { increment: 1 },
+      },
+      create: {
+        userId,
+        totalLearningTime: 120,
+        lessonsCompleted: 1,
+        exercisesCompleted: 0,
+        totalPrawns: 0,
+      },
+    });
+
     // Note : Le déblocage des leçons suivantes (>2) se fait via les exercices
     return progress;
   }
@@ -96,6 +111,21 @@ export class ProgressService {
         isUnlocked: true,
         isCompleted: false,
         stars: 0,
+      },
+    });
+
+    await this.prisma.statistics.upsert({
+      where: { userId },
+      update: {
+        totalLearningTime: { increment: 300 },
+        exercisesCompleted: { increment: 1 },
+      },
+      create: {
+        userId,
+        totalLearningTime: 300,
+        lessonsCompleted: 0,
+        exercisesCompleted: 1,
+        totalPrawns: 0,
       },
     });
 

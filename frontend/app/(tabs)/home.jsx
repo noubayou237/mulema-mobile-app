@@ -73,12 +73,33 @@ const getIcon = (name) => {
   return "book";
 };
 
-/* ── Exercices du jour ── */
-const getDailyExos = (t) => [
-  { id: "e1", label: t("exercises.daily.salutations"), icon: "hand-left", route: "exercices/salutation/exos1", done: true },
-  { id: "e2", label: t("exercises.daily.family"), icon: "people", route: "exercices/famille/exos1", done: false },
-  { id: "e3", label: t("exercises.daily.animals"), icon: "paw", route: "exercices/animaux/exos1", done: false },
-];
+/* ── Exercices basés sur les thèmes (Dynamique) ── */
+const getThemeExos = (themes) => {
+  if (!themes || themes.length === 0) return [];
+  // Afficher les thèmes actifs (commencés)
+  const activeThemes = themes.filter((t) => t.lessonsCount > 0 && t.lessonsCompleted > 0);
+  
+  if (activeThemes.length === 0) {
+    // S'il n'a rien commencé, on propose le premier thème dispo
+    const first = themes[0];
+    return [{
+      id: first.id,
+      label: first.name,
+      icon: getIcon(first.name),
+      route: `/(tabs)/lessons/${first.id}`,
+      done: false,
+    }];
+  }
+
+  // Trier par les plus récents (les moins complétés d'abord, ou simplement les 3 premiers)
+  return activeThemes.slice(0, 3).map(theme => ({
+    id: theme.id,
+    label: theme.name,
+    icon: getIcon(theme.name),
+    route: `/(tabs)/lessons/${theme.id}`,
+    done: theme.lessonsCompleted >= theme.lessonsCount,
+  }));
+};
 
 /* ════════════════════════════════════════════════════════════════════
    DRAWER — Quick Access Menu
@@ -707,13 +728,13 @@ export default function HomeScreen() {
               <Text style={[Typo.headlineMd, { color: CAM.dark }]}>{t("home.exercises")}</Text>
               <View style={s.exoBadgeCount}>
                 <Text style={[Typo.labelMd, { color: CAM.forest }]}>
-                  {getDailyExos(t).filter((e) => e.done).length}/{getDailyExos(t).length}
+                  {getThemeExos(themes).filter((e) => e.done).length}/{getThemeExos(themes).length}
                 </Text>
               </View>
             </View>
 
             <View style={s.exoList}>
-              {getDailyExos(t).map((exo) => (
+              {getThemeExos(themes).map((exo) => (
                 <ExerciseRow
                   key={exo.id}
                   exo={exo}
