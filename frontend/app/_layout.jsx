@@ -63,16 +63,22 @@ function AuthGate({ children }) {
     if (!isReady) return;
     const inAuth       = segments[0] === "(auth)";
     const inOnboarding = segments[0] === "(onboarding)";
+    // ✅ FIX: explicitly check both group AND screen name so this guard is
+    // robust regardless of future route nesting changes.
+    const onPageVideo  = inOnboarding && segments[1] === "PageVideo";
 
     if (!isAuthenticated) {
       if (!inAuth) router.replace("/(auth)/sign-in");
     } else if (!activeLanguage) {
+      // No language selected yet — must go through ChoiceLanguage
       if (!inOnboarding) router.replace("/(onboarding)/ChoiceLanguage");
     } else if (!hasSeenIntro) {
-      if (segments[1] !== "PageVideo") {
+      // Language chosen but intro not watched — must go through PageVideo
+      if (!onPageVideo) {
         router.replace(`/(onboarding)/PageVideo?lang=${encodeURIComponent(activeLanguage.code)}`);
       }
     } else {
+      // Fully onboarded — send out of auth/onboarding zones
       if (inAuth || inOnboarding) router.replace("/(tabs)/home");
     }
   }, [isReady, isAuthenticated, activeLanguage, hasSeenIntro, segments]);

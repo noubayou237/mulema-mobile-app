@@ -141,12 +141,17 @@ const VerifyEmail = () => {
     }, 1000);
   };
 
-  // ── Auto login — FIX: Using Auth Store ──
+  // ── Auto login — delegates routing entirely to AuthGate ──
+  // loginWithTokens() now resets the language store first, so AsyncStorage is always
+  // clean. The AuthGate will then see: isAuthenticated=true, activeLanguage=null →
+  // and automatically redirect to /(onboarding)/ChoiceLanguage. No explicit nav needed.
   const autoLogin = async (responseData) => {
     const { accessToken, refreshToken } = responseData;
     const { loginWithTokens } = useAuthStore.getState();
     await loginWithTokens({ accessToken, refreshToken });
-    router.replace("/(onboarding)/ChoiceLanguage");
+    // ✅ Do NOT push a route here — AuthGate handles it via the routing effect.
+    // Adding an explicit router.replace() here races with AuthGate's async
+    // loadActiveLanguage() and can cause it to redirect to home instead.
   };
 
   // ── Verify — ORIGINAL LOGIC ──

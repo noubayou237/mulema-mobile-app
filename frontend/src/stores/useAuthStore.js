@@ -5,6 +5,7 @@
 
 import { create } from "zustand";
 import api, { saveSession, clearSession, getSession } from "../services/api";
+import { useLanguageStore } from "./useLanguageStore";
 
 export const useAuthStore = create((set, get) => ({
   user: null,
@@ -77,6 +78,11 @@ export const useAuthStore = create((set, get) => ({
   },
 
   loginWithTokens: async (tokens) => {
+    // ✅ FIX: Clear any stale language/onboarding data from a previous session
+    // before we authenticate. This prevents a previous user's AsyncStorage
+    // (selectedLanguage, hasSeenIntro) from bypassing onboarding for a new user.
+    await useLanguageStore.getState().reset();
+
     await saveSession(tokens);
     let user = null;
     try {
@@ -132,6 +138,9 @@ export const useAuthStore = create((set, get) => ({
       await api.post("/auth/logout").catch(() => {});
     } catch {}
     await clearSession();
+    // ✅ FIX: Clear language store + AsyncStorage so next user/session
+    // starts onboarding fresh (selectedLanguage, hasSeenIntro, etc.)
+    await useLanguageStore.getState().reset();
     set({ user: null, token: null, isAuthenticated: false });
   },
 }));
