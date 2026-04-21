@@ -10,6 +10,8 @@ import {
 import { AuthService } from './auth.service';
 import { EmailService } from './email/email.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -21,14 +23,14 @@ export class AuthController {
   ) {}
 
   @Post('register')
-  async register(@Body() body: any) {
+  async register(@Body() body: RegisterDto) {
     this.logger.log(`Register request for email: ${body.email}`);
     return this.authService.register(body);
   }
 
   @Post('login')
-  async login(@Body() body: any) {
-    this.logger.log(`Login request for email: ${body.email}`);
+  async login(@Body() body: LoginDto) {
+    this.logger.log(`Login request for identifier: ${body.identifier}`);
     return this.authService.login(body);
   }
 

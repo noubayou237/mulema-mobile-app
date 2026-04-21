@@ -46,6 +46,9 @@ export const Colors = {
   error:           "#BA1A1A",
   errorContainer:  "#FFDAD6",
   onError:         "#FFFFFF",
+  success:         "#2E7D32",
+  successContainer:"#A5D6A7",
+  onSuccess:       "#FFFFFF",
 
   // ── Helpers ──
   textPrimary:     "#131B2E",

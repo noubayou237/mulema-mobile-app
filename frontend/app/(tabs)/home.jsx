@@ -465,7 +465,7 @@ const ThemeCard = ({ theme, onPress }) => {
         </View>
 
         <Text style={[Typo.titleSm, { marginTop: Space.md, color: Colors.onSurface }]} numberOfLines={1}>
-          {t("common.theLanguage") === "en" && theme.name_en ? theme.name_en : theme.name}
+          {i18n.language.startsWith("en") && theme.name_en ? theme.name_en : theme.name}
         </Text>
         <Text style={[Typo.labelSm, { marginTop: Space.xs, color: Colors.textTertiary }]}>
           {t("lessons.lessonsCount", { count: theme.lessonsCount })}
@@ -515,7 +515,6 @@ export default function HomeScreen() {
   const { data: dash, isLoading: dLoading, fetchDashboard } = useDashboardStore();
 
   const [selectedTheme, setSelectedTheme] = useState(null);
-  const [sheetVisible, setSheetVisible] = useState(false);
 
   const { t, i18n } = useTranslation();
   const [appLang, setAppLang] = useState(i18n.language || 'fr');
@@ -612,10 +611,7 @@ export default function HomeScreen() {
   };
 
   const handleSelectLesson = (lesson, index) => {
-    setSheetVisible(false);
-    setTimeout(() => {
-      router.push(`/(tabs)/lessons/${lesson.id || index + 1}`);
-    }, 320);
+    router.push(`/(tabs)/lessons/${lesson.id || index + 1}`);
   };
 
   /* ── Continuer ── */
@@ -710,8 +706,8 @@ export default function HomeScreen() {
               </View>
             ) : (
               <View style={s.grid}>
-                {themes.slice(0, 4).map((t) => (
-                  <ThemeCard key={t.id} theme={t} onPress={openSheet} />
+                {themes.slice(0, 4).map((theme) => (
+                  <ThemeCard key={theme.id} theme={theme} onPress={openSheet} />
                 ))}
               </View>
             )}
@@ -771,15 +767,6 @@ export default function HomeScreen() {
         />
       </Animated.View>
 
-      {/* ══ BOTTOM SHEET ══ */}
-      {sheetVisible && selectedTheme && (
-        <BottomSheet
-          theme={selectedTheme}
-          onClose={() => setSheetVisible(false)}
-          onSelectLesson={handleSelectLesson}
-          appLang={appLang}
-        />
-      )}
     </View>
   );
 }

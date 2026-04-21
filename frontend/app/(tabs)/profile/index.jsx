@@ -6,7 +6,7 @@
  * ╚══════════════════════════════════════════════════════════════╝
  */
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, Animated, Easing,
   StyleSheet, Platform, Dimensions, StatusBar,
@@ -54,6 +54,7 @@ export default function ProfileScreen() {
   const streak = dash?.streakDays || 0;
   const wordsLearned = dash?.wordsLearned || 0;
   const totalHours = Math.round((dash?.totalTimeMinutes || 0) / 60);
+  const barHeights = useMemo(() => DAYS.map(() => Math.random() * 60 + 10), []);
 
   return (
     <View style={s.root}>
@@ -147,10 +148,10 @@ export default function ProfileScreen() {
           </View>
           <View style={s.barsRow}>
             {DAYS.map((day, i) => {
-              const h = Math.random() * 60 + 10; // placeholder — remplacer par données réelles
+              const h = barHeights[i];
               const isToday = i === new Date().getDay() - 1;
               return (
-                <View key={day} style={s.barCol}>
+                <View key={i} style={s.barCol}>
                   <View style={[s.bar, { height: h, backgroundColor: isToday ? Colors.primary : Colors.surfaceVariant }]} />
                   <Text style={[Typo.labelSm, isToday && { color: Colors.primary, fontWeight: "700" }]}>{day}</Text>
                 </View>

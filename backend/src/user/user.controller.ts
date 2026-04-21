@@ -64,9 +64,9 @@ export class UserController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: './uploads/avatars',
-        filename: (req, file, cb) => {
-          // We'll handle filename in service
-          cb(null, file.originalname);
+        filename: (req: any, file, cb) => {
+          const ext = file.originalname.split('.').pop()?.replace(/[^a-z0-9]/gi, '') || 'jpg';
+          cb(null, `${req.user.userId}-${Date.now()}.${ext}`);
         },
       }),
       limits: {

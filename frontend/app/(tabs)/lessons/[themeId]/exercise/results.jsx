@@ -51,13 +51,7 @@ const ScoreRing = ({ score }) => {
 
   return (
     <View style={r.ringWrap}>
-      <View style={r.ringBg}>
-        <Animated.Text style={r.scoreNum}>
-          {anim.interpolate
-            ? undefined
-            : `${score}%`}
-        </Animated.Text>
-      </View>
+      <View style={r.ringBg} />
       <AnimatedScore anim={anim} />
     </View>
   );

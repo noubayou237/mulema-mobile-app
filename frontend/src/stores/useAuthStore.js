@@ -88,7 +88,11 @@ export const useAuthStore = create((set, get) => ({
     try {
       const { data } = await api.get("/auth/me");
       user = data;
-    } catch {}
+    } catch (err) {
+      console.warn("[Auth] Failed to load user profile:", err?.message);
+      set({ isAuthenticated: false, token: null });
+      return null;
+    }
 
     set({
       user,

@@ -1,9 +1,11 @@
-import { Controller, Post, Body, Get, Param, Patch } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Patch, UseGuards, Req } from '@nestjs/common';
 import { ExerciseService } from './exercise.service';
 import { ExerciseEngineService } from './exercise-engine.service';
 import { CreateExerciseDto } from './dto/create-exercise.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 
 @Controller('exercises')
+@UseGuards(JwtAuthGuard)
 export class ExerciseController {
   constructor(
     private readonly exerciseService: ExerciseService,
@@ -28,11 +30,12 @@ export class ExerciseController {
   @Patch(':id/complete')
   completeExercise(
     @Param('id') id: string,
-    @Body() body: { userId: string; accuracy: number; timeSpent: number },
+    @Req() req: any,
+    @Body() body: { accuracy: number; timeSpent: number },
   ) {
     return this.exerciseService.completeExercise(
       id,
-      body.userId,
+      req.user.userId,
       body.accuracy,
       body.timeSpent,
     );
@@ -59,10 +62,11 @@ export class ExerciseController {
 
   @Post('word-progress')
   updateWordProgress(
-    @Body() body: { userId: string; wordId: string; isCorrect: boolean },
+    @Req() req: any,
+    @Body() body: { wordId: string; isCorrect: boolean },
   ) {
     return this.exerciseEngineService.updateWordProgress(
-      body.userId,
+      req.user.userId,
       body.wordId,
       body.isCorrect,
     );

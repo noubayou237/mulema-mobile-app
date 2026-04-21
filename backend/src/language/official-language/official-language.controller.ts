@@ -15,6 +15,7 @@ export class OfficialLanguageController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   create(@Body() dto: any) {
     return this.service.create(dto.name);
   }

@@ -28,9 +28,8 @@ export class AuthService {
     let candidate = sanitizedBase || 'user';
     let suffix = 0;
 
-    // Iterate until we find a username that is not taken
-    // The loop is bounded by the database constraint and will exit quickly in practice
-    while (true) {
+    const MAX_ATTEMPTS = 20;
+    while (suffix < MAX_ATTEMPTS) {
       const existing = await this.prisma.user.findUnique({
         where: { username: candidate },
       });
@@ -42,6 +41,8 @@ export class AuthService {
       suffix += 1;
       candidate = `${sanitizedBase}${suffix}`;
     }
+
+    throw new Error(`Could not generate unique username after ${MAX_ATTEMPTS} attempts`);
   }
 
   // =====================
@@ -150,7 +151,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const accessToken = (jwt as any).sign(
+    const accessToken = jwt.sign(
       { sub: user.id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: 60 * 15 }, // 15 min
@@ -189,7 +190,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const newAccessToken = (jwt as any).sign(
+    const newAccessToken = jwt.sign(
       { sub: storedToken.user.id, role: storedToken.user.role },
       process.env.JWT_SECRET,
       { expiresIn: 60 * 15 },
@@ -414,7 +415,7 @@ export class AuthService {
     });
 
     // Generate tokens (auto-login)
-    const accessToken = (jwt as any).sign(
+    const accessToken = jwt.sign(
       { sub: user.id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: 60 * 15 }, // 15 min
@@ -508,7 +509,7 @@ export class AuthService {
       });
     }
 
-    const accessToken = (jwt as any).sign(
+    const accessToken = jwt.sign(
       { sub: user.id, role: user.role, provider },
       process.env.JWT_SECRET,
       { expiresIn: 60 * 15 },

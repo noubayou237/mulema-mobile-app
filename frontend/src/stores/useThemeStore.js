@@ -144,8 +144,8 @@ export const useThemeStore = create((set, get) => ({
 
     return {
       e1: enoughLessonsCompleted,
-      e2: enoughLessonsCompleted && false, // Placeholder for levels E2/E3 if needed
-      e3: enoughLessonsCompleted && false,
+      e2: enoughLessonsCompleted,
+      e3: enoughLessonsCompleted,
     };
   },
 
@@ -166,9 +166,6 @@ export const useThemeStore = create((set, get) => ({
 
     // Si débloqué explicitement dans la DB
     if (prog?.isUnlocked) return false;
-
-    // Fallback : Les 2 premières leçons (order 0 et 1) sont toujours débloquées par défaut
-    if (order < 2) return false;
 
     return true;
   },

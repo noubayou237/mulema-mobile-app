@@ -414,7 +414,7 @@ export default function CommunityScreen() {
           timeLeft={timeLeft}
           streak={3}
           hearts={5}
-          onMenuPress={() => router.push("/modal/menu")}
+          onMenuPress={() => router.push("/(tabs)/profile/settings")}
         />
 
         {/* ── Podium ── */}
