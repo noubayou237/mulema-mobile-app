@@ -521,8 +521,9 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
             <Text style={tipS.title}>{t("common.didYouKnow")}</Text>
           </View>
           <Text style={tipS.body}>
-            En {langName},{" "}
-            <Text style={{ fontStyle: "italic" }}>"{q.target.title}"</Text> se dit{" "}
+            {t("exercises.tipIn", { langName })}{" "}
+            <Text style={{ fontStyle: "italic" }}>"{q.target.title}"</Text>{" "}
+            {t("exercises.tipIsSaid")}{" "}
             <Text style={{ fontWeight: "700", fontStyle: "italic" }}>"{q.target.subtitle}"</Text>.
           </Text>
         </View>
@@ -864,6 +865,11 @@ export default function ExerciseSession() {
 
 
   useEffect(() => {
+    pauseBackgroundMusic();
+    return () => { resumeBackgroundMusic(); };
+  }, []);
+
+  useEffect(() => {
     if (themeId) fetchLessons(themeId);
     fetchDashboard();
   }, [themeId]);
@@ -874,7 +880,7 @@ export default function ExerciseSession() {
     () => (wordCount ? lessons.slice(0, wordCount) : lessons),
     [lessonsKey, wordCount]
   );
-  const questions = useMemo(() => buildSession(wordsForSession), [lessonsKey, wordCount]);
+  const questions = useMemo(() => buildSession(wordsForSession), [wordsForSession]);
 
 
   const [idx, setIdx]           = useState(0);
@@ -941,7 +947,7 @@ export default function ExerciseSession() {
 
   useEffect(() => {
     if (hearts <= 0) setTimeout(() => goResults(), 500);
-  }, [hearts]);
+  }, [hearts, goResults]);
 
   if (!curQ) {
     return (
@@ -977,7 +983,7 @@ export default function ExerciseSession() {
       {isRetry && retryIdx === 0 && (
         <View style={s.reviewBanner}>
           <Ionicons name="refresh-circle" size={16} color={C.primary} />
-          <Text style={s.reviewTxt}>{t("exercises.retryMistakes", "Let's go back to your mistakes")}</Text>
+          <Text style={s.reviewTxt}>{t("exercises.retryMistakes")}</Text>
         </View>
       )}
 

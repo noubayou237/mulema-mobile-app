@@ -58,7 +58,7 @@ const icon = (code) => ICONS[(code ?? "").toLowerCase()] ?? "book-outline";
    THEME CARD (Leçons tab)
    ════════════════════════════════════════════════════════════════ */
 const ThemeCard = ({ theme, index, onPress }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const fade = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(20)).current;
 
@@ -107,7 +107,7 @@ const ThemeCard = ({ theme, index, onPress }) => {
         </View>
 
         <Text style={[s.cardName, locked && { color: FAINT }]} numberOfLines={1}>
-          {t("common.theLanguage") === "en" && theme.name_en ? theme.name_en : theme.name ?? "—"}
+          {i18n.language.startsWith("en") && theme.name_en ? theme.name_en : theme.name ?? "—"}
         </Text>
         {theme.nameLocal ? (
           <Text style={[s.cardLocal, locked && { color: FAINT }]} numberOfLines={1}>

@@ -21,12 +21,14 @@ export default function OfflineBanner() {
       }).start();
     } else if (!prevConnected.current) {
       // Was offline, now back — slide up to hide after brief delay
-      Animated.delay(1200);
-      Animated.timing(translateY, {
-        toValue: -60,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
+      Animated.sequence([
+        Animated.delay(1200),
+        Animated.timing(translateY, {
+          toValue: -60,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
     }
     prevConnected.current = isConnected;
   }, [isConnected]);

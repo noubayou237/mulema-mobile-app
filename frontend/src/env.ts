@@ -16,7 +16,10 @@ const envSchema = z.object({
 
   // Expo credentials (for social login redirect URIs)
   EXPO_PUBLIC_EXPO_USERNAME: z.string().optional(),
-  EXPO_PUBLIC_APP_SLUG: z.string().optional()
+  EXPO_PUBLIC_APP_SLUG: z.string().optional(),
+
+  // App links
+  EXPO_PUBLIC_PRIVACY_POLICY_URL: z.string().url().optional()
 });
 
 // Parse and validate process.env against the schema
@@ -40,7 +43,8 @@ export const env = {
     envData.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || "",
   EXPO_PUBLIC_FACEBOOK_APP_ID: envData.EXPO_PUBLIC_FACEBOOK_APP_ID || "",
   EXPO_PUBLIC_EXPO_USERNAME: envData.EXPO_PUBLIC_EXPO_USERNAME || "",
-  EXPO_PUBLIC_APP_SLUG: envData.EXPO_PUBLIC_APP_SLUG || "mulema"
+  EXPO_PUBLIC_APP_SLUG: envData.EXPO_PUBLIC_APP_SLUG || "mulema",
+  EXPO_PUBLIC_PRIVACY_POLICY_URL: envData.EXPO_PUBLIC_PRIVACY_POLICY_URL || ""
 };
 
 // Type for TypeScript autocomplete

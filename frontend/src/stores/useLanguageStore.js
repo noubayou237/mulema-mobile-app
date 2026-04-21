@@ -33,12 +33,11 @@ export const useLanguageStore = create((set, get) => ({
 
   loadActiveLanguage: async () => {
     const { languages } = get();
-    if (languages.length === 0) return null;
 
     // Helper : chercher d'abord par ID exact, sinon par nom
     // en priorisant les langues patrimoniales (celles qui ont des thèmes)
     const findLang = (query) => {
-      if (!query) return null;
+      if (!query || languages.length === 0) return null;
       // 1. ID exact
       const byId = languages.find((l) => l.id === query);
       if (byId) return byId;
@@ -51,17 +50,22 @@ export const useLanguageStore = create((set, get) => ({
 
     try {
       const storedId = await AsyncStorage.getItem(STORAGE_KEY);
-      const found = findLang(storedId);
-      if (found) {
-        set({ activeLanguage: found });
+      let found = findLang(storedId);
+
+      const storedName = await AsyncStorage.getItem("selectedLanguageName");
+      
+      if (!found && storedName) {
+        found = findLang(storedName);
       }
 
-      if (!found) {
-        const storedName = await AsyncStorage.getItem("selectedLanguageName");
-        const foundByName = findLang(storedName);
-        if (foundByName) {
-          set({ activeLanguage: foundByName });
-        }
+      // Fallback: If backend fails (languages.length === 0) but we have a stored language
+      if (!found && storedId && storedName) {
+        const storedType = (await AsyncStorage.getItem(STORAGE_KEY_TYPE)) || "patrimonial";
+        found = { id: storedId, name: storedName, type: storedType };
+      }
+
+      if (found) {
+        set({ activeLanguage: found });
       }
 
       // Load intro video seen flag — important: this must ALWAYS run

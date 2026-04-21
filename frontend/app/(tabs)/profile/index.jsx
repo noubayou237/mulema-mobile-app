@@ -149,7 +149,7 @@ export default function ProfileScreen() {
           <View style={s.barsRow}>
             {DAYS.map((day, i) => {
               const h = barHeights[i];
-              const isToday = i === new Date().getDay() - 1;
+              const isToday = i === (new Date().getDay() + 6) % 7;
               return (
                 <View key={i} style={s.barCol}>
                   <View style={[s.bar, { height: h, backgroundColor: isToday ? Colors.primary : Colors.surfaceVariant }]} />

@@ -13,7 +13,6 @@ import {
   View,
   Text,
   ScrollView,
-  FlatList,
   TouchableOpacity,
   Animated,
   Easing,
@@ -271,7 +270,7 @@ const RankRow = ({ item, isCurrentUser = false }) => {
         <View style={rr.xpCol}>
           <Text style={[rr.xp, isCurrentUser && { color: "#FFF" }]}>{item.totalXP}</Text>
           <Text style={[rr.xpLabel, isCurrentUser && { color: "rgba(255,255,255,0.7)" }]}>
-            {isCurrentUser ? t("community.yourScore") : t("stats.xp", { defaultValue: "XP" })}
+            {isCurrentUser ? t("community.yourScore") : t("stats.xp")}
           </Text>
         </View>
       </View>
@@ -373,16 +372,6 @@ export default function CommunityScreen() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [timeLeft, setTimeLeft] = useState("2j 14h");
-
-  // Try to use community store if available
-  let storeRanking = null;
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const store = require("../../src/stores/useCommunityStore");
-    if (store?.useCommunityStore) {
-      // Would use store here
-    }
-  } catch (_) { }
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);

@@ -6,6 +6,8 @@
 import { create } from "zustand";
 import api, { saveSession, clearSession, getSession } from "../services/api";
 import { useLanguageStore } from "./useLanguageStore";
+import { useThemeStore } from "./useThemeStore";
+import { useDashboardStore } from "./useDashboardStore";
 
 export const useAuthStore = create((set, get) => ({
   user: null,
@@ -33,15 +35,25 @@ export const useAuthStore = create((set, get) => ({
         isLoading: false,
         isSessionLoaded: true,
       });
-    } catch {
-      await clearSession();
-      set({
-        user: null,
-        token: null,
-        isAuthenticated: false,
-        isLoading: false,
-        isSessionLoaded: true,
-      });
+    } catch (error) {
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
+        await clearSession();
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          isLoading: false,
+          isSessionLoaded: true,
+        });
+      } else {
+        // Keep authentication active if backend fails (e.g. 500 Timeout)
+        // User is null but they won't be pushed back to login
+        set({
+          isAuthenticated: true,
+          isLoading: false,
+          isSessionLoaded: true,
+        });
+      }
     }
   },
 
@@ -142,9 +154,9 @@ export const useAuthStore = create((set, get) => ({
       await api.post("/auth/logout").catch(() => {});
     } catch {}
     await clearSession();
-    // ✅ FIX: Clear language store + AsyncStorage so next user/session
-    // starts onboarding fresh (selectedLanguage, hasSeenIntro, etc.)
     await useLanguageStore.getState().reset();
+    useThemeStore.getState().reset();
+    useDashboardStore.getState().reset();
     set({ user: null, token: null, isAuthenticated: false });
   },
 }));

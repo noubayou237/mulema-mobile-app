@@ -30,7 +30,7 @@ export class AuthController {
 
   @Post('login')
   async login(@Body() body: LoginDto) {
-    this.logger.log(`Login request for identifier: ${body.identifier}`);
+    this.logger.log(`Login request for email: ${body.email}`);
     return this.authService.login(body);
   }
 

@@ -7,8 +7,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
 import { useThemeStore } from "../../src/stores/useThemeStore";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
 import { useDashboardStore } from "../../src/stores/useDashboardStore";
@@ -49,7 +47,7 @@ const icon = (code) => ICONS[(code ?? "").toLowerCase()] ?? "book-outline";
    EXERCISE CARD (Exercices tab)
    ════════════════════════════════════════════════════════════════ */
 const ExerciseThemeCard = ({ theme, index, onPress, isCompleted, hasReward }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const fade = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(20)).current;
 
@@ -84,7 +82,7 @@ const ExerciseThemeCard = ({ theme, index, onPress, isCompleted, hasReward }) =>
           </View>
           <View style={{ flex: 1, marginLeft: 12 }}>
             <Text style={[s.exCardName, locked && { color: FAINT }]} numberOfLines={1}>
-              {t("common.theLanguage") === "en" && theme.name_en ? theme.name_en : theme.name ?? "—"}
+              {i18n.language.startsWith("en") && theme.name_en ? theme.name_en : theme.name ?? "—"}
             </Text>
             <Text style={[s.exCardSub, locked && { color: FAINT }]}>
               {locked

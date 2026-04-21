@@ -261,7 +261,10 @@
     "notBad": "Pas mal !",
     "notBadSub": "Encore quelques révisions et tu vas maîtriser ça.",
     "keepGoing": "Courage !",
-    "keepGoingSub": "Revois les leçons et réessaie, tu peux faire mieux !"
+    "keepGoingSub": "Revois les leçons et réessaie, tu peux faire mieux !",
+    "retryMistakes": "Revenons sur tes erreurs",
+    "tipIn": "En {{langName}},",
+    "tipIsSaid": "se dit"
   },
   "errors": {
     "networkError": "Erreur réseau. Veuillez vérifier votre connexion.",
@@ -313,7 +316,8 @@
     "totalTime": "Temps total",
     "weeklyActivity": "Activité hebdomadaire",
     "streakGood": "Vous êtes en feu ! Continuez comme ça.",
-    "streakKeepGoing": "Continuez votre série !"
+    "streakKeepGoing": "Continuez votre série !",
+    "xp": "XP"
   },
   "community": {
     "title": "Communauté",

@@ -55,9 +55,9 @@ export class ExerciseController {
     return this.exerciseEngineService.generateThemeExercises(themeId);
   }
 
-  @Get('review/:userId')
-  getWordsForReview(@Param('userId') userId: string) {
-    return this.exerciseEngineService.getWordsForReview(userId);
+  @Get('review/me')
+  getWordsForReview(@Req() req: any) {
+    return this.exerciseEngineService.getWordsForReview(req.user.userId);
   }
 
   @Post('word-progress')

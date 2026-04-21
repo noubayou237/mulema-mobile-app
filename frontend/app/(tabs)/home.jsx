@@ -23,8 +23,6 @@ import {
   ActivityIndicator,
   PanResponder,
   Alert,
-  Modal,
-  FlatList,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -50,7 +48,6 @@ const GOLD = Colors.secondaryContainer || "#FD9D1A";
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 const DRAWER_WIDTH = SCREEN_W * 0.78;
 const CARD_W = (SCREEN_W - Space["2xl"] * 2 - Space.md) / 2;
-const SHEET_HEIGHT = SCREEN_H * 0.72;
 
 /* ── Icônes de thème ── */
 const THEME_ICONS = {
@@ -145,7 +142,7 @@ const DrawerContent = ({ user, dashboard, onClose, onNav, onLogout }) => {
         </View>
         <View style={{ marginLeft: Space.lg, flex: 1 }}>
           <Text style={[Typo.titleLg, { color: Colors.onSurface }]} numberOfLines={1}>
-            {user?.name || t("common.user", "Utilisateur")}
+            {user?.name || t("common.user")}
           </Text>
           <View style={dr.levelBadge}>
             <Ionicons name="star" size={11} color={GOLD} />
@@ -189,109 +186,6 @@ const DrawerContent = ({ user, dashboard, onClose, onNav, onLogout }) => {
 };
 
 /* ════════════════════════════════════════════════════════════════════
-   BOTTOM SHEET — Leçons d'un thème
-   ════════════════════════════════════════════════════════════════════ */
-
-const BottomSheet = ({ theme, onClose, onSelectLesson, appLang }) => {
-  const { t } = useTranslation();
-  const slideAnim = useRef(new Animated.Value(SHEET_HEIGHT)).current;
-  const overlayAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.spring(slideAnim, { toValue: 0, tension: 70, friction: 12, useNativeDriver: true }),
-      Animated.timing(overlayAnim, { toValue: 1, duration: 280, useNativeDriver: true }),
-    ]).start();
-  }, []);
-
-  const dismiss = () => {
-    Animated.parallel([
-      Animated.timing(slideAnim, { toValue: SHEET_HEIGHT, duration: 280, easing: Easing.in(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(overlayAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
-    ]).start(onClose);
-  };
-
-  /* Génère des leçons fictives si pas de données */
-  const lessons = theme?.lessons || Array.from({ length: theme?.lessonsCount || 4 }, (_, i) => ({
-    id: `lesson-${i + 1}`,
-    title: t("lessons.lessonNum", { num: i + 1 }),
-    subtitle: `${theme?.name || t("common.theme")} · ${t("home.levels.level")} ${i + 1}`,
-    done: i < (theme?.lessonsCompleted || 0),
-  }));
-
-  return (
-    <Modal transparent visible animationType="none" onRequestClose={dismiss}>
-      <Animated.View style={[bs.overlay, { opacity: overlayAnim }]}>
-        <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={dismiss} />
-      </Animated.View>
-
-      <Animated.View style={[bs.sheet, { transform: [{ translateY: slideAnim }] }]}>
-        {/* Handle */}
-        <View style={bs.handle} />
-
-        {/* En-tête thème */}
-        <View style={bs.sheetHeader}>
-          <View style={[bs.sheetIcon, { backgroundColor: RED_L }]}>
-            <Ionicons name={getIcon(theme?.name)} size={24} color={RED} />
-          </View>
-          <View style={{ flex: 1, marginLeft: Space.lg }}>
-            <Text style={[Typo.headlineMd, { color: Colors.onSurface }]}>{theme?.name}</Text>
-            <Text style={[Typo.labelSm, { color: RED }]}>
-              {t("home.levels.lessonsCompleted", { completed: theme?.lessonsCompleted || 0, total: theme?.lessonsCount || lessons.length })}
-            </Text>
-          </View>
-          <TouchableOpacity onPress={dismiss} style={bs.closeBtn} activeOpacity={0.7}>
-            <Ionicons name="close" size={20} color={Colors.textTertiary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Barre de progression du thème (vert pour le succès et la progression) */}
-        <View style={bs.progressTrack}>
-          <View style={[bs.progressFill, {
-            width: `${theme?.lessonsCount > 0 ? Math.round((theme.lessonsCompleted / theme.lessonsCount) * 100) : 0}%`,
-          }]} />
-        </View>
-
-        {/* Liste des leçons */}
-        <FlatList
-          data={lessons}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: Space["2xl"], paddingBottom: 40 }}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item, index }) => (
-            <TouchableOpacity
-              onPress={() => onSelectLesson(item, index)}
-              activeOpacity={0.75}
-              style={bs.lessonRow}
-            >
-              <View style={[bs.lessonNum, item.done && { backgroundColor: GREEN, borderColor: GREEN }]}>
-                {item.done
-                  ? <Ionicons name="checkmark" size={14} color="#fff" />
-                  : <Text style={[Typo.labelMd, { color: RED }]}>{index + 1}</Text>
-                }
-              </View>
-              <View style={{ flex: 1, marginLeft: Space.lg }}>
-                <Text style={[Typo.titleSm, { color: Colors.onSurface }]}>
-                  {appLang === 'en' && item.title_en ? item.title_en : item.title}
-                </Text>
-                {item.subtitle && (
-                  <Text style={[Typo.labelSm, { color: Colors.textTertiary }]}>{item.subtitle}</Text>
-                )}
-              </View>
-              <Ionicons
-                name={item.done ? "checkmark-circle" : "play-circle-outline"}
-                size={22}
-                color={item.done ? GREEN : Colors.surfaceVariant}
-              />
-            </TouchableOpacity>
-          )}
-        />
-      </Animated.View>
-    </Modal>
-  );
-};
-
-/* ════════════════════════════════════════════════════════════════════
    HOME HEADER
    ════════════════════════════════════════════════════════════════════ */
 
@@ -311,7 +205,7 @@ const HomeHeader = ({ streak = 0, xp = 0, onMenuPress, currentLang, onToggleLang
           onPress={() => {
             Alert.alert(
               t("settings.selectLanguage"),
-              t("settings.selectLanguageDesc", "Choose the interface language / Choisissez la langue"),
+              t("settings.selectLanguageDesc"),
               [
                 { text: "Français", onPress: () => onToggleLang('fr') },
                 { text: "English", onPress: () => onToggleLang('en') },
@@ -330,7 +224,7 @@ const HomeHeader = ({ streak = 0, xp = 0, onMenuPress, currentLang, onToggleLang
         </View>
         <View style={[s.headerBadge, { backgroundColor: "#FFF7E6", marginLeft: Space.sm }]}>
           <Ionicons name="restaurant" size={13} color={GOLD} />
-          <Text style={[Typo.labelLg, { color: Colors.onSurface, marginLeft: 3 }]}>{xp} {t("common.prawns", "Crevettes")}</Text>
+          <Text style={[Typo.labelLg, { color: Colors.onSurface, marginLeft: 3 }]}>{xp} {t("common.prawns")}</Text>
         </View>
       </View>
     </View>
@@ -431,7 +325,7 @@ const DashCard = ({ user, percent = 0, mins = 0, goal = 40, onContinue }) => {
    ════════════════════════════════════════════════════════════════════ */
 
 const ThemeCard = ({ theme, onPress }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const pct = theme.lessonsCount > 0 ? Math.round((theme.lessonsCompleted / theme.lessonsCount) * 100) : 0;
   const locked = theme.locked;
   const scale = useRef(new Animated.Value(1)).current;
@@ -513,8 +407,6 @@ export default function HomeScreen() {
   const { activeLanguage, languages, fetchLanguages, loadActiveLanguage } = useLanguageStore();
   const { themes, isLoading: tLoading, fetchThemes } = useThemeStore();
   const { data: dash, isLoading: dLoading, fetchDashboard } = useDashboardStore();
-
-  const [selectedTheme, setSelectedTheme] = useState(null);
 
   const { t, i18n } = useTranslation();
   const [appLang, setAppLang] = useState(i18n.language || 'fr');
@@ -608,10 +500,6 @@ export default function HomeScreen() {
   /* ── Bottom Sheet ── */
   const openSheet = (theme) => {
     router.push(`/(tabs)/lessons/${theme.id}`);
-  };
-
-  const handleSelectLesson = (lesson, index) => {
-    router.push(`/(tabs)/lessons/${lesson.id || index + 1}`);
   };
 
   /* ── Continuer ── */
@@ -1083,77 +971,3 @@ const dr = StyleSheet.create({
   },
 });
 
-/* ══════════════════════════════════════════════════════════════════════
-   STYLES — Bottom Sheet
-   ══════════════════════════════════════════════════════════════════════ */
-
-const bs = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.4)",
-  },
-  sheet: {
-    position: "absolute",
-    bottom: 0, left: 0, right: 0,
-    height: SHEET_HEIGHT,
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    overflow: "hidden",
-    ...Shadow.lg,
-  },
-  handle: {
-    alignSelf: "center",
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.surfaceVariant,
-    marginTop: Space.lg,
-    marginBottom: Space.md,
-  },
-  sheetHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Space["2xl"],
-    paddingVertical: Space.lg,
-  },
-  sheetIcon: {
-    width: 48, height: 48,
-    borderRadius: 24,
-    alignItems: "center", justifyContent: "center",
-  },
-  closeBtn: {
-    width: 36, height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.surfaceContainerLow,
-    alignItems: "center", justifyContent: "center",
-  },
-  progressTrack: {
-    height: 4,
-    backgroundColor: Colors.surfaceVariant,
-    marginHorizontal: Space["2xl"],
-    marginBottom: Space.xl,
-    borderRadius: Radius.full,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: 4,
-    backgroundColor: GREEN, // Keep Green for progress metric
-    borderRadius: Radius.full,
-  },
-  lessonRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: Space.lg,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.surfaceVariant,
-  },
-  lessonNum: {
-    width: 32, height: 32,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: RED,
-    alignItems: "center", justifyContent: "center",
-    backgroundColor: "transparent",
-  },
-});

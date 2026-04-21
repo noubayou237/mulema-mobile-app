@@ -67,8 +67,6 @@ const getLangKey = (langName = "") => {
   return "duala";
 };
 
-const DEFAULT_TIP = "Chaque mot que tu apprends est une porte ouverte sur une riche culture camerounaise.";
-
 /* ── Icônes par thème ─────────────────────────────────────────── */
 const THEME_ICONS = {
   famille: "people",
@@ -98,10 +96,10 @@ export default function LessonScreen() {
 
   /* Trouver la leçon courante */
   const lessonIdx = lessons.findIndex((l) => l.id === lessonId);
-  const lesson    = lessons[lessonIdx];
+  const lesson    = lessons[lessonIdx] ?? null;
   const total     = lessons.length || 10;
-  const isFirst   = lessonIdx === 0;
-  const isLast    = lessonIdx === total - 1;
+  const isFirst   = lessonIdx >= 0 && lessonIdx === 0;
+  const isLast    = lessonIdx >= 0 && lessonIdx === total - 1;
 
   /* Thème courant */
   const theme    = themes.find((t) => t.id === themeId);
