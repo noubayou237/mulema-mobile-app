@@ -32,6 +32,7 @@ import { Colors } from "../src/theme/tokens";
 
 // Background music
 import { useBackgroundMusic } from "../src/hooks/useBackgroundMusic";
+import OfflineBanner from "../src/components/ui/OfflineBanner";
 
 function AuthGate({ children }) {
   const router = useRouter();
@@ -120,6 +121,7 @@ export default function RootLayout() {
     <LanguageProvider>
       <UserProvider>
         <AuthGate>
+          <OfflineBanner />
           <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(onboarding)" />

@@ -282,7 +282,8 @@
     "privacyUrlNotSet": "URL de la politique de confidentialité non configurée.",
     "deleteConfirmType": "Veuillez saisir 'DELETE' pour confirmer.",
     "deleteFailed": "Impossible de supprimer le compte. Réessayez plus tard.",
-    "noThemesRefresh": "Aucun thème disponible.\nTire vers le bas pour actualiser."
+    "noThemesRefresh": "Aucun thème disponible.\nTire vers le bas pour actualiser.",
+    "noInternet": "Pas de connexion internet"
   },
   "messages": {
     "accountCreated": "Compte créé avec succès !",

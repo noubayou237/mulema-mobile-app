@@ -282,7 +282,8 @@
     "noThemesRefresh": "No themes available.\nPull down to refresh.",
     "privacyUrlNotSet": "Privacy policy URL not configured.",
     "deleteConfirmType": "Please type 'DELETE' to confirm.",
-    "deleteFailed": "Unable to delete account. Please try again later."
+    "deleteFailed": "Unable to delete account. Please try again later.",
+    "noInternet": "No internet connection"
   },
   "messages": {
     "accountCreated": "Account created successfully!",
