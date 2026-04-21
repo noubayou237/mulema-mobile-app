@@ -13,7 +13,6 @@ import {
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Audio } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { useTranslation } from "react-i18next";
 
@@ -21,6 +20,7 @@ import { useThemeStore }    from "../../../../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../../../../src/stores/useDashboardStore";
 import { useLanguageStore }  from "../../../../../src/stores/useLanguageStore";
 import { pauseBackgroundMusic, resumeBackgroundMusic } from "../../../../../src/hooks/useBackgroundMusic";
+import { setAudioMode, playAudioUrl } from "../../../../../src/utils/audioUtils";
 
 const { width: SW } = Dimensions.get("window");
 const CARD_W = (SW - 40 - 12) / 2;
@@ -72,19 +72,7 @@ const normalize = (s = "") =>
 const playWordAudio = async (audioUrl) => {
   if (!audioUrl) return;
   try {
-    // setAudioModeAsync may throw "Unable to activate keep awake" on some devices — safe to ignore
-    try {
-      await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
-    } catch (modeErr) {
-      if (!String(modeErr?.message).includes("keep awake")) throw modeErr;
-    }
-    const { sound } = await Audio.loadAsync({ uri: audioUrl });
-    await sound.playAsync();
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.didJustFinish) {
-        sound.unloadAsync();
-      }
-    });
+    await playAudioUrl(audioUrl);
   } catch (e) {
     console.warn("Audio play error", e);
   }
@@ -104,19 +92,6 @@ const triggerFeedback = (correct) => {
     // Fallback Android : pattern différent correct/incorrect
     Vibration.vibrate(correct ? [0, 80] : [0, 100, 60, 120]);
   }
-  // Sons : ajoute tes fichiers dans assets/sounds/correct.mp3 et wrong.mp3
-  // puis décommente les lignes ci-dessous :
-  // try {
-  //   const file = correct
-  //     ? require("../../../../../assets/sounds/correct.mp3")
-  //     : require("../../../../../assets/sounds/wrong.mp3");
-  //   Audio.setAudioModeAsync({ playsInSilentModeIOS: true }).then(() => {
-  //     Audio.loadAsync(file).then(({ sound }) => {
-  //       sound.playAsync();
-  //       sound.setOnPlaybackStatusUpdate(s => { if (s.didJustFinish) sound.unloadAsync(); });
-  //     });
-  //   });
-  // } catch {}
 };
 
 /* ── Génération des questions ───────────────────────────────── */

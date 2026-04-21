@@ -20,7 +20,6 @@ import {
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Audio } from "expo-av";
 import * as Haptics from "expo-haptics";
 import { useTranslation } from "react-i18next";
 
@@ -29,31 +28,15 @@ import { useThemeStore } from "../../../../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../../../../src/stores/useDashboardStore";
 import { useLanguageStore } from "../../../../../src/stores/useLanguageStore";
 import { pauseBackgroundMusic, resumeBackgroundMusic } from "../../../../../src/hooks/useBackgroundMusic";
+import { playAudioUrl } from "../../../../../src/utils/audioUtils";
 
-const playAudio = async (url, t) => {
+const playAudio = async (url) => {
   if (!url) {
     try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); } catch {}
     return;
   }
   try {
-    await Audio.setAudioModeAsync({ 
-      allowsRecordingIOS: false,
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true,
-    });
-    
-    const { sound } = await Audio.Sound.createAsync(
-      { uri: url },
-      { shouldPlay: true, volume: 1.0 }
-    );
-    
-    await sound.playAsync();
-    sound.setOnPlaybackStatusUpdate((s) => {
-      if (s.didJustFinish) {
-        sound.unloadAsync();
-      }
-    });
+    await playAudioUrl(url);
   } catch (e) {
     console.warn("Audio play error", e);
   }

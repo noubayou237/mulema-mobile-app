@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { Audio } from "expo-av";
+import { setAudioMode } from "../utils/audioUtils";
 
 const SONG = require("../../assets/appthemesong/GENERIK MAKOUNE short.mp3.mpeg");
 const VOLUME = 0.1; // gentle background level
@@ -31,12 +32,7 @@ export function useBackgroundMusic() {
       }
 
       try {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: false,
-          shouldDuckAndroid: true,
-        });
+        await setAudioMode();
 
         const { sound } = await Audio.Sound.createAsync(SONG, {
           isLooping: true,
