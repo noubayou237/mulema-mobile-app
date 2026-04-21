@@ -1,8 +1,3 @@
-/**
- * MULEMA — Page Thèmes : Leçons 
- *  Lessons only, exercises have been moved to their own tab.
- */
-
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity,
@@ -11,23 +6,18 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import Svg, { Circle } from "react-native-svg";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { useThemeStore } from "../../../src/stores/useThemeStore";
-import { useLanguageStore } from "../../../src/stores/useLanguageStore";
-import { useDashboardStore } from "../../../src/stores/useDashboardStore";
+import { useThemeStore } from "../../src/stores/useThemeStore";
+import { useLanguageStore } from "../../src/stores/useLanguageStore";
+import { useDashboardStore } from "../../src/stores/useDashboardStore";
 
 import { useTranslation } from "react-i18next";
-import { Colors, Space } from "../../../src/theme/tokens";
+import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 
-// ID Duala connu — fallback 
 const DUALA_ID = "c81daa9d-7be2-4896-91c8-7531c994aec5";
 
-const { width } = Dimensions.get("window");
-const CARD_W = (width - Space["2xl"] * 2 - Space.lg) / 2;
-
-/* ── Palette — Adjusted to use design tokens where possible ── */
 const RED = Colors.primary;
 const RED_L = Colors.primary + "15";
 const BG = Colors.surface;
@@ -36,8 +26,10 @@ const TRACK = Colors.surfaceContainerHigh;
 const TEXT = Colors.onSurface;
 const TEXT_SUB = Colors.textTertiary;
 const FAINT = Colors.textTertiary + "80";
+const GREEN = Colors.success || "#2E7D32";
+const GREEN_L = (Colors.success || "#2E7D32") + "15";
+const GOLD = Colors.secondary || "#F9A825";
 
-/* ── Icônes par code thème ──────────────────────────────────── */
 const ICONS = {
   salutation: "hand-left", salutations: "hand-left",
   famille: "people", family: "people",
@@ -53,11 +45,10 @@ const ICONS = {
 };
 const icon = (code) => ICONS[(code ?? "").toLowerCase()] ?? "book-outline";
 
-
 /* ════════════════════════════════════════════════════════════════
-   THEME CARD (Leçons tab)
+   EXERCISE CARD (Exercices tab)
    ════════════════════════════════════════════════════════════════ */
-const ThemeCard = ({ theme, index, onPress }) => {
+const ExerciseThemeCard = ({ theme, index, onPress, isCompleted, hasReward }) => {
   const { t } = useTranslation();
   const fade = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(20)).current;
@@ -70,65 +61,68 @@ const ThemeCard = ({ theme, index, onPress }) => {
   }, []);
 
   const locked = theme.locked ?? false;
-  const pct = theme.lessonsCount > 0
-    ? Math.round((theme.lessonsCompleted / theme.lessonsCount) * 100) : 0;
-
-  const R = 34;
-  const C2 = 2 * Math.PI * R;
+  const exercisesDone = theme.exercisesCompleted ?? 0;
+  const exercisesTotal = theme.exercisesCount ?? 3;
+  const pct = exercisesTotal > 0 ? Math.round((exercisesDone / exercisesTotal) * 100) : 0;
+  const allDone = pct >= 100;
 
   return (
     <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }] }}>
       <TouchableOpacity
         onPress={() => !locked && onPress(theme)}
         activeOpacity={locked ? 1 : 0.75}
-        style={[s.card, locked && s.cardLocked]}
+        style={[s.exCard, locked && s.cardLocked, allDone && s.exCardDone]}
       >
-        {/* Anneau SVG + icône */}
-        <View style={s.ringWrap}>
-          <Svg width={80} height={80} style={StyleSheet.absoluteFill}>
-            <Circle cx={40} cy={40} r={R} stroke={locked ? "#E0E0EA" : TRACK} strokeWidth={5} fill="none" />
-            {!locked && pct > 0 && (
-              <Circle
-                cx={40} cy={40} r={R}
-                stroke={RED} strokeWidth={5} fill="none"
-                strokeDasharray={`${C2} ${C2}`}
-                strokeDashoffset={C2 - (pct / 100) * C2}
-                strokeLinecap="round"
-                rotation="-90" origin="40, 40"
-              />
-            )}
-          </Svg>
-          <View style={[s.iconCircle, locked && s.iconCircleLocked]}>
+        <View style={s.exCardTop}>
+          <View style={[s.exIconCircle, locked && s.iconCircleLocked, allDone && { backgroundColor: GREEN_L }]}>
             {locked
               ? <Ionicons name="lock-closed" size={20} color={FAINT} />
-              : <Ionicons name={icon(theme.code)} size={24} color={RED} />
+              : allDone
+                ? <Ionicons name="checkmark-circle" size={24} color={GREEN} />
+                : <Ionicons name={icon(theme.code)} size={24} color={RED} />
             }
           </View>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={[s.exCardName, locked && { color: FAINT }]} numberOfLines={1}>
+              {t("common.theLanguage") === "en" && theme.name_en ? theme.name_en : theme.name ?? "—"}
+            </Text>
+            <Text style={[s.exCardSub, locked && { color: FAINT }]}>
+              {locked
+                ? (theme.lockHint || t("lessons.completeToUnlock"))
+                : allDone
+                  ? t("exercises.allDone")
+                  : t("exercises.count", { count: exercisesDone, total: exercisesTotal })
+              }
+            </Text>
+          </View>
+          {/* Reward indicator */}
+          {allDone && hasReward && (
+            <View style={s.rewardBadge}>
+              <Ionicons name="videocam" size={14} color="#FFF" />
+            </View>
+          )}
+          {!locked && (
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={allDone ? GREEN : TEXT_SUB}
+              style={{ marginLeft: 8 }}
+            />
+          )}
         </View>
 
-        <Text style={[s.cardName, locked && { color: FAINT }]} numberOfLines={1}>
-          {t("common.theLanguage") === "en" && theme.name_en ? theme.name_en : theme.name ?? "—"}
-        </Text>
-        {theme.nameLocal ? (
-          <Text style={[s.cardLocal, locked && { color: FAINT }]} numberOfLines={1}>
-            {theme.nameLocal}
-          </Text>
-        ) : null}
-
-        {locked
-          ? <Text style={s.lockMsg} numberOfLines={2}>{theme.lockHint || t("lessons.locked")}</Text>
-          : <Text style={s.cardPct}>{t("lessons.percentCompleted", { percent: pct })}</Text>
-        }
+        {/* Progress bar */}
+        {!locked && (
+          <View style={s.exProgress}>
+            <View style={[s.exProgressFill, { width: `${Math.max(pct, 2)}%`, backgroundColor: allDone ? GREEN : RED }]} />
+          </View>
+        )}
       </TouchableOpacity>
     </Animated.View>
   );
 };
 
-
-/* ════════════════════════════════════════════════════════════════
-   SCREEN
-   ════════════════════════════════════════════════════════════════ */
-export default function ThemesScreen() {
+export default function ExercisesScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { activeLanguage, languages, fetchLanguages, loadActiveLanguage } = useLanguageStore();
@@ -177,30 +171,33 @@ export default function ThemesScreen() {
     setRefreshing(false);
   };
 
+  const handleExerciseThemePress = useCallback((theme) => {
+    router.push(`/(tabs)/lessons/${theme.id}/exercise/session`);
+  }, [router]);
+
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
       <StatusBar barStyle="dark-content" backgroundColor={BG} />
 
-      {/* ── HEADER ── */}
       <View style={s.header}>
         <View style={s.headerLeft}>
           <TouchableOpacity style={s.menuBtn}>
             <Ionicons name="menu" size={24} color={TEXT} />
           </TouchableOpacity>
           <View>
-            <Text style={s.headerTitle}>{t("lessons.title", "Thèmes")}</Text>
+            <Text style={s.headerTitle}>{t("nav.exercises", "Exercices")}</Text>
             <Text style={s.headerSub}>{activeLanguage?.name ?? "Duala"}</Text>
           </View>
         </View>
 
         <View style={s.headerRight}>
-          <View style={s.badge}>
-            <Ionicons name="flash" size={13} color="#E8A020" />
-            <Text style={s.badgeXP}>{dash?.totalPoints ?? 0}</Text>
+          <View style={[s.badge, { backgroundColor: RED_L }]}>
+            <Ionicons name="flash" size={13} color={RED} />
+            <Text style={[s.badgeXP, { color: RED }]}>{dash?.totalPoints ?? 0}</Text>
           </View>
           <View style={[s.badge, s.badgeHeart]}>
-            <Ionicons name="heart" size={13} color="#E53E3E" />
-            <Text style={[s.badgeXP, { color: "#E53E3E" }]}>{dash?.hearts ?? 5}</Text>
+            <Ionicons name="heart" size={13} color={RED} />
+            <Text style={[s.badgeXP, { color: RED }]}>{dash?.hearts ?? 5}</Text>
           </View>
           <View style={s.avatar} />
         </View>
@@ -213,29 +210,27 @@ export default function ThemesScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[RED]} tintColor={RED} />
         }
       >
-        {/* ── HERO CARD ── */}
         <View style={s.hero}>
           <View style={s.heroBlob} />
           <Text style={s.heroTitle}>
-            {t("home.continueLearning", "Apprentissage\nQuotidien")}
+            {t("exercises.title", "Exercices\nPratiques")}
           </Text>
           <Text style={s.heroSub}>
-            {t("lessons.stepByStep", "Continuez votre voyage linguistique\nà travers la culture Camerounaise.")}
+            {t("exercises.introText", "Testez vos connaissances et\ndébloquez du contenu culturel.")}
           </Text>
           <View style={s.streakPill}>
-            <Text style={s.streakIcon}>✦</Text>
+            <Text style={[s.streakIcon, { color: GREEN }]}>✦</Text>
             <Text style={s.streakTxt}>
               {t("stats.streakDaysShort", { count: dash?.streakDays || 0 })}
             </Text>
           </View>
         </View>
 
-        {/* ── CONTENT ── */}
         {isLoading && themes.length === 0 ? (
           <ActivityIndicator size="large" color={RED} style={{ marginVertical: 48 }} />
         ) : !isLoading && themes.length === 0 ? (
           <View style={s.empty}>
-            <Ionicons name="book-outline" size={44} color={FAINT} />
+            <Ionicons name="barbell-outline" size={44} color={FAINT} />
             <Text style={s.emptyTxt}>
               {t("errors.noThemesRefresh")}
             </Text>
@@ -243,34 +238,38 @@ export default function ThemesScreen() {
         ) : (
           <View>
             <View style={s.sectionHeader}>
-              <Ionicons name="book" size={18} color={RED} />
-              <Text style={s.sectionTitle}>{t("lessons.available")}</Text>
+              <Ionicons name="barbell" size={18} color={RED} />
+              <Text style={s.sectionTitle}>{t("exercises.byTheme")}</Text>
             </View>
-            <View style={s.grid}>
-              {themes.map((theme, idx) => (
-                <ThemeCard
+            <Text style={s.sectionSubtitle}>
+              {t("exercises.rewardHint")}
+            </Text>
+            {themes.map((theme, idx) => {
+              const allDone = (theme.exercisesCompleted ?? 0) >= (theme.exercisesCount ?? 3) && (theme.exercisesCount ?? 3) > 0;
+              const hasReward = allDone;
+              return (
+                <ExerciseThemeCard
                   key={theme.id}
                   theme={theme}
                   index={idx}
-                  onPress={(t) => router.push(`/(tabs)/lessons/${t.id}`)}
+                  isCompleted={allDone}
+                  hasReward={hasReward}
+                  onPress={(t) => handleExerciseThemePress(t)}
                 />
-              ))}
-            </View>
+              );
+            })}
           </View>
         )}
-
         <View style={{ height: 24 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-/* ── Styles ─────────────────────────────────────────────────── */
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: BG },
   scroll: { paddingHorizontal: 16, paddingTop: 8 },
 
-  /* Header */
   header: {
     flexDirection: "row", alignItems: "center",
     justifyContent: "space-between",
@@ -294,7 +293,6 @@ const s = StyleSheet.create({
     backgroundColor: RED,
   },
 
-  /* Hero */
   hero: {
     backgroundColor: RED,
     borderRadius: 24, padding: 24,
@@ -313,10 +311,9 @@ const s = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 8,
     borderWidth: 1, borderColor: "rgba(255,255,255,0.25)",
   },
-  streakIcon: { color: "#FFD166", fontSize: 12 },
+  streakIcon: { fontSize: 12 },
   streakTxt: { fontSize: 12, fontFamily: "Fredoka_600SemiBold", color: "#FFF", letterSpacing: 0.8 },
 
-  /* Section Headers */
   sectionHeader: {
     flexDirection: "row", alignItems: "center", gap: 8,
     marginBottom: 6,
@@ -324,37 +321,50 @@ const s = StyleSheet.create({
   sectionTitle: {
     fontSize: 16, fontFamily: "Fredoka_600SemiBold", color: TEXT,
   },
-
-  /* Grille */
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 16, marginBottom: 20 },
-
-  /* Card (Leçons) */
-  card: {
-    width: CARD_W, backgroundColor: CARD_BG,
-    borderRadius: 20, alignItems: "center",
-    paddingVertical: 20, paddingHorizontal: 10,
-    shadowColor: "#A0A8C0", shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12, shadowRadius: 12, elevation: 3,
+  sectionSubtitle: {
+    fontSize: 13, fontFamily: "Nunito-Regular", color: TEXT_SUB,
+    marginBottom: 16, lineHeight: 18,
   },
-  cardLocked: { backgroundColor: "#F5F6FA" },
 
-  /* Anneau */
-  ringWrap: {
-    width: 80, height: 80,
-    alignItems: "center", justifyContent: "center",
-    marginBottom: 2,
+  exCard: {
+    backgroundColor: CARD_BG,
+    borderRadius: 16,
+    paddingVertical: 16, paddingHorizontal: 16,
+    marginBottom: 12,
+    shadowColor: "#A0A8C0", shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1, shadowRadius: 8, elevation: 2,
   },
-  iconCircle: {
-    width: 54, height: 54, borderRadius: 27,
+  exCardDone: {
+    borderLeftWidth: 4, borderLeftColor: GREEN,
+  },
+  exCardTop: {
+    flexDirection: "row", alignItems: "center",
+  },
+  exIconCircle: {
+    width: 48, height: 48, borderRadius: 24,
     backgroundColor: RED_L,
     alignItems: "center", justifyContent: "center",
   },
   iconCircleLocked: { backgroundColor: "#EDEDF2" },
-
-  cardName: { fontSize: 14, fontFamily: "Fredoka_600SemiBold", color: TEXT, marginTop: 10, textAlign: "center" },
-  cardLocal: { fontSize: 11, fontFamily: "Nunito-Regular", color: TEXT_SUB, textAlign: "center", marginTop: 1 },
-  cardPct: { fontSize: 12, fontFamily: "Nunito-Regular", color: TEXT_SUB, marginTop: 3 },
-  lockMsg: { fontSize: 11, fontFamily: "Nunito-Regular", color: FAINT, textAlign: "center", lineHeight: 16, marginTop: 3 },
+  exCardName: {
+    fontSize: 15, fontFamily: "Fredoka_600SemiBold", color: TEXT,
+  },
+  exCardSub: {
+    fontSize: 12, fontFamily: "Nunito-Regular", color: TEXT_SUB, marginTop: 2,
+  },
+  exProgress: {
+    height: 6, backgroundColor: TRACK,
+    borderRadius: 3, marginTop: 12, overflow: "hidden",
+  },
+  exProgressFill: {
+    height: "100%", borderRadius: 3,
+  },
+  rewardBadge: {
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: GOLD,
+    alignItems: "center", justifyContent: "center",
+    marginLeft: 8,
+  },
 
   empty: { alignItems: "center", paddingVertical: 48 },
   emptyTxt: { fontSize: 14, fontFamily: "Nunito-Regular", color: FAINT, textAlign: "center", marginTop: 12, lineHeight: 20 },

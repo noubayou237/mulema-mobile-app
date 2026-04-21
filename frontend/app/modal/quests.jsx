@@ -41,9 +41,9 @@ const QuestCard = ({ icon, iconBg, title, subtitle, xp, current, total }) => {
           <Text style={[Typo.bodySm, { marginTop: Space.xs }]}>{subtitle}</Text>
         </View>
         <View style={s.xpBadge}>
-          <Ionicons name="flame" size={12} color={Colors.secondary} />
-          <Text style={[Typo.labelLg, { color: Colors.secondary, fontSize: 16 }]}>{xp}</Text>
-          <Text style={[Typo.labelSm, { color: Colors.secondary, marginTop: -2 }]}>XP</Text>
+          <Ionicons name="star" size={12} color={Colors.primary} />
+          <Text style={[Typo.labelLg, { color: Colors.primary, fontSize: 16 }]}>{xp}</Text>
+          <Text style={[Typo.labelSm, { color: Colors.primary, marginTop: -2 }]}>XP</Text>
         </View>
       </View>
       <View style={{ marginTop: Space.lg }}>
@@ -68,7 +68,7 @@ export default function QuestsScreen() {
 
   const quests = [
     { icon: "book", iconBg: Colors.primary + "12", title: t("quests.learnWords"), subtitle: t("quests.learnWordsSub"), xp: 10, current: 3, total: 5 },
-    { icon: "school", iconBg: Colors.secondaryContainer + "30", title: t("quests.finishLessons"), subtitle: t("quests.finishLessonsSub"), xp: 20, current: 1, total: 2 },
+    { icon: "school", iconBg: Colors.primary + "12", title: t("quests.finishLessons"), subtitle: t("quests.finishLessonsSub"), xp: 20, current: 1, total: 2 },
     { icon: "time", iconBg: Colors.primary + "12", title: t("quests.practiceTime"), subtitle: t("quests.practiceTimeSub"), xp: 15, current: 4, total: 10 },
   ];
 
@@ -86,8 +86,8 @@ export default function QuestsScreen() {
         </TouchableOpacity>
         <Text style={[Typo.titleLg, { marginLeft: Space.md, flex: 1 }]}>{t("quests.title")}</Text>
         <View style={s.streakBadge}>
-          <Ionicons name="flame" size={16} color={Colors.secondary} />
-          <Text style={[Typo.labelLg, { marginLeft: 4 }]}>{dash?.streakDays || 0}</Text>
+          <Ionicons name="leaf" size={16} color={Colors.success} />
+          <Text style={[Typo.labelLg, { marginLeft: 4, color: Colors.success }]}>{dash?.streakDays || 0}</Text>
         </View>
       </View>
 
@@ -143,7 +143,7 @@ const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.surface },
   scroll: { paddingHorizontal: Space["2xl"], paddingBottom: Space["2xl"] },
   header: { flexDirection: "row", alignItems: "center", paddingTop: Platform.OS === "ios" ? 60 : 44, paddingBottom: Space.xl },
-  streakBadge: { flexDirection: "row", alignItems: "center", backgroundColor: Colors.secondaryFixed, borderRadius: Radius.full, paddingHorizontal: Space.lg, paddingVertical: Space.sm },
+  streakBadge: { flexDirection: "row", alignItems: "center", backgroundColor: Colors.success + "15", borderRadius: Radius.full, paddingHorizontal: Space.lg, paddingVertical: Space.sm },
 
   dailyBanner: { borderRadius: Radius.xl, padding: Space["2xl"], flexDirection: "row", alignItems: "center", marginBottom: Space["2xl"], overflow: "hidden" },
   dailyPct: { ...Typo.displayLg, fontSize: 52, color: Colors.onPrimary, marginTop: Space.sm },

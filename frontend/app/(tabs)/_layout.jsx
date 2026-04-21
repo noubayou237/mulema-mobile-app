@@ -3,13 +3,12 @@ import { Tabs } from "expo-router";
 import { Colors } from "../../src/theme/tokens";
 import { useTranslation } from "react-i18next";
 
-/* Icônes emoji enfantines (Duolingo-style) */
 const TAB_ICONS = {
   home: { active: "🏡", inactive: "🏠" },
   lessons: { active: "🗺️", inactive: "📖" },
+  exercises: { active: "📝", inactive: "✍️" },
   community: { active: "🏆", inactive: "🥈" },
   profile: { active: "🦸", inactive: "👤" },
-
 };
 
 const TabIcon = ({ name, focused, color }) => {
@@ -72,6 +71,15 @@ export default function TabsLayout() {
           title: t("nav.lessons"),
           tabBarIcon: ({ focused, color }) => (
             <TabIcon name="lessons" focused={focused} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="exercises"
+        options={{
+          title: t("nav.exercises", "Exercices"),
+          tabBarIcon: ({ focused, color }) => (
+            <TabIcon name="exercises" focused={focused} color={color} />
           ),
         }}
       />

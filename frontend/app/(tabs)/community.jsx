@@ -200,7 +200,7 @@ const FilterTabs = ({ active, onChange }) => {
 const getRankTags = (t) => ({
   rising: { label: t("community.ranks.rising"), color: Colors.primary },
   top10: { label: t("community.ranks.top10"), color: "#FF9800" },
-  streak: (days) => ({ label: t("community.ranks.streak", { count: days }), color: "#E53935" }),
+  streak: (days) => ({ label: t("community.ranks.streak", { count: days }), color: Colors.success }),
   newcomer: { label: t("community.ranks.newcomer"), color: "#9C27B0" },
 });
 
@@ -304,7 +304,7 @@ const LeagueHeader = ({ league, timeLeft, onMenuPress, streak, hearts }) => {
         <Text style={lh.pageTitle}>{t("nav.community")}</Text>
         <View style={lh.navBadges}>
           <View style={lh.badge}>
-            <Ionicons name="flame" size={16} color={Colors.secondary} />
+            <Ionicons name="flame" size={16} color={Colors.success} />
             <Text style={lh.badgeNum}>{streak}</Text>
           </View>
           <View style={[lh.badge, lh.heartBadge]}>

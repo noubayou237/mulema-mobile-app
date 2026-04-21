@@ -1,7 +1,7 @@
 /**
  * ╔══════════════════════════════════════════════════════════════════╗
  * ║  MULEMA — Home Screen  v2.0                                      ║
- * ║  Palette camerounaise · Animations cascade · Bottom Sheet        ║
+ * ║  App Red UI · Animations cascade · Bottom Sheet                  ║
  * ║  Drawer · Exercices du jour · Navigation complète                ║
  * ╚══════════════════════════════════════════════════════════════════╝
  *
@@ -40,18 +40,12 @@ import { useDashboardStore } from "../../src/stores/useDashboardStore";
 import { useTranslation } from "react-i18next";
 import { changeLanguage, getCurrentLanguage } from "../../src/i18n";
 
-/* ── Palette camerounaise ── */
-const CAM = {
-  forest: "#2D6A4F",
-  forestLight: "#40916C",
-  forestPale: "#D8F3DC",
-  orange: "#F4A261",
-  orangeLight: "#FFDDD2",
-  gold: "#F4C430",
-  goldLight: "#FFF3C4",
-  dark: "#1B2D2A",
-  surface: "#F9FBFA",
-};
+/* ── Palette ── */
+const RED = Colors.primary;
+const RED_L = Colors.primary + "15";
+const GREEN = Colors.success || "#2E7D32";
+const GREEN_L = GREEN + "15";
+const GOLD = Colors.secondaryContainer || "#FD9D1A";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 const DRAWER_WIDTH = SCREEN_W * 0.78;
@@ -111,16 +105,16 @@ const DrawerItem = ({ icon, label, onPress, highlighted }) => (
     activeOpacity={0.7}
     style={[dr.menuItem, highlighted && dr.menuItemHL]}
   >
-    <View style={[dr.menuIcon, highlighted && { backgroundColor: CAM.forest + "25" }]}>
+    <View style={[dr.menuIcon, highlighted && { backgroundColor: RED_L }]}>
       <Ionicons
         name={icon}
         size={20}
-        color={highlighted ? CAM.forest : Colors.textTertiary}
+        color={highlighted ? RED : Colors.textTertiary}
       />
     </View>
     <Text style={[Typo.titleSm, {
       marginLeft: Space.lg,
-      color: highlighted ? CAM.forest : Colors.onSurface,
+      color: highlighted ? RED : Colors.onSurface,
     }]}>
       {label}
     </Text>
@@ -131,7 +125,7 @@ const DrawerContent = ({ user, dashboard, onClose, onNav, onLogout }) => {
   const { t } = useTranslation();
   return (
     <View style={dr.container}>
-      {/* Bande décorative verte en haut */}
+      {/* Bande décorative en haut */}
       <View style={dr.topStripe} />
 
       <TouchableOpacity onPress={onClose} activeOpacity={0.7} style={dr.closeBtn}>
@@ -144,8 +138,8 @@ const DrawerContent = ({ user, dashboard, onClose, onNav, onLogout }) => {
           {user?.avatar ? (
             <Image source={{ uri: user.avatar }} style={dr.avatar} contentFit="cover" />
           ) : (
-            <View style={[dr.avatar, { backgroundColor: CAM.forestPale, alignItems: "center", justifyContent: "center" }]}>
-              <Ionicons name="person" size={28} color={CAM.forest} />
+            <View style={[dr.avatar, { backgroundColor: RED_L, alignItems: "center", justifyContent: "center" }]}>
+              <Ionicons name="person" size={28} color={RED} />
             </View>
           )}
         </View>
@@ -154,8 +148,8 @@ const DrawerContent = ({ user, dashboard, onClose, onNav, onLogout }) => {
             {user?.name || t("common.user", "Utilisateur")}
           </Text>
           <View style={dr.levelBadge}>
-            <Ionicons name="star" size={11} color={CAM.gold} />
-            <Text style={[Typo.labelSm, { color: CAM.forest, marginLeft: 4 }]}>
+            <Ionicons name="star" size={11} color={GOLD} />
+            <Text style={[Typo.labelSm, { color: RED, marginLeft: 4 }]}>
               {t("home.scholarLevel", { level: Math.floor((dashboard?.totalPoints || 0) / 100) })}
             </Text>
           </View>
@@ -164,8 +158,9 @@ const DrawerContent = ({ user, dashboard, onClose, onNav, onLogout }) => {
 
       {/* Streak (Racines) */}
       <View style={dr.streakBadge}>
-        <Ionicons name="leaf" size={15} color={CAM.forest} />
-        <Text style={[Typo.labelLg, { color: CAM.dark, marginLeft: Space.sm }]}>
+        {/* Streak icon must be green per user requirements */}
+        <Ionicons name="leaf" size={15} color={GREEN} />
+        <Text style={[Typo.labelLg, { color: Colors.onSurface, marginLeft: Space.sm }]}>
           {t("stats.rootsCount", { count: dashboard?.streakDays || 0 })}
         </Text>
       </View>
@@ -184,8 +179,8 @@ const DrawerContent = ({ user, dashboard, onClose, onNav, onLogout }) => {
       <View style={{ flex: 1 }} />
 
       <TouchableOpacity onPress={onLogout} activeOpacity={0.7} style={dr.logoutBtn}>
-        <Ionicons name="log-out-outline" size={18} color={CAM.forest} />
-        <Text style={[Typo.titleSm, { color: CAM.forest, marginLeft: Space.md }]}>
+        <Ionicons name="log-out-outline" size={18} color={RED} />
+        <Text style={[Typo.titleSm, { color: RED, marginLeft: Space.md }]}>
           {t("profile.logout")}
         </Text>
       </TouchableOpacity>
@@ -236,12 +231,12 @@ const BottomSheet = ({ theme, onClose, onSelectLesson, appLang }) => {
 
         {/* En-tête thème */}
         <View style={bs.sheetHeader}>
-          <View style={[bs.sheetIcon, { backgroundColor: CAM.forestPale }]}>
-            <Ionicons name={getIcon(theme?.name)} size={24} color={CAM.forest} />
+          <View style={[bs.sheetIcon, { backgroundColor: RED_L }]}>
+            <Ionicons name={getIcon(theme?.name)} size={24} color={RED} />
           </View>
           <View style={{ flex: 1, marginLeft: Space.lg }}>
-            <Text style={[Typo.headlineMd, { color: CAM.dark }]}>{theme?.name}</Text>
-            <Text style={[Typo.labelSm, { color: CAM.forest }]}>
+            <Text style={[Typo.headlineMd, { color: Colors.onSurface }]}>{theme?.name}</Text>
+            <Text style={[Typo.labelSm, { color: RED }]}>
               {t("home.levels.lessonsCompleted", { completed: theme?.lessonsCompleted || 0, total: theme?.lessonsCount || lessons.length })}
             </Text>
           </View>
@@ -250,7 +245,7 @@ const BottomSheet = ({ theme, onClose, onSelectLesson, appLang }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Barre de progression du thème */}
+        {/* Barre de progression du thème (vert pour le succès et la progression) */}
         <View style={bs.progressTrack}>
           <View style={[bs.progressFill, {
             width: `${theme?.lessonsCount > 0 ? Math.round((theme.lessonsCompleted / theme.lessonsCount) * 100) : 0}%`,
@@ -269,14 +264,14 @@ const BottomSheet = ({ theme, onClose, onSelectLesson, appLang }) => {
               activeOpacity={0.75}
               style={bs.lessonRow}
             >
-              <View style={[bs.lessonNum, item.done && { backgroundColor: CAM.forest }]}>
+              <View style={[bs.lessonNum, item.done && { backgroundColor: GREEN, borderColor: GREEN }]}>
                 {item.done
                   ? <Ionicons name="checkmark" size={14} color="#fff" />
-                  : <Text style={[Typo.labelMd, { color: CAM.forest }]}>{index + 1}</Text>
+                  : <Text style={[Typo.labelMd, { color: RED }]}>{index + 1}</Text>
                 }
               </View>
               <View style={{ flex: 1, marginLeft: Space.lg }}>
-                <Text style={[Typo.titleSm, { color: CAM.dark }]}>
+                <Text style={[Typo.titleSm, { color: Colors.onSurface }]}>
                   {appLang === 'en' && item.title_en ? item.title_en : item.title}
                 </Text>
                 {item.subtitle && (
@@ -286,7 +281,7 @@ const BottomSheet = ({ theme, onClose, onSelectLesson, appLang }) => {
               <Ionicons
                 name={item.done ? "checkmark-circle" : "play-circle-outline"}
                 size={22}
-                color={item.done ? CAM.forest : CAM.orange}
+                color={item.done ? GREEN : Colors.surfaceVariant}
               />
             </TouchableOpacity>
           )}
@@ -306,7 +301,7 @@ const HomeHeader = ({ streak = 0, xp = 0, onMenuPress, currentLang, onToggleLang
     <View style={s.header}>
       <View style={s.headerLeft}>
         <TouchableOpacity onPress={onMenuPress} activeOpacity={0.7} style={s.menuBtn}>
-          <Ionicons name="menu" size={22} color={CAM.forest} />
+          <Ionicons name="menu" size={22} color={RED} />
         </TouchableOpacity>
         <Image source={require("../../assets/images/logo.png")} style={{ width: 72, height: 72, marginLeft: Space.sm }} contentFit="contain" />
       </View>
@@ -325,17 +320,17 @@ const HomeHeader = ({ streak = 0, xp = 0, onMenuPress, currentLang, onToggleLang
             );
           }}
           activeOpacity={0.7}
-          style={[s.headerBadge, { backgroundColor: CAM.forestPale, paddingHorizontal: 8, paddingVertical: 6 }]}
+          style={[s.headerBadge, { backgroundColor: RED_L, paddingHorizontal: 8, paddingVertical: 6 }]}
         >
-          <Ionicons name="globe-outline" size={18} color={CAM.forest} />
+          <Ionicons name="globe-outline" size={18} color={RED} />
         </TouchableOpacity>
-        <View style={[s.headerBadge, { backgroundColor: CAM.forestPale, marginLeft: Space.xs }]}>
-          <Ionicons name="leaf" size={14} color={CAM.forest} />
-          <Text style={[Typo.labelLg, { color: CAM.dark, marginLeft: 4 }]}>{streak}</Text>
+        <View style={[s.headerBadge, { backgroundColor: GREEN_L, marginLeft: Space.xs }]}>
+          <Ionicons name="leaf" size={14} color={GREEN} />
+          <Text style={[Typo.labelLg, { color: Colors.onSurface, marginLeft: 4 }]}>{streak}</Text>
         </View>
-        <View style={[s.headerBadge, { backgroundColor: CAM.goldLight, marginLeft: Space.sm }]}>
-          <Ionicons name="restaurant" size={13} color={CAM.gold} />
-          <Text style={[Typo.labelLg, { color: CAM.dark, marginLeft: 3 }]}>{xp} {t("common.prawns", "Crevettes")}</Text>
+        <View style={[s.headerBadge, { backgroundColor: "#FFF7E6", marginLeft: Space.sm }]}>
+          <Ionicons name="restaurant" size={13} color={GOLD} />
+          <Text style={[Typo.labelLg, { color: Colors.onSurface, marginLeft: 3 }]}>{xp} {t("common.prawns", "Crevettes")}</Text>
         </View>
       </View>
     </View>
@@ -352,17 +347,17 @@ const LangBanner = ({ lang, onPress }) => {
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={s.langBanner}>
       <View style={s.langDot} />
-      <Text style={[Typo.labelLg, { color: CAM.forest, marginLeft: Space.md, flex: 1 }]}>
+      <Text style={[Typo.labelLg, { color: RED, marginLeft: Space.md, flex: 1 }]}>
         {lang.name}
       </Text>
-      <Text style={[Typo.bodySm, { color: CAM.forestLight }]}>{t("common.edit")}</Text>
-      <Ionicons name="chevron-forward" size={13} color={CAM.forestLight} style={{ marginLeft: 2 }} />
+      <Text style={[Typo.bodySm, { color: RED }]}>{t("common.edit")}</Text>
+      <Ionicons name="chevron-forward" size={13} color={RED} style={{ marginLeft: 2 }} />
     </TouchableOpacity>
   );
 };
 
 /* ════════════════════════════════════════════════════════════════════
-   DASHBOARD CARD — gradient vert forêt
+   DASHBOARD CARD
    ════════════════════════════════════════════════════════════════════ */
 
 const DashCard = ({ user, percent = 0, mins = 0, goal = 40, onContinue }) => {
@@ -384,7 +379,7 @@ const DashCard = ({ user, percent = 0, mins = 0, goal = 40, onContinue }) => {
       <View style={s.dashDeco1} />
       <View style={s.dashDeco2} />
 
-      <Text style={[Typo.labelSm, { color: CAM.forestPale + "CC", marginBottom: Space.xs }]}>
+      <Text style={[Typo.labelSm, { color: "rgba(255,255,255,0.8)", marginBottom: Space.xs }]}>
         {t("home.yourProgress").toUpperCase()}
       </Text>
       <Text style={[Typo.headlineLg, { color: "#fff", marginBottom: Space["2xl"] }]}>
@@ -392,7 +387,7 @@ const DashCard = ({ user, percent = 0, mins = 0, goal = 40, onContinue }) => {
       </Text>
 
       <View style={s.goalRow}>
-        <Text style={[Typo.labelLg, { color: CAM.forestPale }]}>{t("home.dailyGoal")}</Text>
+        <Text style={[Typo.labelLg, { color: "rgba(255,255,255,0.8)" }]}>{t("home.dailyGoal")}</Text>
         <Text style={[Typo.bodyMd, { color: "#fff" }]}>{mins}/{goal} min</Text>
       </View>
 
@@ -401,29 +396,29 @@ const DashCard = ({ user, percent = 0, mins = 0, goal = 40, onContinue }) => {
           width: bar.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] }),
         }]} />
         <View style={s.progressLabel}>
-          <Text style={[Typo.labelMd, { color: CAM.dark }]}>{percent}%</Text>
+          <Text style={[Typo.labelMd, { color: Colors.onSurface }]}>{percent}%</Text>
         </View>
       </View>
 
       {/* Stats rapides */}
       <View style={s.statsRow}>
         <View style={s.statItem}>
-          <Ionicons name="book-outline" size={16} color={CAM.forestPale} />
-          <Text style={[Typo.labelSm, { color: CAM.forestPale, marginLeft: 6 }]}>
+          <Ionicons name="book-outline" size={16} color="rgba(255,255,255,0.8)" />
+          <Text style={[Typo.labelSm, { color: "rgba(255,255,255,0.8)", marginLeft: 6 }]}>
             {mins} min
           </Text>
         </View>
         <View style={s.statItem}>
-          <Ionicons name="trophy-outline" size={16} color={CAM.gold} />
-          <Text style={[Typo.labelSm, { color: CAM.gold, marginLeft: 6 }]}>
+          <Ionicons name="trophy-outline" size={16} color={GOLD} />
+          <Text style={[Typo.labelSm, { color: GOLD, marginLeft: 6 }]}>
             {percent >= 100 ? t("home.goalReached") : t("home.remaining", { count: 100 - percent })}
           </Text>
         </View>
       </View>
 
       <TouchableOpacity onPress={onContinue} activeOpacity={0.85} style={s.continueBtn}>
-        <Ionicons name="play" size={16} color={CAM.forest} />
-        <Text style={[Typo.titleSm, { color: CAM.forest, marginLeft: Space.sm }]}>
+        <Ionicons name="play" size={16} color={RED} />
+        <Text style={[Typo.titleSm, { color: RED, marginLeft: Space.sm }]}>
           {t("home.continueLearning")}
         </Text>
       </TouchableOpacity>
@@ -456,20 +451,20 @@ const ThemeCard = ({ theme, onPress }) => {
         {pct > 0 && <View style={[s.themeProgress, { width: `${pct}%` }]} />}
 
         <View style={s.themeTop}>
-          <View style={[s.themeIcon, { backgroundColor: locked ? Colors.surfaceVariant : CAM.forestPale }]}>
-            <Ionicons name={getIcon(theme.name)} size={22} color={locked ? Colors.textTertiary : CAM.forest} />
+          <View style={[s.themeIcon, { backgroundColor: locked ? Colors.surfaceVariant : RED_L }]}>
+            <Ionicons name={getIcon(theme.name)} size={22} color={locked ? Colors.textTertiary : RED} />
           </View>
           {locked
             ? <Ionicons name="lock-closed" size={14} color={Colors.textTertiary} />
             : pct > 0 && (
               <View style={s.pctBadge}>
-                <Text style={[Typo.labelMd, { color: CAM.forest }]}>{pct}%</Text>
+                <Text style={[Typo.labelMd, { color: GREEN }]}>{pct}%</Text>
               </View>
             )
           }
         </View>
 
-        <Text style={[Typo.titleSm, { marginTop: Space.md, color: CAM.dark }]} numberOfLines={1}>
+        <Text style={[Typo.titleSm, { marginTop: Space.md, color: Colors.onSurface }]} numberOfLines={1}>
           {t("common.theLanguage") === "en" && theme.name_en ? theme.name_en : theme.name}
         </Text>
         <Text style={[Typo.labelSm, { marginTop: Space.xs, color: Colors.textTertiary }]}>
@@ -488,10 +483,10 @@ const ExerciseRow = ({ exo, onPress }) => {
   const { t } = useTranslation();
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={s.exoRow}>
-      <View style={[s.exoIcon, { backgroundColor: exo.done ? CAM.forestPale : CAM.orangeLight }]}>
-        <Ionicons name={exo.icon} size={18} color={exo.done ? CAM.forest : CAM.orange} />
+      <View style={[s.exoIcon, { backgroundColor: exo.done ? GREEN_L : Colors.surfaceContainerLow }]}>
+        <Ionicons name={exo.icon} size={18} color={exo.done ? GREEN : Colors.textTertiary} />
       </View>
-      <Text style={[Typo.titleSm, { flex: 1, marginLeft: Space.lg, color: CAM.dark }]} numberOfLines={1}>
+      <Text style={[Typo.titleSm, { flex: 1, marginLeft: Space.lg, color: Colors.onSurface }]} numberOfLines={1}>
         {exo.label}
       </Text>
       {exo.done ? (
@@ -501,7 +496,7 @@ const ExerciseRow = ({ exo, onPress }) => {
         </View>
       ) : (
         <View style={s.todoBadge}>
-          <Text style={[Typo.labelMd, { color: CAM.orange }]}>{t("exercises.todo")}</Text>
+          <Text style={[Typo.labelMd, { color: Colors.textTertiary }]}>{t("exercises.todo")}</Text>
         </View>
       )}
     </TouchableOpacity>
@@ -652,7 +647,7 @@ export default function HomeScreen() {
 
   return (
     <View style={s.root}>
-      <StatusBar barStyle="dark-content" backgroundColor={CAM.surface} />
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.surface} />
 
       {/* ══ CONTENU PRINCIPAL ══ */}
       <View style={{ flex: 1 }} {...panRef.panHandlers}>
@@ -691,19 +686,19 @@ export default function HomeScreen() {
           {/* Thèmes */}
           <Animated.View style={[s.section, fadeUp(anims[2], 22)]}>
             <View style={s.sectionHead}>
-              <Text style={[Typo.headlineMd, { color: CAM.dark }]}>{t("home.themesToExplore")}</Text>
+              <Text style={[Typo.headlineMd, { color: Colors.onSurface }]}>{t("home.themesToExplore")}</Text>
               <TouchableOpacity
                 onPress={() => router.push("/(tabs)/lessons")}
                 activeOpacity={0.7}
               >
-                <Text style={[Typo.titleSm, { color: CAM.forest }]}>{t("home.seeAll")}</Text>
+                <Text style={[Typo.titleSm, { color: RED }]}>{t("home.seeAll")}</Text>
               </TouchableOpacity>
             </View>
 
             {loading ? (
               <ActivityIndicator
                 size="large"
-                color={CAM.forest}
+                color={RED}
                 style={{ marginVertical: Space["3xl"] }}
               />
             ) : themes.length === 0 ? (
@@ -725,9 +720,9 @@ export default function HomeScreen() {
           {/* Exercices du jour */}
           <Animated.View style={[s.section, fadeUp(anims[3], 22)]}>
             <View style={s.sectionHead}>
-              <Text style={[Typo.headlineMd, { color: CAM.dark }]}>{t("home.exercises")}</Text>
+              <Text style={[Typo.headlineMd, { color: Colors.onSurface }]}>{t("home.exercises")}</Text>
               <View style={s.exoBadgeCount}>
-                <Text style={[Typo.labelMd, { color: CAM.forest }]}>
+                <Text style={[Typo.labelMd, { color: RED }]}>
                   {getThemeExos(themes).filter((e) => e.done).length}/{getThemeExos(themes).length}
                 </Text>
               </View>
@@ -794,7 +789,7 @@ export default function HomeScreen() {
    ══════════════════════════════════════════════════════════════════════ */
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: CAM.surface },
+  root: { flex: 1, backgroundColor: Colors.surface },
   scroll: { paddingHorizontal: Space["2xl"], paddingBottom: Space["2xl"] },
 
   /* Header */
@@ -812,14 +807,14 @@ const s = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 50,
-    backgroundColor: CAM.surface,
+    backgroundColor: Colors.surface,
     paddingBottom: Space.sm,
   },
   headerLeft: { flexDirection: "row", alignItems: "center" },
   menuBtn: {
     width: 40, height: 40,
     borderRadius: 20,
-    backgroundColor: CAM.forestPale,
+    backgroundColor: RED_L,
     alignItems: "center", justifyContent: "center",
   },
   headerCenter: { flexDirection: "row", alignItems: "center" },
@@ -837,7 +832,7 @@ const s = StyleSheet.create({
   langBanner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: CAM.forestPale,
+    backgroundColor: RED_L,
     borderRadius: Radius.lg,
     paddingHorizontal: Space.lg,
     paddingVertical: Space.md,
@@ -846,12 +841,12 @@ const s = StyleSheet.create({
   langDot: {
     width: 8, height: 8,
     borderRadius: 4,
-    backgroundColor: CAM.forest,
+    backgroundColor: RED,
   },
 
   /* Dashboard card */
   dashCard: {
-    backgroundColor: CAM.forest,
+    backgroundColor: RED,
     borderRadius: Radius.xl,
     padding: Space["4xl"],
     marginBottom: Space["2xl"],
@@ -865,7 +860,7 @@ const s = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: CAM.forestLight + "50",
+    backgroundColor: "rgba(255,255,255,0.07)",
   },
   dashDeco2: {
     position: "absolute",
@@ -874,7 +869,7 @@ const s = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: CAM.gold + "22",
+    backgroundColor: "rgba(255,255,255,0.05)",
   },
   goalRow: {
     flexDirection: "row",
@@ -893,7 +888,7 @@ const s = StyleSheet.create({
   progressFill: {
     position: "absolute",
     left: 0, top: 0, bottom: 0,
-    backgroundColor: CAM.gold,
+    backgroundColor: GREEN, // Keep Green for progress metric
     borderRadius: Radius.full,
   },
   progressLabel: {
@@ -912,7 +907,7 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: CAM.gold,
+    backgroundColor: Colors.surface,
     borderRadius: Radius.full,
     paddingVertical: Space.lg,
     paddingHorizontal: Space["2xl"],
@@ -941,7 +936,7 @@ const s = StyleSheet.create({
     position: "absolute",
     bottom: 0, left: 0,
     height: 3,
-    backgroundColor: CAM.forest,
+    backgroundColor: GREEN, // Keep green for progress
     borderRadius: Radius.full,
   },
   themeTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
@@ -951,7 +946,7 @@ const s = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
   },
   pctBadge: {
-    backgroundColor: CAM.forestPale,
+    backgroundColor: GREEN_L,
     borderRadius: Radius.full,
     paddingHorizontal: Space.md,
     paddingVertical: 2,
@@ -960,7 +955,7 @@ const s = StyleSheet.create({
 
   /* Exercices */
   exoBadgeCount: {
-    backgroundColor: CAM.forestPale,
+    backgroundColor: RED_L,
     borderRadius: Radius.full,
     paddingHorizontal: Space.md,
     paddingVertical: 2,
@@ -987,13 +982,13 @@ const s = StyleSheet.create({
   doneBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: CAM.forest,
+    backgroundColor: GREEN, // Done is success metric
     borderRadius: Radius.full,
     paddingHorizontal: Space.md,
     paddingVertical: 4,
   },
   todoBadge: {
-    backgroundColor: CAM.orangeLight,
+    backgroundColor: Colors.surfaceContainerLow,
     borderRadius: Radius.full,
     paddingHorizontal: Space.md,
     paddingVertical: 4,
@@ -1017,7 +1012,7 @@ const dr = StyleSheet.create({
     position: "absolute",
     top: 0, left: 0, right: 0,
     height: 4,
-    backgroundColor: CAM.forest,
+    backgroundColor: RED,
   },
   container: {
     flex: 1,
@@ -1047,7 +1042,7 @@ const dr = StyleSheet.create({
     width: 60, height: 60,
     borderRadius: 30,
     borderWidth: 2.5,
-    borderColor: CAM.forest,
+    borderColor: RED,
     alignItems: "center", justifyContent: "center",
     overflow: "hidden",
   },
@@ -1055,7 +1050,7 @@ const dr = StyleSheet.create({
   levelBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: CAM.goldLight,
+    backgroundColor: RED_L,
     borderRadius: Radius.full,
     paddingHorizontal: Space.md,
     paddingVertical: 2,
@@ -1065,7 +1060,7 @@ const dr = StyleSheet.create({
   streakBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: CAM.orangeLight,
+    backgroundColor: GREEN_L,
     borderRadius: Radius.full,
     paddingHorizontal: Space.lg,
     paddingVertical: Space.sm,
@@ -1083,7 +1078,7 @@ const dr = StyleSheet.create({
     paddingVertical: Space.lg,
   },
   menuItemHL: {
-    backgroundColor: CAM.forestPale,
+    backgroundColor: RED_L,
     borderRadius: Radius.xl,
     paddingHorizontal: Space.lg,
     marginHorizontal: -Space.lg,
@@ -1156,7 +1151,7 @@ const bs = StyleSheet.create({
   },
   progressFill: {
     height: 4,
-    backgroundColor: CAM.forest,
+    backgroundColor: GREEN, // Keep Green for progress metric
     borderRadius: Radius.full,
   },
   lessonRow: {
@@ -1170,7 +1165,7 @@ const bs = StyleSheet.create({
     width: 32, height: 32,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: CAM.forest,
+    borderColor: RED,
     alignItems: "center", justifyContent: "center",
     backgroundColor: "transparent",
   },

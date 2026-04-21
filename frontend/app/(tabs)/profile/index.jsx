@@ -86,10 +86,10 @@ export default function ProfileScreen() {
             )}
             {/* Level badge */}
             <View style={s.levelBadge}>
-              <Ionicons name="ribbon" size={14} color={Colors.secondaryContainer} />
+              <Ionicons name="ribbon" size={14} color={Colors.surface} />
             </View>
           </View>
-          <Text style={[Typo.labelSm, { color: Colors.secondary, marginTop: Space.lg }]}>{t("profile.rank", "APPRENANT ÉLITE").toUpperCase()}</Text>
+          <Text style={[Typo.labelSm, { color: Colors.primary, marginTop: Space.lg }]}>{t("profile.rank", "APPRENANT ÉLITE").toUpperCase()}</Text>
           <Text style={[Typo.displayMd, { marginTop: Space.xs }]}>{user?.name || t("profile.name", "Utilisateur")}</Text>
 
           {/* Edit button */}
@@ -109,8 +109,8 @@ export default function ProfileScreen() {
             <Text style={[Typo.bodySm]}>{t("stats.wordsLearned", "Mots appris")}</Text>
           </View>
           <View style={[s.statCard, Shadow.sm]}>
-            <View style={[s.statIcon, { backgroundColor: Colors.secondaryContainer + "30" }]}>
-              <Ionicons name="time" size={20} color={Colors.secondary} />
+            <View style={[s.statIcon, { backgroundColor: Colors.primaryContainer }]}>
+              <Ionicons name="time" size={20} color={Colors.primary} />
             </View>
             <Text style={s.statValue}>{totalHours}h</Text>
             <Text style={[Typo.bodySm]}>{t("stats.totalTime", "Temps total")}</Text>
@@ -120,7 +120,7 @@ export default function ProfileScreen() {
         {/* ── Streak Card ── */}
         <Animated.View style={fade(a2, 15)}>
           <LinearGradient
-            colors={[Colors.secondaryContainer, "#E88A10"]}
+            colors={[Colors.success, Colors.success]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={s.streakCard}
@@ -195,13 +195,13 @@ const s = StyleSheet.create({
   levelBadge: {
     position: "absolute", bottom: 0, right: 0,
     width: 32, height: 32, borderRadius: 16,
-    backgroundColor: Colors.secondaryContainer,
+    backgroundColor: Colors.primary,
     alignItems: "center", justifyContent: "center",
     borderWidth: 3, borderColor: Colors.surface,
   },
   editBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",
-    backgroundColor: Colors.secondaryContainer, borderRadius: Radius.full,
+    backgroundColor: Colors.primary, borderRadius: Radius.full,
     paddingHorizontal: Space["3xl"], paddingVertical: Space.md,
     marginTop: Space.xl, width: "100%",
   },

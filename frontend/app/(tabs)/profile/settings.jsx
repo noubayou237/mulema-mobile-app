@@ -217,7 +217,7 @@ export default function SettingsScreen() {
         <View style={[s.sectionCard, Shadow.sm]}>
           <SettingRow
             icon="help-circle"
-            iconColor={Colors.secondary}
+            iconColor={Colors.primary}
             label={t("settings.helpSupport", "Aide")}
             right={<Ionicons name="open-outline" size={16} color={Colors.textTertiary} />}
             onPress={() => {}}
