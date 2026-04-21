@@ -141,11 +141,10 @@ const THEMES = [
 
 // ─────────────────────────────────────────────────────────────────────
 export async function main() {
-  console.log('🌱 Seed Ghomálá — 4 thèmes principaux\n');
 
   // 1. Récupérer ou créer la langue patrimoniale Ghomálá
   let lang = await prisma.patrimonialLanguage.findFirst({
-    where: { name: { contains: 'Ghomala', mode: 'insensitive' } },
+    where: { name: 'Ghomálá' },
   });
 
   if (!lang) {

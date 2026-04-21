@@ -34,13 +34,21 @@ export default function ChoiceLanguage() {
   const loadLanguages = async () => {
     try {
       const { data } = await api.get("/patrimonial-languages");
-      const langs = (data || []).map((l) => ({
-        id: l.id,
-        name: l.name,
-        code: l.name.toLowerCase(),
-        label: t("common.theLanguage", { name: l.name }),
-        type: "patrimonial",
-      }));
+      
+      const uniqueLangsMap = new Map();
+      (data || []).forEach((l) => {
+        const code = l.name.toLowerCase();
+        if (!uniqueLangsMap.has(code)) {
+          uniqueLangsMap.set(code, {
+            id: l.id,
+            name: l.name,
+            code: code,
+            label: t("common.theLanguage", { name: l.name }),
+            type: "patrimonial",
+          });
+        }
+      });
+      const langs = Array.from(uniqueLangsMap.values());
       setLanguages(langs);
 
       // Restaurer la sélection précédente

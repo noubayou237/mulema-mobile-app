@@ -120,7 +120,7 @@ export async function main() {
 
   // 1. Récupérer ou créer la langue patrimoniale Duala
   let lang = await prisma.patrimonialLanguage.findFirst({
-    where: { name: { contains: 'Duala', mode: 'insensitive' } },
+    where: { name: 'Duala' },
   });
 
   if (!lang) {

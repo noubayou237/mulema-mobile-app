@@ -39,10 +39,10 @@ const HAS_SEEN_INTRO = "hasSeenIntro";
 const HAS_SELECTED_LANGUAGE = "selectedLanguage";
 
 const VIDEO_BY_LANG = {
-  bassa: require("../../assets/BassaVideos/video_2026-04-15_13-47-01.mp4"),
-  duala: require("../../assets/DualaVideos/IMG_5666.MOV"),
-  ghomala: require("../../assets/GhomalaVidoes/IMG_5927.MOV"),
-  default: require("../../assets/DualaVideos/IMG_5666.MOV"),
+  bassa: require("../../assets/bassa-intro-vid.mp4"),
+  duala: require("../../assets/duala-intro-vid.mp4"),
+  ghomala: require("../../assets/ghomala-intro-vid.mp4"),
+  default: require("../../assets/duala-intro-vid.mp4"),
 };
 
 const { width, height } = Dimensions.get("window");
@@ -230,7 +230,7 @@ const persistAndGoHome = async () => {
         {/* Video layer */}
         <Video
           ref={videoRef}
-          source={{ uri: videoUri }}
+          source={videoUri}
           resizeMode="cover"
           shouldPlay={false}
           isLooping={false}

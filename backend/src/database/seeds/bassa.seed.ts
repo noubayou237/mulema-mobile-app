@@ -146,7 +146,7 @@ export async function main() {
   console.log('🌱 Seed Bassa — 4 thèmes principaux\n');
 
   let lang = await prisma.patrimonialLanguage.findFirst({
-    where: { name: { contains: 'Bassa', mode: 'insensitive' } },
+    where: { name: 'Bassa' },
   });
 
   if (!lang) {

@@ -16,9 +16,9 @@ import { Colors, Space, Typo } from "../../src/theme/tokens";
 const { width: SW, height: SH } = Dimensions.get("window");
 
 const VIDEOS = {
-  bassa: require("../../assets/BassaVideos/video_2026-04-15_13-47-01.mp4"),
-  duala: require("../../assets/DualaVideos/IMG_5666.MOV"),
-  ghomala: require("../../assets/GhomalaVidoes/IMG_5927.MOV"),
+  bassa: require("../../assets/bassa-intro-vid.mp4"),
+  duala: require("../../assets/duala-intro-vid.mp4"),
+  ghomala: require("../../assets/ghomala-intro-vid.mp4"),
 };
 
 export default function OnboardingVideoScreen() {
