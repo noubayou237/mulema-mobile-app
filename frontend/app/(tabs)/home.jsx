@@ -411,7 +411,7 @@ const DashCard = ({ user, percent = 0, mins = 0, goal = 40, onContinue }) => {
         <View style={s.statItem}>
           <Ionicons name="trophy-outline" size={16} color={GOLD} />
           <Text style={[Typo.labelSm, { color: GOLD, marginLeft: 6 }]}>
-            {percent >= 100 ? t("home.goalReached") : t("home.remaining", { count: 100 - percent })}
+            {percent >= 100 ? t("home.goalReached") : t("home.remainingPercent", { count: 100 - percent })}
           </Text>
         </View>
       </View>

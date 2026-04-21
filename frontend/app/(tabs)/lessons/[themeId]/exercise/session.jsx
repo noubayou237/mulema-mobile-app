@@ -949,12 +949,12 @@ export default function ExerciseSession() {
         <StatusBar barStyle="dark-content" />
         <View style={s.center}>
           <Text style={{ color: C.textSub, fontSize: 15 }}>
-            {questions.length === 0 ? "Chargement des exercices…" : "Session terminée !"}
+            {questions.length === 0 ? t("exercises.loading") : t("exercises.sessionComplete")}
           </Text>
           {questions.length > 0 && (
             <TouchableOpacity onPress={goResults} style={{ marginTop: 24 }}>
               <Text style={{ color: C.primary, fontWeight: "700", fontSize: 16 }}>
-                Voir les résultats →
+                {t("exercises.seeResults")}
               </Text>
             </TouchableOpacity>
           )}

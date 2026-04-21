@@ -28,7 +28,11 @@
     "percentCompleted": "{{percent}}% Completed",
     "oops": "Oops!",
     "theme": "Theme",
-    "timerFormat": "{{days}}d {{hours}}h"
+    "timerFormat": "{{days}}d {{hours}}h",
+    "prawns": "XP",
+    "verify": "Check",
+    "tip": "Tip",
+    "retry": "Try Again"
   },
   "nav": {
     "lessons": "Lessons",
@@ -114,7 +118,9 @@
     "madeWithLove": "MADE WITH LOVE FOR CULTURE",
     "deleteAccountTitle": "Delete my account?",
     "deleteAccountDesc": "This action is irreversible. All your data will be erased.",
-    "typeDeleteToConfirm": "Type DELETE to confirm:"
+    "typeDeleteToConfirm": "Type DELETE to confirm:",
+    "emailChangeHint": "Contact support to change your email address.",
+    "passwordChangeHint": "Use 'Forgot Password' on the login screen to reset your password."
   },
   "home": {
     "title": "Home",
@@ -190,7 +196,9 @@
     "translationIn": "TRANSLATION IN {{lang}}",
     "listenPronunciation": "Listen to pronunciation",
     "noAudioAvailable": "No audio available",
-    "finishLessons": "Finish lessons"
+    "finishLessons": "Finish lessons",
+    "startWith": "💡 Start with:",
+    "finalChallenge": "⚡ FINAL CHALLENGE"
   },
   "exercises": {
     "title": "Exercises",
@@ -244,7 +252,16 @@
     "continueAdventure": "🎉 Continue the adventure",
     "reviewLessons": "Review the lessons",
     "retry": "Restart the exercises",
-    "backToThemes": "Back to themes"
+    "backToThemes": "Back to themes",
+    "loading": "Loading exercises…",
+    "sessionComplete": "Session complete!",
+    "seeResults": "See results →",
+    "veryGood": "Very good!",
+    "veryGoodSub": "Keep it up, you're making great progress.",
+    "notBad": "Not bad!",
+    "notBadSub": "A few more reviews and you'll master this.",
+    "keepGoing": "Keep going!",
+    "keepGoingSub": "Review the lessons and try again, you can do better!"
   },
   "errors": {
     "networkError": "Network error. Please check your connection.",
@@ -274,7 +291,8 @@
     "languageChanged": "Language changed successfully!",
     "profileSaved": "Profile saved successfully!",
     "mulemaMeaning": "Mulema means 'Heart' in several Bantu languages. We protect yours.",
-    "mulemaMeaningLong": "The word 'Mulema' means 'Heart' in several Bantu languages of Central Africa. Learning a language is touching the heart of a culture."
+    "mulemaMeaningLong": "The word 'Mulema' means 'Heart' in several Bantu languages of Central Africa. Learning a language is touching the heart of a culture.",
+    "accountDeleted": "Account deleted successfully."
   },
   "stats": {
     "title": "Statistics",
@@ -398,6 +416,10 @@
     "videoDescDefault": "Discover Mulema in action"
   },
   "leagues": {
+    "shrimp": "Shrimp League",
+    "bronze": "Bronze League",
+    "silver": "Silver League",
+    "gold": "Gold League",
     "diamond": "Diamond League"
   },
   "quests": {

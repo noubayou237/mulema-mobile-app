@@ -30,10 +30,10 @@ const getStars = (score) => {
 
 const getMessage = (score, t) => {
   if (score >= 90) return { title: t("exercises.excellent"), sub: t("exercises.progressingFast") };
-  if (score >= 70) return { title: "Très bien !", sub: "Continue sur cette lancée, tu progresses vite." };
-  if (score >= 50) return { title: "Pas mal !", sub: "Encore quelques révisions et tu vas maîtriser ça." };
-  if (score >= 30) return { title: "Courage !", sub: "Revois les leçons et réessaie, tu peux faire mieux !" };
-  return { title: t("exercises.retry"), sub: t("exercises.progressingFast") }; // Placeholder sub
+  if (score >= 70) return { title: t("exercises.veryGood"), sub: t("exercises.veryGoodSub") };
+  if (score >= 50) return { title: t("exercises.notBad"), sub: t("exercises.notBadSub") };
+  if (score >= 30) return { title: t("exercises.keepGoing"), sub: t("exercises.keepGoingSub") };
+  return { title: t("exercises.retry"), sub: t("exercises.keepGoingSub") };
 };
 
 /* ── Anneau de score animé ─────────────────────────────────── */

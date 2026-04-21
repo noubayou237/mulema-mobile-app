@@ -28,7 +28,11 @@
     "percentCompleted": "{{percent}}% complété",
     "oops": "Oups !",
     "theme": "Thème",
-    "timerFormat": "{{days}}j {{hours}}h"
+    "timerFormat": "{{days}}j {{hours}}h",
+    "prawns": "Crevettes",
+    "verify": "Vérifier",
+    "tip": "Astuce",
+    "retry": "Réessayer"
   },
   "nav": {
     "lessons": "Leçons",
@@ -114,7 +118,9 @@
     "madeWithLove": "FAIT AVEC AMOUR POUR LA CULTURE",
     "deleteAccountTitle": "Supprimer mon compte ?",
     "deleteAccountDesc": "Cette action est irréversible. Toutes vos données seront effacées.",
-    "typeDeleteToConfirm": "Tapez DELETE pour confirmer :"
+    "typeDeleteToConfirm": "Tapez DELETE pour confirmer :",
+    "emailChangeHint": "Contactez le support pour modifier votre adresse email.",
+    "passwordChangeHint": "Utilisez 'Mot de passe oublié' sur l'écran de connexion pour réinitialiser votre mot de passe."
   },
   "home": {
     "title": "Accueil",
@@ -190,7 +196,9 @@
     "translationIn": "TRADUCTION EN {{lang}}",
     "listenPronunciation": "Écouter la prononciation",
     "noAudioAvailable": "Pas d'audio disponible",
-    "finishLessons": "Terminer les leçons"
+    "finishLessons": "Terminer les leçons",
+    "startWith": "💡 Commence par :",
+    "finalChallenge": "⚡ DÉFI FINAL"
   },
   "exercises": {
     "title": "Exercices",
@@ -244,7 +252,16 @@
     "continueAdventure": "🎉 Continuer l'aventure",
     "reviewLessons": "Revoir les leçons",
     "retry": "Recommencer les exercices",
-    "backToThemes": "Retour aux thèmes"
+    "backToThemes": "Retour aux thèmes",
+    "loading": "Chargement des exercices…",
+    "sessionComplete": "Session terminée !",
+    "seeResults": "Voir les résultats →",
+    "veryGood": "Très bien !",
+    "veryGoodSub": "Continue sur cette lancée, tu progresses vite.",
+    "notBad": "Pas mal !",
+    "notBadSub": "Encore quelques révisions et tu vas maîtriser ça.",
+    "keepGoing": "Courage !",
+    "keepGoingSub": "Revois les leçons et réessaie, tu peux faire mieux !"
   },
   "errors": {
     "networkError": "Erreur réseau. Veuillez vérifier votre connexion.",
@@ -274,7 +291,8 @@
     "languageChanged": "Langue modifiée avec succès !",
     "profileSaved": "Profil enregistré avec succès !",
     "mulemaMeaning": "Mulema signifie 'Cœur' dans plusieurs langues bantoues. Nous protégeons le vôtre.",
-    "mulemaMeaningLong": "Le mot 'Mulema' signifie 'Cœur' dans plusieurs langues bantoues d'Afrique centrale. Apprendre une langue, c'est toucher le cœur d'une culture."
+    "mulemaMeaningLong": "Le mot 'Mulema' signifie 'Cœur' dans plusieurs langues bantoues d'Afrique centrale. Apprendre une langue, c'est toucher le cœur d'une culture.",
+    "accountDeleted": "Compte supprimé avec succès."
   },
   "stats": {
     "title": "Statistiques",
@@ -401,6 +419,10 @@
     "videoDescDefault": "Découvrez Mulema en action"
   },
   "leagues": {
+    "shrimp": "Ligue Crevette",
+    "bronze": "Ligue Bronze",
+    "silver": "Ligue Argent",
+    "gold": "Ligue Or",
     "diamond": "Ligue Diamant"
   },
   "quests": {

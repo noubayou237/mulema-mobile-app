@@ -89,7 +89,7 @@ export default function SettingsScreen() {
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmation !== "DELETE") {
-      Alert.alert("Erreur", 'Veuillez saisir "DELETE" pour confirmer.');
+      Alert.alert(t("common.error"), t("errors.deleteConfirmType"));
       return;
     }
 

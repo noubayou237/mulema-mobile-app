@@ -285,7 +285,7 @@ export default function LessonScreen() {
             {lesson.hint ? (
               <View style={s.hintPill}>
                 <Text style={s.hintText}>
-                  💡 Commence par : <Text style={s.hintLetter}>{lesson.hint}</Text>
+                  {t("lessons.startWith")} <Text style={s.hintLetter}>{lesson.hint}</Text>
                 </Text>
               </View>
             ) : null}

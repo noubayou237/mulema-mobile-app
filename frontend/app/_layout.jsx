@@ -4,7 +4,8 @@
  */
 
 import { useEffect, useState } from "react";
-import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from "react-native";
+import { useTranslation } from "react-i18next";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useFonts } from "expo-font";
 import {
@@ -138,11 +139,59 @@ export default function RootLayout() {
   );
 }
 
+// Expo Router picks up this named export and uses it as the error boundary
+// for the entire navigator tree. Catches unhandled JS errors in any screen.
+export function ErrorBoundary({ error, retry }) {
+  const { t } = useTranslation();
+  return (
+    <View style={s.errorContainer}>
+      <Text style={s.errorTitle}>{t("errors.somethingWentWrong")}</Text>
+      <Text style={s.errorMessage}>{error.message}</Text>
+      <TouchableOpacity style={s.retryBtn} onPress={retry}>
+        <Text style={s.retryText}>{t("common.retry")}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 const s = StyleSheet.create({
   loader: {
     flex: 1,
     backgroundColor: Colors.surface,
     alignItems: "center",
     justifyContent: "center",
+  },
+  errorContainer: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 32,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontFamily: "Fredoka_600SemiBold",
+    color: Colors.onSurface,
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  errorMessage: {
+    fontSize: 13,
+    fontFamily: "Nunito-Regular",
+    color: Colors.textTertiary,
+    textAlign: "center",
+    marginBottom: 32,
+    lineHeight: 20,
+  },
+  retryBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: 24,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+  },
+  retryText: {
+    fontSize: 15,
+    fontFamily: "Fredoka_600SemiBold",
+    color: "#FFF",
   },
 });
