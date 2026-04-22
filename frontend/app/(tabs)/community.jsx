@@ -34,8 +34,8 @@ import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 // ── Stores ──
 import { useAuthStore } from "../../src/stores/useAuthStore";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
+import { useDashboardStore } from "../../src/stores/useDashboardStore";
 import { useTranslation } from "react-i18next";
-// import { useCommunityStore } from "../../src/stores/useCommunityStore";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
@@ -350,36 +350,72 @@ const MOCK_RANKING = [
   { id: "8", rank: 8, name: "Léon K.", totalXP: 590, avatar: null, streakDays: 0, tag: "newcomer" },
 ];
 
+// Normalise a raw leaderboard entry from the API into the shape this UI expects
+const normaliseEntry = (entry, index) => ({
+  id:          entry.id ?? String(index),
+  rank:        entry.rank ?? index + 1,
+  name:        entry.name ?? entry.username ?? "—",
+  totalXP:     entry.totalXP ?? entry.totalPoints ?? entry.xp ?? 0,
+  avatar:      entry.avatarUrl ?? entry.avatar ?? null,
+  streakDays:  entry.streakDays ?? 0,
+  tag:         entry.tag ?? null,
+  xpToNextRank: entry.xpToNextRank ?? 50,
+});
+
 export default function CommunityScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { user } = useAuthStore();
   const { activeLanguage } = useLanguageStore();
+  const {
+    leaderboard: rawLeaderboard,
+    leaderboardLoading,
+    data: dashData,
+    fetchLeaderboard,
+    fetchDashboard,
+  } = useDashboardStore();
 
-  // Fallback to mock if store not wired
-  const [ranking, setRanking] = useState(MOCK_RANKING);
-  const [currentUserRank, setCurrentUserRank] = useState({
-    id: "me",
-    rank: 42,
-    name: user?.name || t("community.isYou"),
-    totalXP: 310,
-    avatar: user?.avatar,
-    streakDays: 0,
-    xpToNextRank: 50,
-    tag: null,
-  });
   const [filter, setFilter] = useState("week");
-  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [timeLeft, setTimeLeft] = useState("2j 14h");
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1200);
+  // Fetch on mount
+  useEffect(() => {
+    fetchLeaderboard();
+    fetchDashboard();
   }, []);
 
-  const top3 = ranking.slice(0, 3);
-  const rest = ranking.slice(3);
+  // Use real data when available, fall back to mock
+  const hasRealData = rawLeaderboard.length > 0;
+  const ranking = hasRealData
+    ? rawLeaderboard.map(normaliseEntry)
+    : MOCK_RANKING;
+
+  const userXP   = dashData?.totalPoints ?? 310;
+  const streak   = dashData?.streakDays  ?? 0;
+  const hearts   = dashData?.hearts      ?? 5;
+
+  const currentUserRank = {
+    id:           "me",
+    rank:         ranking.findIndex((r) => r.id === user?.id) + 1 || 42,
+    name:         user?.name || t("community.isYou"),
+    totalXP:      userXP,
+    avatar:       user?.avatar ?? null,
+    streakDays:   streak,
+    xpToNextRank: 50,
+    tag:          null,
+  };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([fetchLeaderboard(), fetchDashboard()]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchLeaderboard, fetchDashboard]);
+
+  const top3  = ranking.slice(0, 3);
+  const rest  = ranking.slice(3);
   const league = getLeagueTier(currentUserRank.totalXP, t);
 
   return (
@@ -400,9 +436,9 @@ export default function CommunityScreen() {
         {/* ── Header avec ligue ── */}
         <LeagueHeader
           league={league}
-          timeLeft={timeLeft}
-          streak={3}
-          hearts={5}
+          timeLeft={null}
+          streak={streak}
+          hearts={hearts}
           onMenuPress={() => router.push("/(tabs)/profile/settings")}
         />
 
@@ -416,7 +452,7 @@ export default function CommunityScreen() {
         </View>
 
         {/* ── List rang 4+ ── */}
-        {loading ? (
+        {leaderboardLoading && !hasRealData ? (
           <ActivityIndicator
             color={Colors.primary}
             size="large"

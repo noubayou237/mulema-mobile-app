@@ -42,14 +42,6 @@ const playAudio = async (url) => {
   }
 };
 
-const getLangKey = (langName = "") => {
-  const n = langName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  if (n.includes("duala") || n.includes("douala")) return "duala";
-  if (n.includes("ghomala") || n.includes("ghomal") || n.includes("bamilek")) return "ghomala";
-  if (n.includes("bassa") || n.includes("basaa")) return "bassa";
-  return "duala";
-};
-
 /* ── Icônes par thème ─────────────────────────────────────────── */
 const THEME_ICONS = {
   famille: "people",
@@ -88,13 +80,7 @@ export default function LessonScreen() {
   const theme    = themes.find((t) => t.id === themeId);
   const themeCode = theme?.code ?? "famille";
 
-  /* Conseil culturel pour cette leçon (via i18n) */
-  const langKey  = getLangKey(activeLanguage?.name ?? "");
   const langName = activeLanguage?.name ?? "Duala";
-  
-  // Tenter de récupérer les tips depuis i18n
-  const tips = t(`culturalTips.${langKey}.${themeCode}`, { returnObjects: true });
-  const tip  = Array.isArray(tips) ? tips[lessonIdx % tips.length] : t("messages.mulemaMeaningLong");
 
   /* Animations */
   const cardAnim  = useRef(new Animated.Value(0)).current;
@@ -141,7 +127,7 @@ export default function LessonScreen() {
   };
 
   const goPrev = () => {
-    if (isFirst) { router.replace(`/(tabs)/lessons/${themeId}`); return; }
+    if (isFirst) { router.back(); return; }
     cardAnim.setValue(0);
     slideAnim.setValue(-30);
     router.replace(`/(tabs)/lessons/${themeId}/lesson/${lessons[lessonIdx - 1].id}`);
@@ -270,17 +256,6 @@ export default function LessonScreen() {
                 </Text>
               </View>
             ) : null}
-          </View>
-
-          {/* ── Conseil culturel ── */}
-          <View style={s.tipCard}>
-            <View style={s.tipHeader}>
-              <View style={s.tipIcon}>
-                <Ionicons name="bulb" size={16} color={Colors.secondary} />
-              </View>
-              <Text style={s.tipTitle}>{t("common.didYouKnow")}</Text>
-            </View>
-            <Text style={s.tipBody}>{tip}</Text>
           </View>
 
           {/* ── Bouton audio prononciation ── */}
@@ -431,25 +406,6 @@ const s = StyleSheet.create({
   },
   hintText: { fontSize: 13, color: Colors.onSurface },
   hintLetter: { fontWeight: "800", color: Colors.primary },
-
-  /* Tip */
-  tipCard: {
-    backgroundColor: "#FFF3E0",
-    borderRadius: Radius.xl,
-    padding: Space["2xl"],
-    marginBottom: Space.lg,
-  },
-  tipHeader: { flexDirection: "row", alignItems: "center", marginBottom: Space.md, gap: Space.sm },
-  tipIcon: {
-    width: 32, height: 32, borderRadius: 16,
-    backgroundColor: Colors.secondary + "20",
-    alignItems: "center", justifyContent: "center",
-  },
-  tipTitle: {
-    fontSize: 11, fontWeight: "800",
-    color: Colors.secondary, letterSpacing: 1,
-  },
-  tipBody: { fontSize: 14, color: Colors.onSurface, lineHeight: 21 },
 
   /* Listen button */
   listenBtn: {

@@ -489,20 +489,6 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
           ))}
         </View>
 
-        {/* Le saviez-vous */}
-        <View style={tipS.card}>
-          <View style={tipS.row}>
-            <Ionicons name="bulb" size={16} color={C.orange} />
-            <Text style={tipS.title}>{t("common.didYouKnow")}</Text>
-          </View>
-          <Text style={tipS.body}>
-            {t("exercises.tipIn", { langName })}{" "}
-            <Text style={{ fontStyle: "italic" }}>"{q.target.title}"</Text>{" "}
-            {t("exercises.tipIsSaid")}{" "}
-            <Text style={{ fontWeight: "700", fontStyle: "italic" }}>"{q.target.subtitle}"</Text>.
-          </Text>
-        </View>
-
         <View style={{ height: 120 }} />
       </ScrollView>
 
