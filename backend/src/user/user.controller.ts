@@ -36,6 +36,14 @@ export class UserController {
   }
 
   // =====================
+  // GET LEADERBOARD
+  // =====================
+  @Get('leaderboard')
+  async getLeaderboard(@CurrentUser() user: AuthUser) {
+    return this.userService.getLeaderboard(user.userId);
+  }
+
+  // =====================
   // GET PROFILE
   // =====================
   @Get('profile')

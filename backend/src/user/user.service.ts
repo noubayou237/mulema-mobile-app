@@ -62,6 +62,8 @@ export class UserService {
       progressPercent,
       totalTimeMinutes: totalMinutes,
       hearts: cowry?.currentCowries ?? 5,
+      lessonsCompleted: stats?.lessonsCompleted ?? 0,
+      exercisesCompleted: stats?.exercisesCompleted ?? 0,
       continueTheme,
     };
   }
@@ -133,6 +135,66 @@ export class UserService {
     }
 
     return streak; // Déjà connecté aujourd'hui
+  }
+
+  // =====================
+  // GET LEADERBOARD
+  // =====================
+  async getLeaderboard(userId: string) {
+    const users = await this.prisma.user.findMany({
+      where: { statistics: { isNot: null } },
+      select: {
+        id: true,
+        name: true,
+        createdAt: true,
+        avatar: { select: { imageUrl: true } },
+        statistics: { select: { totalPrawns: true } },
+        rootsStreak: { select: { daysConnected: true } },
+      },
+      orderBy: { statistics: { totalPrawns: 'desc' } },
+      take: 20,
+    });
+
+    const entries = await Promise.all(
+      users.map(async (u, i) => {
+        const xp = u.statistics?.totalPrawns ?? 0;
+        const rank = i + 1;
+        const prevXP = i > 0 ? (users[i - 1].statistics?.totalPrawns ?? 0) : xp;
+        const xpToNextRank = rank > 1 ? Math.max(0, prevXP - xp + 1) : 0;
+
+        const daysSinceJoin = Math.floor(
+          (Date.now() - new Date(u.createdAt).getTime()) / (1000 * 60 * 60 * 24),
+        );
+
+        let tag: string | null = null;
+        if (rank <= 10) tag = 'top10';
+        else if (daysSinceJoin <= 14) tag = 'newcomer';
+
+        let avatar: string | null = null;
+        if (u.avatar?.imageUrl) {
+          try {
+            const key = this.r2Storage.extractKey(u.avatar.imageUrl);
+            avatar = await this.r2Storage.getSignedUrl(key, 3600);
+          } catch {
+            avatar = u.avatar.imageUrl;
+          }
+        }
+
+        return {
+          id: u.id,
+          rank,
+          name: u.name,
+          totalXP: xp,
+          avatar,
+          streakDays: u.rootsStreak?.daysConnected ?? 0,
+          tag,
+          xpToNextRank,
+          isCurrentUser: u.id === userId,
+        };
+      }),
+    );
+
+    return entries;
   }
 
   // =====================

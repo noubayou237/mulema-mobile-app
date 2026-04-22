@@ -46,7 +46,9 @@ export class LevelService {
       orderBy: { order: 'asc' },
       include: {
         _count: { select: { words: true } },
+        exercises: { select: { id: true } },
         words: {
+          orderBy: { order: 'asc' },
           include: {
             userProgress: {
               where: { userId, isCompleted: true },
@@ -57,10 +59,21 @@ export class LevelService {
     });
 
     return themes.map((t) => {
-      // Compter combien de mots ont un userProgress indiquant isCompleted: true
-      const lessonsCompleted = t.words.reduce((acc, word) => {
-        return acc + (word.userProgress.length > 0 ? 1 : 0);
-      }, 0);
+      const lessonsCompleted = t.words.reduce(
+        (acc, word) => acc + (word.userProgress.length > 0 ? 1 : 0),
+        0,
+      );
+
+      // exercisesCount: how many discrete exercises exist for this theme
+      const exercisesCount = t.exercises.length || 3;
+
+      // exercisesCompleted: words at order >= 2 that are completed map 1-to-1
+      // to exercise sessions the user has passed (each session unlocks the next word).
+      // Cap at exercisesCount so we never exceed the total.
+      const exercisesCompleted = Math.min(
+        exercisesCount,
+        t.words.filter((w) => w.order >= 2 && w.userProgress.length > 0).length,
+      );
 
       return {
         id: t.id,
@@ -74,6 +87,8 @@ export class LevelService {
         lockHint: t.lock_hint,
         lessonsCount: t._count.words,
         lessonsCompleted,
+        exercisesCount,
+        exercisesCompleted,
       };
     });
   }

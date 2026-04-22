@@ -286,7 +286,8 @@
     "privacyUrlNotSet": "Privacy policy URL not configured.",
     "deleteConfirmType": "Please type 'DELETE' to confirm.",
     "deleteFailed": "Unable to delete account. Please try again later.",
-    "noInternet": "No internet connection"
+    "noInternet": "No internet connection",
+    "backOnline": "Back online"
   },
   "messages": {
     "accountCreated": "Account created successfully!",
@@ -433,13 +434,36 @@
     "dailyProgress": "DAILY PROGRESS",
     "remainingDefis": "{{count}} more challenge{{plural}} for the mythical chest!",
     "challenges": "Daily Challenges",
-    "resetIn": "RESET IN {{hours}}H",
-    "learnWords": "Learn 5 new words",
-    "learnWordsSub": "Continue your learning streak",
-    "finishLessons": "Complete 2 lessons",
-    "finishLessonsSub": "Master the basic concepts",
-    "practiceTime": "Practice for 10 minutes",
+    "learnWords": "Complete 5 lessons",
+    "learnWordsSub": "Learn new words in your active theme",
+    "finishLessons": "Complete 3 exercises",
+    "finishLessonsSub": "Practice with matching, writing and selection",
+    "practiceTime": "Practice 30 minutes",
     "practiceTimeSub": "Consistency is the key to success"
+  },
+  "notifications": {
+    "subtitle": "Stay on track with your journey.",
+    "clearAll": "Clear all",
+    "allClear": "All caught up!",
+    "allClearSub": "No new notifications right now.",
+    "urgent": "URGENT",
+    "sections": {
+      "streak": "STREAK & HEARTS",
+      "community": "COMMUNITY",
+      "newContent": "NEW CONTENT"
+    },
+    "streakTitle": "Keep your streak alive!",
+    "streakStartTitle": "Start your streak today!",
+    "streakBody": "Your {{days}}-day streak is active. Keep it going with a quick lesson!",
+    "streakStartBody": "Complete your first lesson to start building your streak.",
+    "goLearn": "Go learn",
+    "leagueTitle": "Climb the leaderboard",
+    "leagueBody": "Complete exercises to earn XP and rise in the rankings.",
+    "viewRanking": "View ranking",
+    "newContent": "NEW CONTENT",
+    "exercisesTitle": "Exercises available",
+    "exercisesBody": "New exercises are ready for your active themes. Practice to earn XP and unlock the next lessons.",
+    "goExercises": "Go to exercises"
   },
   "settingsModal": {
     "myLanguages": "My Languages",

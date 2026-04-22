@@ -394,14 +394,21 @@ export default function CommunityScreen() {
   const streak   = dashData?.streakDays  ?? 0;
   const hearts   = dashData?.hearts      ?? 5;
 
+  // Find the current user's leaderboard entry to get real xpToNextRank
+  const myLeaderboardEntry = hasRealData
+    ? rawLeaderboard.find((e) => e.isCurrentUser)
+    : null;
+
+  const myRankInList = ranking.findIndex((r) => r.id === user?.id);
+
   const currentUserRank = {
     id:           "me",
-    rank:         ranking.findIndex((r) => r.id === user?.id) + 1 || 42,
+    rank:         myRankInList >= 0 ? myRankInList + 1 : 42,
     name:         user?.name || t("community.isYou"),
     totalXP:      userXP,
     avatar:       user?.avatar ?? null,
     streakDays:   streak,
-    xpToNextRank: 50,
+    xpToNextRank: myLeaderboardEntry?.xpToNextRank ?? 50,
     tag:          null,
   };
 

@@ -64,8 +64,7 @@ export const useDashboardStore = create((set) => ({
       return leaderboard;
     } catch (error) {
       set({ leaderboardLoading: false });
-      const status = error?.response?.status;
-      if (status !== 401 && status !== 404) {
+      if (error?.response?.status !== 401) {
         console.error("[DashboardStore] fetchLeaderboard error:", error);
       }
       return [];

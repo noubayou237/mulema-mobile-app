@@ -286,7 +286,8 @@
     "deleteConfirmType": "Veuillez saisir 'DELETE' pour confirmer.",
     "deleteFailed": "Impossible de supprimer le compte. Réessayez plus tard.",
     "noThemesRefresh": "Aucun thème disponible.\nTire vers le bas pour actualiser.",
-    "noInternet": "Pas de connexion internet"
+    "noInternet": "Pas de connexion internet",
+    "backOnline": "Connexion rétablie"
   },
   "messages": {
     "accountCreated": "Compte créé avec succès !",
@@ -435,13 +436,36 @@
     "dailyProgress": "PROGRESSION DU JOUR",
     "remainingDefis": "Encore {{count}} défi{{plural}} pour le coffre mythique !",
     "challenges": "Défis Quotidiens",
-    "resetIn": "RESET EN {{hours}}H",
-    "learnWords": "Apprendre 5 nouveaux mots",
-    "learnWordsSub": "Continuez votre série d'apprentissage",
-    "finishLessons": "Terminer 2 leçons",
-    "finishLessonsSub": "Maîtrisez les concepts fondamentaux",
-    "practiceTime": "Pratiquer 10 minutes",
+    "learnWords": "Terminer 5 leçons",
+    "learnWordsSub": "Apprenez de nouveaux mots dans votre thème actif",
+    "finishLessons": "Terminer 3 exercices",
+    "finishLessonsSub": "Pratiquez avec les appariements, l'écriture et la sélection",
+    "practiceTime": "Pratiquer 30 minutes",
     "practiceTimeSub": "La régularité est la clé du succès"
+  },
+  "notifications": {
+    "subtitle": "Suivez votre progression.",
+    "clearAll": "Tout effacer",
+    "allClear": "Tout bon !",
+    "allClearSub": "Aucune nouvelle notification pour le moment.",
+    "urgent": "URGENT",
+    "sections": {
+      "streak": "SÉRIE & CŒURS",
+      "community": "COMMUNAUTÉ",
+      "newContent": "NOUVEAUTÉS"
+    },
+    "streakTitle": "Gardez votre série en vie !",
+    "streakStartTitle": "Commencez votre série aujourd'hui !",
+    "streakBody": "Votre série de {{days}} jour(s) est active. Continuez avec une leçon rapide !",
+    "streakStartBody": "Terminez votre première leçon pour démarrer votre série.",
+    "goLearn": "Apprendre",
+    "leagueTitle": "Montez dans le classement",
+    "leagueBody": "Terminez des exercices pour gagner des XP et progresser dans le classement.",
+    "viewRanking": "Voir le classement",
+    "newContent": "NOUVEAUTÉS",
+    "exercisesTitle": "Exercices disponibles",
+    "exercisesBody": "De nouveaux exercices sont prêts pour vos thèmes actifs. Pratiquez pour gagner des XP et débloquer les prochaines leçons.",
+    "goExercises": "Aller aux exercices"
   },
   "settingsModal": {
     "myLanguages": "Mes Langues",

@@ -27,7 +27,7 @@ export const dashboardService = {
    * @returns LeaderboardEntry[]
    */
   getLeaderboard: async () => {
-    const { data } = await api.get("/leaderboard");
+    const { data } = await api.get("/user/leaderboard");
     return data;
   },
 };

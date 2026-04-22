@@ -1,45 +1,75 @@
-import { useEffect, useRef } from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Animated, StyleSheet, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { useNetworkStatus } from "../../hooks/useNetworkStatus";
-import { Colors } from "../../theme/tokens";
+
+const BANNER_HEIGHT = 54;
 
 export default function OfflineBanner() {
   const { t } = useTranslation();
   const isConnected = useNetworkStatus();
-  const translateY = useRef(new Animated.Value(-60)).current;
-  const prevConnected = useRef(true);
 
+  // "idle" | "offline" | "reconnected"
+  const [status, setStatus] = useState("idle");
+  const translateY = useRef(new Animated.Value(-BANNER_HEIGHT)).current;
+  const dismissTimer = useRef(null);
+
+  // Transition logic
   useEffect(() => {
     if (!isConnected) {
-      // Slide down to show
-      Animated.spring(translateY, {
-        toValue: 0,
-        useNativeDriver: true,
-        bounciness: 4,
-      }).start();
-    } else if (!prevConnected.current) {
-      // Was offline, now back — slide up to hide after brief delay
-      Animated.sequence([
-        Animated.delay(1200),
-        Animated.timing(translateY, {
-          toValue: -60,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      // Drop offline immediately, cancel any pending dismiss
+      if (dismissTimer.current) {
+        clearTimeout(dismissTimer.current);
+        dismissTimer.current = null;
+      }
+      setStatus("offline");
+    } else if (status === "offline") {
+      // Just came back online — show green briefly then hide
+      setStatus("reconnected");
+      dismissTimer.current = setTimeout(() => setStatus("idle"), 2500);
     }
-    prevConnected.current = isConnected;
   }, [isConnected]);
+
+  // Animate in/out whenever status changes
+  useEffect(() => {
+    const toValue = status === "idle" ? -BANNER_HEIGHT : 0;
+    const useSpring = status === "offline";
+
+    if (useSpring) {
+      Animated.spring(translateY, {
+        toValue,
+        bounciness: 5,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(translateY, {
+        toValue,
+        duration: 280,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [status]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (dismissTimer.current) clearTimeout(dismissTimer.current);
+    };
+  }, []);
+
+  const offline = status === "offline";
+  const bgColor = offline ? "#323232" : "#2E7D32";
+  const icon    = offline ? "cloud-offline-outline" : "checkmark-circle-outline";
+  const label   = offline ? t("errors.noInternet") : t("errors.backOnline");
 
   return (
     <Animated.View
-      style={[s.banner, { transform: [{ translateY }] }]}
+      style={[s.banner, { backgroundColor: bgColor, transform: [{ translateY }] }]}
       pointerEvents="none"
     >
-      <Ionicons name="cloud-offline-outline" size={16} color="#FFF" />
-      <Text style={s.text}>{t("errors.noInternet")}</Text>
+      <Ionicons name={icon} size={16} color="#FFF" />
+      <Text style={s.text}>{label}</Text>
     </Animated.View>
   );
 }
@@ -51,7 +81,6 @@ const s = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 999,
-    backgroundColor: "#323232",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -59,6 +88,7 @@ const s = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 16,
     paddingTop: 44,
+    height: BANNER_HEIGHT + 44,
   },
   text: {
     color: "#FFF",
