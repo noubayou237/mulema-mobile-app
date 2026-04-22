@@ -11,30 +11,45 @@ export default function OfflineBanner() {
   const isConnected = useNetworkStatus();
 
   // "idle" | "offline" | "reconnected"
+  const FULL_HEIGHT = BANNER_HEIGHT + 44;
   const [status, setStatus] = useState("idle");
-  const translateY = useRef(new Animated.Value(-BANNER_HEIGHT)).current;
+  const translateY = useRef(new Animated.Value(-FULL_HEIGHT)).current;
   const dismissTimer = useRef(null);
+
+  const isFirstRender = useRef(true);
 
   // Transition logic
   useEffect(() => {
+    // Avoid showing "Online" on initial load
+    if (isFirstRender.current) {
+      if (!isConnected) {
+        setStatus("offline");
+        // We stay offline until manually reconnected or timer
+        dismissTimer.current = setTimeout(() => setStatus("idle"), 5000);
+      }
+      isFirstRender.current = false;
+      return;
+    }
+
     if (!isConnected) {
-      // Drop offline, but hide after 3 seconds
+      // Transition to Offline
       setStatus("offline");
       if (dismissTimer.current) clearTimeout(dismissTimer.current);
-      dismissTimer.current = setTimeout(() => setStatus("idle"), 3000);
-    } else if (status === "offline" || status === "idle") {
-      // Just came back online or startup
+      // Auto-hide after 5 seconds instead of remaining permanent
+      dismissTimer.current = setTimeout(() => setStatus("idle"), 5000);
+    } else {
+      // Transition to Online
       if (status === "offline") {
         setStatus("reconnected");
         if (dismissTimer.current) clearTimeout(dismissTimer.current);
-        dismissTimer.current = setTimeout(() => setStatus("idle"), 2500);
+        dismissTimer.current = setTimeout(() => setStatus("idle"), 3000);
       }
     }
   }, [isConnected]);
 
   // Animate in/out whenever status changes
   useEffect(() => {
-    const toValue = status === "idle" ? -BANNER_HEIGHT : 0;
+    const toValue = status === "idle" ? -FULL_HEIGHT : 0;
     const useSpring = status === "offline";
 
     if (useSpring) {

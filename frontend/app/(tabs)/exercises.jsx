@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, Dimensions, StatusBar,
   ActivityIndicator, RefreshControl, Animated, Easing,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,6 +11,8 @@ import { useRouter } from "expo-router";
 import { useThemeStore } from "../../src/stores/useThemeStore";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
 import { useDashboardStore } from "../../src/stores/useDashboardStore";
+import { useAuthStore } from "../../src/stores/useAuthStore";
+import { DrawerContent } from "../../src/components/layout/DrawerContent";
 
 import { useTranslation } from "react-i18next";
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
@@ -123,10 +126,59 @@ const ExerciseThemeCard = ({ theme, index, onPress, isCompleted, hasReward }) =>
 export default function ExercisesScreen() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { user, logout } = useAuthStore();
   const { activeLanguage, languages, fetchLanguages, loadActiveLanguage } = useLanguageStore();
   const { themes, isLoading, fetchThemes } = useThemeStore();
   const { data: dash, fetchDashboard } = useDashboardStore();
   const [refreshing, setRefreshing] = useState(false);
+
+  /* ── Drawer ── */
+  const { width: SCREEN_W } = Dimensions.get("window");
+  const DRAWER_WIDTH = SCREEN_W * 0.78;
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
+  const overlayAnim = useRef(new Animated.Value(0)).current;
+
+  const openDrawer = useCallback(() => {
+    setDrawerOpen(true);
+    Animated.parallel([
+      Animated.spring(drawerAnim, { toValue: 0, tension: 65, friction: 11, useNativeDriver: true }),
+      Animated.timing(overlayAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  const closeDrawer = useCallback(() => {
+    Animated.parallel([
+      Animated.spring(drawerAnim, { toValue: -DRAWER_WIDTH, tension: 65, friction: 11, useNativeDriver: true }),
+      Animated.timing(overlayAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
+    ]).start(() => setDrawerOpen(false));
+  }, []);
+
+  const handleDrawerNav = (target) => {
+    closeDrawer();
+    setTimeout(() => {
+      switch (target) {
+        case "quests": router.push("/modal/quests"); break;
+        case "notifications": router.push("/(tabs)/profile/notifications"); break;
+        case "change-language": router.push("/modal/change-language"); break;
+        case "settings": router.push("/(tabs)/profile/settings"); break;
+      }
+    }, 300);
+  };
+
+  const handleLogout = () => {
+    closeDrawer();
+    setTimeout(() => {
+      Alert.alert(
+        t("profile.logout"),
+        t("profile.logoutConfirm"),
+        [
+          { text: t("common.cancel"), style: "cancel" },
+          { text: t("common.confirm"), style: "destructive", onPress: () => logout() },
+        ]
+      );
+    }, 300);
+  };
 
   const getPatrimonialId = (lang, allLangs) => {
     if (!lang) return DUALA_ID;
@@ -179,7 +231,7 @@ export default function ExercisesScreen() {
 
       <View style={s.header}>
         <View style={s.headerLeft}>
-          <TouchableOpacity style={s.menuBtn}>
+          <TouchableOpacity style={s.menuBtn} onPress={openDrawer}>
             <Ionicons name="menu" size={24} color={TEXT} />
           </TouchableOpacity>
           <View>
@@ -260,6 +312,27 @@ export default function ExercisesScreen() {
         )}
         <View style={{ height: 24 }} />
       </ScrollView>
+
+      {/* ══ DRAWER OVERLAY ══ */}
+      {drawerOpen && (
+        <Animated.View
+          style={[StyleSheet.absoluteFillObject, { backgroundColor: "rgba(0,0,0,0.38)", zIndex: 90, opacity: overlayAnim }]}
+          pointerEvents="box-none"
+        >
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={closeDrawer} />
+        </Animated.View>
+      )}
+
+      {/* ══ DRAWER PANEL ══ */}
+      <Animated.View style={[s.drawerPanel, { transform: [{ translateX: drawerAnim }] }]}>
+        <DrawerContent
+          user={user}
+          dashboard={dash}
+          onClose={closeDrawer}
+          onNav={handleDrawerNav}
+          onLogout={handleLogout}
+        />
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -366,4 +439,12 @@ const s = StyleSheet.create({
 
   empty: { alignItems: "center", paddingVertical: 48 },
   emptyTxt: { fontSize: 14, fontFamily: "Nunito-Regular", color: FAINT, textAlign: "center", marginTop: 12, lineHeight: 20 },
+  drawerPanel: {
+    position: "absolute",
+    top: 0, bottom: 0, left: 0,
+    width: Dimensions.get("window").width * 0.78,
+    backgroundColor: "#FFF",
+    zIndex: 100,
+    ...Shadow.lg,
+  },
 });

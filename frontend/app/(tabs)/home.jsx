@@ -33,6 +33,7 @@ import { useAuthStore } from "../../src/stores/useAuthStore";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
 import { useThemeStore } from "../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../src/stores/useDashboardStore";
+import { DrawerContent } from "../../src/components/layout/DrawerContent";
 
 import { useTranslation } from "react-i18next";
 import { changeLanguage, getCurrentLanguage } from "../../src/i18n";
@@ -91,98 +92,7 @@ const getThemeExos = (themes) => {
   }));
 };
 
-/* ════════════════════════════════════════════════════════════════════
-   DRAWER — Quick Access Menu
-   ════════════════════════════════════════════════════════════════════ */
-
-const DrawerItem = ({ icon, label, onPress, highlighted }) => (
-  <TouchableOpacity
-    onPress={onPress}
-    activeOpacity={0.7}
-    style={[dr.menuItem, highlighted && dr.menuItemHL]}
-  >
-    <View style={[dr.menuIcon, highlighted && { backgroundColor: RED_L }]}>
-      <Ionicons
-        name={icon}
-        size={20}
-        color={highlighted ? RED : Colors.textTertiary}
-      />
-    </View>
-    <Text style={[Typo.titleSm, {
-      marginLeft: Space.lg,
-      color: highlighted ? RED : Colors.onSurface,
-    }]}>
-      {label}
-    </Text>
-  </TouchableOpacity>
-);
-
-const DrawerContent = ({ user, dashboard, onClose, onNav, onLogout }) => {
-  const { t } = useTranslation();
-  return (
-    <View style={dr.container}>
-      {/* Bande décorative en haut */}
-      <View style={dr.topStripe} />
-
-      <TouchableOpacity onPress={onClose} activeOpacity={0.7} style={dr.closeBtn}>
-        <Ionicons name="close" size={22} color={Colors.onSurface} />
-      </TouchableOpacity>
-
-      {/* Profil */}
-      <View style={dr.profileRow}>
-        <View style={dr.avatarRing}>
-          {user?.avatar ? (
-            <Image source={{ uri: user.avatar }} style={dr.avatar} contentFit="cover" />
-          ) : (
-            <View style={[dr.avatar, { backgroundColor: RED_L, alignItems: "center", justifyContent: "center" }]}>
-              <Ionicons name="person" size={28} color={RED} />
-            </View>
-          )}
-        </View>
-        <View style={{ marginLeft: Space.lg, flex: 1 }}>
-          <Text style={[Typo.titleLg, { color: Colors.onSurface }]} numberOfLines={1}>
-            {user?.name || t("common.user")}
-          </Text>
-          <View style={dr.levelBadge}>
-            <Ionicons name="star" size={11} color={GOLD} />
-            <Text style={[Typo.labelSm, { color: RED, marginLeft: 4 }]}>
-              {t("home.scholarLevel", { level: Math.floor((dashboard?.totalPoints || 0) / 100) })}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Streak (Racines) */}
-      <View style={dr.streakBadge}>
-        {/* Streak icon must be green per user requirements */}
-        <Ionicons name="leaf" size={15} color={GREEN} />
-        <Text style={[Typo.labelLg, { color: Colors.onSurface, marginLeft: Space.sm }]}>
-          {t("stats.rootsCount", { count: dashboard?.streakDays || 0 })}
-        </Text>
-      </View>
-
-      <View style={dr.divider} />
-
-      <Text style={[Typo.labelSm, { color: Colors.textTertiary, marginBottom: Space.md }]}>
-        {t("common.quickAccess")}
-      </Text>
-
-      <DrawerItem icon="ribbon-outline" label={t("nav.quests")} onPress={() => onNav("quests")} />
-      <DrawerItem icon="notifications-outline" label={t("settings.notifications")} onPress={() => onNav("notifications")} />
-      <DrawerItem icon="language-outline" label={t("settings.language")} onPress={() => onNav("change-language")} />
-      <DrawerItem icon="settings-outline" label={t("settings.title")} onPress={() => onNav("settings")} highlighted />
-
-      <View style={{ flex: 1 }} />
-
-      <TouchableOpacity onPress={onLogout} activeOpacity={0.7} style={dr.logoutBtn}>
-        <Ionicons name="log-out-outline" size={18} color={RED} />
-        <Text style={[Typo.titleSm, { color: RED, marginLeft: Space.md }]}>
-          {t("profile.logout")}
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-};
+// Drawer Content moved to shared component
 
 /* ════════════════════════════════════════════════════════════════════
    HOME HEADER
@@ -289,7 +199,7 @@ const DashCard = ({ user, percent = 0, mins = 0, goal = 40, onContinue }) => {
           width: bar.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] }),
         }]} />
         <View style={s.progressLabel}>
-          <Text style={[Typo.labelMd, { color: Colors.onSurface }]}>{percent}%</Text>
+          <Text style={[Typo.labelMd, { color: "#FFF" }]}>{percent}%</Text>
         </View>
       </View>
 

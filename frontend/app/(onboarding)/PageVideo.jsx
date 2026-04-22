@@ -118,17 +118,30 @@ export default function PageVideo() {
         }
 
         if (!chosen) {
+          // If still no language, maybe check the store
+          const active = useLanguageStore.getState().activeLanguage;
+          if (active) chosen = active.code || active.name;
+        }
+
+        if (!chosen) {
           router.replace("/ChoiceLanguage");
           return;
         }
 
-        chosen = String(chosen).toLowerCase();
+        // Normalize: lowercase, remove special chars if any
+        chosen = String(chosen)
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .trim();
 
         if (mounted) {
+          console.log("🎥 PageVideo: Resolved language to:", chosen);
           setLangResolved(chosen);
           setResolving(false);
         }
-      } catch {
+      } catch (err) {
+        console.error("❌ PageVideo resolution error:", err);
         router.replace("/ChoiceLanguage");
       }
     })();

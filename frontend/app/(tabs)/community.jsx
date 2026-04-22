@@ -22,7 +22,9 @@ import {
   StatusBar,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -35,6 +37,7 @@ import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 import { useAuthStore } from "../../src/stores/useAuthStore";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
 import { useDashboardStore } from "../../src/stores/useDashboardStore";
+import { DrawerContent } from "../../src/components/layout/DrawerContent";
 import { useTranslation } from "react-i18next";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -365,7 +368,7 @@ const normaliseEntry = (entry, index) => ({
 export default function CommunityScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { activeLanguage } = useLanguageStore();
   const {
     leaderboard: rawLeaderboard,
@@ -377,6 +380,54 @@ export default function CommunityScreen() {
 
   const [filter, setFilter] = useState("week");
   const [refreshing, setRefreshing] = useState(false);
+
+  /* ── Drawer ── */
+  const { width: SCREEN_W } = Dimensions.get("window");
+  const DRAWER_WIDTH = SCREEN_W * 0.78;
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
+  const overlayAnim = useRef(new Animated.Value(0)).current;
+
+  const openDrawer = useCallback(() => {
+    setDrawerOpen(true);
+    Animated.parallel([
+      Animated.spring(drawerAnim, { toValue: 0, tension: 65, friction: 11, useNativeDriver: true }),
+      Animated.timing(overlayAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  const closeDrawer = useCallback(() => {
+    Animated.parallel([
+      Animated.spring(drawerAnim, { toValue: -DRAWER_WIDTH, tension: 65, friction: 11, useNativeDriver: true }),
+      Animated.timing(overlayAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
+    ]).start(() => setDrawerOpen(false));
+  }, []);
+
+  const handleDrawerNav = (target) => {
+    closeDrawer();
+    setTimeout(() => {
+      switch (target) {
+        case "quests": router.push("/modal/quests"); break;
+        case "notifications": router.push("/(tabs)/profile/notifications"); break;
+        case "change-language": router.push("/modal/change-language"); break;
+        case "settings": router.push("/(tabs)/profile/settings"); break;
+      }
+    }, 300);
+  };
+
+  const handleLogout = () => {
+    closeDrawer();
+    setTimeout(() => {
+      Alert.alert(
+        t("profile.logout"),
+        t("profile.logoutConfirm"),
+        [
+          { text: t("common.cancel"), style: "cancel" },
+          { text: t("common.confirm"), style: "destructive", onPress: () => logout() },
+        ]
+      );
+    }, 300);
+  };
 
   // Fetch on mount
   useEffect(() => {
@@ -426,7 +477,7 @@ export default function CommunityScreen() {
   const league = getLeagueTier(currentUserRank.totalXP, t);
 
   return (
-    <View style={s.root}>
+    <SafeAreaView style={s.root} edges={["top"]}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.surface} />
 
       <ScrollView
@@ -446,7 +497,7 @@ export default function CommunityScreen() {
           timeLeft={null}
           streak={streak}
           hearts={hearts}
-          onMenuPress={() => router.push("/(tabs)/profile/settings")}
+          onMenuPress={openDrawer}
         />
 
         {/* ── Podium ── */}
@@ -502,7 +553,28 @@ export default function CommunityScreen() {
           </View>
         </View>
       </View>
-    </View>
+
+      {/* ══ DRAWER OVERLAY ══ */}
+      {drawerOpen && (
+        <Animated.View
+          style={[StyleSheet.absoluteFillObject, { backgroundColor: "rgba(0,0,0,0.38)", zIndex: 90, opacity: overlayAnim }]}
+          pointerEvents="box-none"
+        >
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={closeDrawer} />
+        </Animated.View>
+      )}
+
+      {/* ══ DRAWER PANEL ══ */}
+      <Animated.View style={[lh.drawer, { transform: [{ translateX: drawerAnim }] }]}>
+        <DrawerContent
+          user={user}
+          dashboard={dashData}
+          onClose={closeDrawer}
+          onNav={handleDrawerNav}
+          onLogout={handleLogout}
+        />
+      </Animated.View>
+    </SafeAreaView>
   );
 }
 
@@ -604,6 +676,14 @@ const lh = StyleSheet.create({
   timerValue: {
     fontSize: 14,
     fontFamily: "Fredoka_600SemiBold",
+  },
+  drawer: {
+    position: "absolute",
+    top: 0, bottom: 0, left: 0,
+    width: Dimensions.get("window").width * 0.78,
+    backgroundColor: "#FFF",
+    zIndex: 100,
+    ...Shadow.lg,
   },
 });
 

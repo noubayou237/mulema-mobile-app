@@ -92,7 +92,17 @@ export default function ChangeLanguageScreen() {
     });
   };
 
-  const otherLanguages = languages.filter((l) => l.id !== activeLanguage?.id && isAllowedLanguage(l));
+  const otherLanguages = React.useMemo(() => {
+    const activeName = (activeLanguage?.name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const seen = new Set([activeName]);
+    
+    return languages.filter((l) => {
+      const name = (l?.name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (seen.has(name) || !isAllowedLanguage(l)) return false;
+      seen.add(name);
+      return true;
+    });
+  }, [languages, activeLanguage]);
 
   return (
     <View style={s.root}>
