@@ -18,16 +18,17 @@ export default function OfflineBanner() {
   // Transition logic
   useEffect(() => {
     if (!isConnected) {
-      // Drop offline immediately, cancel any pending dismiss
-      if (dismissTimer.current) {
-        clearTimeout(dismissTimer.current);
-        dismissTimer.current = null;
-      }
+      // Drop offline, but hide after 3 seconds
       setStatus("offline");
-    } else if (status === "offline") {
-      // Just came back online — show green briefly then hide
-      setStatus("reconnected");
-      dismissTimer.current = setTimeout(() => setStatus("idle"), 2500);
+      if (dismissTimer.current) clearTimeout(dismissTimer.current);
+      dismissTimer.current = setTimeout(() => setStatus("idle"), 3000);
+    } else if (status === "offline" || status === "idle") {
+      // Just came back online or startup
+      if (status === "offline") {
+        setStatus("reconnected");
+        if (dismissTimer.current) clearTimeout(dismissTimer.current);
+        dismissTimer.current = setTimeout(() => setStatus("idle"), 2500);
+      }
     }
   }, [isConnected]);
 

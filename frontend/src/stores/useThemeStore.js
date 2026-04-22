@@ -50,7 +50,8 @@ export const useThemeStore = create((set, get) => ({
       return themes;
     } catch (error) {
       set({ isLoading: false });
-      if (error?.response?.status !== 401) {
+      // Don't log if it's a 401 or Network Error after session is cleared
+      if (error?.response?.status !== 401 && isSessionActive()) {
         console.error("[ThemeStore] fetchThemes error:", error);
       }
       return [];

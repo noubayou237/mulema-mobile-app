@@ -127,7 +127,10 @@ export default function LessonScreen() {
   };
 
   const goPrev = () => {
-    if (isFirst) { router.back(); return; }
+    if (isFirst) {
+      router.replace("/(tabs)/lessons");
+      return;
+    }
     cardAnim.setValue(0);
     slideAnim.setValue(-30);
     router.replace(`/(tabs)/lessons/${themeId}/lesson/${lessons[lessonIdx - 1].id}`);

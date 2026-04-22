@@ -43,7 +43,7 @@ const getBaseUrl = () => {
 const BASE_URL = getBaseUrl();
 
 const STORAGE_KEY = "userSession";
-const TIMEOUT = 30000;
+const TIMEOUT = 10000;
 
 // Synchronous flag — set/cleared together with AsyncStorage so that store
 // fetch functions can guard against post-logout calls without async I/O.
@@ -189,7 +189,7 @@ export const saveSession = async (tokens) => {
 };
 
 export const clearSession = async () => {
-  _sessionActive = false;
+  _sessionActive = false; // Synchronous flag for stores
   await AsyncStorage.removeItem(STORAGE_KEY);
 };
 

@@ -23,9 +23,9 @@ import {
   StatusBar,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
+import * as Clipboard from "expo-clipboard";
 
 // ── Design system ──
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
@@ -35,7 +35,6 @@ import api from "../../src/services/api";
 import { MButton } from "../../src/components/ui/MComponents";
 
 const RESEND_COOLDOWN = 60;
-const STORAGE_KEY = "userSession";
 const CODE_LENGTH = 6;
 
 /* ══════════════════════════════════════════════════════════════
@@ -52,7 +51,7 @@ const DigitBox = ({ digit, focused }) => {
       friction: 8,
       useNativeDriver: true,
     }).start();
-  }, [focused, digit]);
+  }, [focused, digit, scaleAnim]);
 
   return (
     <Animated.View
@@ -123,8 +122,24 @@ const VerifyEmail = () => {
     ]).start();
 
     startCountdown();
+    checkClipboard(); // Initial check
+
     return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
-  }, []);
+  }, [footerAnim, formAnim, heroAnim, heroScale, titleAnim, checkClipboard]);
+
+  // ── Clipboard Detection ──
+  const checkClipboard = async () => {
+    try {
+      const text = await Clipboard.getStringAsync();
+      const clean = text?.trim();
+      // If it's a 6-digit number and we don't have a code yet
+      if (clean && /^\d{6}$/.test(clean) && code === "") {
+        setCode(clean);
+      }
+    } catch (_e) {
+      // Ignore clipboard errors
+    }
+  };
 
   // ── Countdown — ORIGINAL LOGIC ──
   const startCountdown = () => {
@@ -197,7 +212,7 @@ const VerifyEmail = () => {
 
   // ── Derived ──
   const digits = Array(CODE_LENGTH).fill("").map((_, i) => code[i] || "");
-  const isReady = code.length >= 4;
+  const isReady = code.length === CODE_LENGTH;
 
   // ── Render helpers ──
   const animStyle = (anim, yOffset = 20) => ({
@@ -209,19 +224,7 @@ const VerifyEmail = () => {
     <View style={s.root}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.surface} />
 
-      {/* Hidden real input for OTP */}
-      <TextInput
-        ref={inputRef}
-        value={code}
-        onChangeText={(val) => setCode(val.replace(/[^0-9]/g, "").slice(0, CODE_LENGTH))}
-        keyboardType="number-pad"
-        maxLength={CODE_LENGTH}
-        style={{ position: "absolute", opacity: 0, width: 0, height: 0 }}
-        onFocus={() => setInputFocused(true)}
-        onBlur={() => setInputFocused(false)}
-        autoFocus={false}
-        editable={!loading && !resendLoading}
-      />
+      {/* Hidden real input for OTP moved into the OTP section for better focus interaction */}
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -268,15 +271,36 @@ const VerifyEmail = () => {
 
           {/* ── OTP boxes ── */}
           <Animated.View style={[s.otpSection, animStyle(formAnim, 20)]}>
-            <TouchableOpacity
-              onPress={() => inputRef.current?.focus()}
-              activeOpacity={1}
-              style={s.otpRow}
-            >
-              {digits.map((d, i) => (
-                <DigitBox key={i} digit={d} focused={inputFocused && code.length === i} />
-              ))}
-            </TouchableOpacity>
+            <View style={s.otpContainer}>
+              <View style={s.otpRow} pointerEvents="none">
+                {digits.map((d, i) => (
+                  <DigitBox key={i} digit={d} focused={inputFocused && code.length === i} />
+                ))}
+              </View>
+
+              {/* The "Invisible" Input Overlay */}
+              <TextInput
+                ref={inputRef}
+                value={code}
+                onChangeText={(val) => setCode(val.replace(/[^0-9]/g, "").slice(0, CODE_LENGTH))}
+                keyboardType="number-pad"
+                textContentType="oneTimeCode"
+                maxLength={CODE_LENGTH}
+                style={s.hiddenInputOverlay}
+                onFocus={() => {
+                  setInputFocused(true);
+                  checkClipboard();
+                }}
+                onBlur={() => setInputFocused(false)}
+                autoFocus={true}
+                editable={!loading && !resendLoading}
+                caretHidden={true}
+                selectionColor="transparent"
+                autoCapitalize="none"
+                autoCorrect={false}
+                spellCheck={false}
+              />
+            </View>
 
             {code.length > 0 && (
               <TouchableOpacity onPress={() => setCode("")} style={s.clearBtn}>
@@ -299,7 +323,7 @@ const VerifyEmail = () => {
           {/* ── Resend section ── */}
           <Animated.View style={[{ alignItems: "center", marginBottom: Space["3xl"] }, animStyle(footerAnim, 10)]}>
             <Text style={[Typo.bodyMd, { color: Colors.textSecondary, marginBottom: Space.sm }]}>
-              Vous n'avez pas reçu de code ?
+              {"Vous n'avez pas reçu de code ?"}
             </Text>
             {resendCooldown > 0 ? (
               <Text style={[Typo.bodyMd, { color: Colors.textTertiary }]}>
@@ -392,10 +416,28 @@ const s = StyleSheet.create({
     alignItems: "center",
     marginBottom: Space["3xl"],
   },
+  otpContainer: {
+    position: "relative",
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   otpRow: {
     flexDirection: "row",
     gap: Space.md,
     justifyContent: "center",
+  },
+  hiddenInputOverlay: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    opacity: 1,
+    color: "transparent",
+    backgroundColor: "transparent",
+    zIndex: 10,
+    fontSize: 24,
   },
   clearBtn: {
     flexDirection: "row",

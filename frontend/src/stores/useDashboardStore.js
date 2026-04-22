@@ -43,8 +43,8 @@ export const useDashboardStore = create((set) => ({
       return data;
     } catch (error) {
       set({ isLoading: false });
-      // 401 is expected during the logout race window — suppress it
-      if (error?.response?.status !== 401) {
+      // 401/NetworkError is expected during the logout race window — suppress it
+      if (error?.response?.status !== 401 && isSessionActive()) {
         console.error("[DashboardStore] fetchDashboard error:", error);
       }
       return null;
@@ -64,7 +64,7 @@ export const useDashboardStore = create((set) => ({
       return leaderboard;
     } catch (error) {
       set({ leaderboardLoading: false });
-      if (error?.response?.status !== 401) {
+      if (error?.response?.status !== 401 && isSessionActive()) {
         console.error("[DashboardStore] fetchLeaderboard error:", error);
       }
       return [];

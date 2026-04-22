@@ -25,6 +25,7 @@ import { useState, useEffect, useRef } from "react";
 import * as ImagePicker from "expo-image-picker";
 import api from "../../src/services/api";
 import { useTranslation } from "react-i18next";
+import { useDashboardStore } from "../../src/stores/useDashboardStore";
 import "../../src/i18n";
 
 const { width, height } = Dimensions.get("window");
@@ -249,6 +250,8 @@ const Profile = () => {
   const [editNameFocused, setEditNameFocused] = useState(false);
   const [editEmailFocused, setEditEmailFocused] = useState(false);
 
+  const { data: dashData, fetchDashboard } = useDashboardStore();
+
   const headerAnim = useRef(new Animated.Value(0)).current;
   const avatarScale = useRef(new Animated.Value(0.7)).current;
   const avatarAnim = useRef(new Animated.Value(0)).current;
@@ -256,6 +259,7 @@ const Profile = () => {
   const pulseOpacity = useRef(new Animated.Value(0.4)).current;
 
   useEffect(() => {
+    fetchDashboard();
     Animated.stagger(80, [
       Animated.timing(headerAnim, {
         toValue: 1,
@@ -579,7 +583,7 @@ const Profile = () => {
             }
           ]}
         >
-          <TouchableOpacity onPress={() => router.back()} style={p.iconBtn}>
+          <TouchableOpacity onPress={() => router.replace("/home")} style={p.iconBtn}>
             <Ionicons name='arrow-back' size={20} color={TEXT_DARK} />
           </TouchableOpacity>
           <Text style={p.pageTitle}>{t("profile.title")}</Text>
@@ -680,23 +684,23 @@ const Profile = () => {
         {/* ── Stats row ── */}
         <View style={p.statsRow}>
           <StatCard
-            number={user?.totalPrawns || 0}
+            number={dashData?.totalPoints || 0}
             label={t("profile.points")}
             icon='star'
             color='#E8A000'
             delay={100}
           />
           <StatCard
-            number={0}
+            number={dashData?.lessonsCompleted || 0}
             label={t("profile.completed")}
             icon='checkmark-circle'
             color={RED}
             delay={180}
           />
           <StatCard
-            number='–'
+            number={dashData?.totalTimeMinutes ? `${dashData.totalTimeMinutes}m` : "0m"}
             label={t("profile.rank")}
-            icon='trophy'
+            icon='time-outline'
             color='#C62828'
             delay={260}
           />
