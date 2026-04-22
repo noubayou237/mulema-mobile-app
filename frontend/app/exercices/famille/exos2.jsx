@@ -13,489 +13,232 @@ import {
   ScrollView,
   Dimensions,
   Image,
-  Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert
 } from "react-native";
 import { Audio } from "expo-av";
 import { useTranslation } from "react-i18next";
+import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { THEME_FAMILLE_WORDS } from "../../data/themeData";
+import { 
+  THEME_FAMILLE_WORDS, 
+  THEME_VETEMENTS_WORDS, 
+  THEME_AUDIO,
+  THEME_IMAGES
+} from "../../data/themeData";
 import { generateBlockExercises } from "../../../src/services/ExerciseApiService";
+import AudioService from "../../src/services/AudioService";
 
 const { width } = Dimensions.get("window");
-
-// Audio state flags
-let audioInitialized = false;
-let audioDisabled = false;
-
-/**
- * Check if error is keep-awake related
- */
-const isKeepAwakeError = (error) => {
-  if (!error) return false;
-  const message = error.message || String(error);
-  return (
-    message.includes("keep awake") || message.includes("Unable to activate")
-  );
-};
-
-// Audio initialization with error handling for keep-awake issues
-const initializeAudio = async () => {
-  if (audioInitialized || audioDisabled) return !audioDisabled;
-
-  try {
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true
-    });
-    audioInitialized = true;
-    return true;
-  } catch (error) {
-    if (isKeepAwakeError(error)) {
-      console.warn("Keep awake not available:", error.message);
-      try {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: false,
-          shouldDuckAndroid: false
-        });
-        audioInitialized = true;
-        return true;
-      } catch (fallbackError) {
-        console.warn("Audio fallback also failed:", fallbackError.message);
-        audioDisabled = true;
-        return false;
-      }
-    }
-    audioDisabled = true;
-    return false;
-  }
-};
+const MULEMA_RED = "#C81E2F";
 
 // Initialize audio on module load
-initializeAudio().catch(() => {});
-
-// Audio mapping for all 6 words - using available audio files
-// Note: In production, each word should have its own audio file
-const getAudioForWord = async (wordId) => {
-  if (audioDisabled) return false;
-
-  // Audio map for available files - map each word to available audio
-  // Since we have limited audio files, we'll map them to available ones
-  const audioMap = {
-    // p1: Le papa -> Papá
-    p1: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Mon Frère en duala.wav"),
-    // p2: La tante paternelle -> Ndómɛ á tetɛ́
-    p2: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/les grands parents en duala.wav"),
-    // p3: La maman -> Mamá
-    p3: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Le bebe en duala.wav"),
-    // p4: L'oncle paternel -> Árí á tetɛ́
-    p4: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/l'oncle en douala.wav"),
-    // p5: Le frère -> Muna
-    p5: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Mon Frère en duala.wav"),
-    // p6: La sœur -> Sango
-    p6: require("../../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Le bebe en duala.wav")
-  };
-
-  const audioSource = audioMap[wordId];
-  if (!audioSource) {
-    console.log(`Audio not available for: ${wordId}`);
-    return false;
-  }
-
-  try {
-    const initResult = await initializeAudio();
-    if (!initResult) return false;
-
-    const { sound } = await Audio.Sound.createAsync(audioSource);
-    await sound.playAsync();
-
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.isLoaded && status.didJustFinish) {
-        sound.unloadAsync();
-      }
-    });
-    return true;
-  } catch (error) {
-    if (isKeepAwakeError(error)) {
-      audioDisabled = true;
-    }
-    console.error("Error playing audio:", error.message);
-    return false;
-  }
-};
-
-// Play feedback sound
-const playFeedbackSound = async (isCorrect) => {
-  try {
-    try {
-      if (isCorrect) {
-        await Haptics.notificationAsync(
-          Haptics.NotificationFeedbackType.Success
-        );
-      } else {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
-    } catch (hapticsError) {
-      console.log("Haptics not available:", hapticsError.message);
-    }
-  } catch (error) {
-    console.log("Feedback error:", error);
-  }
-};
-
-// --- EXERCISE DATA: ALL 6 WORDS ---
-// Block ID for the "Famille" theme in the backend
-const THEME_BLOCK_ID = "block-famille-001";
-
-// Static fallback data
-const staticExerciseQuestions = THEME_FAMILLE_WORDS.map((word, index) => ({
-  id: word.id,
-  questionNumber: index + 1,
-  fr: word.fr,
-  local: word.local,
-  audio: word.audio
-}));
-
-const TOTAL_QUESTIONS = staticExerciseQuestions.length;
+AudioService.initializeAudio().catch(() => {});
 
 const ExerciseTwoScreen = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { t, i18n } = useTranslation();
-  const currentLanguage = i18n.language || "fr";
 
-  // --- PARAMETER HANDLING ---
-  const getParamAsNumber = (key, fallback) => {
-    const value = params[key];
-    const num = value ? parseInt(value, 10) : fallback;
-    return isNaN(num) ? fallback : num;
-  };
-
-  const initialLives = getParamAsNumber("currentLives", 5);
-  const totalProgress = getParamAsNumber("totalProgress", 33);
+  // Theme management
+  const themeId = params.themeId || "famille";
+  const pool = themeId === "vetements" ? THEME_VETEMENTS_WORDS : THEME_FAMILLE_WORDS;
+  const THEME_BLOCK_ID = themeId === "vetements" ? "block-vetements-001" : "block-famille-001";
 
   // --- STATE ---
-  // Backend data state
-  const [exerciseQuestions, setExerciseQuestions] = useState(
-    staticExerciseQuestions
-  );
+  const [exerciseQuestions, setExerciseQuestions] = useState([]);
   const [isLoadingExercises, setIsLoadingExercises] = useState(true);
-  const [exerciseError, setExerciseError] = useState(null);
-
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [inputText, setInputText] = useState("");
-  const [lives, setLives] = useState(initialLives);
+  const [lives, setLives] = useState(params.currentLives ? parseInt(params.currentLives) : 5);
   const [status, setStatus] = useState("idle"); // 'idle', 'success', 'error'
   const [isAnswered, setIsAnswered] = useState(false);
-  const [errorCount, setErrorCount] = useState(
-    getParamAsNumber("errorCount", 0)
-  );
-
-  // Track results for each question
-  const [questionResults, setQuestionResults] = useState([]);
+  const [errorCount, setErrorCount] = useState(params.errorCount ? parseInt(params.errorCount) : 0);
 
   // Timer state
   const [startTime] = useState(() => Date.now());
   const [elapsedTime, setElapsedTime] = useState(0);
   const timerRef = useRef(null);
+  const audioRef = useRef(null);
 
-  // Current question
-  // Fetch exercises from backend on mount
+  // --- EFFECTS ---
   useEffect(() => {
     const fetchExercises = async () => {
       try {
         setIsLoadingExercises(true);
         const backendExercises = await generateBlockExercises(THEME_BLOCK_ID);
-
         if (backendExercises && backendExercises.length > 0) {
-          const listenWriteExercise = backendExercises.find(
-            (ex) => ex.type === "LISTEN_WRITE"
-          );
-
-          if (listenWriteExercise && listenWriteExercise.questions) {
-            const transformedQuestions = listenWriteExercise.questions.map(
-              (q, index) => ({
-                id: q.word?.id || `q-${index}`,
-                questionNumber: index + 1,
-                fr: q.word?.sourceText || q.word?.fr || "",
-                local: q.word?.targetText || q.word?.local || "",
-                audio: q.word?.audioUrl
-              })
-            );
-            setExerciseQuestions(transformedQuestions);
-            console.log("✅ Loaded LISTEN_WRITE exercises from backend API");
+          const typeMatch = backendExercises.find(ex => ex.type === "LISTEN_WRITE");
+          if (typeMatch && typeMatch.questions) {
+            const transformed = typeMatch.questions.map((q, idx) => ({
+              id: q.word?.id || `q-${idx}`,
+              fr: q.word?.fr || "",
+              local: q.word?.local || "",
+            }));
+            setExerciseQuestions(transformed);
+            return;
           }
         }
+        setExerciseQuestions(pool.slice(0, 5));
       } catch (error) {
-        console.log("⚠️ Failed to fetch from backend:", error.message);
-        setExerciseError(error.message);
+        setExerciseQuestions(pool.slice(0, 5));
       } finally {
         setIsLoadingExercises(false);
       }
     };
 
     fetchExercises();
-  }, []);
 
-  const currentQuestion = exerciseQuestions[currentQuestionIndex];
-  const isLastQuestion = currentQuestionIndex === TOTAL_QUESTIONS - 1;
-
-  // Initialize timer
-  useEffect(() => {
     timerRef.current = setInterval(() => {
       setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
     }, 1000);
 
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (audioRef.current) audioRef.current.unloadAsync();
     };
   }, [startTime]);
 
-  // Format time
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
+  const currentQuestion = exerciseQuestions[currentQuestionIndex];
+  const isLastQuestion = currentQuestionIndex === exerciseQuestions.length - 1;
 
   // --- HANDLERS ---
-
   const handlePlayAudio = async () => {
-    const success = await getAudioForWord(currentQuestion.id);
-    if (!success) {
-      Alert.alert(
-        t("errors.audioError") || "Audio Error",
-        t("errors.audioNotAvailable") || "Audio not available"
-      );
+    try {
+      if (audioRef.current) await audioRef.current.unloadAsync();
+      const audioSource = THEME_AUDIO[themeId]?.[currentQuestion.id];
+      if (!audioSource) return;
+
+      const { sound } = await Audio.Sound.createAsync(audioSource);
+      audioRef.current = sound;
+      await sound.playAsync();
+    } catch (e) {
+      console.log("Audio error:", e);
     }
   };
 
   const handleValidate = async () => {
     if (inputText.trim() === "") return;
 
-    const normalizedInput = inputText.trim().toLowerCase();
-    const isSuccess = normalizedInput === currentQuestion.local.toLowerCase();
-
-    // Record result
-    const result = {
-      questionId: currentQuestion.id,
-      questionNumber: currentQuestion.questionNumber,
-      userAnswer: inputText.trim(),
-      correctAnswer: currentQuestion.local,
-      isCorrect: isSuccess
-    };
-    setQuestionResults((prev) => [...prev, result]);
-
-    if (isSuccess) {
+    const success = inputText.trim().toLowerCase() === currentQuestion.local.toLowerCase();
+    
+    if (success) {
       setStatus("success");
-      await playFeedbackSound(true);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } else {
       setStatus("error");
-      setErrorCount((prev) => prev + 1);
-      setLives((prev) => Math.max(0, prev - 1));
-      await playFeedbackSound(false);
+      setErrorCount(prev => prev + 1);
+      setLives(prev => Math.max(0, prev - 1));
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
-
     setIsAnswered(true);
   };
 
   const handleNextQuestion = () => {
-    // Check if game over
-    if (lives <= 1) {
-      Alert.alert("Game Over", "Vous avez épuisé toutes vos vies !", [
-        {
-          text: "OK",
-          onPress: () => {
-            const exerciseTime = elapsedTime;
-            const totalTime = (parseInt(params?.totalTime) || 0) + exerciseTime;
-            router.push({
-              pathname: "/exercices/famille/endexos",
-              params: {
-                currentLives: 0,
-                totalTime: totalTime,
-                totalProgress: totalProgress,
-                errorCount: errorCount,
-                completedExercises: 2,
-                totalExercises: 3,
-                exerciseTimes: JSON.stringify([exerciseTime])
-              }
-            });
-          }
-        }
-      ]);
+    if (lives <= 0) {
+      router.push({
+        pathname: "/exercices/famille/endexos",
+        params: { ...params, currentLives: 0, errorCount }
+      });
       return;
     }
 
-    // Move to next question or finish
     if (isLastQuestion) {
-      // Finish exercise 2, go to exercise 3
-      finishExercise();
+      router.push({
+        pathname: "/exercices/famille/exos3",
+        params: {
+          ...params,
+          currentLives: lives,
+          totalTime: (parseInt(params.totalTime) || 0) + elapsedTime,
+          totalProgress: 66,
+          errorCount,
+          themeId
+        }
+      });
     } else {
-      // Go to next question
-      setCurrentQuestionIndex((prev) => prev + 1);
+      setCurrentQuestionIndex(prev => prev + 1);
       setInputText("");
       setStatus("idle");
       setIsAnswered(false);
     }
   };
 
-  const finishExercise = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-    const exerciseTime = elapsedTime;
-    const cumulativeTime = (parseInt(params?.totalTime) || 0) + exerciseTime;
-
-    router.push({
-      pathname: "/exercices/famille/exos3",
-      params: {
-        currentLives: lives,
-        totalTime: cumulativeTime,
-        totalProgress: 66, // After 2 exercises (33% + 33%)
-        errorCount: errorCount,
-        exerciseTimes: JSON.stringify([exerciseTime])
-      }
-    });
-  };
-
-  // Calculate progress for this exercise (0-33%)
-  const exerciseProgress = ((currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 33;
-  const overallProgress = totalProgress + exerciseProgress;
+  if (isLoadingExercises || !currentQuestion) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size='large' color={MULEMA_RED} />
+          <Text style={styles.loadingText}>Préparation de l'exercice...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle='dark-content' backgroundColor='#F5F5F5' />
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          {/* --- HEADER --- */}
+      <StatusBar barStyle='dark-content' backgroundColor='#F8F9FA' />
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{flex:1}}>
+        <View style={styles.container}>
+          {/* Header */}
           <View style={styles.header}>
-            <View>
-              <Text style={styles.headerText}>
-                Question {currentQuestionIndex + 1} / {TOTAL_QUESTIONS}
-              </Text>
-              <Text style={styles.timerText}>
-                🕒 Temps : {formatTime(elapsedTime)}
-              </Text>
+            <View style={styles.headerRow}>
+              <Text style={styles.themeTitle}>{themeId === "vetements" ? "Vêtements" : "Famille"}</Text>
+              <View style={styles.livesBadge}>
+                <Ionicons name="heart" size={18} color={MULEMA_RED} />
+                <Text style={styles.livesText}>{lives}</Text>
+              </View>
             </View>
-            <Text style={styles.livesText}>🐚 {lives} vies</Text>
+            <View style={styles.progressContainer}>
+              <View style={[styles.progressFill, { width: `${((currentQuestionIndex + 1) / exerciseQuestions.length) * 100}%` }]} />
+            </View>
           </View>
 
-          {/* Progress bar for this exercise */}
-          <View style={styles.exerciseProgressContainer}>
-            <View style={styles.exerciseProgressBar}>
-              <View
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            {/* Instruction Card */}
+            <View style={styles.instructionCard}>
+              <Ionicons name="mic-outline" size={24} color={MULEMA_RED} />
+              <Text style={styles.instruction}>Écoute et écris en langue locale</Text>
+              <TouchableOpacity onPress={handlePlayAudio} style={styles.audioBtn}>
+                <Ionicons name="volume-medium" size={60} color="#FFF" />
+              </TouchableOpacity>
+              <Text style={styles.hint}>Indice : "{currentQuestion.fr}"</Text>
+            </View>
+
+            {/* Input Area */}
+            <View style={styles.inputContainer}>
+              <TextInput
                 style={[
-                  styles.exerciseProgressFill,
-                  {
-                    width: `${((currentQuestionIndex + 1) / TOTAL_QUESTIONS) * 100}%`
-                  }
+                  styles.input,
+                  status === "success" && styles.inputSuccess,
+                  status === "error" && styles.inputError
                 ]}
+                placeholder="Tape ta réponse ici..."
+                value={inputText}
+                onChangeText={text => !isAnswered && setInputText(text)}
+                editable={!isAnswered}
+                autoCapitalize="none"
               />
             </View>
-          </View>
 
-          {/* --- INSTRUCTION --- */}
-          <View style={styles.instructionContainer}>
-            <View style={styles.imageContainer}>
-              <Image
-                source={require("../../../assets/images/avatar-famille.png")}
-                style={styles.illustrationImage}
-                resizeMode='contain'
-              />
-            </View>
-            <Text style={styles.instruction}>
-              Écoutez et écrivez le mot en langue locale :
-            </Text>
-            <Text style={styles.frenchWord}>
-              &quot;{currentQuestion.fr}&quot;
-            </Text>
+            {/* Feedback area */}
+            {isAnswered && (
+              <View style={[styles.feedbackBox, status === "success" ? styles.successBox : styles.errorBox]}>
+                <Text style={styles.feedbackTitle}>{status === "success" ? "Super ! 🔥" : "Presque ! 🧐"}</Text>
+                {status === "error" && <Text style={styles.correctText}>La réponse était : {currentQuestion.local}</Text>}
+              </View>
+            )}
+          </ScrollView>
 
+          {/* Footer */}
+          <View style={styles.footer}>
             <TouchableOpacity
-              style={styles.audioButton}
-              onPress={handlePlayAudio}
+              style={[styles.mainBtn, inputText.trim() === "" && !isAnswered && styles.btnDisabled]}
+              onPress={isAnswered ? handleNextQuestion : handleValidate}
+              disabled={inputText.trim() === "" && !isAnswered}
             >
-              <Text style={styles.audioIcon}>🎧</Text>
+              <Text style={styles.btnText}>{isAnswered ? "CONTINUER" : "VALIDER"}</Text>
             </TouchableOpacity>
           </View>
-
-          {/* --- INPUT --- */}
-          <TextInput
-            style={[
-              styles.input,
-              status === "error" && styles.inputError,
-              status === "success" && styles.inputSuccess
-            ]}
-            placeholder={isAnswered ? "" : "Écrivez votre réponse ici..."}
-            value={inputText}
-            onChangeText={(text) => {
-              setInputText(text);
-              if (!isAnswered) setStatus("idle");
-            }}
-            editable={!isAnswered}
-            autoCapitalize='none'
-            autoCorrect={false}
-          />
-
-          {/* --- FEEDBACK --- */}
-          {isAnswered && (
-            <View
-              style={
-                status === "success"
-                  ? styles.correctionSuccess
-                  : styles.correctionError
-              }
-            >
-              <Text
-                style={
-                  status === "success"
-                    ? styles.correctionTitleSuccess
-                    : styles.correctionTitleError
-                }
-              >
-                {status === "success" ? "Parfait ! ✅" : "Dommage ! ❌"}
-              </Text>
-              {status === "error" && (
-                <Text style={styles.correctionText}>
-                  La bonne réponse était :{" "}
-                  <Text style={styles.boldRed}>{currentQuestion.local}</Text>
-                </Text>
-              )}
-            </View>
-          )}
-        </ScrollView>
-
-        {/* --- FOOTER --- */}
-        <View style={styles.footerActions}>
-          <TouchableOpacity
-            style={[
-              styles.validateButton,
-              isAnswered && status === "error" && styles.continueButtonError,
-              isAnswered &&
-                status === "success" &&
-                styles.continueButtonSuccess,
-              !isAnswered && inputText.trim() === "" && { opacity: 0.5 }
-            ]}
-            onPress={isAnswered ? handleNextQuestion : handleValidate}
-            disabled={!isAnswered && inputText.trim() === ""}
-          >
-            <Text style={styles.validateButtonText}>
-              {isAnswered
-                ? isLastQuestion
-                  ? "Terminer"
-                  : "Question suivante"
-                : "Valider"}
-            </Text>
-          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -503,180 +246,38 @@ const ExerciseTwoScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#F5F5F5"
+  safeArea: { flex: 1, backgroundColor: "#F8F9FA" },
+  container: { flex: 1 },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  loadingText: { marginTop: 12, color: "#666", fontWeight: "500" },
+  header: { padding: 20, backgroundColor: "#FFF", elevation: 2 },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 15 },
+  themeTitle: { fontSize: 22, fontWeight: "800", color: "#212529" },
+  livesBadge: { flexDirection: "row", alignItems: "center", backgroundColor: "#FFF5F5", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+  livesText: { marginLeft: 5, fontWeight: "bold", fontSize: 16, color: "#MULEMA_RED" },
+  progressContainer: { height: 8, backgroundColor: "#E9ECEF", borderRadius: 4 },
+  progressFill: { height: "100%", backgroundColor: "#C81E2F", borderRadius: 4 },
+  scrollContent: { padding: 25, alignItems: "center" },
+  instructionCard: { width: "100%", alignItems: "center", marginBottom: 40 },
+  instruction: { fontSize: 18, fontWeight: "700", color: "#495057", marginTop: 10, textAlign: "center" },
+  audioBtn: { backgroundColor: "#C81E2F", width: 120, height: 120, borderRadius: 60, justifyContent: "center", alignItems: "center", marginVertical: 30, elevation: 5 },
+  hint: { color: "#ADB5BD", fontStyle: "italic", fontSize: 16 },
+  inputContainer: { width: "100%" },
+  input: { 
+    height: 70, borderBottomWidth: 3, borderColor: "#DEE2E6", fontSize: 24, 
+    fontWeight: "800", textAlign: "center", color: "#212529" 
   },
-  scrollContainer: {
-    flexGrow: 1,
-    padding: 20,
-    alignItems: "center",
-    paddingBottom: 20
-  },
-  header: {
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 15,
-    marginTop: 10
-  },
-  headerText: {
-    fontSize: 14,
-    color: "#000",
-    fontWeight: "600"
-  },
-  livesText: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#C81E2F"
-  },
-  timerText: {
-    fontSize: 12,
-    color: "#666",
-    marginTop: 4
-  },
-  exerciseProgressContainer: {
-    width: "100%",
-    marginBottom: 20
-  },
-  exerciseProgressBar: {
-    height: 6,
-    backgroundColor: "#E0E0E0",
-    borderRadius: 3,
-    overflow: "hidden"
-  },
-  exerciseProgressFill: {
-    height: "100%",
-    backgroundColor: "#4CAF50",
-    borderRadius: 3
-  },
-  instructionContainer: {
-    width: "100%",
-    alignItems: "center",
-    marginBottom: 30
-  },
-  imageContainer: {
-    width: "100%",
-    height: 80,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 15
-  },
-  illustrationImage: {
-    width: 60,
-    height: 60
-  },
-  instruction: {
-    fontSize: 16,
-    fontWeight: "500",
-    marginBottom: 15,
-    textAlign: "center"
-  },
-  frenchWord: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 20,
-    fontStyle: "italic"
-  },
-  audioButton: {
-    backgroundColor: "#C81E2F",
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 8
-  },
-  audioIcon: {
-    fontSize: 32
-  },
-  input: {
-    width: "100%",
-    height: 50,
-    borderColor: "#CCC",
-    borderBottomWidth: 2,
-    paddingHorizontal: 10,
-    fontSize: 20,
-    textAlign: "center",
-    marginBottom: 20
-  },
-  inputError: {
-    borderColor: "#C81E2F",
-    borderBottomWidth: 3
-  },
-  inputSuccess: {
-    borderColor: "#34C759",
-    borderBottomWidth: 3
-  },
-  correctionError: {
-    backgroundColor: "#FFEBEE",
-    borderLeftWidth: 5,
-    borderLeftColor: "#C81E2F",
-    padding: 15,
-    width: "100%",
-    borderRadius: 8
-  },
-  correctionSuccess: {
-    backgroundColor: "#E8F5E9",
-    borderLeftWidth: 5,
-    borderLeftColor: "#34C759",
-    padding: 15,
-    width: "100%",
-    borderRadius: 8
-  },
-  correctionTitleError: {
-    color: "#C81E2F",
-    fontWeight: "bold",
-    fontSize: 16,
-    marginBottom: 5
-  },
-  correctionTitleSuccess: {
-    color: "#34C759",
-    fontWeight: "bold",
-    fontSize: 16,
-    marginBottom: 5
-  },
-  correctionText: {
-    fontSize: 16,
-    color: "#333"
-  },
-  boldRed: {
-    fontWeight: "bold",
-    color: "#C81E2F",
-    fontSize: 18
-  },
-  footerActions: {
-    width: "100%",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: "#F5F5F5",
-    borderTopWidth: 1,
-    borderTopColor: "#EEE"
-  },
-  validateButton: {
-    paddingVertical: 15,
-    borderRadius: 30,
-    alignItems: "center",
-    width: "100%",
-    backgroundColor: "#C81E2F"
-  },
-  continueButtonError: {
-    backgroundColor: "#C81E2F"
-  },
-  continueButtonSuccess: {
-    backgroundColor: "#34C759"
-  },
-  validateButtonText: {
-    color: "#FFF",
-    fontWeight: "bold",
-    fontSize: 16,
-    textTransform: "uppercase"
-  }
+  inputSuccess: { borderColor: "#34C759", color: "#166534" },
+  inputError: { borderColor: "#FF4D4D", color: "#991B1B" },
+  feedbackBox: { width: "100%", marginTop: 30, padding: 20, borderRadius: 16 },
+  successBox: { backgroundColor: "#D1FAE5" },
+  errorBox: { backgroundColor: "#FEE2E2" },
+  feedbackTitle: { fontWeight: "bold", fontSize: 18, marginBottom: 5 },
+  correctText: { fontSize: 16, borderTopWidth: 1, borderTopColor: "rgba(0,0,0,0.1)", paddingTop: 10 },
+  footer: { padding: 20, backgroundColor: "#FFF" },
+  mainBtn: { backgroundColor: "#C81E2F", paddingVertical: 18, borderRadius: 16, alignItems: "center" },
+  btnDisabled: { backgroundColor: "#DEE2E6" },
+  btnText: { color: "#FFF", fontWeight: "bold", fontSize: 16, letterSpacing: 1 }
 });
 
 export default ExerciseTwoScreen;

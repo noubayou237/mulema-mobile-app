@@ -182,6 +182,7 @@ export default function EditProfileScreen() {
                 style={s.input}
                 placeholder={t("auth.namePlaceholder", "Your Name")}
                 placeholderTextColor={Colors.textFaint}
+                editable={!isSaving && !isUploading}
               />
             </View>
 
@@ -264,6 +265,7 @@ const PasswordModal = ({ visible, onClose, onSave, loading, states, setStates, t
               onChangeText={(v) => setStates({ ...states, old: v })}
               style={s.modalInput}
               placeholder="••••••••"
+              editable={!loading}
             />
 
             <Text style={[s.modalLabel, { marginTop: Space.lg }]}>{t("profile.newPassword", "New Password")}</Text>
@@ -273,6 +275,7 @@ const PasswordModal = ({ visible, onClose, onSave, loading, states, setStates, t
               onChangeText={(v) => setStates({ ...states, new: v })}
               style={s.modalInput}
               placeholder="••••••••"
+              editable={!loading}
             />
 
             <Text style={[s.modalLabel, { marginTop: Space.lg }]}>{t("profile.confirmNewPassword", "Confirm New Password")}</Text>
@@ -282,6 +285,7 @@ const PasswordModal = ({ visible, onClose, onSave, loading, states, setStates, t
               onChangeText={(v) => setStates({ ...states, confirm: v })}
               style={s.modalInput}
               placeholder="••••••••"
+              editable={!loading}
             />
           </View>
 

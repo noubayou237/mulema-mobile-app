@@ -27,6 +27,7 @@ import { Ionicons } from "@expo/vector-icons";
 // import { useUser } from "../../src/context/UserContext";
 import { useAuthStore } from "../../src/stores/useAuthStore";
 import { useTranslation } from "react-i18next";
+import { getErrorMessage } from "../../src/utils/errorUtils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../../src/services/api";
 
@@ -86,8 +87,7 @@ const SignInScreen = () => {
     try {
       await login(email, password);
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || t("signIn.signInFailed");
-      Alert.alert(t("common.error"), msg);
+      Alert.alert(t("common.error"), getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -157,6 +157,7 @@ const SignInScreen = () => {
               placeholder={t("signIn.emailPlaceholder")}
               keyboardType="email-address"
               autoCapitalize="none"
+              editable={!loading}
             />
 
             {/* Password — label row with "Mot de passe oublié ?" */}
@@ -175,6 +176,7 @@ const SignInScreen = () => {
               secureTextEntry={!showPassword}
               rightIcon={showPassword ? "eye-outline" : "eye-off-outline"}
               onRightPress={() => setShowPassword(!showPassword)}
+              editable={!loading}
             />
 
             {/* Sign in button */}

@@ -29,9 +29,10 @@ import { useTranslation } from "react-i18next";
 
 // ── Design system ──
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
+import { getErrorMessage } from "../../src/utils/errorUtils";
 import { useAuthStore } from "../../src/stores/useAuthStore";
 import api from "../../src/services/api";
-import { MButton, MCulturalCard } from "../../src/components/ui/MComponents";
+import { MButton } from "../../src/components/ui/MComponents";
 
 const RESEND_COOLDOWN = 60;
 const STORAGE_KEY = "userSession";
@@ -173,8 +174,7 @@ const VerifyEmail = () => {
         await autoLogin(response.data);
       }
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || "Échec de la vérification.";
-      Alert.alert(t("common.error"), msg);
+      Alert.alert(t("common.error"), getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -189,7 +189,7 @@ const VerifyEmail = () => {
       Alert.alert(t("common.success"), `${t("auth.codeSentTo")} ${email}`);
       startCountdown();
     } catch (err) {
-      Alert.alert(t("common.error"), err?.response?.data?.message || t("errors.serverError"));
+      Alert.alert(t("common.error"), getErrorMessage(err));
     } finally {
       setResendLoading(false);
     }
@@ -220,6 +220,7 @@ const VerifyEmail = () => {
         onFocus={() => setInputFocused(true)}
         onBlur={() => setInputFocused(false)}
         autoFocus={false}
+        editable={!loading && !resendLoading}
       />
 
       <KeyboardAvoidingView
@@ -313,13 +314,6 @@ const VerifyEmail = () => {
             )}
           </Animated.View>
 
-          {/* ── Cultural card ── */}
-          <Animated.View style={[{ width: "100%" }, animStyle(footerAnim, 10)]}>
-            <MCulturalCard
-              title={t("common.didYouKnow")}
-              body={t("messages.mulemaMeaning")}
-            />
-          </Animated.View>
 
         </ScrollView>
       </KeyboardAvoidingView>

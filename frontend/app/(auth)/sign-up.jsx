@@ -26,6 +26,7 @@ import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../../src/services/api";
 import { useTranslation } from "react-i18next";
+import { getErrorMessage } from "../../src/utils/errorUtils";
 
 // ── Design system ──
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
@@ -192,8 +193,7 @@ const SignUpScreen = () => {
         params: { email: form.email, flow: "verify" },
       });
     } catch (err) {
-      const message =
-        err?.response?.data?.message || err?.message || t("signUp.error.creationFailed");
+      const message = getErrorMessage(err, t("signUp.error.creationFailed"));
       Alert.alert(t("signUp.error.title"), message);
     } finally {
       setLoading(false);
@@ -261,6 +261,7 @@ const SignUpScreen = () => {
               onChangeText={onChange("name")}
               placeholder="John Doe"
               autoCapitalize="words"
+              editable={!loading}
             />
 
             {/* Pseudo / Nom d'utilisateur */}
@@ -271,6 +272,7 @@ const SignUpScreen = () => {
               placeholder="@monpseudo"
               autoCapitalize="none"
               autoCorrect={false}
+              editable={!loading}
             />
 
             {/* Adresse Email */}
@@ -281,6 +283,7 @@ const SignUpScreen = () => {
               placeholder={t("signUp.emailPlaceholder")}
               keyboardType="email-address"
               autoCapitalize="none"
+              editable={!loading}
             />
 
             {/* Mot de passe */}
@@ -292,6 +295,7 @@ const SignUpScreen = () => {
               secureTextEntry={!showPassword}
               rightIcon={showPassword ? "eye-outline" : "eye-off-outline"}
               onRightPress={() => setShowPassword(!showPassword)}
+              editable={!loading}
             />
             <StrengthBar password={form.password} t={t} />
 
@@ -304,6 +308,7 @@ const SignUpScreen = () => {
               secureTextEntry={!showConfirm}
               rightIcon={showConfirm ? "eye-outline" : "eye-off-outline"}
               onRightPress={() => setShowConfirm(!showConfirm)}
+              editable={!loading}
             />
             <MatchIndicator password={form.password} confirm={form.confirm} t={t} />
 

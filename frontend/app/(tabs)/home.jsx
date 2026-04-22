@@ -29,7 +29,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
-import { MCulturalCard } from "../../src/components/ui/MComponents";
 import { useAuthStore } from "../../src/stores/useAuthStore";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
 import { useThemeStore } from "../../src/stores/useThemeStore";
@@ -623,12 +622,7 @@ export default function HomeScreen() {
             </View>
           </Animated.View>
 
-          <Animated.View style={[{ marginTop: Space.xl }, fadeUp(anims[4], 15)]}>
-            <MCulturalCard
-              title={t("common.didYouKnow")}
-              body={t("messages.mulemaMeaningLong")}
-            />
-          </Animated.View>
+          <View style={{ height: Space["4xl"] }} />
 
           <View style={{ height: Space["4xl"] }} />
         </ScrollView>

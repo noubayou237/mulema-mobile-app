@@ -25,50 +25,57 @@ const isKeepAwakeError = (error) => {
   );
 };
 
+let initializationPromise = null;
+
 /**
  * Initialize audio with error handling for keep-awake issues
  * This function handles the "Unable to activate keep awake" error gracefully
+ * and ensures only one initialization attempt happens at a time.
  */
 const initializeAudio = async () => {
-  if (audioInitialized || audioDisabled) return !audioDisabled;
+  if (audioInitialized) return true;
+  if (audioDisabled) return false;
 
-  try {
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
-      shouldDuckAndroid: true
-    });
-    audioInitialized = true;
-    console.log("Audio initialized successfully");
-    return true;
-  } catch (error) {
-    // Handle the "Unable to activate keep awake" error
-    if (isKeepAwakeError(error)) {
-      console.warn(
-        "Keep awake not available, continuing with limited audio functionality:",
-        error.message
-      );
-      // Try with a more lenient configuration
-      try {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: false,
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: false,
-          shouldDuckAndroid: false
-        });
-        audioInitialized = true;
-        return true;
-      } catch (fallbackError) {
-        console.warn("Audio fallback also failed:", fallbackError.message);
-        // Disable audio to prevent further errors
-        audioDisabled = true;
-        return false;
+  // If already initializing, wait for it
+  if (initializationPromise) return initializationPromise;
+
+  initializationPromise = (async () => {
+    try {
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+        shouldDuckAndroid: true
+      });
+      audioInitialized = true;
+      console.log("[AudioService] Audio initialized successfully");
+      return true;
+    } catch (error) {
+      if (isKeepAwakeError(error)) {
+        console.warn("[AudioService] Keep awake not available, trying fallback...");
+        try {
+          await Audio.setAudioModeAsync({
+            allowsRecordingIOS: false,
+            playsInSilentModeIOS: true,
+            staysActiveInBackground: false,
+            shouldDuckAndroid: false
+          });
+          audioInitialized = true;
+          return true;
+        } catch (fallbackError) {
+          console.warn("[AudioService] Audio fallback failed:", fallbackError.message);
+          audioDisabled = true;
+          return false;
+        }
       }
+      console.error("[AudioService] Error initializing audio:", error);
+      return false;
+    } finally {
+      initializationPromise = null;
     }
-    console.error("Error initializing audio:", error);
-    return false;
-  }
+  })();
+
+  return initializationPromise;
 };
 
 // Initialize audio on module load (best effort)
@@ -254,6 +261,7 @@ export const showAudioError = (message) => {
 };
 
 export default {
+  initializeAudio,
   initializeValidationSounds,
   playCorrectSound,
   playIncorrectSound,

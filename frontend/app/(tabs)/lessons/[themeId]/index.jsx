@@ -26,51 +26,23 @@ const { width: SW } = Dimensions.get("window");
 /* ═══════════════════════════════════════════════════════════════
    THÈME IMMERSIF PAR LANGUE
    ═══════════════════════════════════════════════════════════════ */
+const RED_THEME = {
+  bg: "#0A0000", // Very dark red/black background
+  headerGrad: ["#7F0000", "#B71C1C", "#D32F2F"],
+  nodeActive: "#E53935",
+  nodeDone: "#7F0000",
+  accent: "#FF5252",
+  accentGlow: "#FF525250",
+  pathColor: "#B71C1C80",
+  label: "Mulema",
+  unitLabel: "MULEMA",
+};
+
 const LANG_THEMES = {
-  duala: {
-    bg: "#050D1A",
-    headerGrad: ["#0D47A1", "#1565C0", "#1976D2"],
-    nodeActive: "#1E88E5",
-    nodeDone: "#0D47A1",
-    accent: "#29B6F6",
-    accentGlow: "#29B6F680",
-    pathColor: "#1565C080",
-    label: "eau",
-    unitLabel: "UNIVERS DUALA",
-  },
-  ghomala: {
-    bg: "#050E06",
-    headerGrad: ["#1B5E20", "#2E7D32", "#388E3C"],
-    nodeActive: "#43A047",
-    nodeDone: "#1B5E20",
-    accent: "#81C784",
-    accentGlow: "#81C78450",
-    pathColor: "#2E7D3270",
-    label: "forêt",
-    unitLabel: "UNIVERS GHOMÁLÁ",
-  },
-  bassa: {
-    bg: "#0F0800",
-    headerGrad: ["#E65100", "#F57C00", "#FF8F00"],
-    nodeActive: "#FFA726",
-    nodeDone: "#E65100",
-    accent: "#FFB300",
-    accentGlow: "#FFB30050",
-    pathColor: "#F5770070",
-    label: "désert",
-    unitLabel: "UNIVERS BASSA",
-  },
-  default: {
-    bg: "#0A0008",
-    headerGrad: ["#7F0000", "#B71C1C", "#C62828"],
-    nodeActive: "#E53935",
-    nodeDone: "#7F0000",
-    accent: "#EF9A9A",
-    accentGlow: "#EF9A9A40",
-    pathColor: "#B71C1C60",
-    label: "",
-    unitLabel: "MULEMA",
-  },
+  duala: { ...RED_THEME, unitLabel: "UNIVERS DUALA" },
+  ghomala: { ...RED_THEME, unitLabel: "UNIVERS GHOMÁLÁ" },
+  bassa: { ...RED_THEME, unitLabel: "UNIVERS BASSA" },
+  default: RED_THEME,
 };
 
 const getLangTheme = (langName = "") => {

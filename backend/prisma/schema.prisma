@@ -12,17 +12,17 @@ model User {
   name               String
   email              String            @unique
   username           String            @unique
-  passwordHash       String?
-  role               Role              @default(USER)
-  isVerified         Boolean           @default(false)
   totalPrawns        Int               @default(0)
-  officialLanguageId String?
   createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-  language           String            @default("en")
+  role               Role              @default(USER)
+  officialLanguageId String?
   isSocial           Boolean           @default(false)
+  isVerified         Boolean           @default(false)
+  language           String            @default("en")
+  passwordHash       String?
   provider           SocialProvider?
   providerId         String?
+  updatedAt          DateTime          @updatedAt
   avatar             Avatar?
   cowry              Cowry?
   otps               Otp[]
@@ -38,10 +38,10 @@ model User {
 
 model RefreshToken {
   id        String   @id @default(uuid())
-  tokenHash String   @unique
+  userId    String
   expiresAt DateTime
   createdAt DateTime @default(now())
-  userId    String
+  tokenHash String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -207,8 +207,8 @@ model Story {
 model Level {
   id                    String              @id @default(uuid())
   levelNumber           Int
-  title                 String?
   patrimonialLanguageId String
+  title                 String?
   lessons               Lesson[]
   patrimonialLanguage   PatrimonialLanguage @relation(fields: [patrimonialLanguageId], references: [id])
 }
@@ -216,9 +216,9 @@ model Level {
 model Lesson {
   id           String         @id @default(uuid())
   title        String
-  order        Int
   contentUrl   String?
   levelId      String
+  order        Int
   themeId      String?
   exercises    Exercise[]     @relation("ExerciseLesson")
   level        Level          @relation(fields: [levelId], references: [id])
@@ -247,8 +247,8 @@ model Exercise {
   theme     String
   timeSpent Float
   accuracy  Float
-  lessonId  String?
   storyId   String?
+  lessonId  String?
   lesson    Lesson?    @relation("ExerciseLesson", fields: [lessonId], references: [id])
   story     Story?     @relation("ExerciseStory", fields: [storyId], references: [id])
   questions Question[]

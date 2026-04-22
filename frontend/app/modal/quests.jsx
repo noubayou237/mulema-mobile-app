@@ -17,7 +17,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
-import { MCulturalCard } from "../../src/components/ui/MComponents";
 import { useDashboardStore } from "../../src/stores/useDashboardStore";
 
 /* ── Quest Card ── */
@@ -126,12 +125,6 @@ export default function QuestsScreen() {
           <QuestCard key={i} {...q} />
         ))}
 
-        <View style={{ marginTop: Space["2xl"] }}>
-          <MCulturalCard
-            title={t("common.didYouKnow")}
-            body={'Mulema signifie "Cœur". Dans de nombreuses langues bantoues, l\'apprentissage vient du cœur avant de passer par l\'esprit.'}
-          />
-        </View>
 
         <View style={{ height: Space["4xl"] }} />
       </ScrollView>

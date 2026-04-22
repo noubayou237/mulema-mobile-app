@@ -16,7 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
-import { MButton, MCulturalCard } from "../../src/components/ui/MComponents";
+import { MButton } from "../../src/components/ui/MComponents";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
 
 /* ── 3 heritage languages are available ── */
@@ -178,12 +178,6 @@ export default function ChangeLanguageScreen() {
           </Text>
         </TouchableOpacity>
 
-        {/* ── Cultural Card ── */}
-        <View style={{ marginTop: Space["2xl"] }}>
-          <MCulturalCard
-            body={t("settingsModal.languageChangeWarning")}
-          />
-        </View>
 
         <View style={{ height: Space["4xl"] }} />
       </ScrollView>

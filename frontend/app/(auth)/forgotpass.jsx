@@ -28,10 +28,10 @@ import api from "../../src/services/api";
 
 // ── Design system ──
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
+import { getErrorMessage } from "../../src/utils/errorUtils";
 import {
   MInput,
   MButton,
-  MCulturalCard,
 } from "../../src/components/ui/MComponents";
 
 /* ══════════════════════════════════════════════════════════════
@@ -159,8 +159,7 @@ const ForgotPasswordScreen = () => {
       await api.post("/auth/request-password-reset", { email: email.trim() });
       setSent(true);
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || "Impossible d'envoyer le code.";
-      Alert.alert("Erreur", msg);
+      Alert.alert("Erreur", getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -239,6 +238,7 @@ const ForgotPasswordScreen = () => {
                   placeholder="nom@exemple.com"
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  editable={!loading}
                 />
 
                 {/* Send button */}

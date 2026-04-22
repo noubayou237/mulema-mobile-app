@@ -5,7 +5,7 @@
  * ╚══════════════════════════════════════════════════════════════╝
  *
  *  Usage:
- *    import { MInput, MButton, MDivider, MSocialButton, MCulturalCard, MChip }
+ *    import { MInput, MButton, MDivider, MSocialButton, MChip }
  *      from "@/components/ui/MComponents";
  */
 
@@ -43,6 +43,7 @@ export const MInput = ({
   rightIcon,
   onRightPress,
   error,
+  ...rest
 }) => {
   const [focused, setFocused] = useState(false);
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -113,6 +114,7 @@ export const MInput = ({
           autoCapitalize={autoCapitalize}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          {...rest}
         />
         {rightIcon && (
           <TouchableOpacity
@@ -302,20 +304,6 @@ export const MSocialButton = ({ provider, onPress, disabled = false }) => {
 };
 
 
-/* ══════════════════════════════════════════════════════════════
-   MCulturalCard — "Le saviez-vous ?" card with asymmetric radius
-   ══════════════════════════════════════════════════════════════ */
-
-export const MCulturalCard = ({ title, body }) => (
-  <View style={[styles.culturalCard, Shadow.sm]}>
-    <Text style={[Typo.labelSm, { color: Colors.secondary, marginBottom: Space.sm }]}>
-      {title || "LE SAVIEZ-VOUS ?"}
-    </Text>
-    <Text style={[Typo.bodyMd, { color: Colors.onSurface }]}>{body}</Text>
-    {/* Orange decorative blob */}
-    <View style={styles.culturalBlob} />
-  </View>
-);
 
 
 /* ══════════════════════════════════════════════════════════════
@@ -420,26 +408,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Cultural card
-  culturalCard: {
-    backgroundColor: Colors.secondaryFixed,
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius["2xl"],
-    borderBottomLeftRadius: Radius.xl,
-    borderBottomRightRadius: Radius.md,
-    padding: Space["2xl"],
-    overflow: "hidden",
-    position: "relative",
-  },
-  culturalBlob: {
-    position: "absolute",
-    right: -20,
-    bottom: -20,
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.secondaryContainer + "60",
-  },
 
   // Chip
   chip: {
