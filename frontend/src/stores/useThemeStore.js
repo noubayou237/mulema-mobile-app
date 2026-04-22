@@ -19,6 +19,7 @@
 
 import { create } from "zustand";
 import { themesService } from "../services/themes.service";
+import { isSessionActive } from "../services/api";
 
 export const useThemeStore = create((set, get) => ({
   // ── State ──
@@ -41,15 +42,17 @@ export const useThemeStore = create((set, get) => ({
   // ═════════════════════════════════════════════════════════════
 
   fetchThemes: async (languageId) => {
-    if (!languageId) return;
+    if (!languageId || !isSessionActive()) return [];
     set({ isLoading: true });
     try {
       const themes = await themesService.getByLanguage(languageId);
       set({ themes, isLoading: false });
       return themes;
     } catch (error) {
-      console.error("[ThemeStore] fetchThemes error:", error);
       set({ isLoading: false });
+      if (error?.response?.status !== 401) {
+        console.error("[ThemeStore] fetchThemes error:", error);
+      }
       return [];
     }
   },
@@ -60,15 +63,17 @@ export const useThemeStore = create((set, get) => ({
   // ═════════════════════════════════════════════════════════════
 
   fetchLessons: async (themeId) => {
-    if (!themeId) return;
+    if (!themeId || !isSessionActive()) return [];
     set({ currentThemeId: themeId, lessonsLoading: true });
     try {
       const lessons = await themesService.getLessons(themeId);
       set({ lessons, lessonsLoading: false });
       return lessons;
     } catch (error) {
-      console.error("[ThemeStore] fetchLessons error:", error);
       set({ lessonsLoading: false });
+      if (error?.response?.status !== 401) {
+        console.error("[ThemeStore] fetchLessons error:", error);
+      }
       return [];
     }
   },
@@ -79,15 +84,17 @@ export const useThemeStore = create((set, get) => ({
   // ═════════════════════════════════════════════════════════════
 
   fetchWords: async (lessonId) => {
-    if (!lessonId) return;
+    if (!lessonId || !isSessionActive()) return [];
     set({ currentLessonId: lessonId, wordsLoading: true });
     try {
       const words = await themesService.getWords(lessonId);
       set({ words, wordsLoading: false });
       return words;
     } catch (error) {
-      console.error("[ThemeStore] fetchWords error:", error);
       set({ wordsLoading: false });
+      if (error?.response?.status !== 401) {
+        console.error("[ThemeStore] fetchWords error:", error);
+      }
       return [];
     }
   },

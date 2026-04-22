@@ -18,6 +18,7 @@
 
 import { create } from "zustand";
 import { dashboardService } from "../services/dashboard.service";
+import { isSessionActive } from "../services/api";
 
 export const useDashboardStore = create((set) => ({
   // ── State ──
@@ -34,14 +35,18 @@ export const useDashboardStore = create((set) => ({
   // ═════════════════════════════════════════════════════════════
 
   fetchDashboard: async () => {
+    if (!isSessionActive()) return null;
     set({ isLoading: true });
     try {
       const data = await dashboardService.get();
       set({ data, isLoading: false });
       return data;
     } catch (error) {
-      console.error("[DashboardStore] fetchDashboard error:", error);
       set({ isLoading: false });
+      // 401 is expected during the logout race window — suppress it
+      if (error?.response?.status !== 401) {
+        console.error("[DashboardStore] fetchDashboard error:", error);
+      }
       return null;
     }
   },
@@ -51,14 +56,17 @@ export const useDashboardStore = create((set) => ({
   // ═════════════════════════════════════════════════════════════
 
   fetchLeaderboard: async () => {
+    if (!isSessionActive()) return [];
     set({ leaderboardLoading: true });
     try {
       const leaderboard = await dashboardService.getLeaderboard();
       set({ leaderboard, leaderboardLoading: false });
       return leaderboard;
     } catch (error) {
-      console.error("[DashboardStore] fetchLeaderboard error:", error);
       set({ leaderboardLoading: false });
+      if (error?.response?.status !== 401) {
+        console.error("[DashboardStore] fetchLeaderboard error:", error);
+      }
       return [];
     }
   },

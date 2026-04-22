@@ -25,7 +25,13 @@ const getBaseUrl = () => {
   }
 
   if (__DEV__) {
-    // Try to auto-detect host IP for physical device testing
+    // 1. Prioritize explicit environment variable from .env
+    const EXPO_PUBLIC_API_IP = process.env.EXPO_PUBLIC_API_IP;
+    if (EXPO_PUBLIC_API_IP) {
+      return `http://${EXPO_PUBLIC_API_IP}:5001`;
+    }
+
+    // 2. Fallback to auto-detection for physical devices
     const debuggerHost = Constants.expoConfig?.hostUri;
     const localhost = debuggerHost ? debuggerHost.split(":")[0] : "localhost";
     return `http://${localhost}:5001`;
@@ -38,6 +44,11 @@ const BASE_URL = getBaseUrl();
 
 const STORAGE_KEY = "userSession";
 const TIMEOUT = 30000;
+
+// Synchronous flag — set/cleared together with AsyncStorage so that store
+// fetch functions can guard against post-logout calls without async I/O.
+let _sessionActive = false;
+export const isSessionActive = () => _sessionActive;
 
 // ── Instance Axios ──
 
@@ -123,10 +134,14 @@ api.interceptors.response.use(
 
     try {
       const raw = await AsyncStorage.getItem(STORAGE_KEY);
-      if (!raw) throw new Error("No session");
+      
+      // ✅ FIX: Instead of throwing a generic error that causes [Error: No session] logs,
+      // we just reject with the original error if there's no session to refresh with.
+      if (!raw || !JSON.parse(raw)?.refreshToken) {
+        return Promise.reject(error);
+      }
 
       const session = JSON.parse(raw);
-      if (!session?.refreshToken) throw new Error("No refresh token");
 
       // Appel refresh — utilise axios directement (pas l'instance api)
       const { data } = await axios.post(`${BASE_URL}/auth/refresh`, {
@@ -169,14 +184,12 @@ api.interceptors.response.use(
  * Appelé par useAuthStore après login/register.
  */
 export const saveSession = async (tokens) => {
+  _sessionActive = true;
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(tokens));
 };
 
-/**
- * Supprime la session de AsyncStorage.
- * Appelé par useAuthStore.logout().
- */
 export const clearSession = async () => {
+  _sessionActive = false;
   await AsyncStorage.removeItem(STORAGE_KEY);
 };
 
@@ -187,7 +200,12 @@ export const clearSession = async () => {
 export const getSession = async () => {
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (raw) {
+      const session = JSON.parse(raw);
+      if (session?.accessToken) _sessionActive = true;
+      return session;
+    }
+    return null;
   } catch {
     return null;
   }

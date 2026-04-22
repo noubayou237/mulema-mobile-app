@@ -7,6 +7,7 @@
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { languagesService } from "../services/languages.service";
+import { isSessionActive } from "../services/api";
 
 const STORAGE_KEY = "selectedLanguage";
 const STORAGE_KEY_TYPE = "selectedLanguageType";
@@ -19,14 +20,17 @@ export const useLanguageStore = create((set, get) => ({
   isLoaded: false,
 
   fetchLanguages: async () => {
+    if (!isSessionActive()) return [];
     set({ isLoading: true });
     try {
       const languages = await languagesService.getAll();
       set({ languages, isLoading: false, isLoaded: true });
       return languages;
     } catch (error) {
-      console.warn("[LanguageStore] fetchLanguages error:", error);
       set({ isLoading: false, isLoaded: true });
+      if (error?.response?.status !== 401) {
+        console.warn("[LanguageStore] fetchLanguages error:", error);
+      }
       return [];
     }
   },

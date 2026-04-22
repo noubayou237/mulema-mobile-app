@@ -8,6 +8,7 @@ import api, { saveSession, clearSession, getSession } from "../services/api";
 import { useLanguageStore } from "./useLanguageStore";
 import { useThemeStore } from "./useThemeStore";
 import { useDashboardStore } from "./useDashboardStore";
+import { getErrorMessage } from "../utils/errorUtils";
 
 export const useAuthStore = create((set, get) => ({
   user: null,
@@ -150,6 +151,9 @@ export const useAuthStore = create((set, get) => ({
   },
 
   logout: async () => {
+    // Mark as unauthenticated FIRST (synchronous) so any pending useEffect
+    // fetches triggered by store resets below already see isAuthenticated=false.
+    set({ user: null, token: null, isAuthenticated: false });
     try {
       await api.post("/auth/logout").catch(() => {});
     } catch {}
@@ -157,7 +161,6 @@ export const useAuthStore = create((set, get) => ({
     await useLanguageStore.getState().reset();
     useThemeStore.getState().reset();
     useDashboardStore.getState().reset();
-    set({ user: null, token: null, isAuthenticated: false });
   },
 }));
 
