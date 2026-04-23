@@ -134,6 +134,10 @@ export default function RootLayout() {
               name="modal/quests"
               options={{ presentation: "modal", animation: "slide_from_bottom" }}
             />
+            <Stack.Screen
+              name="modal/onboarding-video"
+              options={{ presentation: "fullScreenModal", animation: "fade", headerShown: false }}
+            />
           </Stack>
         </AuthGate>
       </UserProvider>
