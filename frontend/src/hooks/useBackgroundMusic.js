@@ -23,9 +23,10 @@ export function useBackgroundMusic() {
   // Load and start music
   useEffect(() => {
     let mounted = true;
+    let isOwner = false; // true only for the instance that created the sound
 
     const load = async () => {
-      // Already playing globally — just reference it
+      // Already playing globally — just reference it, don't create a second
       if (globalSound) {
         soundRef.current = globalSound;
         return;
@@ -47,6 +48,7 @@ export function useBackgroundMusic() {
 
         globalSound = sound;
         soundRef.current = sound;
+        isOwner = true;
       } catch (err) {
         console.warn("[BackgroundMusic] Could not load theme song:", err.message);
       }
@@ -56,6 +58,12 @@ export function useBackgroundMusic() {
 
     return () => {
       mounted = false;
+      // Only the owner releases the native resource so the sound survives
+      // normal re-renders but is properly freed when the root unmounts.
+      if (isOwner && globalSound) {
+        globalSound.unloadAsync().catch(() => {});
+        globalSound = null;
+      }
     };
   }, []);
 
