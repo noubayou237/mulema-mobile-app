@@ -11,7 +11,6 @@
     "lint": "expo lint"
   },
   "dependencies": {
-    "@clerk/clerk-expo": "^2.19.1",
     "@expo-google-fonts/fredoka": "^0.4.1",
     "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -21,10 +20,7 @@
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
     "axios": "^1.13.4",
-    "dotenv": "^17.2.3",
     "expo": "~54.0.20",
-    "expo-apple-authentication": "~8.0.8",
-    "expo-auth-session": "~7.0.10",
     "expo-av": "~16.0.7",
     "expo-clipboard": "~8.0.8",
     "expo-constants": "~18.0.10",
@@ -47,7 +43,6 @@
     "expo-updates": "~29.0.16",
     "expo-web-browser": "~15.0.10",
     "i18next": "^25.8.13",
-    "lucide-react-native": "^0.553.0",
     "nativewind": "^4.2.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -61,8 +56,8 @@
     "react-native-vector-icons": "^10.3.0",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.5.1",
-    "yet": "^0.1.0",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",

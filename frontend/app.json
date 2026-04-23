@@ -24,11 +24,12 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.mulema.app",
       "infoPlist": {
-        "NSFaceIDUsageDescription": "Use Face ID for authentication",
+        "NSPhotoLibraryUsageDescription": "Allow Mulema to access your photos to update your profile picture.",
+        "NSPhotoLibraryAddUsageDescription": "Allow Mulema to save photos to your library.",
         "CFBundleURLTypes": [
           {
             "CFBundleTypeRole": "Editor",
-            "CFBundleURLSchemes": ["com.mulema.app", "fb1992544871639029"]
+            "CFBundleURLSchemes": ["com.mulema.app"]
           }
         ]
       }
@@ -49,7 +50,9 @@
           "autoVerify": true,
           "data": [
             {
-              "scheme": "https"
+              "scheme": "https",
+              "host": "mulema.app",
+              "pathPrefix": "/auth"
             }
           ],
           "category": ["BROWSER", "DEFAULT"]
@@ -63,6 +66,13 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Mulema to access your photos to update your profile picture.",
+          "cameraPermission": false
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-icon.png",
@@ -72,12 +82,6 @@
           "dark": {
             "backgroundColor": "#000000"
           }
-        }
-      ],
-      [
-        "expo-apple-authentication",
-        {
-          "nonce": true
         }
       ]
     ],
