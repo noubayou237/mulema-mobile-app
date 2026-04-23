@@ -1,12 +1,13 @@
 import { z } from "zod";
 
-// Define the schema for environment variables
-// Using optional() to handle missing environment variables gracefully
 const envSchema = z.object({
-  // API Configuration
+  // Production API endpoint — takes priority over EXPO_PUBLIC_API_IP in api.js
+  EXPO_PUBLIC_API_URL: z.string().url().optional(),
+
+  // Dev-only: local machine IP for connecting a physical device to a local server
   EXPO_PUBLIC_API_IP: z.string().optional(),
 
-  // Google OAuth - All client IDs are optional but warn if missing
+  // Google OAuth (required only when social login is enabled)
   EXPO_PUBLIC_GOOGLE_CLIENT_ID: z.string().optional(),
   EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: z.string().optional(),
   EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID: z.string().optional(),
@@ -19,33 +20,39 @@ const envSchema = z.object({
   EXPO_PUBLIC_APP_SLUG: z.string().optional(),
 
   // App links
-  EXPO_PUBLIC_PRIVACY_POLICY_URL: z.string().url().optional()
+  EXPO_PUBLIC_PRIVACY_POLICY_URL: z.string().url().optional(),
 });
 
-// Parse and validate process.env against the schema
 const _env = envSchema.safeParse(process.env);
 
 if (!_env.success) {
-  console.error("❌ Invalid environment variables:", _env.error.format());
-  console.warn("⚠️ Using default values for missing environment variables.");
+  // Invalid values (e.g. malformed URL) — log details so they're easy to spot
+  console.error("[env] Invalid environment variables:", _env.error.format());
 }
 
-// Extract data with defaults for any missing values
-const envData = _env.data || {};
+const envData = _env.data ?? {};
 
-// Export the validated environment variables with fallback defaults
+// In development, warn when no API endpoint is explicitly configured so
+// developers notice they are hitting the built-in fallback rather than their
+// intended server.
+if (__DEV__ && !envData.EXPO_PUBLIC_API_URL && !envData.EXPO_PUBLIC_API_IP) {
+  console.warn(
+    "[env] Neither EXPO_PUBLIC_API_URL nor EXPO_PUBLIC_API_IP is set. " +
+    "The app will fall back to auto-detected localhost. " +
+    "Set one of these in your .env file to connect to a specific server."
+  );
+}
+
 export const env = {
-  EXPO_PUBLIC_API_IP: envData.EXPO_PUBLIC_API_IP || "localhost",
-  EXPO_PUBLIC_GOOGLE_CLIENT_ID: envData.EXPO_PUBLIC_GOOGLE_CLIENT_ID || "",
-  EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID:
-    envData.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || "",
-  EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID:
-    envData.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || "",
-  EXPO_PUBLIC_FACEBOOK_APP_ID: envData.EXPO_PUBLIC_FACEBOOK_APP_ID || "",
-  EXPO_PUBLIC_EXPO_USERNAME: envData.EXPO_PUBLIC_EXPO_USERNAME || "",
-  EXPO_PUBLIC_APP_SLUG: envData.EXPO_PUBLIC_APP_SLUG || "mulema",
-  EXPO_PUBLIC_PRIVACY_POLICY_URL: envData.EXPO_PUBLIC_PRIVACY_POLICY_URL || ""
+  EXPO_PUBLIC_API_URL: envData.EXPO_PUBLIC_API_URL ?? "",
+  EXPO_PUBLIC_API_IP: envData.EXPO_PUBLIC_API_IP ?? "localhost",
+  EXPO_PUBLIC_GOOGLE_CLIENT_ID: envData.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? "",
+  EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: envData.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? "",
+  EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID: envData.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? "",
+  EXPO_PUBLIC_FACEBOOK_APP_ID: envData.EXPO_PUBLIC_FACEBOOK_APP_ID ?? "",
+  EXPO_PUBLIC_EXPO_USERNAME: envData.EXPO_PUBLIC_EXPO_USERNAME ?? "",
+  EXPO_PUBLIC_APP_SLUG: envData.EXPO_PUBLIC_APP_SLUG ?? "mulema",
+  EXPO_PUBLIC_PRIVACY_POLICY_URL: envData.EXPO_PUBLIC_PRIVACY_POLICY_URL ?? "",
 };
 
-// Type for TypeScript autocomplete
 export type Env = z.infer<typeof envSchema>;
