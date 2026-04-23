@@ -54,7 +54,7 @@ export default function ProfileScreen() {
   const streak = dash?.streakDays || 0;
   const wordsLearned = dash?.wordsLearned || 0;
   const totalHours = Math.round((dash?.totalTimeMinutes || 0) / 60);
-  const barHeights = useMemo(() => DAYS.map(() => Math.random() * 60 + 10), []);
+  const barHeights = useMemo(() => DAYS.map(() => 0), []);
 
   return (
     <View style={s.root}>

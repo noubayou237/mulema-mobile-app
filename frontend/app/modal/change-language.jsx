@@ -16,7 +16,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
-import { MButton } from "../../src/components/ui/MComponents";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
 
 /* ── 3 heritage languages are available ── */
@@ -29,29 +28,18 @@ import { useAuthStore } from "../../src/stores/useAuthStore";
 
 /* ── Language Row ── */
 const LanguageRow = ({ language, isActive, onPress }) => {
-  const { t } = useTranslation();
-  // Placeholder progress — will come from backend per-language stats
-  const progress = Math.floor(Math.random() * 100);
-
   return (
     <TouchableOpacity
       onPress={() => onPress(language)}
       activeOpacity={0.7}
       style={[s.langRow, Shadow.sm]}
     >
-      {/* Flag placeholder */}
       <View style={s.flagCircle}>
         <Text style={{ fontSize: 24 }}>{getFlag(language.code)}</Text>
       </View>
 
       <View style={{ flex: 1, marginLeft: Space.lg }}>
         <Text style={Typo.titleMd}>{language.name}</Text>
-        <Text style={[Typo.bodySm, { marginTop: 2 }]}>{t("common.percentCompleted", { percent: progress })}</Text>
-      </View>
-
-      {/* Mini progress bar */}
-      <View style={s.miniProgress}>
-        <View style={[s.miniProgressFill, { height: `${Math.max(progress, 5)}%` }]} />
       </View>
 
       <Ionicons name="chevron-forward" size={18} color={Colors.textTertiary} style={{ marginLeft: Space.md }} />
@@ -142,13 +130,6 @@ export default function ChangeLanguageScreen() {
               </View>
               <View style={{ marginLeft: Space.lg, flex: 1 }}>
                 <Text style={[Typo.headlineMd, { color: Colors.onPrimary }]}>{activeLanguage.name}</Text>
-                {/* Mini progress */}
-                <View style={{ flexDirection: "row", alignItems: "center", marginTop: Space.sm }}>
-                  <View style={s.activeProgressTrack}>
-                    <View style={[s.activeProgressFill, { width: "65%" }]} />
-                  </View>
-                  <Text style={[Typo.labelMd, { color: Colors.onPrimary, marginLeft: Space.sm }]}>65%</Text>
-                </View>
               </View>
             </View>
 
