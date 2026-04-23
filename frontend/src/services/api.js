@@ -14,6 +14,7 @@
  */
 
 import axios from "axios";
+import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import Constants from "expo-constants";
@@ -67,7 +68,7 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     try {
-      const raw = await AsyncStorage.getItem(STORAGE_KEY);
+      const raw = await SecureStore.getItemAsync(STORAGE_KEY);
       if (raw) {
         const session = JSON.parse(raw);
         if (session?.accessToken) {
@@ -133,10 +134,8 @@ api.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      const raw = await AsyncStorage.getItem(STORAGE_KEY);
-      
-      // ✅ FIX: Instead of throwing a generic error that causes [Error: No session] logs,
-      // we just reject with the original error if there's no session to refresh with.
+      const raw = await SecureStore.getItemAsync(STORAGE_KEY);
+
       if (!raw || !JSON.parse(raw)?.refreshToken) {
         return Promise.reject(error);
       }
@@ -153,7 +152,7 @@ api.interceptors.response.use(
         accessToken: data.accessToken,
         refreshToken: data.refreshToken || session.refreshToken,
       };
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newSession));
+      await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(newSession));
 
       // Débloquer la queue
       processQueue(null, data.accessToken);
@@ -164,7 +163,7 @@ api.interceptors.response.use(
     } catch (refreshError) {
       // Refresh échoué → déconnecter l'utilisateur
       processQueue(refreshError, null);
-      await AsyncStorage.removeItem(STORAGE_KEY);
+      await SecureStore.deleteItemAsync(STORAGE_KEY);
 
       // Note : le useAuthStore détectera l'absence de token au prochain check
       // et redirigera vers sign-in
@@ -179,32 +178,37 @@ api.interceptors.response.use(
 // HELPERS
 // ═══════════════════════════════════════════════════════════════
 
-/**
- * Sauvegarde les tokens dans AsyncStorage.
- * Appelé par useAuthStore après login/register.
- */
 export const saveSession = async (tokens) => {
   _sessionActive = true;
-  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(tokens));
+  await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(tokens));
 };
 
 export const clearSession = async () => {
-  _sessionActive = false; // Synchronous flag for stores
-  await AsyncStorage.removeItem(STORAGE_KEY);
+  _sessionActive = false;
+  await SecureStore.deleteItemAsync(STORAGE_KEY);
 };
 
-/**
- * Lit la session depuis AsyncStorage.
- * Appelé par useAuthStore.loadSession() au démarrage.
- */
 export const getSession = async () => {
   try {
-    const raw = await AsyncStorage.getItem(STORAGE_KEY);
+    // Primary: read from encrypted storage
+    const raw = await SecureStore.getItemAsync(STORAGE_KEY);
     if (raw) {
       const session = JSON.parse(raw);
       if (session?.accessToken) _sessionActive = true;
       return session;
     }
+
+    // Migration: silently move tokens saved by older app versions from
+    // AsyncStorage to SecureStore so existing users are not logged out.
+    const legacyRaw = await AsyncStorage.getItem(STORAGE_KEY);
+    if (legacyRaw) {
+      await SecureStore.setItemAsync(STORAGE_KEY, legacyRaw);
+      await AsyncStorage.removeItem(STORAGE_KEY);
+      const session = JSON.parse(legacyRaw);
+      if (session?.accessToken) _sessionActive = true;
+      return session;
+    }
+
     return null;
   } catch {
     return null;
