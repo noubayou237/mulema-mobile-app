@@ -17,7 +17,6 @@ import { DrawerContent } from "../../src/components/layout/DrawerContent";
 import { useTranslation } from "react-i18next";
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 
-const DUALA_ID = "c81daa9d-7be2-4896-91c8-7531c994aec5";
 
 const RED = Colors.primary;
 const RED_L = Colors.primary + "15";
@@ -181,7 +180,7 @@ export default function ExercisesScreen() {
   };
 
   const getPatrimonialId = (lang, allLangs) => {
-    if (!lang) return DUALA_ID;
+    if (!lang) return null;
     if (lang.type === "patrimonial") return lang.id;
     const langName = (lang.name ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const match = (allLangs || []).find((l) => {
@@ -189,14 +188,14 @@ export default function ExercisesScreen() {
       const n = l.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       return n.includes(langName) || langName.includes(n);
     });
-    return match?.id ?? DUALA_ID;
+    return match?.id ?? null;
   };
 
   useEffect(() => {
     const init = async () => {
       if (activeLanguage) {
         const langId = getPatrimonialId(activeLanguage, languages);
-        fetchThemes(langId);
+        if (langId) fetchThemes(langId);
         fetchDashboard();
         return;
       }
@@ -204,12 +203,9 @@ export default function ExercisesScreen() {
         const langs = await fetchLanguages();
         const lang = await loadActiveLanguage();
         const langId = getPatrimonialId(lang, langs);
-        fetchThemes(langId);
+        if (langId) fetchThemes(langId);
         fetchDashboard();
-        return;
       } catch { }
-      fetchThemes(DUALA_ID);
-      fetchDashboard();
     };
     init();
   }, [activeLanguage?.id]);
@@ -217,7 +213,7 @@ export default function ExercisesScreen() {
   const onRefresh = async () => {
     setRefreshing(true);
     const langId = getPatrimonialId(activeLanguage, languages);
-    await Promise.all([fetchThemes(langId), fetchDashboard()]);
+    await Promise.all([langId ? fetchThemes(langId) : Promise.resolve(), fetchDashboard()]);
     setRefreshing(false);
   };
 

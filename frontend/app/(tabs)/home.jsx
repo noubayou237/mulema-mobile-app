@@ -329,19 +329,21 @@ export default function HomeScreen() {
   const getPatrimonialId = (lang, allLangs) => {
     if (lang?.type === "patrimonial") return lang.id;
     const p = (allLangs || []).find((l) => l.type === "patrimonial");
-    return p?.id ?? "c81daa9d-7be2-4896-91c8-7531c994aec5";
+    return p?.id ?? null;
   };
 
   useEffect(() => {
     const init = async () => {
       if (activeLanguage) {
-        fetchThemes(getPatrimonialId(activeLanguage, languages));
+        const langId = getPatrimonialId(activeLanguage, languages);
+      if (langId) fetchThemes(langId);
         fetchDashboard();
         return;
       }
       const langs = await fetchLanguages().catch(() => []);
       const lang = await loadActiveLanguage();
-      fetchThemes(getPatrimonialId(lang, langs));
+      const langId2 = getPatrimonialId(lang, langs);
+      if (langId2) fetchThemes(langId2);
       fetchDashboard();
     };
     init();
