@@ -244,13 +244,6 @@ const FeedbackBanner = ({ correct, correctAnswer, onNext }) => {
         </View>
       </View>
 
-      {!correct && (
-        <TouchableOpacity style={fb.explainBtn} activeOpacity={0.8}>
-          <Ionicons name="information-circle" size={18} color={C.primary} />
-          <Text style={fb.explainTxt}>{t("exercises.explanation")}</Text>
-        </TouchableOpacity>
-      )}
-
       <TouchableOpacity
         onPress={onNext}
         style={[fb.continueBtn, correct ? fb.continueBtnGreen : fb.continueBtnRed]}

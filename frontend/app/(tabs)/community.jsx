@@ -173,16 +173,25 @@ const Podium = ({ top3 = [], leagueColor = "#FF9800" }) => {
 const FilterTabs = ({ active, onChange }) => {
   const { t } = useTranslation();
   const tabs = [
-    { key: "week", label: t("common.currentWeek") },
-    { key: "month", label: t("common.thisMonth") },
     { key: "all", label: t("common.total") },
+    { key: "month", label: t("common.thisMonth"), comingSoon: true },
+    { key: "week", label: t("common.currentWeek"), comingSoon: true },
   ];
   return (
     <View style={ft.container}>
       {tabs.map((tab) => (
         <TouchableOpacity
           key={tab.key}
-          onPress={() => onChange(tab.key)}
+          onPress={() => {
+            if (tab.comingSoon) {
+              Alert.alert(
+                t("common.comingSoon", "Bientôt disponible"),
+                t("community.filterComingSoon", "Le filtrage par période sera disponible dans une prochaine mise à jour.")
+              );
+              return;
+            }
+            onChange(tab.key);
+          }}
           activeOpacity={0.7}
           style={[ft.tab, active === tab.key && ft.tabActive]}
         >
@@ -378,7 +387,7 @@ export default function CommunityScreen() {
     fetchDashboard,
   } = useDashboardStore();
 
-  const [filter, setFilter] = useState("week");
+  const [filter, setFilter] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
 
   /* ── Drawer ── */

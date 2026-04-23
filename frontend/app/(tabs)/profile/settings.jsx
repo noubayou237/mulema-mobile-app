@@ -55,8 +55,30 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
 
-  const [notificationsOn, setNotificationsOn] = useState(true);
+  const [notificationsOn, setNotificationsOn] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+
+  const handleNotificationsToggle = (value) => {
+    if (value) {
+      Alert.alert(
+        t("common.comingSoon", "Bientôt disponible"),
+        t("settings.notificationsComingSoon", "Les notifications push seront disponibles dans une prochaine mise à jour.")
+      );
+      return;
+    }
+    setNotificationsOn(false);
+  };
+
+  const handleDarkModeToggle = (value) => {
+    if (value) {
+      Alert.alert(
+        t("common.comingSoon", "Bientôt disponible"),
+        t("settings.darkModeComingSoon", "Le mode sombre sera disponible dans une prochaine mise à jour.")
+      );
+      return;
+    }
+    setDarkMode(false);
+  };
 
   const { t, i18n } = useTranslation();
   const [appLang, setAppLang] = useState(i18n.language || 'fr');
@@ -161,7 +183,7 @@ export default function SettingsScreen() {
             right={
               <Switch
                 value={notificationsOn}
-                onValueChange={setNotificationsOn}
+                onValueChange={handleNotificationsToggle}
                 trackColor={{ false: Colors.surfaceVariant, true: Colors.primary + "60" }}
                 thumbColor={notificationsOn ? Colors.primary : Colors.surfaceContainerHigh}
               />
@@ -177,7 +199,10 @@ export default function SettingsScreen() {
                 <Ionicons name="pencil" size={14} color={Colors.textTertiary} style={{ marginLeft: Space.sm }} />
               </View>
             }
-            onPress={() => {}}
+            onPress={() => Alert.alert(
+              t("common.comingSoon", "Bientôt disponible"),
+              t("settings.dailyRemindersComingSoon", "Les rappels quotidiens seront disponibles dans une prochaine mise à jour.")
+            )}
           />
         </View>
 
@@ -190,7 +215,7 @@ export default function SettingsScreen() {
             right={
               <Switch
                 value={darkMode}
-                onValueChange={setDarkMode}
+                onValueChange={handleDarkModeToggle}
                 trackColor={{ false: Colors.surfaceVariant, true: Colors.primary + "60" }}
                 thumbColor={darkMode ? Colors.primary : Colors.surfaceContainerHigh}
               />
@@ -220,13 +245,19 @@ export default function SettingsScreen() {
             iconColor={Colors.primary}
             label={t("settings.helpSupport", "Aide")}
             right={<Ionicons name="open-outline" size={16} color={Colors.textTertiary} />}
-            onPress={() => {}}
+            onPress={() => Alert.alert(
+              t("common.comingSoon", "Bientôt disponible"),
+              t("settings.helpComingSoon", "Le centre d'aide sera disponible dans une prochaine mise à jour.")
+            )}
           />
           <View style={s.divider} />
           <SettingRow
             icon="document-text"
             label={t("settings.terms", "Conditions d'utilisation")}
-            onPress={() => {}}
+            onPress={() => Alert.alert(
+              t("common.comingSoon", "Bientôt disponible"),
+              t("settings.termsComingSoon", "Les conditions d'utilisation seront disponibles dans une prochaine mise à jour.")
+            )}
           />
           <View style={s.divider} />
           <SettingRow
