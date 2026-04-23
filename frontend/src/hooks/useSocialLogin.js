@@ -72,7 +72,8 @@ export const useSocialLogin = () => {
         );
         const userInfo = await userInfoResponse.json();
 
-        // Send to backend - don't throw if this fails, just return the error
+        // Backend must validate the Google token and create the session.
+        // A backend failure means no access token / no server session — always an error.
         try {
           const response = await api.post("/auth/google", {
             idToken: result.authentication.idToken,
@@ -82,31 +83,12 @@ export const useSocialLogin = () => {
           });
           return { success: true, data: response.data };
         } catch (backendError) {
-          console.error("Backend error:", backendError);
-          // Check if it's a network error (backend not running)
-          if (
-            backendError.code === "ECONNREFUSED" ||
-            backendError.code === "TIMEOUT" ||
-            backendError.message?.includes("Network")
-          ) {
-            return {
-              success: false,
-              error:
-                "Backend server is not running. Please start the backend or check your connection."
-            };
-          }
-          // Even if backend fails, we got the Google token, so still return success
-          // The user can still log in with the Google info
+          console.error("Google backend auth error:", backendError);
           return {
-            success: true,
-            data: {
-              // Create a minimal response for when backend fails
-              user: {
-                email: userInfo.email,
-                name: userInfo.name
-              },
-              provider: "GOOGLE"
-            }
+            success: false,
+            error: backendError.response?.data?.message
+              || backendError.message
+              || "Google sign-in failed. Please try again."
           };
         }
       }
