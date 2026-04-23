@@ -3,9 +3,18 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as express from 'express';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Validate JWT secrets at startup
+  if (!process.env.JWT_SECRET) {
+    throw new Error('CRITICAL: JWT_SECRET environment variable is not defined!');
+  }
+
+  // Security Headers
+  app.use(helmet());
 
   // Increase JSON payload limit for file uploads
   app.use(express.json({ limit: '50mb' }));
@@ -29,15 +38,17 @@ async function bootstrap() {
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
   );
 
-  // Swagger documentation
-  const config = new DocumentBuilder()
-    .setTitle('Mulema API')
-    .setDescription("Documentation de l'API pour l'application Mulema")
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  // Swagger documentation (Only in development)
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('Mulema API')
+      .setDescription("Documentation de l'API pour l'application Mulema")
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, document);
+  }
 
   // Listen on port 5001, bind to all interfaces
   const port = process.env.PORT ?? 5001;
@@ -45,6 +56,5 @@ async function bootstrap() {
   await app.listen(port, host);
 
   console.log(`🚀 Backend running on http://${host}:${port}`);
-  console.log(`📚 API docs: http://${host}:${port}/api`);
 }
 bootstrap();

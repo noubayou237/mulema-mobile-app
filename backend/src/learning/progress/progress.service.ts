@@ -3,7 +3,7 @@ import { PrismaService } from '../../auth/prisma/prisma.service';
 
 @Injectable()
 export class ProgressService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Initialise le progrès pour un thème Mulem.
@@ -93,7 +93,7 @@ export class ProgressService {
     themeId: string,
     completedLessonOrder: number,
   ) {
-    // 1) Mark the CURRENT lesson as completed
+    // Mark the CURRENT lesson as completed
     const currentWord = await this.prisma.mulemWord.findFirst({
       where: { themeId, order: completedLessonOrder + 1 },
       orderBy: { order: 'asc' },

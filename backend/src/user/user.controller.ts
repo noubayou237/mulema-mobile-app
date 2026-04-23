@@ -13,7 +13,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
 
 interface AuthUser {
   userId: string;
@@ -70,13 +70,7 @@ export class UserController {
   @Put('profile-picture')
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads/avatars',
-        filename: (req: any, file, cb) => {
-          const ext = file.originalname.split('.').pop()?.replace(/[^a-z0-9]/gi, '') || 'jpg';
-          cb(null, `${req.user.userId}-${Date.now()}.${ext}`);
-        },
-      }),
+      storage: memoryStorage(),
       limits: {
         fileSize: 5 * 1024 * 1024, // 5MB
       },

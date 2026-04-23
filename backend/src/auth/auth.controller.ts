@@ -7,6 +7,7 @@ import {
   Req,
   Logger,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { EmailService } from './email/email.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -28,6 +29,7 @@ export class AuthController {
     return this.authService.register(body);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   async login(@Body() body: LoginDto) {
     this.logger.log(`Login request for email: ${body.email}`);
@@ -51,12 +53,14 @@ export class AuthController {
     return this.authService.logout(refreshToken);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('request-password-reset')
   async requestPasswordReset(@Body('email') email: string) {
     this.logger.log(`Password reset request for email: ${email}`);
     return this.authService.requestPasswordReset(email);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('reset-password')
   async resetPassword(
     @Body()
@@ -70,12 +74,14 @@ export class AuthController {
     return this.authService.resetPassword(body);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('request-otp')
   async requestOtp(@Body('email') email: string) {
     this.logger.log(`OTP request for email: ${email}`);
     return this.authService.requestOtp(email);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('verify-email')
   async verifyEmail(
     @Body()
@@ -89,6 +95,7 @@ export class AuthController {
   }
 
   // Auto-login after email verification
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('verify-email-and-login')
   async verifyEmailAndLogin(
     @Body()
@@ -102,22 +109,4 @@ export class AuthController {
   }
 
 
-  // Social Login Endpoints
-  @Post('google')
-  async googleLogin(@Body() body: any) {
-    this.logger.log(`Google login request for email: ${body.email}`);
-    return this.authService.socialLogin(body, 'GOOGLE');
-  }
-
-  @Post('facebook')
-  async facebookLogin(@Body() body: any) {
-    this.logger.log(`Facebook login request for facebookId: ${body.facebookId}`);
-    return this.authService.socialLogin(body, 'FACEBOOK');
-  }
-
-  @Post('apple')
-  async appleLogin(@Body() body: any) {
-    this.logger.log(`Apple login request for user: ${body.user}`);
-    return this.authService.socialLogin(body, 'APPLE');
-  }
 }

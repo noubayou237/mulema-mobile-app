@@ -150,17 +150,24 @@ export const useAuthStore = create((set, get) => ({
   },
 
   logout: async () => {
-    // 1. Immediately clear the synchronous session flag and persistence
-    await clearSession();
-    
-    // 2. Mark as unauthenticated (synchronous state update)
-    set({ user: null, token: null, isAuthenticated: false });
-    
+    // 1. Get tokens before clearing
+    let refreshToken = null;
     try {
-      // 3. Inform backend (fire and forget)
-      api.post("/auth/logout").catch(() => {});
+      const session = await getSession();
+      refreshToken = session?.refreshToken;
     } catch {}
-    
+
+    // 2. Immediately clear persistence and local state
+    await clearSession();
+    set({ user: null, token: null, isAuthenticated: false });
+
+    try {
+      // 3. Inform backend to invalidate the refresh token
+      if (refreshToken) {
+        api.post("/auth/logout", { refreshToken }).catch(() => {});
+      }
+    } catch {}
+
     // 4. Reset all other stores
     await useLanguageStore.getState().reset();
     useThemeStore.getState().reset();
