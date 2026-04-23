@@ -19,10 +19,6 @@ import {
 import "../src/i18n";
 import { initializeLanguage } from "../src/i18n";
 
-// Providers
-import { LanguageProvider } from "../src/context/LanguageContext";
-import UserProvider from "../src/context/UserContext";
-
 // Stores
 import { useAuthStore } from "../src/stores/useAuthStore";
 import { useLanguageStore } from "../src/stores/useLanguageStore";
@@ -118,30 +114,26 @@ export default function RootLayout() {
   }
 
   return (
-    <LanguageProvider>
-      <UserProvider>
-        <AuthGate>
-          <OfflineBanner />
-          <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(onboarding)" />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen
-              name="modal/change-language"
-              options={{ presentation: "modal", animation: "slide_from_bottom" }}
-            />
-            <Stack.Screen
-              name="modal/quests"
-              options={{ presentation: "modal", animation: "slide_from_bottom" }}
-            />
-            <Stack.Screen
-              name="modal/onboarding-video"
-              options={{ presentation: "fullScreenModal", animation: "fade", headerShown: false }}
-            />
-          </Stack>
-        </AuthGate>
-      </UserProvider>
-    </LanguageProvider>
+    <AuthGate>
+      <OfflineBanner />
+      <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(onboarding)" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen
+          name="modal/change-language"
+          options={{ presentation: "modal", animation: "slide_from_bottom" }}
+        />
+        <Stack.Screen
+          name="modal/quests"
+          options={{ presentation: "modal", animation: "slide_from_bottom" }}
+        />
+        <Stack.Screen
+          name="modal/onboarding-video"
+          options={{ presentation: "fullScreenModal", animation: "fade", headerShown: false }}
+        />
+      </Stack>
+    </AuthGate>
   );
 }
 
