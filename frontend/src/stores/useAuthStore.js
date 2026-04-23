@@ -4,10 +4,34 @@
  */
 
 import { create } from "zustand";
+import * as SecureStore from "expo-secure-store";
 import api, { saveSession, clearSession, getSession } from "../services/api";
 import { useLanguageStore } from "./useLanguageStore";
 import { useThemeStore } from "./useThemeStore";
 import { useDashboardStore } from "./useDashboardStore";
+
+const USER_CACHE_KEY = "cachedUser";
+
+const cacheUser = async (user) => {
+  try {
+    await SecureStore.setItemAsync(USER_CACHE_KEY, JSON.stringify(user));
+  } catch {}
+};
+
+const getCachedUser = async () => {
+  try {
+    const raw = await SecureStore.getItemAsync(USER_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const clearCachedUser = async () => {
+  try {
+    await SecureStore.deleteItemAsync(USER_CACHE_KEY);
+  } catch {}
+};
 
 export const useAuthStore = create((set, get) => ({
   user: null,
@@ -25,8 +49,8 @@ export const useAuthStore = create((set, get) => ({
         return;
       }
 
-      // Vérifier le token en appelant /auth/me
       const { data: user } = await api.get("/auth/me");
+      await cacheUser(user);
 
       set({
         user,
@@ -38,6 +62,7 @@ export const useAuthStore = create((set, get) => ({
     } catch (error) {
       if (error?.response?.status === 401 || error?.response?.status === 403) {
         await clearSession();
+        await clearCachedUser();
         set({
           user: null,
           token: null,
@@ -46,10 +71,13 @@ export const useAuthStore = create((set, get) => ({
           isSessionLoaded: true,
         });
       } else {
-        // Keep authentication active if backend fails (e.g. 500 Timeout)
-        // User is null but they won't be pushed back to login
+        // Non-auth error (timeout, 5xx) — backend temporarily unavailable.
+        // Restore the last cached user so screens don't receive a null user
+        // object and crash. Stay authenticated so the user isn't kicked out.
+        const cachedUser = await getCachedUser();
         set({
-          isAuthenticated: true,
+          user: cachedUser,
+          isAuthenticated: !!cachedUser,
           isLoading: false,
           isSessionLoaded: true,
         });
@@ -66,11 +94,11 @@ export const useAuthStore = create((set, get) => ({
       refreshToken: data.refreshToken,
     });
 
-    // Charger le user via GET /auth/me
     let user = null;
     try {
       const meResponse = await api.get("/auth/me");
       user = meResponse.data;
+      await cacheUser(user);
     } catch (e) {
       console.warn("[AuthStore] GET /auth/me failed:", e);
     }
@@ -100,6 +128,7 @@ export const useAuthStore = create((set, get) => ({
     try {
       const { data } = await api.get("/auth/me");
       user = data;
+      await cacheUser(user);
     } catch (err) {
       console.warn("[Auth] Failed to load user profile:", err?.message);
       set({ isAuthenticated: false, token: null });
@@ -157,8 +186,9 @@ export const useAuthStore = create((set, get) => ({
       refreshToken = session?.refreshToken;
     } catch {}
 
-    // 2. Immediately clear persistence and local state
+    // 2. Immediately clear persistence, cache, and local state
     await clearSession();
+    await clearCachedUser();
     set({ user: null, token: null, isAuthenticated: false });
 
     try {
