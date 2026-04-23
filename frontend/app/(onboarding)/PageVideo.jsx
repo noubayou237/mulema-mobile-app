@@ -136,7 +136,6 @@ export default function PageVideo() {
           .trim();
 
         if (mounted) {
-          console.log("🎥 PageVideo: Resolved language to:", chosen);
           setLangResolved(chosen);
           setResolving(false);
         }

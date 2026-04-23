@@ -599,7 +599,7 @@ export default function Header({
         await AsyncStorage.setItem(STREAK_KEY, JSON.stringify({ days: 1, lastDate: new Date().toDateString() }));
         setStreakDays(1);
       }
-    } catch (e) { console.log("Streak err:", e); }
+    } catch (e) { console.warn("[Header] Streak error:", e); }
   };
 
   const loadSavedLang = async () => {

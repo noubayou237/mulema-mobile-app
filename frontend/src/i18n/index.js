@@ -16,7 +16,7 @@ const getDefaultLanguage = async () => {
       return savedLanguage;
     }
   } catch (error) {
-    console.log("Error reading language from storage:", error);
+    console.warn("[i18n] Error reading language from storage:", error);
   }
   return "fr"; // Default to French
 };
@@ -39,7 +39,6 @@ export const changeLanguage = async (language) => {
   try {
     await i18n.changeLanguage(language);
     await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, language);
-    console.log(`Language changed to: ${language}`);
   } catch (error) {
     console.error("Error changing language:", error);
   }
@@ -49,7 +48,6 @@ export const changeLanguage = async (language) => {
 export const initializeLanguage = async () => {
   const language = await getDefaultLanguage();
   await i18n.changeLanguage(language);
-  console.log(`Initialized language: ${language}`);
   return language;
 };
 

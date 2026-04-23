@@ -76,7 +76,7 @@ export default function ChoiceLanguage() {
           patrimonialLanguageId: language.id,
         });
       } catch (apiError) {
-        console.log("Language might already exist:", apiError.message);
+        console.warn("[ChoiceLanguage] Language might already exist:", apiError.message);
       }
 
       // Mettre à jour le store (synchronise AsyncStorage + state)
