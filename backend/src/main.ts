@@ -25,7 +25,7 @@ async function bootstrap() {
     origin: [
       'https://mulema.app',
       'https://api.mulema.app',
-      /localhost$/,
+      /^https?:\/\/localhost(:\d+)?$/,
       /^http:\/\/10\.0\.2\.2/, // Android emulator
       /^http:\/\/192\.168\./,   // Local network
     ],
