@@ -20,11 +20,13 @@ import Logger from "../utils/logger";
 import { create } from "zustand";
 import { dashboardService } from "../services/dashboard.service";
 import { isSessionActive } from "../services/api";
+import { getFriendlyErrorMessage } from "../utils/errorUtils";
 
 export const useDashboardStore = create((set) => ({
   // ── State ──
   data: null,               // DashboardData | null
   isLoading: false,
+  error: null,              // Message d'erreur convivial
 
   // Leaderboard (séparé car indépendant de la langue)
   leaderboard: [],           // LeaderboardEntry[]
@@ -40,13 +42,15 @@ export const useDashboardStore = create((set) => ({
     set({ isLoading: true });
     try {
       const data = await dashboardService.get();
-      set({ data, isLoading: false });
+      set({ data, isLoading: false, error: null });
       return data;
     } catch (error) {
-      set({ isLoading: false });
+      const msg = getFriendlyErrorMessage(error);
+      set({ isLoading: false, error: msg });
+      
       // 401/NetworkError is expected during the logout race window — suppress it
       if (error?.response?.status !== 401 && isSessionActive()) {
-        Logger.error("[DashboardStore] fetchDashboard error:", error);
+        Logger.error("[DashboardStore] fetchDashboard error:", msg);
       }
       return null;
     }
@@ -68,10 +72,13 @@ export const useDashboardStore = create((set) => ({
           ...state.data, 
           hearts: result.currentCowries,
           nextRechargeIn: result.nextRechargeIn
-        }
+        },
+        error: null
       }));
     } catch (error) {
-      Logger.error("[DashboardStore] deductHeart error:", error);
+      const msg = getFriendlyErrorMessage(error);
+      set({ error: msg });
+      Logger.error("[DashboardStore] deductHeart error:", msg);
     }
   },
 

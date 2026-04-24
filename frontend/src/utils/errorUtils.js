@@ -1,48 +1,33 @@
 /**
- * Safely extracts a string error message from an API error response.
- * Handles NestJS validation errors (arrays), Axios errors, and native strings.
- * Prevents "Value for message cannot be cast from ReadableNativeMap to String" crashes.
- * 
- * @param {any} error 
- * @param {string} fallback 
- * @returns {string}
+ * MULEMA — Error Utilities
+ * Maps technical errors (Axios, etc.) to user-friendly messages.
  */
-export const getErrorMessage = (error, fallback = "Une erreur est survenue") => {
-  if (!error) return fallback;
 
-  // 1. Check for Axios response data
-  if (error.response?.data) {
-    const data = error.response.data;
+export const getFriendlyErrorMessage = (error) => {
+  if (!error) return "Une erreur inconnue est survenue.";
 
-    // NestJS often returns { message: string | string[], error: string, statusCode: number }
-    if (data.message) {
-      if (Array.isArray(data.message)) {
-        return data.message.join("\n"); // Join multiple validation errors with newlines
-      }
-      if (typeof data.message === "string") {
-        return data.message;
-      }
-    }
-
-    // Fallback to data.error or just stringify the data if it's simple
-    if (data.error && typeof data.error === "string") {
-      return data.error;
-    }
-    
-    if (typeof data === "string") {
-      return data;
-    }
+  // handle Axios "Network Error"
+  if (error.message === "Network Error") {
+    return "Problème de connexion au serveur. Vérifiez votre connexion internet ou si le serveur est en maintenance.";
   }
 
-  // 2. Check for generic error message
-  if (error.message && typeof error.message === "string") {
-    return error.message;
+  // handle Axios timeout
+  if (error.code === "ECONNABORTED") {
+    return "Le serveur met trop de temps à répondre. Réessayez plus tard.";
   }
 
-  // 3. Last resort
-  if (typeof error === "string") {
-    return error;
+  // handle HTTP responses
+  if (error.response) {
+    const { status, data } = error.response;
+
+    if (status === 401) return "Votre session a expiré. Veuillez vous reconnecter.";
+    if (status === 403) return "Vous n'avez pas l'autorisation d'accéder à cette ressource.";
+    if (status === 404) return "La ressource demandée est introuvable.";
+    if (status >= 500) return "Le serveur rencontre un problème. Nos équipes travaillent dessus.";
+
+    // Backend often returns { message: "..." }
+    if (data?.message) return data.message;
   }
 
-  return fallback;
+  return error.message || "Une erreur est survenue.";
 };

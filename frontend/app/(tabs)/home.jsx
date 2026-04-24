@@ -140,9 +140,6 @@ const HomeHeader = ({ streak = 0, xp = 0, hearts = 5, nextRechargeIn = 0, onMenu
           <Ionicons name="heart" size={14} color={RED} />
           <Text style={[Typo.labelLg, { color: Colors.onSurface, marginLeft: 4 }]}>
             {hearts}
-            {hearts < 5 && nextRechargeIn > 0 && (
-              <Text style={{ fontSize: 10, color: RED }}> ({formatTime(nextRechargeIn)})</Text>
-            )}
           </Text>
         </View>
         <View style={[s.headerBadge, { backgroundColor: GREEN_L, marginLeft: Space.xs }]}>
@@ -333,7 +330,7 @@ export default function HomeScreen() {
   const { user, logout } = useAuthStore();
   const { activeLanguage, languages, fetchLanguages, loadActiveLanguage } = useLanguageStore();
   const { themes, isLoading: tLoading, fetchThemes } = useThemeStore();
-  const { data: dash, isLoading: dLoading, fetchDashboard } = useDashboardStore();
+  const { data: dash, isLoading: dLoading, error: dashError, fetchDashboard } = useDashboardStore();
 
   const { t, i18n } = useTranslation();
   const [appLang, setAppLang] = useState(i18n.language || 'fr');
@@ -483,10 +480,17 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <ScrollView
+          <ScrollView
           contentContainerStyle={[s.scroll, { paddingTop: 140 }]}
           showsVerticalScrollIndicator={false}
         >
+          {/* Bannière d'erreur (Connexion) */}
+          {dashError && (
+            <View style={s.errorBanner}>
+              <Ionicons name="cloud-offline-outline" size={20} color="#FFF" />
+              <Text style={s.errorTxt}>{dashError}</Text>
+            </View>
+          )}
 
           {/* Dashboard */}
           <Animated.View style={fadeUp(anims[1], 22)}>
@@ -793,6 +797,22 @@ const s = StyleSheet.create({
     borderRadius: Radius.full,
     paddingHorizontal: Space.md,
     paddingVertical: 4,
+  },
+  /* Error banner */
+  errorBanner: {
+    backgroundColor: "#F44336",
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Space.lg,
+    borderRadius: Radius.lg,
+    marginBottom: Space.lg,
+    gap: Space.md,
+  },
+  errorTxt: {
+    color: "#FFF",
+    fontFamily: "Nunito-Regular",
+    fontSize: 13,
+    flex: 1,
   },
 });
 

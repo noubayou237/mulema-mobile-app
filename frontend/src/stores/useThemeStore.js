@@ -21,11 +21,13 @@ import Logger from "../utils/logger";
 import { create } from "zustand";
 import { themesService } from "../services/themes.service";
 import { isSessionActive } from "../services/api";
+import { getFriendlyErrorMessage } from "../utils/errorUtils";
 
 export const useThemeStore = create((set, get) => ({
   // ── State ──
   themes: [],                // Theme[] — thèmes de la langue active
   isLoading: false,
+  error: null,
 
   // Leçon en cours (quand l'utilisateur navigue dans un thème)
   currentThemeId: null,      // string | null
@@ -47,13 +49,14 @@ export const useThemeStore = create((set, get) => ({
     set({ isLoading: true });
     try {
       const themes = await themesService.getByLanguage(languageId);
-      set({ themes, isLoading: false });
+      set({ themes, isLoading: false, error: null });
       return themes;
     } catch (error) {
-      set({ isLoading: false });
+      const msg = getFriendlyErrorMessage(error);
+      set({ isLoading: false, error: msg });
       // Don't log if it's a 401 or Network Error after session is cleared
       if (error?.response?.status !== 401 && isSessionActive()) {
-        Logger.error("[ThemeStore] fetchThemes error:", error);
+        Logger.error("[ThemeStore] fetchThemes error:", msg);
       }
       return [];
     }
@@ -142,14 +145,13 @@ export const useThemeStore = create((set, get) => ({
   getExerciseAccess: (themeId) => {
     const { lessons } = get();
     
-    // Directive: Exercises available after 2 lessons are completed
-    // We count how many lessons have isCompleted: true in their userProgress array
+    // Final Challenge (Exercises) should only be available after ALL lessons are completed
     const lessonsCompletedCount = lessons.reduce((acc, l) => {
       const prog = l.userProgress?.[0];
       return acc + (prog?.isCompleted ? 1 : 0);
     }, 0);
 
-    const enoughLessonsCompleted = lessonsCompletedCount >= 2;
+    const enoughLessonsCompleted = lessons.length > 0 && lessonsCompletedCount >= lessons.length;
 
     return {
       e1: enoughLessonsCompleted,
