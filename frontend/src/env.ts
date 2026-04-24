@@ -1,3 +1,4 @@
+import Logger from "./utils/logger";
 import { z } from "zod";
 
 const envSchema = z.object({
@@ -27,7 +28,7 @@ const _env = envSchema.safeParse(process.env);
 
 if (!_env.success) {
   // Invalid values (e.g. malformed URL) — log details so they're easy to spot
-  console.error("[env] Invalid environment variables:", _env.error.format());
+  Logger.error("[env] Invalid environment variables:", _env.error.format());
 }
 
 const envData = _env.data ?? {};
@@ -36,7 +37,7 @@ const envData = _env.data ?? {};
 // developers notice they are hitting the built-in fallback rather than their
 // intended server.
 if (__DEV__ && !envData.EXPO_PUBLIC_API_URL && !envData.EXPO_PUBLIC_API_IP) {
-  console.warn(
+  Logger.warn(
     "[env] Neither EXPO_PUBLIC_API_URL nor EXPO_PUBLIC_API_IP is set. " +
     "The app will fall back to auto-detected localhost. " +
     "Set one of these in your .env file to connect to a specific server."

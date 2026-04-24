@@ -1,3 +1,4 @@
+import Logger from "../utils/logger";
 /**
  * ╔══════════════════════════════════════════════════════════════╗
  * ║  MULEMA — useDashboardStore (Zustand)                         ║
@@ -45,9 +46,32 @@ export const useDashboardStore = create((set) => ({
       set({ isLoading: false });
       // 401/NetworkError is expected during the logout race window — suppress it
       if (error?.response?.status !== 401 && isSessionActive()) {
-        console.error("[DashboardStore] fetchDashboard error:", error);
+        Logger.error("[DashboardStore] fetchDashboard error:", error);
       }
       return null;
+    }
+  },
+
+  deductHeart: async () => {
+    const { data } = useDashboardStore.getState();
+    if (!data || data.hearts <= 0) return;
+    
+    // Optimistic UI update
+    set({
+      data: { ...data, hearts: data.hearts - 1 }
+    });
+
+    try {
+      const result = await dashboardService.deductCowry(1);
+      set((state) => ({
+        data: { 
+          ...state.data, 
+          hearts: result.currentCowries,
+          nextRechargeIn: result.nextRechargeIn
+        }
+      }));
+    } catch (error) {
+      Logger.error("[DashboardStore] deductHeart error:", error);
     }
   },
 
@@ -65,7 +89,7 @@ export const useDashboardStore = create((set) => ({
     } catch (error) {
       set({ leaderboardLoading: false });
       if (error?.response?.status !== 401 && isSessionActive()) {
-        console.error("[DashboardStore] fetchLeaderboard error:", error);
+        Logger.error("[DashboardStore] fetchLeaderboard error:", error);
       }
       return [];
     }

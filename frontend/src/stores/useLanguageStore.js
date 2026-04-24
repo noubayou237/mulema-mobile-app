@@ -1,3 +1,4 @@
+import Logger from "../utils/logger";
 /**
  * MULEMA — useLanguageStore
  * Fonctionne avec le backend (/official-languages + /patrimonial-languages)
@@ -29,7 +30,7 @@ export const useLanguageStore = create((set, get) => ({
     } catch (error) {
       set({ isLoading: false, isLoaded: true });
       if (error?.response?.status !== 401) {
-        console.warn("[LanguageStore] fetchLanguages error:", error);
+        Logger.warn("[LanguageStore] fetchLanguages error:", error);
       }
       return [];
     }

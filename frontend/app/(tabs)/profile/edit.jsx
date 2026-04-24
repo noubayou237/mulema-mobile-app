@@ -16,8 +16,8 @@ import {
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker";
 import { useTranslation } from "react-i18next";
+import { IMAGES_MAP } from "../../../src/utils/AssetsMap";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../../src/theme/tokens";
 import { useAuthStore } from "../../../src/stores/useAuthStore";
@@ -31,6 +31,7 @@ export default function EditProfileScreen() {
   const [avatarUri, setAvatarUri] = useState(user?.avatar || null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
 
   // Password state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -39,44 +40,22 @@ export default function EditProfileScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPass, setIsChangingPass] = useState(false);
 
-  const handlePickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        t("common.error"),
-        t("errors.cameraPermission", "Permissions are required to access the gallery.")
-      );
-      return;
-    }
+  const handlePickImage = () => {
+    setShowAvatarModal(true);
+  };
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images, // Correct usage for SDK 50+
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-    });
-
-    if (!result.canceled && result.assets && result.assets[0]) {
-      const selectedUri = result.assets[0].uri;
-      setAvatarUri(selectedUri);
-      
-      // Upload immediately
-      setIsUploading(true);
-      try {
-        const fileExt = selectedUri.split('.').pop()?.toLowerCase() || 'jpg';
-        const mimeType = ['png', 'gif', 'webp'].includes(fileExt) 
-          ? `image/${fileExt}` 
-          : 'image/jpeg';
-          
-        await updateProfilePicture(selectedUri, mimeType, `avatar.${fileExt}`);
-        Alert.alert(t("common.success"), t("profile.avatarUpdated", "Avatar was updated successfully."));
-      } catch (err) {
-        console.warn("Avatar upload error", err);
-        Alert.alert(t("common.error"), t("errors.uploadFailed", "Failed to upload avatar."));
-        setAvatarUri(user?.avatar || null); // Revert
-      } finally {
-        setIsUploading(false);
-      }
+  const handleSelectAvatar = async (key) => {
+    setShowAvatarModal(false);
+    setIsUploading(true);
+    try {
+      await useAuthStore.getState().selectPreDrawnAvatar(key);
+      setAvatarUri(key);
+      Alert.alert(t("common.success"), t("profile.avatarUpdated", "Avatar was updated successfully."));
+    } catch (err) {
+      console.warn("Avatar select error", err);
+      Alert.alert(t("common.error"), t("errors.uploadFailed", "Failed to upload avatar."));
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -92,7 +71,7 @@ export default function EditProfileScreen() {
         await updateProfile(name.trim());
       }
       
-      router.back();
+      router.replace("/(tabs)/profile");
     } catch (err) {
       console.warn("Profile update error", err);
       Alert.alert(t("common.error"), t("errors.updateFailed", "Failed to update profile."));
@@ -140,7 +119,7 @@ export default function EditProfileScreen() {
         <View style={{ flex: 1 }}>
           {/* Header */}
           <View style={s.header}>
-            <TouchableOpacity onPress={() => router.back()} style={s.closeBtn}>
+            <TouchableOpacity onPress={() => router.replace("/(tabs)/profile")} style={s.closeBtn}>
               <Ionicons name="close" size={24} color={Colors.onSurface} />
             </TouchableOpacity>
             <Text style={s.headerTitle}>{t("profile.editProfile", "Edit Profile")}</Text>
@@ -153,7 +132,11 @@ export default function EditProfileScreen() {
               <TouchableOpacity onPress={handlePickImage} activeOpacity={0.8}>
                 <View style={[s.avatarRing, Shadow.sm]}>
                   {avatarUri ? (
-                    <Image source={{ uri: avatarUri }} style={s.avatar} contentFit="cover" />
+                     IMAGES_MAP[avatarUri] ? (
+                       <Image source={IMAGES_MAP[avatarUri]} style={s.avatar} contentFit="cover" />
+                     ) : (
+                       <Image source={{ uri: avatarUri }} style={s.avatar} contentFit="cover" />
+                     )
                   ) : (
                     <View style={[s.avatar, { backgroundColor: Colors.primary + "15", alignItems: "center", justifyContent: "center" }]}>
                       <Ionicons name="person" size={48} color={Colors.primary} />
@@ -239,6 +222,12 @@ export default function EditProfileScreen() {
             }}
             t={t}
           />
+          <AvatarModal 
+            visible={showAvatarModal}
+            onClose={() => setShowAvatarModal(false)}
+            onSelect={handleSelectAvatar}
+            t={t}
+          />
         </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -289,7 +278,7 @@ const PasswordModal = ({ visible, onClose, onSave, loading, states, setStates, t
             />
           </View>
 
-          <TouchableOpacity 
+            <TouchableOpacity 
             style={[s.modalSaveBtn, loading && { opacity: 0.7 }]} 
             onPress={onSave}
             disabled={loading}
@@ -301,6 +290,31 @@ const PasswordModal = ({ visible, onClose, onSave, loading, states, setStates, t
     </KeyboardAvoidingView>
   </Modal>
 );
+
+const AvatarModal = ({ visible, onClose, onSelect, t }) => {
+  const avatarKeys = Object.keys(IMAGES_MAP).filter(k => k.startsWith("avatar_"));
+  return (
+    <Modal visible={visible} animationType="slide" transparent>
+      <View style={s.modalOverlay}>
+        <View style={[s.modalContainer, { height: "70%" }]}>
+          <View style={s.modalHeader}>
+            <Text style={s.modalTitle}>{t("profile.selectAvatar", "Choose Avatar")}</Text>
+            <TouchableOpacity onPress={onClose}>
+              <Ionicons name="close" size={24} color={Colors.onSurface} />
+            </TouchableOpacity>
+          </View>
+          <View style={[s.grid, { flexWrap: "wrap", flexDirection: "row", gap: Space.md, justifyContent: "center" }]}>
+             {avatarKeys.map((key) => (
+                <TouchableOpacity key={key} onPress={() => onSelect(key)} style={{ width: 80, height: 80, borderRadius: 40, overflow: "hidden", marginBottom: 10 }}>
+                   <Image source={IMAGES_MAP[key]} style={{ width: 80, height: 80 }} contentFit="cover" />
+                </TouchableOpacity>
+             ))}
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.surface },

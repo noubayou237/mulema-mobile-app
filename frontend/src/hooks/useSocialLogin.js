@@ -1,3 +1,4 @@
+import Logger from "../utils/logger";
 // src/hooks/useSocialLogin.js
 import { useState, useCallback } from "react";
 import * as Google from "expo-auth-session/providers/google";
@@ -10,7 +11,7 @@ let AppleAuth = null;
 try {
   AppleAuth = require("expo-apple-authentication");
 } catch (error) {
-  console.warn("expo-apple-authentication is not available on this platform");
+  Logger.warn("expo-apple-authentication is not available on this platform");
 }
 
 // Environment variables - only imported here to prevent exposure
@@ -83,7 +84,7 @@ export const useSocialLogin = () => {
           });
           return { success: true, data: response.data };
         } catch (backendError) {
-          console.error("Google backend auth error:", backendError);
+          Logger.error("Google backend auth error:", backendError);
           return {
             success: false,
             error: backendError.response?.data?.message
@@ -94,7 +95,7 @@ export const useSocialLogin = () => {
       }
       return { success: false, cancelled: result?.type === "cancel" };
     } catch (error) {
-      console.error("Google login error:", error);
+      Logger.error("Google login error:", error);
       return { success: false, error: error.message };
     } finally {
       setLoading(null);
@@ -126,7 +127,7 @@ export const useSocialLogin = () => {
       }
       return { success: false, cancelled: result?.type === "cancel" };
     } catch (error) {
-      console.error("Facebook login error:", error);
+      Logger.error("Facebook login error:", error);
       return { success: false, error: error.message };
     } finally {
       setLoading(null);
@@ -170,7 +171,7 @@ export const useSocialLogin = () => {
       if (error.code === "ERROR_CANCELLED") {
         return { success: false, cancelled: true };
       }
-      console.error("Apple login error:", error);
+      Logger.error("Apple login error:", error);
       return { success: false, error: error.message };
     } finally {
       setLoading(null);

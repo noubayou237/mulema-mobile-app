@@ -15,10 +15,11 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useTranslation } from "react-i18next";
+import { IMAGES_MAP } from "../../../../../src/utils/AssetsMap";
 
-import { useThemeStore }    from "../../../../../src/stores/useThemeStore";
+import { useThemeStore } from "../../../../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../../../../src/stores/useDashboardStore";
-import { useLanguageStore }  from "../../../../../src/stores/useLanguageStore";
+import { useLanguageStore } from "../../../../../src/stores/useLanguageStore";
 import { pauseBackgroundMusic, resumeBackgroundMusic } from "../../../../../src/hooks/useBackgroundMusic";
 import { setAudioMode, playAudioUrl } from "../../../../../src/utils/audioUtils";
 
@@ -27,21 +28,21 @@ const CARD_W = (SW - 40 - 12) / 2;
 
 /* ── Palette ─────────────────────────────────────────────────── */
 const C = {
-  bg:           "#FFFFFF",
-  primary:      "#B71C1C",
-  primaryDark:  "#7F0000",
+  bg: "#FFFFFF",
+  primary: "#B71C1C",
+  primaryDark: "#7F0000",
   primaryLight: "#FFEBEE",
-  correct:      "#2ECC71",
-  correctDark:  "#1A8A4A",
+  correct: "#2ECC71",
+  correctDark: "#1A8A4A",
   correctLight: "#EDFAF3",
-  orange:       "#F59E0B",
-  card:         "#FFFFFF",
-  text:         "#1A1A2E",
-  textSub:      "#6B7280",
-  textFaint:    "#9CA3AF",
-  tipBg:        "#FFFBF5",
-  track:        "#F5D0D0",
-  border:       "#EED5D5",
+  orange: "#F59E0B",
+  card: "#FFFFFF",
+  text: "#1A1A2E",
+  textSub: "#6B7280",
+  textFaint: "#9CA3AF",
+  tipBg: "#FFFBF5",
+  track: "#F5D0D0",
+  border: "#EED5D5",
 };
 
 const SHADOW = {
@@ -53,7 +54,7 @@ const SHADOW = {
 };
 
 /* ── Caractères spéciaux Duala ──────────────────────────────── */
-const SPECIAL_CHARS = ["ɓ","ɛ","ɔ","ŋ","ɲ","ǎ","ǔ","á","â","é","ê","í","ó","ô","ú","ʼ"];
+const SPECIAL_CHARS = ["ɓ", "ɛ", "ɔ", "ŋ", "ɲ", "ǎ", "ǔ", "á", "â", "é", "ê", "í", "ó", "ô", "ú", "ʼ"];
 
 /* ── Helpers ────────────────────────────────────────────────── */
 const shuffle = (arr) => {
@@ -97,7 +98,7 @@ const triggerFeedback = (correct) => {
 /* ── Génération des questions ───────────────────────────────── */
 const buildSession = (words) => {
   if (!words || words.length < 1) return [];
-  const sw  = shuffle(words);
+  const sw = shuffle(words);
   const PER = 4; // 4 questions per type
 
   // QCM — works with as few as 1 word (binary choice with 2 options minimum)
@@ -105,7 +106,7 @@ const buildSession = (words) => {
   const qcm = Array.from({ length: PER }, (_, i) => {
     const target = sw[i % sw.length];
     const others = sw.filter((w) => w.id !== target.id);
-    const opts   = shuffle([target, ...shuffle(others).slice(0, maxOpts - 1)]);
+    const opts = shuffle([target, ...shuffle(others).slice(0, maxOpts - 1)]);
     const hasImg = opts.every((o) => o.imageUrl);
     return { type: hasImg ? "image_qcm" : "text_qcm", target, options: opts };
   });
@@ -114,11 +115,11 @@ const buildSession = (words) => {
   const matchPairCount = Math.min(3, sw.length);
   const match = sw.length >= 2
     ? Array.from({ length: PER }, (_, i) => {
-        const pairs = Array.from({ length: matchPairCount }, (_, k) =>
-          sw[(i * matchPairCount + k) % sw.length]
-        );
-        return { type: "match", pairs, right: shuffle([...pairs]) };
-      })
+      const pairs = Array.from({ length: matchPairCount }, (_, k) =>
+        sw[(i * matchPairCount + k) % sw.length]
+      );
+      return { type: "match", pairs, right: shuffle([...pairs]) };
+    })
     : [];
 
   const write = Array.from({ length: PER }, (_, i) => ({
@@ -148,9 +149,9 @@ const AudioBtn = ({ url, size = 22, color, style }) => {
     setActive(true);
     Animated.sequence([
       Animated.timing(scaleAnim, { toValue: 1.25, duration: 90, useNativeDriver: true }),
-      Animated.timing(scaleAnim, { toValue: 1,   duration: 90, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 1, duration: 90, useNativeDriver: true }),
     ]).start();
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch { }
     playWordAudio(url);
     setTimeout(() => setActive(false), 1800);
   };
@@ -177,7 +178,7 @@ const AudioBtn = ({ url, size = 22, color, style }) => {
    TOP BAR — barre de progression, sans numéros
    ════════════════════════════════════════════════════════════════ */
 const TopBar = ({ current, total, hearts, onClose }) => {
-  const pct  = total > 0 ? current / total : 0;
+  const pct = total > 0 ? current / total : 0;
   const anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -262,17 +263,17 @@ const FeedbackBanner = ({ correct, correctAnswer, onNext }) => {
    ════════════════════════════════════════════════════════════════ */
 const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
   const { t } = useTranslation();
-  const [sel, setSel]           = useState(null);
+  const [sel, setSel] = useState(null);
   const [feedback, setFeedback] = useState(null);
-  const scrollRef               = useRef(null);
-  const shakeX                  = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef(null);
+  const shakeX = useRef(new Animated.Value(0)).current;
 
   const shake = () =>
     Animated.sequence([
-      Animated.timing(shakeX, { toValue: 8,  duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue: 8, duration: 55, useNativeDriver: true }),
       Animated.timing(shakeX, { toValue: -8, duration: 55, useNativeDriver: true }),
-      Animated.timing(shakeX, { toValue: 4,  duration: 55, useNativeDriver: true }),
-      Animated.timing(shakeX, { toValue: 0,  duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue: 4, duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue: 0, duration: 55, useNativeDriver: true }),
     ]).start();
 
   const verify = () => {
@@ -288,13 +289,23 @@ const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
     if (!feedback) {
       return sel === opt.id ? { borderColor: C.primary, borderWidth: 3 } : {};
     }
-    if (opt.id === q.target.id)               return { borderColor: C.correct, borderWidth: 3 };
+    if (opt.id === q.target.id) return { borderColor: C.correct, borderWidth: 3 };
     if (opt.id === sel && sel !== q.target.id) return { borderColor: C.primary, borderWidth: 3 };
     return { opacity: 0.4 };
   };
 
+
+  const a1 = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(a1, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+  }, []);
+
+  useEffect(() => {
+    if (q.target.audioUrl) playWordAudio(q.target.audioUrl);
+  }, [q.target.id]);
+
   return (
-    <Animated.View style={[{ flex: 1 }, { transform: [{ translateX: shakeX }] }]}>
+    <Animated.View style={[{ flex: 1, opacity: a1 }, { transform: [{ translateX: shakeX }] }]}>
       <ScrollView ref={scrollRef} contentContainerStyle={iq.scroll} showsVerticalScrollIndicator={false}>
 
         <Text style={iq.title}>{t("exercises.pickImageFor")}</Text>
@@ -316,7 +327,7 @@ const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
             >
               <View style={iq.imgWrap}>
                 {opt.imageUrl ? (
-                  <Image source={{ uri: opt.imageUrl }} style={iq.img} contentFit="cover" />
+                  <Image source={IMAGES_MAP[opt.imageUrl] ? IMAGES_MAP[opt.imageUrl] : { uri: opt.imageUrl }} style={iq.img} contentFit="cover" />
                 ) : (
                   <View style={[iq.img, iq.imgPlaceholder]}>
                     <Ionicons name="image-outline" size={32} color={C.textFaint} />
@@ -389,16 +400,16 @@ const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
    ════════════════════════════════════════════════════════════════ */
 const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
   const { t } = useTranslation();
-  const [sel, setSel]           = useState(null);
+  const [sel, setSel] = useState(null);
   const [feedback, setFeedback] = useState(null);
-  const scrollRef               = useRef(null);
-  const shakeX                  = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef(null);
+  const shakeX = useRef(new Animated.Value(0)).current;
 
   const shake = () =>
     Animated.sequence([
-      Animated.timing(shakeX, { toValue: 8,  duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue: 8, duration: 55, useNativeDriver: true }),
       Animated.timing(shakeX, { toValue: -8, duration: 55, useNativeDriver: true }),
-      Animated.timing(shakeX, { toValue: 0,  duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue: 0, duration: 55, useNativeDriver: true }),
     ]).start();
 
   const verify = () => {
@@ -416,7 +427,7 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
       return qx.card;
     }
     if (opt.id === q.target.id) return [qx.card, qx.cardCorrect];
-    if (opt.id === sel)          return [qx.card, qx.cardWrong];
+    if (opt.id === sel) return [qx.card, qx.cardWrong];
     return [qx.card, { opacity: 0.4 }];
   };
 
@@ -426,9 +437,13 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
       return qx.optTxt;
     }
     if (opt.id === q.target.id) return [qx.optTxt, { color: C.correct, fontWeight: "700" }];
-    if (opt.id === sel)          return [qx.optTxt, { color: C.primary, fontWeight: "700" }];
+    if (opt.id === sel) return [qx.optTxt, { color: C.primary, fontWeight: "700" }];
     return [qx.optTxt, { color: C.textFaint }];
   };
+
+  useEffect(() => {
+    if (q.target.audioUrl) playWordAudio(q.target.audioUrl);
+  }, [q.target.id]);
 
   return (
     <Animated.View style={[{ flex: 1 }, { transform: [{ translateX: shakeX }] }]}>
@@ -454,7 +469,7 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
               style={cardStyle(opt)}
             >
               {opt.imageUrl ? (
-                <Image source={{ uri: opt.imageUrl }} style={qx.optImg} contentFit="cover" />
+                <Image source={IMAGES_MAP[opt.imageUrl] ? IMAGES_MAP[opt.imageUrl] : { uri: opt.imageUrl }} style={qx.optImg} contentFit="cover" />
               ) : (
                 <View style={qx.optImgPlaceholder}>
                   <Ionicons name="language" size={26} color={sel === opt.id ? C.primary : C.textFaint} />
@@ -514,10 +529,10 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
    ════════════════════════════════════════════════════════════════ */
 const MatchScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
   const { t } = useTranslation();
-  const [leftSel, setLeftSel]   = useState(null);
-  const [matched, setMatched]   = useState({});
-  const [wrongFlash, setWrong]  = useState(null);
-  const [done, setDone]         = useState(false);
+  const [leftSel, setLeftSel] = useState(null);
+  const [matched, setMatched] = useState({});
+  const [wrongFlash, setWrong] = useState(null);
+  const [done, setDone] = useState(false);
 
   const isRightMatched = (w) => Object.values(matched).includes(w.id);
 
@@ -545,13 +560,13 @@ const MatchScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
   };
 
   const lStyle = (w) => {
-    if (matched[w.id])          return [mx.cell, mx.cellMatchedL];
-    if (leftSel === w.id)       return [mx.cell, mx.cellSel];
+    if (matched[w.id]) return [mx.cell, mx.cellMatchedL];
+    if (leftSel === w.id) return [mx.cell, mx.cellSel];
     if (wrongFlash?.l === w.id) return [mx.cell, mx.cellErr];
     return mx.cell;
   };
   const rStyle = (w) => {
-    if (isRightMatched(w))      return [mx.cell, mx.cellMatchedR];
+    if (isRightMatched(w)) return [mx.cell, mx.cellMatchedR];
     if (wrongFlash?.r === w.id) return [mx.cell, mx.cellErr];
     return mx.cell;
   };
@@ -641,18 +656,18 @@ const MatchScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
    ════════════════════════════════════════════════════════════════ */
 const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
   const { t } = useTranslation();
-  const [typed, setTyped]       = useState("");
+  const [typed, setTyped] = useState("");
   const [feedback, setFeedback] = useState(null);
-  const inputRef                = useRef(null);
-  const scrollRef               = useRef(null);
-  const shakeX                  = useRef(new Animated.Value(0)).current;
+  const inputRef = useRef(null);
+  const scrollRef = useRef(null);
+  const shakeX = useRef(new Animated.Value(0)).current;
 
   const shake = () =>
     Animated.sequence([
-      Animated.timing(shakeX, { toValue: 8,  duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue: 8, duration: 55, useNativeDriver: true }),
       Animated.timing(shakeX, { toValue: -8, duration: 55, useNativeDriver: true }),
-      Animated.timing(shakeX, { toValue: 4,  duration: 55, useNativeDriver: true }),
-      Animated.timing(shakeX, { toValue: 0,  duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue: 4, duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue: 0, duration: 55, useNativeDriver: true }),
     ]).start();
 
   // Insérer un caractère spécial à la fin
@@ -673,6 +688,10 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
     if (ok) onCorrect(); else { shake(); onWrong(); }
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
   };
+
+  useEffect(() => {
+    if (q.target.audioUrl) playWordAudio(q.target.audioUrl);
+  }, [q.target.id]);
 
   return (
     <KeyboardAvoidingView
@@ -808,8 +827,8 @@ export default function ExerciseSession() {
 
   // wordCount: how many words to include (cumulative lessons so far)
   // lessonIdx: 0-based index of the lesson just completed (for unlock)
-  const wordCount      = wordCountStr  ? parseInt(wordCountStr,  10) : null;
-  const lessonIdxParam = lessonIdxStr  != null ? parseInt(lessonIdxStr, 10) : null;
+  const wordCount = wordCountStr ? parseInt(wordCountStr, 10) : null;
+  const lessonIdxParam = lessonIdxStr != null ? parseInt(lessonIdxStr, 10) : null;
 
   const { lessons, fetchLessons } = useThemeStore();
   const { data: dash, fetchDashboard } = useDashboardStore();
@@ -829,7 +848,7 @@ export default function ExerciseSession() {
   }, [themeId]);
 
   // Slice lessons to cumulative word count (or all if no wordCount param)
-  const lessonsKey      = lessons.map((l) => l.id).join(",");
+  const lessonsKey = lessons.map((l) => l.id).join(",");
   const wordsForSession = useMemo(
     () => (wordCount ? lessons.slice(0, wordCount) : lessons),
     [lessonsKey, wordCount]
@@ -837,12 +856,12 @@ export default function ExerciseSession() {
   const questions = useMemo(() => buildSession(wordsForSession), [wordsForSession]);
 
 
-  const [idx, setIdx]           = useState(0);
-  const [retryQ, setRetryQ]     = useState([]);
-  const [isRetry, setIsRetry]   = useState(false);
+  const [idx, setIdx] = useState(0);
+  const [retryQ, setRetryQ] = useState([]);
+  const [isRetry, setIsRetry] = useState(false);
   const [retryIdx, setRetryIdx] = useState(0);
-  const [hearts, setHearts]     = useState(5);
-  const [correct, setCorrect]   = useState(0);
+  const [hearts, setHearts] = useState(5);
+  const [correct, setCorrect] = useState(0);
   const [answered, setAnswered] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -850,8 +869,8 @@ export default function ExerciseSession() {
     if (dash?.hearts != null) setHearts(dash.hearts);
   }, [dash?.hearts]);
 
-  const totalQ  = questions.length || 1;
-  const curQ    = isRetry ? retryQ[retryIdx] : questions[idx];
+  const totalQ = questions.length || 1;
+  const curQ = isRetry ? retryQ[retryIdx] : questions[idx];
   const dispIdx = isRetry ? totalQ + retryIdx + 1 : idx + 1;
   const dispTot = isRetry ? totalQ + retryQ.length : totalQ;
 
@@ -864,12 +883,13 @@ export default function ExerciseSession() {
   const handleWrong = useCallback((toRetry) => {
     setHearts((h) => Math.max(0, h - 1));
     setAnswered((a) => a + 1);
+    useDashboardStore.getState().deductHeart();
     if (toRetry) setRetryQ((q) => [...q, toRetry]);
   }, []);
 
   const goResults = useCallback(() => {
     const score = answered > 0 ? Math.round((correct / answered) * 100) : 0;
-    const extra  = lessonIdxParam != null ? `&lessonIdx=${lessonIdxParam}` : "";
+    const extra = lessonIdxParam != null ? `&lessonIdx=${lessonIdxParam}` : "";
     router.replace(
       `/(tabs)/lessons/${themeId}/exercise/results?score=${score}&correct=${correct}&total=${answered}${extra}`
     );
@@ -931,7 +951,7 @@ export default function ExerciseSession() {
         current={dispIdx}
         total={dispTot}
         hearts={hearts}
-        onClose={() => router.back()}
+        onClose={() => router.replace("/(tabs)/home")}
       />
 
       {isRetry && retryIdx === 0 && (
@@ -991,7 +1011,7 @@ export default function ExerciseSession() {
    ════════════════════════════════════════════════════════════════ */
 
 const s = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: C.bg },
+  root: { flex: 1, backgroundColor: C.bg },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
   reviewBanner: {
     flexDirection: "row", alignItems: "center", gap: 8,
@@ -1051,17 +1071,17 @@ const fb = StyleSheet.create({
     ...SHADOW,
   },
   wrapGreen: { backgroundColor: C.correctLight },
-  wrapRed:   { backgroundColor: C.primaryLight },
-  row:       { flexDirection: "row", alignItems: "center", gap: 14 },
+  wrapRed: { backgroundColor: C.primaryLight },
+  row: { flexDirection: "row", alignItems: "center", gap: 14 },
   icon: {
     width: 48, height: 48, borderRadius: 24,
     alignItems: "center", justifyContent: "center",
   },
   iconGreen: { backgroundColor: C.correct },
-  iconRed:   { backgroundColor: C.primary },
-  title:     { fontSize: 20, fontWeight: "800", marginBottom: 2 },
-  sub:       { fontSize: 14, color: C.textSub, lineHeight: 20 },
-  answer:    { fontWeight: "800", fontStyle: "italic", color: C.text },
+  iconRed: { backgroundColor: C.primary },
+  title: { fontSize: 20, fontWeight: "800", marginBottom: 2 },
+  sub: { fontSize: 14, color: C.textSub, lineHeight: 20 },
+  answer: { fontWeight: "800", fontStyle: "italic", color: C.text },
   explainBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",
     gap: 8, backgroundColor: C.card,
@@ -1074,7 +1094,7 @@ const fb = StyleSheet.create({
     gap: 8, borderRadius: 50, paddingVertical: 16,
   },
   continueBtnGreen: { backgroundColor: C.correctDark },
-  continueBtnRed:   { backgroundColor: C.primary },
+  continueBtnRed: { backgroundColor: C.primary },
   continueTxt: { fontSize: 16, fontWeight: "800", color: "#FFF", letterSpacing: 0.5 },
 });
 
@@ -1104,18 +1124,18 @@ const tipS = StyleSheet.create({
     borderRadius: 18, padding: 18,
     borderWidth: 1, borderColor: C.primary + "20",
   },
-  row:   { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
+  row: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
   title: { fontSize: 14, fontWeight: "800", color: C.orange },
-  body:  { fontSize: 14, color: C.text, lineHeight: 21 },
+  body: { fontSize: 14, color: C.text, lineHeight: 21 },
 });
 
 /* Image QCM */
 const iq = StyleSheet.create({
-  scroll:  { paddingHorizontal: 20, paddingTop: 16 },
-  title:   { fontSize: 18, fontWeight: "600", color: C.textSub, marginBottom: 8 },
+  scroll: { paddingHorizontal: 20, paddingTop: 16 },
+  title: { fontSize: 18, fontWeight: "600", color: C.textSub, marginBottom: 8 },
   wordRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 24 },
-  word:    { fontSize: 28, fontWeight: "800", color: C.primary, flex: 1 },
-  grid:    { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  word: { fontSize: 28, fontWeight: "800", color: C.primary, flex: 1 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   card: {
     width: CARD_W,
     backgroundColor: C.card,
@@ -1147,15 +1167,15 @@ const iq = StyleSheet.create({
 
 /* Text QCM */
 const qx = StyleSheet.create({
-  scroll:  { paddingHorizontal: 20, paddingTop: 16 },
-  title:   { fontSize: 18, fontWeight: "600", color: C.textSub, marginBottom: 12 },
+  scroll: { paddingHorizontal: 20, paddingTop: 16 },
+  title: { fontSize: 18, fontWeight: "600", color: C.textSub, marginBottom: 12 },
   wordRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 24 },
   wordPill: {
     flex: 1, backgroundColor: C.primaryLight,
     borderRadius: 16, paddingHorizontal: 16, paddingVertical: 10,
   },
   keyword: { fontSize: 22, fontWeight: "800", color: C.primary },
-  grid:    { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 20 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 20 },
   card: {
     width: CARD_W, backgroundColor: C.card,
     borderRadius: 20, overflow: "hidden",
@@ -1163,9 +1183,9 @@ const qx = StyleSheet.create({
     alignItems: "center", paddingBottom: 12,
     ...SHADOW,
   },
-  cardSel:     { borderColor: C.primary, backgroundColor: C.primaryLight },
+  cardSel: { borderColor: C.primary, backgroundColor: C.primaryLight },
   cardCorrect: { borderColor: C.correct, backgroundColor: C.correctLight },
-  cardWrong:   { borderColor: C.primary, backgroundColor: C.primaryLight },
+  cardWrong: { borderColor: C.primary, backgroundColor: C.primaryLight },
   optImg: { width: "100%", height: CARD_W * 0.72 },
   optImgPlaceholder: {
     width: "100%", height: CARD_W * 0.72,
@@ -1177,16 +1197,16 @@ const qx = StyleSheet.create({
     textAlign: "center", marginTop: 8, paddingHorizontal: 8,
   },
   optBottom: { alignItems: "center", paddingHorizontal: 8 },
-  badge:     { position: "absolute", top: 8, right: 8 },
+  badge: { position: "absolute", top: 8, right: 8 },
 });
 
 /* Paires */
 const mx = StyleSheet.create({
-  scroll:  { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 140 },
-  title:   { fontSize: 26, fontWeight: "800", color: C.text, marginBottom: 6 },
-  sub:     { fontSize: 14, color: C.textSub, marginBottom: 24, lineHeight: 21 },
+  scroll: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 140 },
+  title: { fontSize: 26, fontWeight: "800", color: C.text, marginBottom: 6 },
+  sub: { fontSize: 14, color: C.textSub, marginBottom: 24, lineHeight: 21 },
   columns: { flexDirection: "row", gap: 12 },
-  col:     { flex: 1, gap: 10 },
+  col: { flex: 1, gap: 10 },
   cell: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     backgroundColor: C.card,
@@ -1194,11 +1214,11 @@ const mx = StyleSheet.create({
     borderWidth: 2.5, borderColor: C.border,
     ...SHADOW,
   },
-  cellSel:      { borderColor: C.primary, backgroundColor: C.primaryLight },
-  cellErr:      { borderColor: "#FF6B6B", backgroundColor: "#FFF0F0" },
+  cellSel: { borderColor: C.primary, backgroundColor: C.primaryLight },
+  cellErr: { borderColor: "#FF6B6B", backgroundColor: "#FFF0F0" },
   cellMatchedL: { borderColor: C.correct, backgroundColor: C.correctLight },
   cellMatchedR: { borderColor: C.correct, backgroundColor: C.correct },
-  cellTxt:  { fontSize: 13, fontWeight: "700", color: C.text, flex: 1 },
+  cellTxt: { fontSize: 13, fontWeight: "700", color: C.text, flex: 1 },
   cellTxtR: { color: C.primary },
   cellLang: {
     fontSize: 9, fontWeight: "700",
@@ -1208,8 +1228,8 @@ const mx = StyleSheet.create({
 
 /* Écriture */
 const wx = StyleSheet.create({
-  scroll:    { paddingHorizontal: 20, paddingTop: 16 },
-  title:     { fontSize: 22, fontWeight: "800", color: C.text, lineHeight: 30, marginBottom: 20 },
+  scroll: { paddingHorizontal: 20, paddingTop: 16 },
+  title: { fontSize: 22, fontWeight: "800", color: C.text, lineHeight: 30, marginBottom: 20 },
   hintCard: {
     flexDirection: "row", alignItems: "center", gap: 14,
     backgroundColor: C.primaryLight,
@@ -1222,7 +1242,7 @@ const wx = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
   },
   hintLabel: { fontSize: 12, fontWeight: "600", color: C.textSub, marginBottom: 4 },
-  hintWord:  { fontSize: 20, fontWeight: "800", color: C.primary },
+  hintWord: { fontSize: 20, fontWeight: "800", color: C.primary },
   blob: {
     position: "absolute", width: 100, height: 100, borderRadius: 50,
     backgroundColor: "rgba(183,28,28,0.07)", right: -20, top: -20,

@@ -1,4 +1,5 @@
 import { Audio } from "expo-av";
+import { AUDIOS_MAP } from "./AssetsMap";
 
 const DEFAULT_AUDIO_MODE = {
   allowsRecordingIOS: false,
@@ -29,8 +30,9 @@ export async function setAudioMode(options = DEFAULT_AUDIO_MODE) {
 export async function playAudioUrl(url) {
   if (!url) return null;
   await setAudioMode();
+  const source = AUDIOS_MAP[url] ? AUDIOS_MAP[url] : { uri: url };
   const { sound } = await Audio.Sound.createAsync(
-    { uri: url },
+    source,
     { shouldPlay: true, volume: 1.0 }
   );
   sound.setOnPlaybackStatusUpdate((status) => {

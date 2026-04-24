@@ -137,7 +137,7 @@ export default function SettingsScreen() {
       {/* ── Sticky Header ── */}
       <View style={s.stickyHeader}>
         <View style={s.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <TouchableOpacity onPress={() => router.replace("/(tabs)/profile")} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
           </TouchableOpacity>
           <Text style={[Typo.titleLg, { marginLeft: Space.md }]}>{t("settings.title", "Paramètres")}</Text>

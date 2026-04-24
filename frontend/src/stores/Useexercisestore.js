@@ -1,3 +1,4 @@
+import Logger from "../utils/logger";
 /**
  * ╔══════════════════════════════════════════════════════════════╗
  * ║  MULEMA — useExerciseStore (Zustand)                          ║
@@ -69,7 +70,7 @@ export const useExerciseStore = create((set, get) => ({
       set({ exerciseData: data, isLoading: false });
       return data;
     } catch (error) {
-      console.error("[ExerciseStore] loadExercise error:", error);
+      Logger.error("[ExerciseStore] loadExercise error:", error);
       set({ isLoading: false });
       throw error;
     }
@@ -126,7 +127,7 @@ export const useExerciseStore = create((set, get) => ({
       set({ result });
       return result;
     } catch (error) {
-      console.error("[ExerciseStore] finishExercise error:", error);
+      Logger.error("[ExerciseStore] finishExercise error:", error);
       throw error;
     }
   },

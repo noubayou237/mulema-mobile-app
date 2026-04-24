@@ -693,7 +693,7 @@ export default function Header({
             <AvatarBtn
               username={username}
               avatarSource={avatarSource}
-              onPress={() => router.push("standalone/profile")}
+              onPress={() => router.push("/(tabs)/profile")}
             />
           </View>
         </View>

@@ -1,3 +1,4 @@
+import Logger from "../utils/logger";
 /**
  * ╔══════════════════════════════════════════════════════════════╗
  * ║  MULEMA — useThemeStore (Zustand)                             ║
@@ -52,7 +53,7 @@ export const useThemeStore = create((set, get) => ({
       set({ isLoading: false });
       // Don't log if it's a 401 or Network Error after session is cleared
       if (error?.response?.status !== 401 && isSessionActive()) {
-        console.error("[ThemeStore] fetchThemes error:", error);
+        Logger.error("[ThemeStore] fetchThemes error:", error);
       }
       return [];
     }
@@ -73,7 +74,7 @@ export const useThemeStore = create((set, get) => ({
     } catch (error) {
       set({ lessonsLoading: false });
       if (error?.response?.status !== 401) {
-        console.error("[ThemeStore] fetchLessons error:", error);
+        Logger.error("[ThemeStore] fetchLessons error:", error);
       }
       return [];
     }
@@ -94,7 +95,7 @@ export const useThemeStore = create((set, get) => ({
     } catch (error) {
       set({ wordsLoading: false });
       if (error?.response?.status !== 401) {
-        console.error("[ThemeStore] fetchWords error:", error);
+        Logger.error("[ThemeStore] fetchWords error:", error);
       }
       return [];
     }

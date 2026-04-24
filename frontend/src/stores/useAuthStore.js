@@ -1,3 +1,4 @@
+import Logger from "../utils/logger";
 /**
  * MULEMA — useAuthStore
  * Adapté au backend qui retourne { accessToken, refreshToken } sans user
@@ -100,7 +101,7 @@ export const useAuthStore = create((set, get) => ({
       user = meResponse.data;
       await cacheUser(user);
     } catch (e) {
-      console.warn("[AuthStore] GET /auth/me failed:", e);
+      Logger.warn("[AuthStore] GET /auth/me failed:", e);
     }
 
     set({
@@ -130,7 +131,7 @@ export const useAuthStore = create((set, get) => ({
       user = data;
       await cacheUser(user);
     } catch (err) {
-      console.warn("[Auth] Failed to load user profile:", err?.message);
+      Logger.warn("[Auth] Failed to load user profile:", err?.message);
       set({ isAuthenticated: false, token: null });
       return null;
     }
@@ -166,6 +167,12 @@ export const useAuthStore = create((set, get) => ({
     const { data } = await api.put("/user/profile-picture", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
+    get().updateUser({ avatar: data.imageUrl });
+    return data;
+  },
+
+  selectPreDrawnAvatar: async (avatarId) => {
+    const { data } = await api.put("/user/avatar/select", { avatarId });
     get().updateUser({ avatar: data.imageUrl });
     return data;
   },

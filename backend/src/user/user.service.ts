@@ -55,13 +55,15 @@ export class UserService {
     );
 
     const updatedStreak = await this.updateStreak(userId);
+    const cowrySynced = await this.syncCowries(userId, cowry);
 
     return {
       streakDays: updatedStreak.daysConnected,
       totalPoints: stats?.totalPrawns ?? 0,
       progressPercent,
       totalTimeMinutes: totalMinutes,
-      hearts: cowry?.currentCowries ?? 5,
+      hearts: cowrySynced.currentCowries,
+      nextRechargeIn: cowrySynced.nextRechargeIn,
       lessonsCompleted: stats?.lessonsCompleted ?? 0,
       exercisesCompleted: stats?.exercisesCompleted ?? 0,
       continueTheme,
@@ -421,6 +423,28 @@ export class UserService {
   }
 
   // =====================
+  // SELECT PRE-DRAWN AVATAR
+  // =====================
+  async selectAvatar(userId: string, avatarId: string) {
+    const existing = await this.prisma.avatar.findUnique({
+      where: { userId }
+    });
+
+    if (existing) {
+      await this.prisma.avatar.update({
+        where: { userId },
+        data: { imageUrl: avatarId }
+      });
+    } else {
+      await this.prisma.avatar.create({
+        data: { userId, imageUrl: avatarId }
+      });
+    }
+
+    return { imageUrl: avatarId };
+  }
+
+  // =====================
   // UPDATE LANGUAGE
   // =====================
   async updateLanguage(userId: string, language: string) {
@@ -522,5 +546,70 @@ export class UserService {
 
     this.logger.log(`Password updated for user ${userId}`);
     return { success: true };
+  }
+
+  // =====================
+  // COWRY RECHARGE & DEDUCT
+  // =====================
+  async syncCowries(userId: string, cowryRecord: any = null) {
+    let cowry = cowryRecord;
+    if (!cowry) {
+      cowry = await this.prisma.cowry.findUnique({ where: { userId } });
+    }
+    if (!cowry) return { currentCowries: 5, nextRechargeIn: 0 };
+
+    const RECHARGE_SECONDS = 9 * 60; // 9 minutes
+    let { currentCowries, maxCowries, rechargeTime } = cowry;
+
+    if (currentCowries < maxCowries && rechargeTime > 0) {
+      const now = Math.floor(Date.now() / 1000);
+      const elapsed = now - rechargeTime;
+      const cowriesToRecover = Math.floor(elapsed / RECHARGE_SECONDS);
+
+      if (cowriesToRecover > 0) {
+        currentCowries = Math.min(maxCowries, currentCowries + cowriesToRecover);
+        // If still not full, advance rechargeTime by the amount of recovered periods
+        if (currentCowries < maxCowries) {
+          rechargeTime += cowriesToRecover * RECHARGE_SECONDS;
+        } else {
+          rechargeTime = 0; // Fully recharged
+        }
+
+        cowry = await this.prisma.cowry.update({
+          where: { userId },
+          data: { currentCowries, rechargeTime },
+        });
+      }
+    }
+    
+    // Calculate seconds left for next recharge if not full
+    const nextRechargeIn = currentCowries < maxCowries
+      ? Math.max(0, RECHARGE_SECONDS - (Math.floor(Date.now() / 1000) - rechargeTime))
+      : 0;
+
+    return { 
+      currentCowries: cowry.currentCowries, 
+      nextRechargeIn 
+    };
+  }
+
+  async deductCowries(userId: string, amount: number) {
+    const cowry = await this.prisma.cowry.findUnique({ where: { userId } });
+    if (!cowry) return { currentCowries: 5 };
+
+    let { currentCowries, rechargeTime, maxCowries } = cowry;
+    if (currentCowries === maxCowries) {
+      // Start the timer
+      rechargeTime = Math.floor(Date.now() / 1000);
+    }
+
+    currentCowries = Math.max(0, currentCowries - amount);
+
+    const updated = await this.prisma.cowry.update({
+      where: { userId },
+      data: { currentCowries, rechargeTime },
+    });
+
+    return this.syncCowries(userId, updated);
   }
 }

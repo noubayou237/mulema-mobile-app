@@ -1,3 +1,4 @@
+import Logger from "../utils/logger";
 /**
  * MULEMA — useBackgroundMusic
  * Plays the app theme song on loop at low volume.
@@ -50,7 +51,7 @@ export function useBackgroundMusic() {
         soundRef.current = sound;
         isOwner = true;
       } catch (err) {
-        console.warn("[BackgroundMusic] Could not load theme song:", err.message);
+        Logger.warn("[BackgroundMusic] Could not load theme song:", err.message);
       }
     };
 
@@ -103,7 +104,7 @@ export function useBackgroundMusic() {
         globalIsMuted = true;
       }
     } catch (err) {
-      console.warn("[BackgroundMusic] toggleMute error:", err.message);
+      Logger.warn("[BackgroundMusic] toggleMute error:", err.message);
     }
   };
 

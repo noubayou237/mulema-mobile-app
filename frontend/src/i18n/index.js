@@ -1,3 +1,4 @@
+import Logger from "../utils/logger";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -16,7 +17,7 @@ const getDefaultLanguage = async () => {
       return savedLanguage;
     }
   } catch (error) {
-    console.warn("[i18n] Error reading language from storage:", error);
+    Logger.warn("[i18n] Error reading language from storage:", error);
   }
   return "fr"; // Default to French
 };
@@ -40,7 +41,7 @@ export const changeLanguage = async (language) => {
     await i18n.changeLanguage(language);
     await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, language);
   } catch (error) {
-    console.error("Error changing language:", error);
+    Logger.error("Error changing language:", error);
   }
 };
 

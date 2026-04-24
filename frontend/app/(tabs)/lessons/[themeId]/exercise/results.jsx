@@ -113,7 +113,7 @@ export default function ExerciseResults() {
     total: totalStr,
     lessonIdx: lessonIdxStr,
   } = useLocalSearchParams();
-  const { completeTheme } = useThemeStore();
+  const { completeTheme, lessons } = useThemeStore();
 
   const score          = parseInt(scoreStr   ?? "0",  10);
   const correct        = parseInt(correctStr ?? "0", 10);
@@ -122,6 +122,9 @@ export default function ExerciseResults() {
   const stars          = getStars(score);
   const msg            = getMessage(score, t);
   const success        = score >= 60;
+  
+  const isFinalLesson  = lessonIdxParam != null && lessons && lessonIdxParam === lessons.length - 1;
+  const [showFinalAnim, setShowFinalAnim] = useState(false);
 
   /* Compléter le thème en local + débloquer la leçon suivante en base si score suffisant */
   useEffect(() => {
@@ -129,13 +132,21 @@ export default function ExerciseResults() {
       completeTheme(themeId, score);
       // Persist unlock to DB only when the user passed (score >= 60)
       if (success && lessonIdxParam != null) {
-        api
-          .post(`/progress/unlock-next-lesson/${themeId}`, {
+        if (isFinalLesson) {
+          setShowFinalAnim(true);
+          // Unlock Final Challenge / Story Video logic in backend (if needed)
+          api.post(`/progress/unlock-final/${themeId}`, {
             completedLessonOrder: lessonIdxParam,
-          })
-          .catch((err) =>
-            console.warn("[Unlock] Could not unlock next lesson:", err?.message)
-          );
+          }).catch(err => Logger.warn("[Unlock] Final challenge:", err?.message));
+        } else {
+          api
+            .post(`/progress/unlock-next-lesson/${themeId}`, {
+              completedLessonOrder: lessonIdxParam,
+            })
+            .catch((err) =>
+              Logger.warn("[Unlock] Could not unlock next lesson:", err?.message)
+            );
+        }
       }
     }
   }, []);
@@ -179,12 +190,12 @@ export default function ExerciseResults() {
           <View style={s.bannerBlob1} />
           <View style={s.bannerBlob2} />
           <Ionicons
-            name={score >= 60 ? "trophy" : "refresh"}
+            name={showFinalAnim ? "film" : (score >= 60 ? "trophy" : "refresh")}
             size={48}
             color="rgba(255,255,255,0.9)"
           />
-          <Text style={s.bannerTitle}>{msg.title}</Text>
-          <Text style={s.bannerSub}>{msg.sub}</Text>
+          <Text style={s.bannerTitle}>{showFinalAnim ? t("exercises.finalChallengeUnlocked", "Final Challenge Unlocked!") : msg.title}</Text>
+          <Text style={s.bannerSub}>{showFinalAnim ? t("exercises.storyVideoAvailable", "The story video is now available!") : msg.sub}</Text>
         </View>
 
         {/* ── Score + étoiles ── */}

@@ -17,6 +17,7 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 
 import { useTranslation } from "react-i18next";
+import { IMAGES_MAP } from "../../../src/utils/AssetsMap";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../../src/theme/tokens";
 import { useAuthStore } from "../../../src/stores/useAuthStore";
@@ -63,7 +64,7 @@ export default function ProfileScreen() {
       {/* ── Sticky Header ── */}
       <View style={s.stickyHeader}>
         <View style={s.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <TouchableOpacity onPress={() => router.replace("/(tabs)/home")} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
           </TouchableOpacity>
           <Text style={[Typo.titleLg, { flex: 1, marginLeft: Space.md }]}>{user?.name || t("profile.title", "Profil")}</Text>
@@ -79,7 +80,11 @@ export default function ProfileScreen() {
         <Animated.View style={[s.avatarSection, fade(a1, 20)]}>
           <View style={s.avatarRing}>
             {user?.avatar ? (
-              <Image source={{ uri: user.avatar }} style={s.avatar} contentFit="cover" />
+              IMAGES_MAP[user.avatar] ? (
+                <Image source={IMAGES_MAP[user.avatar]} style={s.avatar} contentFit="cover" />
+              ) : (
+                <Image source={{ uri: user.avatar }} style={s.avatar} contentFit="cover" />
+              )
             ) : (
               <View style={[s.avatar, { backgroundColor: Colors.primary + "15", alignItems: "center", justifyContent: "center" }]}>
                 <Ionicons name="person" size={48} color={Colors.primary} />

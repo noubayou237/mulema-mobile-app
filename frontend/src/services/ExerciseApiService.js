@@ -1,3 +1,4 @@
+import Logger from "../utils/logger";
 /**
  * Exercise API Service
  *
@@ -26,7 +27,7 @@ export const generateBlockExercises = async (blockId) => {
     const response = await api.get(`/exercises/block/${blockId}/generate`);
     return response.data;
   } catch (error) {
-    console.error('Error generating block exercises:', error);
+    Logger.error('Error generating block exercises:', error);
     throw error;
   }
 };
@@ -42,7 +43,7 @@ export const generateThemeExercises = async (themeId) => {
     const response = await api.get(`/exercises/theme/${themeId}/generate`);
     return response.data;
   } catch (error) {
-    console.error('Error generating theme exercises:', error);
+    Logger.error('Error generating theme exercises:', error);
     throw error;
   }
 };
@@ -58,7 +59,7 @@ export const getWordsForReview = async (userId) => {
     const response = await api.get(`/exercises/review/${userId}`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching review words:', error);
+    Logger.error('Error fetching review words:', error);
     throw error;
   }
 };
@@ -80,7 +81,7 @@ export const updateWordProgress = async (userId, wordId, isCorrect) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Error updating word progress:', error);
+    Logger.error('Error updating word progress:', error);
     throw error;
   }
 };
@@ -96,7 +97,7 @@ export const createExercise = async (exerciseData) => {
     const response = await api.post('/exercises', exerciseData);
     return response.data;
   } catch (error) {
-    console.error('Error creating exercise:', error);
+    Logger.error('Error creating exercise:', error);
     throw error;
   }
 };
@@ -113,7 +114,7 @@ export const completeExercise = async (exerciseId, completionData) => {
     const response = await api.patch(`/exercises/${exerciseId}/complete`, completionData);
     return response.data;
   } catch (error) {
-    console.error('Error completing exercise:', error);
+    Logger.error('Error completing exercise:', error);
     throw error;
   }
 };
@@ -129,7 +130,7 @@ export const getExercise = async (exerciseId) => {
     const response = await api.get(`/exercises/${exerciseId}`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching exercise:', error);
+    Logger.error('Error fetching exercise:', error);
     throw error;
   }
 };
@@ -145,7 +146,7 @@ export const getExercisesByLesson = async (lessonId) => {
     const response = await api.get(`/exercises/lesson/${lessonId}`);
     return response.data;
   } catch (error) {
-    console.error('Error fetching exercises by lesson:', error);
+    Logger.error('Error fetching exercises by lesson:', error);
     throw error;
   }
 };

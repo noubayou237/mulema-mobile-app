@@ -98,8 +98,17 @@ const getThemeExos = (themes) => {
    HOME HEADER
    ════════════════════════════════════════════════════════════════════ */
 
-const HomeHeader = ({ streak = 0, xp = 0, onMenuPress, currentLang, onToggleLang }) => {
+const HomeHeader = ({ streak = 0, xp = 0, hearts = 5, nextRechargeIn = 0, onMenuPress, currentLang, onToggleLang }) => {
   const { t } = useTranslation();
+  
+  // Format nextRechargeIn (seconds) to mm:ss
+  const formatTime = (secs) => {
+    if (!secs) return "";
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
   return (
     <View style={s.header}>
       <View style={s.headerLeft}>
@@ -127,6 +136,15 @@ const HomeHeader = ({ streak = 0, xp = 0, onMenuPress, currentLang, onToggleLang
         >
           <Ionicons name="globe-outline" size={18} color={RED} />
         </TouchableOpacity>
+        <View style={[s.headerBadge, { backgroundColor: RED_L, marginLeft: Space.xs }]}>
+          <Ionicons name="heart" size={14} color={RED} />
+          <Text style={[Typo.labelLg, { color: Colors.onSurface, marginLeft: 4 }]}>
+            {hearts}
+            {hearts < 5 && nextRechargeIn > 0 && (
+              <Text style={{ fontSize: 10, color: RED }}> ({formatTime(nextRechargeIn)})</Text>
+            )}
+          </Text>
+        </View>
         <View style={[s.headerBadge, { backgroundColor: GREEN_L, marginLeft: Space.xs }]}>
           <Ionicons name="leaf" size={14} color={GREEN} />
           <Text style={[Typo.labelLg, { color: Colors.onSurface, marginLeft: 4 }]}>{streak}</Text>
@@ -451,6 +469,8 @@ export default function HomeScreen() {
           <HomeHeader
             streak={dash?.streakDays || 0}
             xp={dash?.totalPoints || 0}
+            hearts={dash?.hearts ?? 5}
+            nextRechargeIn={dash?.nextRechargeIn || 0}
             onMenuPress={openDrawer}
             currentLang={appLang}
             onToggleLang={handleToggleLang}

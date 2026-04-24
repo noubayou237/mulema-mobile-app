@@ -145,4 +145,27 @@ export class UserController {
     this.logger.log(`Change password request for user: ${user.userId}`);
     return this.userService.changePassword(user.userId, body);
   }
+  // =====================
+  // DEDUCT COWRIES
+  // =====================
+  @Put('cowries')
+  async deductCowries(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { amount?: number },
+  ) {
+    this.logger.log(`Deduct cowries request for user: ${user.userId}`);
+    return this.userService.deductCowries(user.userId, body.amount || 1);
+  }
+
+  // =====================
+  // SELECT PRE-DRAWN AVATAR
+  // =====================
+  @Put('avatar/select')
+  async selectAvatar(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { avatarId: string },
+  ) {
+    this.logger.log(`Select pre-drawn avatar request for user: ${user.userId}`);
+    return this.userService.selectAvatar(user.userId, body.avatarId);
+  }
 }
