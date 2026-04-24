@@ -9,7 +9,7 @@ export const getFriendlyErrorMessage = (error) => {
   if (!error) return t("errors.somethingWentWrong");
 
   // 1. Handle Axios "Network Error" (often CORS or server down)
-  if (error.message === "Network Error") {
+  if (error.message === "Network Error" || error.code === "ERR_NETWORK" || error.message?.toLowerCase().includes("network error")) {
     return t("errors.networkError");
   }
 

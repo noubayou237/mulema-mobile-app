@@ -519,15 +519,16 @@ export default function CommunityScreen() {
           <FilterTabs active={filter} onChange={setFilter} />
         </View>
 
-        {/* ── Error banner (user-friendly, no dev jargon) ── */}
+        {/* ── Error banner (Standardized) ── */}
         {leaderboardError && !leaderboardLoading && (
           <View style={s.errorBanner}>
-            <Ionicons name="cloud-offline-outline" size={28} color={Colors.textTertiary} />
-            <Text style={s.errorTitle}>{t("community.rankingsUnavailable", "Classement indisponible")}</Text>
-            <Text style={s.errorSub}>{leaderboardError}</Text>
-            <TouchableOpacity onPress={onRefresh} style={s.retryBtn} activeOpacity={0.75}>
-              <Ionicons name="refresh" size={15} color={Colors.primary} />
-              <Text style={s.retryTxt}>{t("common.retry", "Réessayer")}</Text>
+            <Ionicons name="cloud-offline-outline" size={24} color={Colors.primary} />
+            <View style={{ flex: 1 }}>
+              <Text style={s.errorTitle}>{t("common.error", "Erreur")}</Text>
+              <Text style={s.errorTxt}>{leaderboardError}</Text>
+            </View>
+            <TouchableOpacity onPress={onRefresh} style={s.retryBtn}>
+              <Ionicons name="refresh" size={18} color={Colors.primary} />
             </TouchableOpacity>
           </View>
         )}
@@ -635,45 +636,40 @@ const s = StyleSheet.create({
     gap: Space.sm,
   },
 
-  /* Error banner */
+  /* Error banner (Standardized) */
   errorBanner: {
-    marginHorizontal: Space["2xl"],
-    marginBottom: Space.lg,
-    backgroundColor: Colors.surfaceContainerLowest,
-    borderRadius: Radius.xl,
-    padding: Space["2xl"],
-    alignItems: "center",
-    gap: Space.sm,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-  },
-  errorTitle: {
-    fontFamily: "Fredoka_600SemiBold",
-    fontSize: 16,
-    color: Colors.onSurface,
-    textAlign: "center",
-  },
-  errorSub: {
-    fontFamily: "Nunito-Regular",
-    fontSize: 13,
-    color: Colors.textTertiary,
-    textAlign: "center",
-    lineHeight: 19,
-  },
-  retryBtn: {
+    backgroundColor: Colors.primary + "15",
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginTop: Space.sm,
-    paddingHorizontal: Space.xl,
-    paddingVertical: Space.md,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.primary + "15",
+    padding: Space.lg,
+    borderRadius: Radius.lg,
+    marginBottom: Space.lg,
+    marginHorizontal: Space["2xl"],
+    gap: Space.md,
+    borderWidth: 1,
+    borderColor: Colors.primary + "30",
   },
-  retryTxt: {
-    fontFamily: "Fredoka_600SemiBold",
+  errorTitle: {
     fontSize: 14,
+    fontFamily: "Fredoka_600SemiBold",
     color: Colors.primary,
+    marginBottom: 2,
+  },
+  errorTxt: {
+    color: Colors.textTertiary,
+    fontFamily: "Nunito-Regular",
+    fontSize: 13,
+    flex: 1,
+    lineHeight: 18,
+  },
+  retryBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#FFF",
+    alignItems: "center",
+    justifyContent: "center",
+    ...Shadow.sm,
   },
 
   /* Empty state */

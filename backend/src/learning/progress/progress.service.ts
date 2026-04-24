@@ -155,7 +155,27 @@ export class ProgressService {
     return { unlockedWordId: nextWord.id, order: nextWord.order };
   }
 
-  async markThemeCompleted(userId: string, themeId: string) {
+  async markThemeCompleted(userId: string, themeId: string, completedLessonOrder?: number) {
+    // Mark the last lesson word as completed so progress reaches 100%
+    if (completedLessonOrder != null) {
+      const lastWord = await this.prisma.mulemWord.findFirst({
+        where: { themeId, order: completedLessonOrder + 1 },
+      });
+      if (lastWord) {
+        await this.prisma.userProgress.upsert({
+          where: { userId_mulemWordId: { userId, mulemWordId: lastWord.id } },
+          update: { isCompleted: true, stars: 3 },
+          create: {
+            userId,
+            mulemWordId: lastWord.id,
+            isUnlocked: true,
+            isCompleted: true,
+            stars: 3,
+          },
+        });
+      }
+    }
+
     return this.prisma.userMulemThemeProgress.upsert({
       where: { userId_themeId: { userId, themeId } },
       update: { isCompleted: true },
