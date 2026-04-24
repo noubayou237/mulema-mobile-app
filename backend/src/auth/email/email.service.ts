@@ -1,31 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private transporter: nodemailer.Transporter;
+  private resend: Resend;
 
   constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
-
-    // Verify connection on startup
-    this.transporter
-      .verify()
-      .then(() => {
-        this.logger.log('Email service is ready');
-      })
-      .catch((error) => {
-        this.logger.error('Email service failed to initialize', error);
-      });
+    this.resend = new Resend(process.env.RESEND_API_KEY);
+    this.logger.log('Email service (Resend) initialized');
   }
 
   async sendOtp(
@@ -47,16 +30,20 @@ export class EmailService {
         : `<p>Your email verification code is:</p><h2>${otpCode}</h2><p>This code expires in 10 minutes.</p>`;
 
     try {
-      const info = await this.transporter.sendMail({
-        from: process.env.SMTP_FROM,
+      const { data, error } = await this.resend.emails.send({
+        from: process.env.RESEND_FROM || 'onboarding@resend.dev',
         to: email,
         subject: subject,
         text: text,
         html: html,
       });
 
-      this.logger.log(`Email sent successfully to ${email}: ${info.messageId}`);
-      return info;
+      if (error) {
+        throw error;
+      }
+
+      this.logger.log(`Email sent successfully to ${email}: ${data?.id}`);
+      return data;
     } catch (error) {
       this.logger.error(`Failed to send email to ${email}`, error);
       throw error;
