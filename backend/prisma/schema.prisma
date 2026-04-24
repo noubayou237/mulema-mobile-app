@@ -67,18 +67,11 @@ model Statistics {
 }
 
 model RootsStreak {
-<<<<<<< HEAD
-  id            String @id @default(uuid())
-  daysConnected Int
-  userId        String @unique
-  user          User   @relation(fields: [userId], references: [id])
-=======
   id              String   @id @default(uuid())
   daysConnected   Int      @default(0)
   userId          String   @unique
   lastConnectedAt DateTime @default(now())
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
->>>>>>> 05d59aa94cded19d34e4805b2c7a1da2b701d38b
 }
 
 model Settings {
@@ -240,17 +233,11 @@ model UserProgress {
   isCompleted Boolean    @default(false)
   stars       Int        @default(0)
   userId      String
-<<<<<<< HEAD
-  lessonId    String
-  lesson      Lesson  @relation(fields: [lessonId], references: [id])
-  user        User    @relation(fields: [userId], references: [id])
-=======
   lessonId    String?
   mulemWordId String?
   lesson      Lesson?    @relation(fields: [lessonId], references: [id])
   mulemWord   MulemWord? @relation(fields: [mulemWordId], references: [id])
   user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
->>>>>>> 05d59aa94cded19d34e4805b2c7a1da2b701d38b
 
   @@unique([userId, lessonId])
   @@unique([userId, mulemWordId])
