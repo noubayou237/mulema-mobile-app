@@ -153,7 +153,11 @@ export class UserService {
         statistics: { select: { totalPrawns: true } },
         rootsStreak: { select: { daysConnected: true } },
       },
-      orderBy: { statistics: { totalPrawns: 'desc' } },
+      orderBy: [
+        { statistics: { totalPrawns: 'desc' } },
+        { statistics: { lessonsCompleted: 'desc' } },
+        { createdAt: 'asc' },
+      ],
       take: 20,
     });
 

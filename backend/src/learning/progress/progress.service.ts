@@ -48,13 +48,14 @@ export class ProgressService {
       update: {
         totalLearningTime: { increment: 120 },
         lessonsCompleted: { increment: 1 },
+        totalPrawns: { increment: 15 }, // Award 15 XP for lesson
       },
       create: {
         userId,
         totalLearningTime: 120,
         lessonsCompleted: 1,
         exercisesCompleted: 0,
-        totalPrawns: 0,
+        totalPrawns: 15,
       },
     });
 
@@ -140,13 +141,14 @@ export class ProgressService {
       update: {
         totalLearningTime: { increment: 300 },
         exercisesCompleted: { increment: 1 },
+        totalPrawns: { increment: 30 }, // Award 30 XP for exercise
       },
       create: {
         userId,
         totalLearningTime: 300,
         lessonsCompleted: 0,
         exercisesCompleted: 1,
-        totalPrawns: 0,
+        totalPrawns: 30,
       },
     });
 
