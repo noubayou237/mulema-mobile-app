@@ -183,7 +183,7 @@ export default function BottomNav({ activeKey = "home" }) {
       label: t("nav.home") || "Accueil",
       icon: "home-outline",
       activeIcon: "home",
-      route: "/home",
+      route: "/(tabs)/home",
       center: true
     },
     {
@@ -191,14 +191,14 @@ export default function BottomNav({ activeKey = "home" }) {
       label: t("nav.lessons") || "Leçons",
       icon: "book-outline",
       activeIcon: "book",
-      route: "/lessons"
+      route: "/(tabs)/lessons"
     },
     {
       key: "exercices",
       label: t("nav.exercises") || "Progression",
       icon: "trophy-outline",
       activeIcon: "trophy",
-      route: "/exercices",
+      route: "/(tabs)/exercises",
       badge: null // removed per maquette — clean look
     },
     {
@@ -206,14 +206,14 @@ export default function BottomNav({ activeKey = "home" }) {
       label: t("nav.community") || "Communauté",
       icon: "chatbubbles-outline",
       activeIcon: "chatbubbles",
-      route: "/community"
+      route: "/(tabs)/community"
     },
     {
       key: "profile",
       label: "Profile",
       icon: "person-outline",
       activeIcon: "person",
-      route: "standalone/profile"
+      route: "/(tabs)/profile"
     }
   ];
 

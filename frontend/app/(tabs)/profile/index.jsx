@@ -6,7 +6,7 @@
  * ╚══════════════════════════════════════════════════════════════╝
  */
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, Animated, Easing,
   StyleSheet, Platform, Dimensions, StatusBar,
@@ -16,23 +16,29 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 
+import { useTranslation } from "react-i18next";
+import { IMAGES_MAP } from "../../../src/utils/AssetsMap";
+
 import { Colors, Typo, Space, Radius, Shadow } from "../../../src/theme/tokens";
-import { MCulturalCard } from "../../../src/components/ui/MComponents";
 import { useAuthStore } from "../../../src/stores/useAuthStore";
 import { useDashboardStore } from "../../../src/stores/useDashboardStore";
 
 const { width } = Dimensions.get("window");
 const STAT_W = (width - Space["2xl"] * 2 - Space.md) / 2;
-const DAYS = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"];
 
 /* ══════════════════════════════════════════════════════════════ */
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { t } = useTranslation();
+  const DAYS = t("common.daysShort", { defaultValue: "LUN,MAR,MER,JEU,VEN,SAM,DIM" }).split(",");
+  const { user, fetchProfile } = useAuthStore();
   const { data: dash, fetchDashboard } = useDashboardStore();
 
-  useEffect(() => { fetchDashboard(); }, []);
+  useEffect(() => {
+    fetchDashboard();
+    fetchProfile();
+  }, []);
 
   // Animations
   const a1 = useRef(new Animated.Value(0)).current;
@@ -52,28 +58,36 @@ export default function ProfileScreen() {
   const streak = dash?.streakDays || 0;
   const wordsLearned = dash?.wordsLearned || 0;
   const totalHours = Math.round((dash?.totalTimeMinutes || 0) / 60);
+  const barHeights = useMemo(() => DAYS.map(() => 0), []);
 
   return (
     <View style={s.root}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.surface} />
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* ── Header ── */}
+      {/* ── Sticky Header ── */}
+      <View style={s.stickyHeader}>
         <View style={s.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <TouchableOpacity onPress={() => router.replace("/(tabs)/home")} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
           </TouchableOpacity>
-          <Text style={[Typo.titleLg, { flex: 1, marginLeft: Space.md }]}>{user?.name || "Profil"}</Text>
+          <Text style={[Typo.titleLg, { flex: 1, marginLeft: Space.md }]}>{user?.name || t("profile.title", "Profil")}</Text>
           <TouchableOpacity onPress={() => router.push("/(tabs)/profile/settings")} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="settings-outline" size={24} color={Colors.onSurface} />
           </TouchableOpacity>
         </View>
+      </View>
+
+      <ScrollView contentContainerStyle={[s.scroll, { paddingTop: 100 }]} showsVerticalScrollIndicator={false}>
 
         {/* ── Avatar + Name ── */}
         <Animated.View style={[s.avatarSection, fade(a1, 20)]}>
           <View style={s.avatarRing}>
-            {user?.avatar ? (
-              <Image source={{ uri: user.avatar }} style={s.avatar} contentFit="cover" />
+            {user?.avatar && typeof user.avatar === 'string' && user.avatar.trim() !== "" ? (
+              IMAGES_MAP[user.avatar] ? (
+                <Image source={IMAGES_MAP[user.avatar]} style={s.avatar} contentFit="cover" />
+              ) : (
+                <Image source={{ uri: user.avatar }} style={s.avatar} contentFit="cover" />
+              )
             ) : (
               <View style={[s.avatar, { backgroundColor: Colors.primary + "15", alignItems: "center", justifyContent: "center" }]}>
                 <Ionicons name="person" size={48} color={Colors.primary} />
@@ -81,16 +95,16 @@ export default function ProfileScreen() {
             )}
             {/* Level badge */}
             <View style={s.levelBadge}>
-              <Ionicons name="ribbon" size={14} color={Colors.secondaryContainer} />
+              <Ionicons name="ribbon" size={14} color={Colors.surface} />
             </View>
           </View>
-          <Text style={[Typo.labelSm, { color: Colors.secondary, marginTop: Space.lg }]}>APPRENANT ÉLITE</Text>
-          <Text style={[Typo.displayMd, { marginTop: Space.xs }]}>{user?.name || "Utilisateur"}</Text>
+          <Text style={[Typo.labelSm, { color: Colors.primary, marginTop: Space.lg }]}>{t("profile.rank", "APPRENANT ÉLITE").toUpperCase()}</Text>
+          <Text style={[Typo.displayMd, { marginTop: Space.xs }]}>{user?.name || t("profile.name", "Utilisateur")}</Text>
 
           {/* Edit button */}
-          <TouchableOpacity activeOpacity={0.8} style={s.editBtn}>
+          <TouchableOpacity activeOpacity={0.8} style={s.editBtn} onPress={() => router.push("/(tabs)/profile/edit")}>
             <Ionicons name="pencil" size={16} color={Colors.onPrimary} />
-            <Text style={[Typo.titleSm, { color: Colors.onPrimary, marginLeft: Space.sm }]}>Modifier le profil</Text>
+            <Text style={[Typo.titleSm, { color: Colors.onPrimary, marginLeft: Space.sm }]}>{t("profile.editProfile", "Modifier le profil")}</Text>
           </TouchableOpacity>
         </Animated.View>
 
@@ -101,33 +115,33 @@ export default function ProfileScreen() {
               <Ionicons name="book" size={20} color={Colors.primary} />
             </View>
             <Text style={s.statValue}>{wordsLearned.toLocaleString()}</Text>
-            <Text style={[Typo.bodySm]}>Mots appris</Text>
+            <Text style={[Typo.bodySm]}>{t("stats.wordsLearned", "Mots appris")}</Text>
           </View>
           <View style={[s.statCard, Shadow.sm]}>
-            <View style={[s.statIcon, { backgroundColor: Colors.secondaryContainer + "30" }]}>
-              <Ionicons name="time" size={20} color={Colors.secondary} />
+            <View style={[s.statIcon, { backgroundColor: Colors.primaryContainer }]}>
+              <Ionicons name="time" size={20} color={Colors.primary} />
             </View>
             <Text style={s.statValue}>{totalHours}h</Text>
-            <Text style={[Typo.bodySm]}>Temps total</Text>
+            <Text style={[Typo.bodySm]}>{t("stats.totalTime", "Temps total")}</Text>
           </View>
         </Animated.View>
 
         {/* ── Streak Card ── */}
         <Animated.View style={fade(a2, 15)}>
           <LinearGradient
-            colors={[Colors.secondaryContainer, "#E88A10"]}
+            colors={[Colors.success, Colors.success]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={s.streakCard}
           >
             <View>
-              <Text style={[Typo.labelSm, { color: Colors.onPrimary }]}>SÉRIE ACTUELLE</Text>
+              <Text style={[Typo.labelSm, { color: Colors.onPrimary }]}>{t("stats.dayStreak", "SÉRIE ACTUELLE").toUpperCase()}</Text>
               <View style={{ flexDirection: "row", alignItems: "baseline", marginTop: Space.sm }}>
                 <Text style={s.streakNumber}>{streak}</Text>
-                <Text style={[Typo.titleLg, { color: Colors.onPrimary, marginLeft: Space.sm }]}>jours</Text>
+                <Text style={[Typo.titleLg, { color: Colors.onPrimary, marginLeft: Space.sm }]}>{t("common.days")}</Text>
               </View>
               <Text style={[Typo.bodyMd, { color: Colors.onPrimary + "CC", marginTop: Space.sm, fontStyle: "italic" }]}>
-                {streak >= 7 ? "Vous êtes en feu ! Continuez comme ça." : "Continuez votre série !"}
+                {streak >= 7 ? t("stats.streakGood") : t("stats.streakKeepGoing")}
               </Text>
             </View>
             <Ionicons name="flame" size={56} color={Colors.onPrimary + "40"} />
@@ -138,14 +152,14 @@ export default function ProfileScreen() {
         <Animated.View style={[s.activityCard, Shadow.sm, fade(a3, 15)]}>
           <View style={{ flexDirection: "row", alignItems: "center", marginBottom: Space.xl }}>
             <Ionicons name="bar-chart" size={20} color={Colors.primary} />
-            <Text style={[Typo.titleMd, { marginLeft: Space.sm }]}>Activité hebdomadaire</Text>
+            <Text style={[Typo.titleMd, { marginLeft: Space.sm }]}>{t("stats.weeklyActivity", "Activité hebdomadaire")}</Text>
           </View>
           <View style={s.barsRow}>
             {DAYS.map((day, i) => {
-              const h = Math.random() * 60 + 10; // placeholder — remplacer par données réelles
-              const isToday = i === new Date().getDay() - 1;
+              const h = barHeights[i];
+              const isToday = i === (new Date().getDay() + 6) % 7;
               return (
-                <View key={day} style={s.barCol}>
+                <View key={i} style={s.barCol}>
                   <View style={[s.bar, { height: h, backgroundColor: isToday ? Colors.primary : Colors.surfaceVariant }]} />
                   <Text style={[Typo.labelSm, isToday && { color: Colors.primary, fontWeight: "700" }]}>{day}</Text>
                 </View>
@@ -154,13 +168,7 @@ export default function ProfileScreen() {
           </View>
         </Animated.View>
 
-        {/* ── Pro Tip ── */}
-        <Animated.View style={[{ marginTop: Space.xl }, fade(a3, 10)]}>
-          <MCulturalCard
-            title="ASTUCE DE PRO"
-            body={'"La répétition est la clé de la maîtrise. Pratiquez 5 minutes par jour, chaque jour."'}
-          />
-        </Animated.View>
+        {/* Pro Tip card removed per directive */}
 
         <View style={{ height: Space["4xl"] }} />
       </ScrollView>
@@ -171,10 +179,18 @@ export default function ProfileScreen() {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.surface },
   scroll: { paddingHorizontal: Space["2xl"], paddingBottom: Space["2xl"] },
-
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 50,
+    backgroundColor: Colors.surface,
+  },
   header: {
     flexDirection: "row", alignItems: "center",
     paddingTop: Platform.OS === "ios" ? 60 : 44, paddingBottom: Space.lg,
+    paddingHorizontal: Space["2xl"],
   },
 
   // Avatar
@@ -188,13 +204,13 @@ const s = StyleSheet.create({
   levelBadge: {
     position: "absolute", bottom: 0, right: 0,
     width: 32, height: 32, borderRadius: 16,
-    backgroundColor: Colors.secondaryContainer,
+    backgroundColor: Colors.primary,
     alignItems: "center", justifyContent: "center",
     borderWidth: 3, borderColor: Colors.surface,
   },
   editBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",
-    backgroundColor: Colors.secondaryContainer, borderRadius: Radius.full,
+    backgroundColor: Colors.primary, borderRadius: Radius.full,
     paddingHorizontal: Space["3xl"], paddingVertical: Space.md,
     marginTop: Space.xl, width: "100%",
   },

@@ -1,145 +1,223 @@
 /**
- * ╔══════════════════════════════════════════════════════════════╗
- * ║  MULEMA — Notifications Screen                                ║
- * ║  Matches Notifications.png maquette                           ║
- * ║  Place at: app/(tabs)/profile/notifications.jsx               ║
- * ╚══════════════════════════════════════════════════════════════╝
+ * MULEMA — Notifications Screen
+ * Route: app/(tabs)/profile/notifications.jsx
  */
 
-import React from "react";
+import React, { useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, StatusBar,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import { useTranslation } from "react-i18next";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../../src/theme/tokens";
 import { MButton } from "../../../src/components/ui/MComponents";
 import { useAuthStore } from "../../../src/stores/useAuthStore";
 import { useDashboardStore } from "../../../src/stores/useDashboardStore";
 
+/* ── Section label ── */
 const SectionLabel = ({ title }) => (
-  <Text style={[Typo.labelSm, { color: Colors.primary, marginTop: Space["3xl"], marginBottom: Space.lg }]}>{title}</Text>
+  <Text style={[Typo.labelSm, { color: Colors.primary, marginTop: Space["3xl"], marginBottom: Space.lg, letterSpacing: 1 }]}>
+    {title}
+  </Text>
 );
+
+/* ── Dismissible wrapper ── */
+const Dismissible = ({ id, dismissed, onDismiss, children }) => {
+  if (dismissed.has(id)) return null;
+  return (
+    <View style={{ position: "relative" }}>
+      {children}
+      <TouchableOpacity
+        style={nb.closeBtn}
+        onPress={() => onDismiss(id)}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        activeOpacity={0.6}
+      >
+        <Ionicons name="close" size={16} color={Colors.textTertiary} />
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+/* ══════════════════════════════════════════════════════════════ */
 
 export default function NotificationsScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const { data: dash } = useDashboardStore();
+
+  const [dismissed, setDismissed] = useState(new Set());
+
+  const dismiss = (id) => setDismissed((prev) => new Set([...prev, id]));
+  const clearAll = () => setDismissed(new Set(["streak", "league", "folklore"]));
+
+  const streakDays = dash?.streakDays ?? 0;
+  const allDismissed = dismissed.size >= 3;
 
   return (
     <View style={s.root}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.surface} />
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* ── Header ── */}
-        <View style={s.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
-          </TouchableOpacity>
-          {/* <Text style={[Typo.titleLg, { marginLeft: Space.md, flex: 1 }]}>Notifications</Text> */}
-        
-        </View>
+      {/* ── Header ── */}
+      <View style={[s.header, { paddingHorizontal: Space["2xl"] }]}>
+        <TouchableOpacity onPress={() => router.replace("/(tabs)/home")} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
         {/* ── Title + Clear all ── */}
         <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", marginBottom: Space.xs }}>
           <View>
-            <Text style={Typo.displayMd}>Notifications</Text>
-            <Text style={[Typo.bodyMd, { marginTop: Space.xs }]}>Stay on track with your journey.</Text>
+            <Text style={Typo.displayMd}>{t("nav.notifications", "Notifications")}</Text>
+            <Text style={[Typo.bodyMd, { marginTop: Space.xs }]}>
+              {t("notifications.subtitle", "Stay on track with your journey.")}
+            </Text>
           </View>
-          <TouchableOpacity activeOpacity={0.7}>
-            <Text style={[Typo.titleSm, { color: Colors.primary }]}>Clear all</Text>
-          </TouchableOpacity>
+          {!allDismissed && (
+            <TouchableOpacity activeOpacity={0.7} onPress={clearAll}>
+              <Text style={[Typo.titleSm, { color: Colors.primary }]}>
+                {t("notifications.clearAll", "Clear all")}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
-        {/* ── SÉRIES & CAURIS ── */}
-        <SectionLabel title="SÉRIES & CAURIS" />
-        <View style={[s.card, Shadow.sm]}>
-          <View style={{ flexDirection: "row" }}>
-            <View style={[s.notifIcon, { backgroundColor: Colors.secondaryContainer + "30" }]}>
-              <Ionicons name="flame" size={24} color={Colors.secondaryContainer} />
-            </View>
-            <View style={{ flex: 1, marginLeft: Space.lg }}>
-              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: Space.sm }}>
-                <Text style={Typo.titleMd}>Streak at risk!</Text>
-                <View style={s.urgentBadge}>
-                  <Text style={[Typo.labelSm, { color: Colors.error, textTransform: "uppercase", letterSpacing: 0 }]}>URGENT</Text>
-                </View>
-              </View>
-              <Text style={Typo.bodyMd}>
-                Your <Text style={{ fontWeight: "700" }}>{dash?.streakDays || 5}-day streak</Text> is about to expire. Complete a quick lesson now to keep the fire burning!
-              </Text>
-              <View style={{ flexDirection: "row", gap: Space.md, marginTop: Space.xl }}>
-                <TouchableOpacity
-                  onPress={() => router.push("/(tabs)/lessons")}
-                  activeOpacity={0.8}
-                  style={s.actionBtn}
-                >
-                  <Text style={[Typo.labelLg, { color: Colors.onPrimary }]}>Save{"\n"}Streak</Text>
-                </TouchableOpacity>
-                <TouchableOpacity activeOpacity={0.7} style={s.actionBtnGhost}>
-                  <Text style={[Typo.labelLg, { color: Colors.onSurface }]}>Maybe{"\n"}later</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
+        {/* ── Push notifications coming soon banner ── */}
+        <View style={s.comingSoonBanner}>
+          <Ionicons name="notifications-outline" size={18} color={Colors.primary} />
+          <Text style={[Typo.bodySm, { color: Colors.primary, marginLeft: Space.sm, flex: 1 }]}>
+            {t("notifications.pushComingSoon", "Push notifications are coming in a future update. These are your current reminders.")}
+          </Text>
         </View>
 
-        {/* ── DÉFIS DE LA LIGUE ── */}
-        <SectionLabel title="DÉFIS DE LA LIGUE" />
-        <View style={[s.card, Shadow.sm]}>
-          <View style={{ flexDirection: "row" }}>
-            <View style={[s.notifIcon, { backgroundColor: Colors.primary + "15" }]}>
-              <Ionicons name="trophy" size={24} color={Colors.primary} />
-            </View>
-            <View style={{ flex: 1, marginLeft: Space.lg }}>
-              <Text style={Typo.titleMd}>New League Quest</Text>
-              <Text style={[Typo.bodyMd, { marginTop: Space.sm }]}>
-                The <Text style={{ fontWeight: "700", color: Colors.primary }}>Shrimp League</Text> just started a 24h sprint. Join now to earn 2x XP and climb the leaderboard!
-              </Text>
-              <View style={{ flexDirection: "row", alignItems: "center", marginTop: Space.xl }}>
-                <View style={s.avatarStack}>
-                  <View style={[s.miniAvatar, { backgroundColor: Colors.primary + "30", left: 0 }]} />
-                  <View style={[s.miniAvatar, { backgroundColor: Colors.secondaryContainer + "50", left: 18 }]} />
-                  <View style={[s.miniAvatar, { backgroundColor: Colors.surfaceContainerHigh, left: 36 }]}>
-                    <Text style={[Typo.labelSm, { fontSize: 8 }]}>+12</Text>
+        {/* ── Empty state ── */}
+        {allDismissed && (
+          <View style={s.emptyState}>
+            <Ionicons name="notifications-off-outline" size={52} color={Colors.textTertiary + "60"} />
+            <Text style={[Typo.titleMd, { color: Colors.textTertiary, marginTop: Space.xl, textAlign: "center" }]}>
+              {t("notifications.allClear", "All caught up!")}
+            </Text>
+            <Text style={[Typo.bodyMd, { color: Colors.textTertiary, marginTop: Space.sm, textAlign: "center" }]}>
+              {t("notifications.allClearSub", "No new notifications right now.")}
+            </Text>
+          </View>
+        )}
+
+        {!allDismissed && (
+          <>
+            {/* ── STREAK ── */}
+            <SectionLabel title={t("notifications.sections.streak", "STREAK & HEARTS")} />
+            <Dismissible id="streak" dismissed={dismissed} onDismiss={dismiss}>
+              <View style={[s.card, Shadow.sm]}>
+                <View style={{ flexDirection: "row" }}>
+                  <View style={[s.notifIcon, { backgroundColor: Colors.secondaryContainer + "30" }]}>
+                    <Ionicons name="flame" size={24} color={Colors.secondaryContainer} />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: Space.lg, paddingRight: Space["2xl"] }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: Space.sm }}>
+                      <Text style={Typo.titleMd}>
+                        {streakDays > 0
+                          ? t("notifications.streakTitle", "Keep your streak alive!")
+                          : t("notifications.streakStartTitle", "Start your streak today!")}
+                      </Text>
+                      {streakDays > 0 && (
+                        <View style={s.urgentBadge}>
+                          <Text style={[Typo.labelSm, { color: Colors.error, textTransform: "uppercase", letterSpacing: 0 }]}>
+                            {t("notifications.urgent", "URGENT")}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={Typo.bodyMd}>
+                      {streakDays > 0
+                        ? t("notifications.streakBody", {
+                            days: streakDays,
+                            defaultValue: `Your ${streakDays}-day streak is active. Keep it going with a quick lesson!`,
+                          })
+                        : t("notifications.streakStartBody", "Complete your first lesson to start building your streak.")}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => router.push("/(tabs)/lessons")}
+                      activeOpacity={0.8}
+                      style={[s.actionBtn, { marginTop: Space.xl, alignSelf: "flex-start" }]}
+                    >
+                      <Text style={[Typo.labelLg, { color: Colors.onPrimary }]}>
+                        {t("notifications.goLearn", "Go learn")}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
-                <Text style={[Typo.bodySm, { marginLeft: Space["4xl"] }]}>Others are already{"\n"}competing</Text>
               </View>
-            </View>
-          </View>
-        </View>
+            </Dismissible>
 
-        {/* ── NOUVEAUTÉS ── */}
-        <SectionLabel title="NOUVEAUTÉS" />
-        <View style={[s.newContentCard, Shadow.md]}>
-          {/* Green banner */}
-          <LinearGradient
-            colors={[Colors.primaryContainer, Colors.primary]}
-            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            style={s.newBanner}
-          >
-            <Ionicons name="sparkles" size={40} color={Colors.onPrimary + "50"} />
-            <View style={s.newBadge}>
-              <Text style={[Typo.labelSm, { color: Colors.onPrimary, letterSpacing: 0 }]}>NEW CONTENT</Text>
-            </View>
-          </LinearGradient>
-          {/* Content */}
-          <View style={{ padding: Space["2xl"] }}>
-            <Text style={Typo.headlineMd}>Folklore Unlocked</Text>
-            <Text style={[Typo.bodyMd, { marginTop: Space.md, lineHeight: 22 }]}>
-              Discover the hidden stories and proverbs of the region in our latest themed module. Perfect for advanced cultural immersion.
-            </Text>
-            <MButton
-              title="Explore 'Folklore'"
-              onPress={() => router.push("/(tabs)/lessons")}
-              style={{ marginTop: Space.xl }}
-            />
-          </View>
-        </View>
+            {/* ── COMMUNITY ── */}
+            <SectionLabel title={t("notifications.sections.community", "COMMUNITY")} />
+            <Dismissible id="league" dismissed={dismissed} onDismiss={dismiss}>
+              <View style={[s.card, Shadow.sm]}>
+                <View style={{ flexDirection: "row" }}>
+                  <View style={[s.notifIcon, { backgroundColor: Colors.primary + "15" }]}>
+                    <Ionicons name="trophy" size={24} color={Colors.primary} />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: Space.lg, paddingRight: Space["2xl"] }}>
+                    <Text style={Typo.titleMd}>
+                      {t("notifications.leagueTitle", "Climb the leaderboard")}
+                    </Text>
+                    <Text style={[Typo.bodyMd, { marginTop: Space.sm }]}>
+                      {t("notifications.leagueBody", "Complete exercises to earn XP and rise in the rankings.")}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => router.push("/(tabs)/community")}
+                      activeOpacity={0.8}
+                      style={[s.actionBtnGhost, { marginTop: Space.xl, alignSelf: "flex-start" }]}
+                    >
+                      <Text style={[Typo.labelLg, { color: Colors.onSurface }]}>
+                        {t("notifications.viewRanking", "View ranking")}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Dismissible>
+
+            {/* ── NEW CONTENT ── */}
+            <SectionLabel title={t("notifications.sections.newContent", "NEW CONTENT")} />
+            <Dismissible id="folklore" dismissed={dismissed} onDismiss={dismiss}>
+              <View style={[s.newContentCard, Shadow.md]}>
+                <LinearGradient
+                  colors={[Colors.primaryContainer, Colors.primary]}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  style={s.newBanner}
+                >
+                  <Ionicons name="sparkles" size={40} color={Colors.onPrimary + "50"} />
+                  <View style={s.newBadge}>
+                    <Text style={[Typo.labelSm, { color: Colors.onPrimary, letterSpacing: 0 }]}>
+                      {t("notifications.newContent", "NEW CONTENT")}
+                    </Text>
+                  </View>
+                </LinearGradient>
+                <View style={{ padding: Space["2xl"] }}>
+                  <Text style={Typo.headlineMd}>
+                    {t("notifications.exercisesTitle", "Exercises available")}
+                  </Text>
+                  <Text style={[Typo.bodyMd, { marginTop: Space.md, lineHeight: 22 }]}>
+                    {t("notifications.exercisesBody", "New exercises are ready for your active themes. Practice to earn XP and unlock the next lessons.")}
+                  </Text>
+                  <MButton
+                    title={t("notifications.goExercises", "Go to exercises")}
+                    onPress={() => router.push("/(tabs)/exercises")}
+                    style={{ marginTop: Space.xl }}
+                  />
+                </View>
+              </View>
+            </Dismissible>
+          </>
+        )}
 
         <View style={{ height: Space["4xl"] }} />
       </ScrollView>
@@ -148,22 +226,82 @@ export default function NotificationsScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.surface },
+  root:   { flex: 1, backgroundColor: Colors.surface },
   scroll: { paddingHorizontal: Space["2xl"], paddingBottom: Space["2xl"] },
-  header: { flexDirection: "row", alignItems: "center", paddingTop: Platform.OS === "ios" ? 60 : 44, paddingBottom: Space.xl },
-  avatarSmall: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.primary + "15", alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: Colors.primary },
+  header: {
+    flexDirection: "row", alignItems: "center",
+    paddingTop: Platform.OS === "ios" ? 60 : 44,
+    paddingBottom: Space.xl,
+  },
 
-  card: { backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.xl, padding: Space["2xl"] },
-  notifIcon: { width: 48, height: 48, borderRadius: Radius.lg, alignItems: "center", justifyContent: "center" },
-  urgentBadge: { backgroundColor: Colors.error + "15", borderRadius: Radius.full, paddingHorizontal: Space.md, paddingVertical: 2, marginLeft: Space.sm },
+  comingSoonBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.primary + "10",
+    borderRadius: Radius.lg,
+    padding: Space.lg,
+    marginBottom: Space.xl,
+    marginTop: Space.md,
+  },
 
-  actionBtn: { backgroundColor: Colors.primary, borderRadius: Radius.full, paddingHorizontal: Space.xl, paddingVertical: Space.md, alignItems: "center" },
-  actionBtnGhost: { backgroundColor: Colors.surfaceContainerLow, borderRadius: Radius.full, paddingHorizontal: Space.xl, paddingVertical: Space.md, alignItems: "center" },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 80,
+  },
 
-  avatarStack: { position: "relative", width: 60, height: 28 },
-  miniAvatar: { position: "absolute", width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: Colors.surfaceContainerLowest, alignItems: "center", justifyContent: "center" },
+  card: {
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.xl,
+    padding: Space["2xl"],
+    marginBottom: Space.sm,
+  },
+  notifIcon: {
+    width: 48, height: 48, borderRadius: Radius.lg,
+    alignItems: "center", justifyContent: "center",
+  },
+  urgentBadge: {
+    backgroundColor: Colors.error + "15",
+    borderRadius: Radius.full,
+    paddingHorizontal: Space.md, paddingVertical: 2,
+    marginLeft: Space.sm,
+  },
+  actionBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.full,
+    paddingHorizontal: Space.xl, paddingVertical: Space.md,
+    alignItems: "center",
+  },
+  actionBtnGhost: {
+    backgroundColor: Colors.surfaceContainerLow,
+    borderRadius: Radius.full,
+    paddingHorizontal: Space.xl, paddingVertical: Space.md,
+    alignItems: "center",
+  },
 
-  newContentCard: { backgroundColor: Colors.surfaceContainerLowest, borderRadius: Radius.xl, overflow: "hidden" },
-  newBanner: { height: 120, alignItems: "center", justifyContent: "center", position: "relative" },
-  newBadge: { position: "absolute", bottom: Space.lg, left: Space.lg, backgroundColor: Colors.primary + "80", borderRadius: Radius.full, paddingHorizontal: Space.md, paddingVertical: Space.xs },
+  newContentCard: {
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.xl,
+    overflow: "hidden",
+    marginBottom: Space.sm,
+  },
+  newBanner: {
+    height: 120, alignItems: "center", justifyContent: "center",
+  },
+  newBadge: {
+    position: "absolute", bottom: Space.lg, left: Space.lg,
+    backgroundColor: Colors.primary + "80",
+    borderRadius: Radius.full,
+    paddingHorizontal: Space.md, paddingVertical: Space.xs,
+  },
+});
+
+const nb = StyleSheet.create({
+  closeBtn: {
+    position: "absolute",
+    top: Space.lg,
+    right: Space.lg,
+    width: 24, height: 24, borderRadius: 12,
+    backgroundColor: Colors.surfaceContainerHigh,
+    alignItems: "center", justifyContent: "center",
+  },
 });

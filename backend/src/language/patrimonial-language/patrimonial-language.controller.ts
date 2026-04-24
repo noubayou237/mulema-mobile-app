@@ -15,8 +15,8 @@ export class PatrimonialLanguageController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   create(@Body() dto: any) {
-    // TODO: Protéger cette route (Admin uniquement)
     return this.service.create(dto.name);
   }
 

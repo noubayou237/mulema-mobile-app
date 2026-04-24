@@ -21,6 +21,7 @@ export class LessonController {
    * 🔹 Création d'une leçon (ADMIN)
    */
   @Post()
+  @UseGuards(JwtAuthGuard)
   create(@Body() dto: CreateLessonDto) {
     return this.lessonService.create(dto);
   }
@@ -32,7 +33,7 @@ export class LessonController {
   @UseGuards(JwtAuthGuard)
   @Get('level/:levelId')
   async getLessonsByLevel(@Param('levelId') levelId: string, @Req() req: any) {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     return this.lessonService.getLessonsWithProgress(levelId, userId);
   }
 }

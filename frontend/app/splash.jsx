@@ -5,6 +5,7 @@ import { Svg, G, Path } from "react-native-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { STORAGE_KEYS } from "../src/constants/storageKeys";
+import Logger from "../src/utils/logger";
 
 const HAS_SELECTED_LANGUAGE = "selectedLanguage";
 const HAS_SEEN_INTRO = "hasSeenIntro";
@@ -95,7 +96,7 @@ export default function Splash() {
           router.replace("/(auth)/sign-in");
         }
       } catch (err) {
-        console.warn("Splash: erreur de redirection", err);
+        Logger.warn("Splash: erreur de redirection", err);
         // On error, redirect to sign in for safety
         router.replace("/(auth)/sign-in");
       }

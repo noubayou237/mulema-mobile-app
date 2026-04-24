@@ -1,3 +1,4 @@
+import Logger from "../utils/logger";
 /**
  * ╔══════════════════════════════════════════════════════════════╗
  * ║  MULEMA — useThemeStore (Zustand)                             ║
@@ -19,11 +20,14 @@
 
 import { create } from "zustand";
 import { themesService } from "../services/themes.service";
+import { isSessionActive } from "../services/api";
+import { getFriendlyErrorMessage } from "../utils/errorUtils";
 
 export const useThemeStore = create((set, get) => ({
   // ── State ──
   themes: [],                // Theme[] — thèmes de la langue active
   isLoading: false,
+  error: null,
 
   // Leçon en cours (quand l'utilisateur navigue dans un thème)
   currentThemeId: null,      // string | null
@@ -41,15 +45,19 @@ export const useThemeStore = create((set, get) => ({
   // ═════════════════════════════════════════════════════════════
 
   fetchThemes: async (languageId) => {
-    if (!languageId) return;
+    if (!languageId || !isSessionActive()) return [];
     set({ isLoading: true });
     try {
       const themes = await themesService.getByLanguage(languageId);
-      set({ themes, isLoading: false });
+      set({ themes, isLoading: false, error: null });
       return themes;
     } catch (error) {
-      console.error("[ThemeStore] fetchThemes error:", error);
-      set({ isLoading: false });
+      const msg = getFriendlyErrorMessage(error);
+      set({ isLoading: false, error: msg });
+      // Don't log if it's a 401 or Network Error after session is cleared
+      if (error?.response?.status !== 401 && isSessionActive()) {
+        Logger.error("[ThemeStore] fetchThemes error:", msg);
+      }
       return [];
     }
   },
@@ -60,15 +68,17 @@ export const useThemeStore = create((set, get) => ({
   // ═════════════════════════════════════════════════════════════
 
   fetchLessons: async (themeId) => {
-    if (!themeId) return;
+    if (!themeId || !isSessionActive()) return [];
     set({ currentThemeId: themeId, lessonsLoading: true });
     try {
       const lessons = await themesService.getLessons(themeId);
       set({ lessons, lessonsLoading: false });
       return lessons;
     } catch (error) {
-      console.error("[ThemeStore] fetchLessons error:", error);
       set({ lessonsLoading: false });
+      if (error?.response?.status !== 401) {
+        Logger.error("[ThemeStore] fetchLessons error:", error);
+      }
       return [];
     }
   },
@@ -79,15 +89,17 @@ export const useThemeStore = create((set, get) => ({
   // ═════════════════════════════════════════════════════════════
 
   fetchWords: async (lessonId) => {
-    if (!lessonId) return;
+    if (!lessonId || !isSessionActive()) return [];
     set({ currentLessonId: lessonId, wordsLoading: true });
     try {
       const words = await themesService.getWords(lessonId);
       set({ words, wordsLoading: false });
       return words;
     } catch (error) {
-      console.error("[ThemeStore] fetchWords error:", error);
       set({ wordsLoading: false });
+      if (error?.response?.status !== 401) {
+        Logger.error("[ThemeStore] fetchWords error:", error);
+      }
       return [];
     }
   },
@@ -131,21 +143,42 @@ export const useThemeStore = create((set, get) => ({
   // ═════════════════════════════════════════════════════════════
 
   getExerciseAccess: (themeId) => {
-    const { themes, lessons } = get();
-    const theme = themes.find((t) => t.id === themeId);
+    const { lessons } = get();
+    
+    // Final Challenge (Exercises) should only be available after ALL lessons are completed
+    const lessonsCompletedCount = lessons.reduce((acc, l) => {
+      const prog = l.userProgress?.[0];
+      return acc + (prog?.isCompleted ? 1 : 0);
+    }, 0);
 
-    if (!theme) return { e1: false, e2: false, e3: false };
-
-    // Toutes les leçons du thème doivent être terminées pour accéder aux exercices
-    const allLessonsCompleted =
-      theme.lessonsCount > 0 &&
-      theme.lessonsCompleted >= theme.lessonsCount;
+    const enoughLessonsCompleted = lessons.length > 0 && lessonsCompletedCount >= lessons.length;
 
     return {
-      e1: allLessonsCompleted,
-      e2: allLessonsCompleted && theme.e1Completed && theme.e1Score >= 60,
-      e3: allLessonsCompleted && theme.e2Completed && theme.e2Score >= 60,
+      e1: enoughLessonsCompleted,
+      e2: enoughLessonsCompleted,
+      e3: enoughLessonsCompleted,
     };
+  },
+
+  // ═════════════════════════════════════════════════════════════
+  // isLessonLocked — Vérifie si une leçon est verrouillée
+  // Directive : 2 premières leçons débloquées, le reste via exercices
+  // ═════════════════════════════════════════════════════════════
+
+  isLessonLocked: (lessonId, order) => {
+    // Les 2 premières leçons (order 0 et 1) sont toujours débloquées
+    if (order < 2) return false;
+
+    const { lessons } = get();
+    const lesson = lessons.find((l) => l.id === lessonId);
+    
+    // Progrès depuis la DB : l'include Prisma renvoie un tableau
+    const prog = lesson?.userProgress?.[0];
+
+    // Si débloqué explicitement dans la DB
+    if (prog?.isUnlocked) return false;
+
+    return true;
   },
 
   // ═════════════════════════════════════════════════════════════

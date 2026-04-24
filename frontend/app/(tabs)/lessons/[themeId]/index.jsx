@@ -19,57 +19,30 @@ import { Shadow } from "../../../../src/theme/tokens";
 import { useThemeStore }    from "../../../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../../../src/stores/useDashboardStore";
 import { useLanguageStore }  from "../../../../src/stores/useLanguageStore";
+import { useTranslation } from "react-i18next";
 
 const { width: SW } = Dimensions.get("window");
 
 /* ═══════════════════════════════════════════════════════════════
    THÈME IMMERSIF PAR LANGUE
    ═══════════════════════════════════════════════════════════════ */
+const RED_THEME = {
+  bg: "#0A0000", // Very dark red/black background
+  headerGrad: ["#7F0000", "#B71C1C", "#D32F2F"],
+  nodeActive: "#E53935",
+  nodeDone: "#7F0000",
+  accent: "#FF5252",
+  accentGlow: "#FF525250",
+  pathColor: "#B71C1C80",
+  label: "Mulema",
+  unitLabel: "MULEMA",
+};
+
 const LANG_THEMES = {
-  duala: {
-    bg: "#050D1A",
-    headerGrad: ["#0D47A1", "#1565C0", "#1976D2"],
-    nodeActive: "#1E88E5",
-    nodeDone: "#0D47A1",
-    accent: "#29B6F6",
-    accentGlow: "#29B6F680",
-    pathColor: "#1565C080",
-    label: "eau",
-    unitLabel: "UNIVERS DUALA",
-  },
-  ghomala: {
-    bg: "#050E06",
-    headerGrad: ["#1B5E20", "#2E7D32", "#388E3C"],
-    nodeActive: "#43A047",
-    nodeDone: "#1B5E20",
-    accent: "#81C784",
-    accentGlow: "#81C78450",
-    pathColor: "#2E7D3270",
-    label: "forêt",
-    unitLabel: "UNIVERS GHOMÁLÁ",
-  },
-  bassa: {
-    bg: "#0F0800",
-    headerGrad: ["#E65100", "#F57C00", "#FF8F00"],
-    nodeActive: "#FFA726",
-    nodeDone: "#E65100",
-    accent: "#FFB300",
-    accentGlow: "#FFB30050",
-    pathColor: "#F5770070",
-    label: "désert",
-    unitLabel: "UNIVERS BASSA",
-  },
-  default: {
-    bg: "#0A0008",
-    headerGrad: ["#7F0000", "#B71C1C", "#C62828"],
-    nodeActive: "#E53935",
-    nodeDone: "#7F0000",
-    accent: "#EF9A9A",
-    accentGlow: "#EF9A9A40",
-    pathColor: "#B71C1C60",
-    label: "",
-    unitLabel: "MULEMA",
-  },
+  duala: { ...RED_THEME, unitLabel: "UNIVERS DUALA" },
+  ghomala: { ...RED_THEME, unitLabel: "UNIVERS GHOMÁLÁ" },
+  bassa: { ...RED_THEME, unitLabel: "UNIVERS BASSA" },
+  default: RED_THEME,
 };
 
 const getLangTheme = (langName = "") => {
@@ -140,14 +113,15 @@ const DashedPath = ({ fromX, fromY, toX, toY, color }) => (
 /* ═══════════════════════════════════════════════════════════════
    NŒUD LEÇON (cercle)
    ═══════════════════════════════════════════════════════════════ */
-const LessonNode = ({ lesson, index, onPress, lt }) => {
+const LessonNode = ({ lesson, index, onPress, lt, isLocked }) => {
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim  = useRef(new Animated.Value(0)).current;
 
-  const completed = lesson.userProgress?.isCompleted ?? false;
-  const stars     = lesson.userProgress?.stars ?? 0;
-  const isCurrent = !completed && index === 0;
+  const prog      = lesson.userProgress?.[0];
+  const completed = prog?.isCompleted ?? false;
+  const stars     = prog?.stars ?? 0;
+  const isCurrent = !completed && !isLocked && (prog?.isUnlocked || index < 2);
 
   // Zigzag positions
   const POSITIONS = [SW * 0.5, SW * 0.65, SW * 0.75, SW * 0.65, SW * 0.5, SW * 0.35, SW * 0.25, SW * 0.35];
@@ -205,11 +179,13 @@ const LessonNode = ({ lesson, index, onPress, lt }) => {
       ]}>
         <TouchableOpacity onPress={() => onPress(lesson)} activeOpacity={0.8}>
           <LinearGradient
-            colors={completed ? [lt.nodeDone, lt.nodeDone] : [lt.nodeActive, lt.nodeDone]}
+            colors={isLocked ? ["#333", "#111"] : completed ? [lt.nodeDone, lt.nodeDone] : [lt.nodeActive, lt.nodeDone]}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            style={[nd.circle, completed && nd.circleDone]}
+            style={[nd.circle, completed && nd.circleDone, isLocked && { opacity: 0.5 }]}
           >
-            {completed
+            {isLocked ? (
+              <Ionicons name="lock-closed" size={24} color="rgba(255,255,255,0.4)" />
+            ) : completed
               ? <Ionicons name="checkmark" size={28} color="#FFF" />
               : isCurrent
               ? <Text style={nd.num}>{index + 1}</Text>
@@ -240,7 +216,8 @@ const LessonNode = ({ lesson, index, onPress, lt }) => {
 /* ═══════════════════════════════════════════════════════════════
    NŒUD EXERCICE FINAL (étoile brillante style score-hero)
    ═══════════════════════════════════════════════════════════════ */
-const ExerciseNode = ({ onPress, lt }) => {
+const ExerciseNode = ({ onPress, lt, isLocked }) => {
+  const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const rotAnim   = useRef(new Animated.Value(0)).current;
   const glowAnim  = useRef(new Animated.Value(0)).current;
@@ -266,7 +243,7 @@ const ExerciseNode = ({ onPress, lt }) => {
       {/* Séparateur */}
       <View style={[ex.divider, { borderColor: lt.accent + "50" }]}>
         <View style={[ex.divLine, { backgroundColor: lt.accent + "30" }]} />
-        <Text style={[ex.divTxt, { color: lt.accent }]}>⚡ DÉFI FINAL</Text>
+        <Text style={[ex.divTxt, { color: lt.accent }]}>{t("lessons.finalChallenge")}</Text>
         <View style={[ex.divLine, { backgroundColor: lt.accent + "30" }]} />
       </View>
 
@@ -276,22 +253,22 @@ const ExerciseNode = ({ onPress, lt }) => {
 
       {/* Bouton étoile */}
       <Animated.View style={[ex.btnWrap, { transform: [{ scale: scaleAnim }] }]}>
-        <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
+        <TouchableOpacity onPress={onPress} activeOpacity={isLocked ? 1 : 0.85}>
           <LinearGradient
-            colors={[lt.nodeActive, lt.nodeDone]}
+            colors={isLocked ? ["#333", "#222"] : [lt.nodeActive, lt.nodeDone]}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            style={ex.btn}
+            style={[ex.btn, isLocked && { opacity: 0.6 }]}
           >
-            <Text style={ex.emoji}>🎯</Text>
-            <Text style={[ex.title, { color: "#FFF" }]}>Exercices</Text>
-            <Text style={ex.sub}>15 questions · 3 types</Text>
+            <Text style={[ex.emoji, isLocked && { opacity: 0.3 }]}>{isLocked ? "🔒" : "🎯"}</Text>
+            <Text style={[ex.title, { color: isLocked ? "rgba(255,255,255,0.4)" : "#FFF" }]}>{isLocked ? t("common.locked") : t("nav.exercises")}</Text>
+            <Text style={[ex.sub, isLocked && { color: "rgba(255,255,255,0.2)" }]}>{t("lessons.exerciseCount", { count: 15, types: 3 })}</Text>
           </LinearGradient>
         </TouchableOpacity>
       </Animated.View>
 
       {/* Badge XP potentiel */}
       <View style={[ex.xpBadge, { backgroundColor: lt.accent + "20", borderColor: lt.accent + "50" }]}>
-        <Text style={[ex.xpTxt, { color: lt.accent }]}>+100 XP</Text>
+        <Text style={[ex.xpTxt, { color: lt.accent }]}>{t("lessons.xpPotential", { points: 100 })}</Text>
       </View>
     </View>
   );
@@ -303,8 +280,9 @@ const ExerciseNode = ({ onPress, lt }) => {
 export default function ThemeDetailScreen() {
   const router      = useRouter();
   const { themeId } = useLocalSearchParams();
+  const { t }       = useTranslation();
 
-  const { fetchLessons, getThemeById, lessons, lessonsLoading, clearTheme } = useThemeStore();
+  const { fetchLessons, getThemeById, lessons, lessonsLoading, clearTheme, isLessonLocked, getExerciseAccess } = useThemeStore();
   const { data: dash } = useDashboardStore();
   const { activeLanguage } = useLanguageStore();
 
@@ -316,11 +294,11 @@ export default function ThemeDetailScreen() {
   }, [themeId]);
 
   const theme     = getThemeById(themeId);
-  const themeName = theme?.name_fr ?? theme?.name ?? "Thème";
+  const themeName = theme?.name_fr ?? theme?.name ?? t("common.theme");
   const themeCode = (theme?.code ?? "").toLowerCase();
   const emoji     = getEmoji(themeCode);
 
-  const completed = lessons.filter((l) => l.userProgress?.isCompleted).length;
+  const completed = lessons.filter((l) => l.userProgress?.[0]?.isCompleted).length;
   const totalL    = lessons.length || 0;
   const pct       = totalL > 0 ? Math.round((completed / totalL) * 100) : 0;
 
@@ -369,13 +347,18 @@ export default function ThemeDetailScreen() {
           <View style={[s.blob, { backgroundColor: lt.accent + "12", top: -30, right: -40 }]} />
 
           {/* Label unité */}
-          <Text style={[s.unitLabel, { color: lt.accent }]}>{lt.unitLabel}</Text>
+          <Text style={[s.unitLabel, { color: lt.accent }]}>
+            {activeLanguage?.name?.toLowerCase().includes("duala") ? t("home.universDuala") :
+             activeLanguage?.name?.toLowerCase().includes("ghomala") ? t("home.universGhomala") :
+             activeLanguage?.name?.toLowerCase().includes("bassa") ? t("home.universBassa") :
+             t("home.levels.level")}
+          </Text>
 
           {/* Emoji + titre */}
           <Text style={s.headerEmoji}>{emoji}</Text>
           <Text style={s.headerTitle}>{themeName}</Text>
           <Text style={s.headerSub}>
-            {totalL} leçons · {pct}% maîtrisé
+            {t("home.masteryStats", { count: totalL, percent: pct })}
           </Text>
 
           {/* Barre de progression */}
@@ -387,17 +370,17 @@ export default function ThemeDetailScreen() {
           <View style={s.statsRow}>
             <View style={s.statItem}>
               <Text style={[s.statNum, { color: lt.accent }]}>{completed}</Text>
-              <Text style={s.statLbl}>complétées</Text>
+              <Text style={s.statLbl}>{t("home.completed")}</Text>
             </View>
             <View style={[s.statDivider, { backgroundColor: lt.accent + "30" }]} />
             <View style={s.statItem}>
               <Text style={[s.statNum, { color: lt.accent }]}>{totalL - completed}</Text>
-              <Text style={s.statLbl}>restantes</Text>
+              <Text style={s.statLbl}>{t("home.remainingNodes")}</Text>
             </View>
             <View style={[s.statDivider, { backgroundColor: lt.accent + "30" }]} />
             <View style={s.statItem}>
               <Text style={[s.statNum, { color: lt.accent }]}>{pct}%</Text>
-              <Text style={s.statLbl}>maîtrise</Text>
+              <Text style={s.statLbl}>{t("home.mastery")}</Text>
             </View>
           </View>
         </LinearGradient>
@@ -408,7 +391,7 @@ export default function ThemeDetailScreen() {
         ) : lessons.length === 0 ? (
           <View style={s.empty}>
             <Text style={{ fontSize: 48 }}>📭</Text>
-            <Text style={[s.emptyTxt, { color: lt.accent + "80" }]}>Aucune leçon disponible.</Text>
+            <Text style={[s.emptyTxt, { color: lt.accent + "80" }]}>{t("lessons.noLessons")}</Text>
           </View>
         ) : (
           <View style={s.path}>
@@ -419,12 +402,21 @@ export default function ThemeDetailScreen() {
                 index={idx}
                 totalLessons={totalL}
                 lt={lt}
-                onPress={(l) => router.push(`/(tabs)/lessons/${themeId}/lesson/${l.id}`)}
+                onPress={(l) => {
+                  if (isLessonLocked(l.id, idx)) return;
+                  router.push(`/(tabs)/lessons/${themeId}/lesson/${l.id}`);
+                }}
+                isLocked={isLessonLocked(lesson.id, idx)}
               />
             ))}
             <ExerciseNode
               lt={lt}
-              onPress={() => router.push(`/(tabs)/lessons/${themeId}/exercise/session`)}
+              isLocked={!getExerciseAccess(themeId).e1}
+              onPress={() => {
+                const access = getExerciseAccess(themeId);
+                if (!access.e1) return;
+                router.push(`/(tabs)/lessons/${themeId}/exercise/session`);
+              }}
             />
           </View>
         )}

@@ -10,16 +10,20 @@ import React, { useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, Switch, Alert,
   StyleSheet, Platform, StatusBar, Modal, TextInput, ActivityIndicator,
+  Linking,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
 import * as WebBrowser from "expo-web-browser";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../../src/theme/tokens";
 import { useAuthStore } from "../../../src/stores/useAuthStore";
 import api from "../../../src/services/api";
+
+import { useTranslation } from "react-i18next";
+import { changeLanguage } from "../../../src/i18n";
+import Logger from "../../../src/utils/logger";
+import { getFriendlyErrorMessage } from "../../../src/utils/errorUtils";
 
 /* ── Reusable Setting Row ── */
 const SettingRow = ({ icon, iconColor, label, subtitle, right, onPress }) => (
@@ -52,13 +56,32 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
 
-  const [notificationsOn, setNotificationsOn] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  const [notificationsOn, setNotificationsOn] = useState(false);
+
+  const handleNotificationsToggle = (value) => {
+    if (value) {
+      Alert.alert(
+        t("common.comingSoon", "Bientôt disponible"),
+        t("settings.notificationsComingSoon", "Les notifications push seront disponibles dans une prochaine mise à jour.")
+      );
+      return;
+    }
+    setNotificationsOn(false);
+  };
+
+  const { t, i18n } = useTranslation();
+  const [appLang, setAppLang] = useState(i18n.language || 'fr');
+
+  const handleToggleLang = async () => {
+    const nextLang = appLang.startsWith('fr') ? 'en' : 'fr';
+    await changeLanguage(nextLang);
+    setAppLang(nextLang);
+  };
 
   const handleLogout = () => {
-    Alert.alert("Déconnexion", "Êtes-vous sûr de vouloir vous déconnecter ?", [
-      { text: "Annuler", style: "cancel" },
-      { text: "Confirmer", style: "destructive", onPress: () => logout() },
+    Alert.alert(t("profile.logout"), t("profile.logoutConfirm"), [
+      { text: t("common.cancel"), style: "cancel" },
+      { text: t("common.confirm"), style: "destructive", onPress: () => logout() },
     ]);
   };
 
@@ -67,7 +90,29 @@ export default function SettingsScreen() {
     if (url) {
       await WebBrowser.openBrowserAsync(url);
     } else {
-      Alert.alert("Erreur", "URL de la politique de confidentialité non configurée.");
+      Alert.alert(t("common.error"), t("errors.privacyUrlNotSet"));
+    }
+  };
+
+  const handleOpenTerms = async () => {
+    const url = process.env.EXPO_PUBLIC_TERMS_URL;
+    if (url) {
+      await WebBrowser.openBrowserAsync(url);
+    } else {
+      Alert.alert(t("common.error"), t("errors.termsUrlNotSet", "Terms URL not configured."));
+    }
+  };
+
+  const handleOpenSupport = async () => {
+    const mailto = "mailto:support@mulema.app?subject=Mulema%20Support";
+    const canOpen = await Linking.canOpenURL(mailto);
+    if (canOpen) {
+      await Linking.openURL(mailto);
+    } else {
+      Alert.alert(
+        t("settings.helpSupport", "Aide & Support"),
+        t("settings.contactSupport", "Contactez-nous à support@mulema.app")
+      );
     }
   };
 
@@ -77,7 +122,7 @@ export default function SettingsScreen() {
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmation !== "DELETE") {
-      Alert.alert("Erreur", 'Veuillez saisir "DELETE" pour confirmer.');
+      Alert.alert(t("common.error"), t("errors.deleteConfirmType"));
       return;
     }
 
@@ -85,12 +130,12 @@ export default function SettingsScreen() {
     try {
       await api.delete("/user");
       setShowDeleteModal(false);
-      Alert.alert("Succès", "Votre compte a été supprimé definitivement.", [
-        { text: "OK", onPress: () => logout() }
+      Alert.alert(t("common.success"), t("messages.accountDeleted"), [
+        { text: t("common.ok"), onPress: () => logout() }
       ]);
     } catch (error) {
-      console.error("Delete account error:", error);
-      Alert.alert("Erreur", "Impossible de supprimer le compte. Réessayez plus tard.");
+      Logger.error("Delete account error:", error);
+      Alert.alert(t("common.error"), getFriendlyErrorMessage(error));
     } finally {
       setIsDeleting(false);
     }
@@ -99,140 +144,103 @@ export default function SettingsScreen() {
   return (
     <View style={s.root}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.surface} />
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* ── Header ── */}
+      {/* ── Sticky Header ── */}
+      <View style={s.stickyHeader}>
         <View style={s.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <TouchableOpacity onPress={() => router.replace("/(tabs)/profile")} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
           </TouchableOpacity>
-          <Text style={[Typo.titleLg, { marginLeft: Space.md }]}>Settings</Text>
+          <Text style={[Typo.titleLg, { marginLeft: Space.md }]}>{t("settings.title", "Paramètres")}</Text>
         </View>
+      </View>
 
-        {/* ── Premium Banner ── */}
-        <LinearGradient
-          colors={[Colors.primary, Colors.primaryContainer]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={s.premiumBanner}
-        >
-          <View style={{ flex: 1 }}>
-            <Text style={[Typo.labelSm, { color: Colors.onPrimary + "BB" }]}>PREMIUM ACCESS</Text>
-            <Text style={[Typo.headlineMd, { color: Colors.onPrimary, marginTop: Space.xs }]}>Mulema Plus</Text>
-            <Text style={[Typo.bodyMd, { color: Colors.onPrimary + "CC", marginTop: Space.sm }]}>
-              Enjoy unlimited XP boosts and exclusive cultural content.
-            </Text>
-            <TouchableOpacity activeOpacity={0.8} style={s.premiumBtn}>
-              <Text style={[Typo.labelLg, { color: Colors.onPrimary }]}>Manage Subscription</Text>
-            </TouchableOpacity>
-          </View>
-          <Ionicons name="shield-checkmark" size={40} color={Colors.onPrimary + "30"} />
-        </LinearGradient>
+      <ScrollView contentContainerStyle={[s.scroll, { paddingTop: 90 }]} showsVerticalScrollIndicator={false}>
+
+        {/* Premium Banner removed per directive */}
 
         {/* ── COMPTE ── */}
-        <SectionHeader title="COMPTE" />
+        <SectionHeader title={t("auth.account", "COMPTE").toUpperCase()} />
         <View style={[s.sectionCard, Shadow.sm]}>
           <SettingRow
             icon="person-circle"
-            label="Profile edit"
-            subtitle="Update your avatar and bio"
-            onPress={() => {}}
+            label={t("profile.editProfile")}
+            subtitle={t("profile.editSubtitle")}
+            onPress={() => router.push("/(tabs)/profile/edit")}
           />
           <View style={s.divider} />
           <SettingRow
             icon="mail"
-            label="Email"
+            label={t("auth.email", "Email")}
             subtitle={user?.email || "mulema.learner@example.com"}
-            onPress={() => {}}
+            onPress={() => Alert.alert(t("auth.email"), t("settings.emailChangeHint", "Contact support to change your email address."))}
           />
           <View style={s.divider} />
           <SettingRow
             icon="lock-closed"
-            label="Password"
+            label={t("auth.password", "Password")}
             subtitle="••••••••••"
-            onPress={() => {}}
+            onPress={() => Alert.alert(t("auth.password"), t("settings.passwordChangeHint", "Use 'Forgot Password' on the login screen to reset your password."))}
           />
         </View>
 
         {/* ── APPRENTISSAGE ── */}
-        <SectionHeader title="APPRENTISSAGE" />
+        <SectionHeader title={t("nav.lessons", "APPRENTISSAGE").toUpperCase()} />
         <View style={[s.sectionCard, Shadow.sm]}>
           <SettingRow
             icon="notifications"
             iconColor={Colors.primary}
-            label="Notifications"
+            label={t("settings.notifications", "Notifications")}
             right={
               <Switch
                 value={notificationsOn}
-                onValueChange={setNotificationsOn}
+                onValueChange={handleNotificationsToggle}
                 trackColor={{ false: Colors.surfaceVariant, true: Colors.primary + "60" }}
                 thumbColor={notificationsOn ? Colors.primary : Colors.surfaceContainerHigh}
               />
             }
           />
-          <View style={s.divider} />
-          <SettingRow
-            icon="alarm"
-            label="Rappels quotidiens"
-            right={
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text style={[Typo.bodyMd, { color: Colors.textSecondary }]}>20:00</Text>
-                <Ionicons name="pencil" size={14} color={Colors.textTertiary} style={{ marginLeft: Space.sm }} />
-              </View>
-            }
-            onPress={() => {}}
-          />
         </View>
 
         {/* ── PRÉFÉRENCES ── */}
-        <SectionHeader title="PRÉFÉRENCES" />
+        <SectionHeader title={t("settings.preferences")} />
         <View style={[s.sectionCard, Shadow.sm]}>
           <SettingRow
-            icon="moon"
-            label="Mode sombre"
-            right={
-              <Switch
-                value={darkMode}
-                onValueChange={setDarkMode}
-                trackColor={{ false: Colors.surfaceVariant, true: Colors.primary + "60" }}
-                thumbColor={darkMode ? Colors.primary : Colors.surfaceContainerHigh}
-              />
-            }
-          />
-          <View style={s.divider} />
-          <SettingRow
             icon="globe"
-            label="Langue de l'interface"
+            label={t("settings.interfaceLanguage")}
             right={
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text style={[Typo.bodyMd, { color: Colors.textSecondary }]}>Français</Text>
-                <Ionicons name="chevron-down" size={14} color={Colors.textTertiary} style={{ marginLeft: Space.xs }} />
+                <Text style={[Typo.bodyMd, { color: Colors.textSecondary, fontWeight: "bold" }]}>
+                  {appLang.startsWith('fr') ? 'Français' : 'English'}
+                </Text>
+                <Ionicons name="swap-horizontal" size={16} color={Colors.primary} style={{ marginLeft: Space.sm }} />
               </View>
             }
-            onPress={() => {}}
+            onPress={handleToggleLang}
           />
         </View>
 
         {/* ── SUPPORT & LEGAL ── */}
-        <SectionHeader title="SUPPORT & LEGAL" />
+        <SectionHeader title={t("settings.supportLegal")} />
         <View style={[s.sectionCard, Shadow.sm]}>
           <SettingRow
             icon="help-circle"
-            iconColor={Colors.secondary}
-            label="Aide"
+            iconColor={Colors.primary}
+            label={t("settings.helpSupport", "Aide & Support")}
             right={<Ionicons name="open-outline" size={16} color={Colors.textTertiary} />}
-            onPress={() => {}}
+            onPress={handleOpenSupport}
           />
           <View style={s.divider} />
           <SettingRow
             icon="document-text"
-            label="Conditions d'utilisation"
-            onPress={() => {}}
+            label={t("settings.terms", "Conditions d'utilisation")}
+            right={<Ionicons name="open-outline" size={16} color={Colors.textTertiary} />}
+            onPress={handleOpenTerms}
           />
           <View style={s.divider} />
           <SettingRow
             icon="shield-checkmark-outline"
-            label="Politique de confidentialité"
+            label={t("settings.privacy", "Politique de confidentialité")}
             onPress={handleOpenPrivacyPolicy}
           />
           <View style={s.divider} />
@@ -241,7 +249,7 @@ export default function SettingsScreen() {
             <View style={[s.settingIcon, { backgroundColor: Colors.error + "15" }]}>
               <Ionicons name="log-out-outline" size={20} color={Colors.error} />
             </View>
-            <Text style={[Typo.titleSm, { color: Colors.error, marginLeft: Space.lg }]}>Déconnexion</Text>
+            <Text style={[Typo.titleSm, { color: Colors.error, marginLeft: Space.lg }]}>{t("profile.logout", "Déconnexion")}</Text>
           </TouchableOpacity>
           <View style={s.divider} />
           {/* Supprimer le compte */}
@@ -249,14 +257,14 @@ export default function SettingsScreen() {
             <View style={[s.settingIcon, { backgroundColor: Colors.error + "10" }]}>
               <Ionicons name="trash-outline" size={20} color={Colors.error} />
             </View>
-            <Text style={[Typo.titleSm, { color: Colors.error, marginLeft: Space.lg }]}>Supprimer le compte</Text>
+            <Text style={[Typo.titleSm, { color: Colors.error, marginLeft: Space.lg }]}>{t("common.delete", "Supprimer le compte")}</Text>
           </TouchableOpacity>
         </View>
 
         {/* ── Footer ── */}
         <View style={s.footer}>
           <Text style={[Typo.labelSm, { color: Colors.textTertiary }]}>MULEMA APP V2.4.1 (622)</Text>
-          <Text style={[Typo.bodySm, { color: Colors.textTertiary, marginTop: Space.xs }]}>MADE WITH LOVE FOR CULTURE</Text>
+          <Text style={[Typo.bodySm, { color: Colors.textTertiary, marginTop: Space.xs }]}>{t("settings.madeWithLove")}</Text>
         </View>
 
         <View style={{ height: Space["4xl"] }} />
@@ -271,12 +279,12 @@ export default function SettingsScreen() {
       >
         <View style={s.modalOverlay}>
           <View style={s.modalContent}>
-            <Text style={[Typo.titleMd, { color: Colors.error, textAlign: "center" }]}>Supprimer mon compte ?</Text>
+            <Text style={[Typo.titleMd, { color: Colors.error, textAlign: "center" }]}>{t("settings.deleteAccountTitle")}</Text>
             <Text style={[Typo.bodyMd, { textAlign: "center", marginTop: Space.md, color: Colors.textSecondary }]}>
-              Cette action est irréversible. Toutes vos données seront effacées.
+              {t("settings.deleteAccountDesc")}
             </Text>
             <Text style={[Typo.labelLg, { textAlign: "center", marginTop: Space.lg, color: Colors.onSurface }]}>
-              Tapez <Text style={{ fontWeight: "700", color: Colors.error }}>DELETE</Text> pour confirmer :
+              {t("settings.typeDeleteToConfirm")} <Text style={{ fontWeight: "700", color: Colors.error }}>DELETE</Text>
             </Text>
             
             <TextInput
@@ -294,7 +302,7 @@ export default function SettingsScreen() {
                 disabled={isDeleting}
                 style={[s.modalBtn, { backgroundColor: Colors.surfaceVariant }]}
               >
-                <Text style={[Typo.labelLg, { color: Colors.onSurfaceVariant }]}>Annuler</Text>
+                <Text style={[Typo.labelLg, { color: Colors.onSurfaceVariant }]}>{t("common.cancel")}</Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
@@ -305,7 +313,7 @@ export default function SettingsScreen() {
                 {isDeleting ? (
                   <ActivityIndicator color="#FFF" size="small" />
                 ) : (
-                  <Text style={[Typo.labelLg, { color: "#FFF" }]}>Supprimer</Text>
+                  <Text style={[Typo.labelLg, { color: "#FFF" }]}>{t("common.delete")}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -320,25 +328,21 @@ const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.surface },
   scroll: { paddingHorizontal: Space["2xl"], paddingBottom: Space["2xl"] },
 
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 50,
+    backgroundColor: Colors.surface,
+  },
   header: {
     flexDirection: "row", alignItems: "center",
     paddingTop: Platform.OS === "ios" ? 60 : 44, paddingBottom: Space.xl,
+    paddingHorizontal: Space["2xl"],
   },
 
-  // Premium
-  premiumBanner: {
-    borderRadius: Radius.xl, padding: Space["2xl"],
-    flexDirection: "row", alignItems: "center",
-    overflow: "hidden",
-  },
-  premiumBtn: {
-    backgroundColor: Colors.primaryContainer,
-    borderRadius: Radius.full,
-    paddingHorizontal: Space.xl,
-    paddingVertical: Space.sm,
-    alignSelf: "flex-start",
-    marginTop: Space.lg,
-  },
+  // Premium banner styles removed
 
   // Section card (no-border rule — background shift)
   sectionCard: {

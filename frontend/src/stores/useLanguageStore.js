@@ -1,3 +1,4 @@
+import Logger from "../utils/logger";
 /**
  * MULEMA — useLanguageStore
  * Fonctionne avec le backend (/official-languages + /patrimonial-languages)
@@ -7,37 +8,41 @@
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { languagesService } from "../services/languages.service";
+import { isSessionActive } from "../services/api";
 
 const STORAGE_KEY = "selectedLanguage";
 const STORAGE_KEY_TYPE = "selectedLanguageType";
 
 export const useLanguageStore = create((set, get) => ({
   activeLanguage: null,
+  hasSeenIntro: false,
   languages: [],
   isLoading: false,
   isLoaded: false,
 
   fetchLanguages: async () => {
+    if (!isSessionActive()) return [];
     set({ isLoading: true });
     try {
       const languages = await languagesService.getAll();
       set({ languages, isLoading: false, isLoaded: true });
       return languages;
     } catch (error) {
-      console.warn("[LanguageStore] fetchLanguages error:", error);
       set({ isLoading: false, isLoaded: true });
+      if (error?.response?.status !== 401) {
+        Logger.warn("[LanguageStore] fetchLanguages error:", error);
+      }
       return [];
     }
   },
 
   loadActiveLanguage: async () => {
     const { languages } = get();
-    if (languages.length === 0) return null;
 
     // Helper : chercher d'abord par ID exact, sinon par nom
     // en priorisant les langues patrimoniales (celles qui ont des thèmes)
     const findLang = (query) => {
-      if (!query) return null;
+      if (!query || languages.length === 0) return null;
       // 1. ID exact
       const byId = languages.find((l) => l.id === query);
       if (byId) return byId;
@@ -50,18 +55,29 @@ export const useLanguageStore = create((set, get) => ({
 
     try {
       const storedId = await AsyncStorage.getItem(STORAGE_KEY);
-      const found = findLang(storedId);
-      if (found) {
-        set({ activeLanguage: found });
-        return found;
-      }
+      let found = findLang(storedId);
 
       const storedName = await AsyncStorage.getItem("selectedLanguageName");
-      const foundByName = findLang(storedName);
-      if (foundByName) {
-        set({ activeLanguage: foundByName });
-        return foundByName;
+      
+      if (!found && storedName) {
+        found = findLang(storedName);
       }
+
+      // Fallback: If backend fails (languages.length === 0) but we have a stored language
+      if (!found && storedId && storedName) {
+        const storedType = (await AsyncStorage.getItem(STORAGE_KEY_TYPE)) || "patrimonial";
+        found = { id: storedId, name: storedName, type: storedType };
+      }
+
+      if (found) {
+        set({ activeLanguage: found });
+      }
+
+      // Load intro video seen flag — important: this must ALWAYS run
+      const storedIntro = await AsyncStorage.getItem("hasSeenIntro");
+      set({ hasSeenIntro: storedIntro === "true" });
+
+      return get().activeLanguage;
     } catch {}
 
     return null;
@@ -86,6 +102,13 @@ export const useLanguageStore = create((set, get) => ({
     return language;
   },
 
+  setHasSeenIntro: async (val) => {
+    set({ hasSeenIntro: val });
+    try {
+      await AsyncStorage.setItem("hasSeenIntro", val ? "true" : "false");
+    } catch {}
+  },
+
   hasLanguage: () => get().activeLanguage !== null,
 
   getSpecialCharacters: () => get().activeLanguage?.specialCharacters || [],
@@ -95,8 +118,9 @@ export const useLanguageStore = create((set, get) => ({
       await AsyncStorage.removeItem(STORAGE_KEY);
       await AsyncStorage.removeItem("selectedLanguageName");
       await AsyncStorage.removeItem(STORAGE_KEY_TYPE);
+      await AsyncStorage.removeItem("hasSeenIntro");
     } catch {}
-    set({ activeLanguage: null, languages: [], isLoaded: false });
+    set({ activeLanguage: null, hasSeenIntro: false, languages: [], isLoaded: false });
   },
 }));
 
