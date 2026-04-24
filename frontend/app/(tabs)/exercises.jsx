@@ -218,8 +218,20 @@ export default function ExercisesScreen() {
   };
 
   const handleExerciseThemePress = useCallback((theme) => {
-    router.push(`/(tabs)/lessons/${theme.id}/exercise/session`);
-  }, [router]);
+    const allDone = (theme.exercisesCompleted ?? 0) >= (theme.exercisesCount ?? 3) && (theme.exercisesCount ?? 3) > 0;
+    if (allDone) {
+      // Theme complete — show story video (which marks videoWatched and unlocks the next theme)
+      const langCode = (activeLanguage?.name ?? activeLanguage?.code ?? "duala")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .replace(/[^a-z]/g, "")
+        .trim();
+      router.push(`/modal/onboarding-video?themeId=${theme.id}&langCode=${langCode}`);
+    } else {
+      router.push(`/(tabs)/lessons/${theme.id}/exercise/session`);
+    }
+  }, [router, activeLanguage]);
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>

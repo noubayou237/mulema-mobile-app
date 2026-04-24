@@ -47,6 +47,9 @@ export class LevelService {
       include: {
         _count: { select: { words: true } },
         exercises: { select: { id: true } },
+        userMulemThemeProgress: {
+          where: { userId },
+        },
         words: {
           orderBy: { order: 'asc' },
           include: {
@@ -58,7 +61,23 @@ export class LevelService {
       },
     });
 
-    return themes.map((t) => {
+    // We store all themes to check previous ones for locking logic
+    return themes.map((t, idx) => {
+      const userThemeProg = t.userMulemThemeProgress[0];
+      const isCompleted = userThemeProg?.isCompleted || false;
+      const videoWatched = userThemeProg?.videoWatched || false;
+
+      // A theme unlocks only after the previous theme's final challenge is completed
+      // AND its story video has been watched. The video is the required gateway.
+      let isThemeLocked = t.locked; // Fallback to DB-wide lock
+      if (t.order > 0) {
+        const prevTheme = themes.find((prev) => prev.order === t.order - 1);
+        const prevProg = prevTheme?.userMulemThemeProgress[0];
+        isThemeLocked = !prevProg?.isCompleted || !prevProg?.videoWatched;
+      } else {
+        // First theme is always unlocked unless explicitly locked in DB
+        isThemeLocked = t.locked;
+      }
       const lessonsCompleted = t.words.reduce(
         (acc, word) => acc + (word.userProgress.length > 0 ? 1 : 0),
         0,
@@ -83,7 +102,7 @@ export class LevelService {
         order: t.order,
         icon: t.icon,
         color: t.color,
-        locked: t.locked,
+        locked: isThemeLocked,
         lockHint: t.lock_hint,
         lessonsCount: t._count.words,
         lessonsCompleted,

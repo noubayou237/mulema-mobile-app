@@ -318,7 +318,10 @@ export default function ThemeDetailScreen() {
       >
         {/* ── Bouton retour flottant ── */}
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => {
+            if (router.canGoBack()) router.back();
+            else router.replace("/(tabs)/home");
+          }}
           style={[s.backBtn, { backgroundColor: lt.nodeActive + "30", borderColor: lt.accent + "40" }]}
           activeOpacity={0.7}
         >
@@ -415,7 +418,18 @@ export default function ThemeDetailScreen() {
               onPress={() => {
                 const access = getExerciseAccess(themeId);
                 if (!access.e1) return;
-                router.push(`/(tabs)/lessons/${themeId}/exercise/session`);
+
+                // Find the first incomplete lesson to determine the last completed one
+                const firstIncompleteIdx = lessons.findIndex(l => !l.userProgress?.[0]?.isCompleted);
+                // Last completed lesson index (0-based)
+                const lessonIdx = firstIncompleteIdx === -1
+                  ? lessons.length - 1       // all done → final exercise
+                  : firstIncompleteIdx - 1;  // last completed lesson
+
+                // Practice only the words from completed lessons (not all)
+                const wordCount = lessonIdx + 1;
+
+                router.push(`/(tabs)/lessons/${themeId}/exercise/session?lessonIdx=${lessonIdx}&wordCount=${wordCount}`);
               }}
             />
           </View>

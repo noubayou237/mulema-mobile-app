@@ -155,6 +155,22 @@ export class ProgressService {
     return { unlockedWordId: nextWord.id, order: nextWord.order };
   }
 
+  async markThemeCompleted(userId: string, themeId: string) {
+    return this.prisma.userMulemThemeProgress.upsert({
+      where: { userId_themeId: { userId, themeId } },
+      update: { isCompleted: true },
+      create: { userId, themeId, isCompleted: true, videoWatched: false },
+    });
+  }
+
+  async markVideoWatched(userId: string, themeId: string) {
+    return this.prisma.userMulemThemeProgress.upsert({
+      where: { userId_themeId: { userId, themeId } },
+      update: { videoWatched: true },
+      create: { userId, themeId, isCompleted: true, videoWatched: true },
+    });
+  }
+
   async getProgressForTheme(userId: string, themeId: string) {
     const words = await this.prisma.mulemWord.findMany({
       where: { themeId },

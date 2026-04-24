@@ -16,7 +16,7 @@ const USER_CACHE_KEY = "cachedUser";
 const cacheUser = async (user) => {
   try {
     await SecureStore.setItemAsync(USER_CACHE_KEY, JSON.stringify(user));
-  } catch {}
+  } catch { }
 };
 
 const getCachedUser = async () => {
@@ -31,7 +31,7 @@ const getCachedUser = async () => {
 const clearCachedUser = async () => {
   try {
     await SecureStore.deleteItemAsync(USER_CACHE_KEY);
-  } catch {}
+  } catch { }
 };
 
 export const useAuthStore = create((set, get) => ({
@@ -150,7 +150,6 @@ export const useAuthStore = create((set, get) => ({
       const current = get().user || {};
       const updatedUser = { ...current, ...data };
       set({ user: updatedUser });
-      // We don't necessarily need await here, but it's fine.
       cacheUser(updatedUser);
       return updatedUser;
     } catch (err) {
@@ -206,7 +205,7 @@ export const useAuthStore = create((set, get) => ({
     try {
       const session = await getSession();
       refreshToken = session?.refreshToken;
-    } catch {}
+    } catch { }
 
     // 2. Immediately clear persistence, cache, and local state
     await clearSession();
@@ -216,9 +215,9 @@ export const useAuthStore = create((set, get) => ({
     try {
       // 3. Inform backend to invalidate the refresh token
       if (refreshToken) {
-        api.post("/auth/logout", { refreshToken }).catch(() => {});
+        api.post("/auth/logout", { refreshToken }).catch(() => { });
       }
-    } catch {}
+    } catch { }
 
     // 4. Reset all other stores
     await useLanguageStore.getState().reset();
