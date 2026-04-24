@@ -131,7 +131,7 @@ export default function ThemesScreen() {
   const { t } = useTranslation();
   const { user, logout } = useAuthStore();
   const { activeLanguage, languages, fetchLanguages, loadActiveLanguage } = useLanguageStore();
-  const { themes, isLoading, fetchThemes } = useThemeStore();
+  const { themes, isLoading, error: themeError, fetchThemes } = useThemeStore();
   const { data: dash, fetchDashboard } = useDashboardStore();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -285,6 +285,20 @@ export default function ThemesScreen() {
           </View>
         ) : (
           <View>
+            {/* Bannière d'erreur (Connexion) */}
+            {themeError && (
+              <View style={s.errorBanner}>
+                <Ionicons name="cloud-offline-outline" size={24} color={RED} />
+                <View style={{ flex: 1 }}>
+                  <Text style={s.errorTitle}>{t("common.error", "Erreur")}</Text>
+                  <Text style={s.errorTxt}>{themeError}</Text>
+                </View>
+                <TouchableOpacity onPress={onRefresh} style={s.retryBtn}>
+                  <Ionicons name="refresh" size={18} color={RED} />
+                </TouchableOpacity>
+              </View>
+            )}
+
             <View style={s.sectionHeader}>
               <Ionicons name="book" size={18} color={RED} />
               <Text style={s.sectionTitle}>{t("lessons.available")}</Text>
@@ -421,6 +435,40 @@ const s = StyleSheet.create({
 
   empty: { alignItems: "center", paddingVertical: 48 },
   emptyTxt: { fontSize: 14, fontFamily: "Nunito-Regular", color: FAINT, textAlign: "center", marginTop: 12, lineHeight: 20 },
+
+  /* Error banner */
+  errorBanner: {
+    backgroundColor: RED_L,
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderRadius: 20,
+    marginBottom: 20,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: RED + "30",
+  },
+  errorTitle: {
+    fontSize: 14,
+    fontFamily: "Fredoka_600SemiBold",
+    color: RED,
+    marginBottom: 2,
+  },
+  errorTxt: {
+    fontSize: 13,
+    fontFamily: "Nunito-Regular",
+    color: TEXT_SUB,
+    lineHeight: 18,
+  },
+  retryBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#FFF",
+    alignItems: "center",
+    justifyContent: "center",
+    ...Shadow.sm,
+  },
 
   drawer: {
     position: "absolute",

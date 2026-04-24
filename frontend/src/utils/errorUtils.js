@@ -9,7 +9,7 @@ export const getFriendlyErrorMessage = (error) => {
   if (!error) return t("errors.somethingWentWrong");
 
   // 1. Handle Axios "Network Error" (often CORS or server down)
-  if (error.message === "Network Error") {
+  if (error.message === "Network Error" || error.code === "ERR_NETWORK" || error.message?.toLowerCase().includes("network error")) {
     return t("errors.networkError");
   }
 
@@ -39,6 +39,9 @@ export const getFriendlyErrorMessage = (error) => {
       return t("auth.passwordResetError"); // Generic auth error catch
     }
 
+    // Not found
+    if (status === 404) return t("errors.notFound", "Cette ressource n'est pas disponible pour le moment.");
+
     // Validation Errors (often an array of strings)
     if (Array.isArray(msg)) {
       const first = msg[0].toLowerCase();
@@ -55,9 +58,12 @@ export const getFriendlyErrorMessage = (error) => {
         if (msg === "User not found") return t("errors.accountNotFound");
         if (msg === "Invalid password") return t("errors.invalidPassword");
         if (msg.toLowerCase().includes("missing")) return t("errors.requiredField");
+        if (msg.toLowerCase().includes("cannot") || msg.toLowerCase().includes("not found")) {
+          return t("errors.notFound", "Cette ressource n'est pas disponible pour le moment.");
+        }
         return msg;
     }
-    
+
     if (status >= 500) return t("errors.serverError");
   }
 

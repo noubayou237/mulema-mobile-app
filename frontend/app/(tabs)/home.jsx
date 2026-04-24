@@ -487,8 +487,14 @@ export default function HomeScreen() {
           {/* Bannière d'erreur (Connexion) */}
           {dashError && (
             <View style={s.errorBanner}>
-              <Ionicons name="cloud-offline-outline" size={20} color="#FFF" />
-              <Text style={s.errorTxt}>{dashError}</Text>
+              <Ionicons name="cloud-offline-outline" size={24} color={RED} />
+              <View style={{ flex: 1 }}>
+                <Text style={s.errorTitle}>{t("common.error", "Erreur")}</Text>
+                <Text style={s.errorTxt}>{dashError}</Text>
+              </View>
+              <TouchableOpacity onPress={fetchDashboard} style={s.retryBtn}>
+                <Ionicons name="refresh" size={18} color={RED} />
+              </TouchableOpacity>
             </View>
           )}
 
@@ -800,19 +806,37 @@ const s = StyleSheet.create({
   },
   /* Error banner */
   errorBanner: {
-    backgroundColor: "#F44336",
+    backgroundColor: RED_L,
     flexDirection: "row",
     alignItems: "center",
     padding: Space.lg,
     borderRadius: Radius.lg,
     marginBottom: Space.lg,
     gap: Space.md,
+    borderWidth: 1,
+    borderColor: RED + "30",
+  },
+  errorTitle: {
+    fontSize: 14,
+    fontFamily: "Fredoka_600SemiBold",
+    color: RED,
+    marginBottom: 2,
   },
   errorTxt: {
-    color: "#FFF",
+    color: Colors.textTertiary,
     fontFamily: "Nunito-Regular",
     fontSize: 13,
     flex: 1,
+    lineHeight: 18,
+  },
+  retryBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#FFF",
+    alignItems: "center",
+    justifyContent: "center",
+    ...Shadow.sm,
   },
 });
 

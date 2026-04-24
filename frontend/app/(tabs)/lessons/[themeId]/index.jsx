@@ -4,13 +4,14 @@
  * Nœuds : cercle (leçon) · hexagone (défi) · étoile (bonus final)
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity,
   Animated, StyleSheet, Platform, StatusBar,
   ActivityIndicator, Dimensions,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Path, Circle, Polygon } from "react-native-svg";
@@ -288,10 +289,14 @@ export default function ThemeDetailScreen() {
 
   const lt = getLangTheme(activeLanguage?.name ?? "");
 
-  useEffect(() => {
-    if (themeId) fetchLessons(themeId);
-    return () => clearTheme();
-  }, [themeId]);
+  // Refetch every time this screen gains focus so that newly-unlocked lessons
+  // appear after returning from an exercise without needing a full remount.
+  useFocusEffect(
+    useCallback(() => {
+      if (themeId) fetchLessons(themeId);
+      return () => clearTheme();
+    }, [themeId])
+  );
 
   const theme     = getThemeById(themeId);
   const themeName = theme?.name_fr ?? theme?.name ?? t("common.theme");
@@ -419,14 +424,16 @@ export default function ThemeDetailScreen() {
                 const access = getExerciseAccess(themeId);
                 if (!access.e1) return;
 
-                // Find the first incomplete lesson to determine the last completed one
-                const firstIncompleteIdx = lessons.findIndex(l => !l.userProgress?.[0]?.isCompleted);
-                // Last completed lesson index (0-based)
-                const lessonIdx = firstIncompleteIdx === -1
-                  ? lessons.length - 1       // all done → final exercise
-                  : firstIncompleteIdx - 1;  // last completed lesson
-
-                // Practice only the words from completed lessons (not all)
+                // Find the last lesson that is accessible: indices 0-1 are
+                // auto-unlocked; indices 2+ need an explicit isUnlocked from DB.
+                // This is the "frontier" — the lesson whose exercise should fire
+                // next to advance the curriculum by one step.
+                let lastAccessibleIdx = Math.min(1, lessons.length - 1);
+                for (let i = 2; i < lessons.length; i++) {
+                  if (lessons[i]?.userProgress?.[0]?.isUnlocked) lastAccessibleIdx = i;
+                  else break;
+                }
+                const lessonIdx = lastAccessibleIdx;
                 const wordCount = lessonIdx + 1;
 
                 router.push(`/(tabs)/lessons/${themeId}/exercise/session?lessonIdx=${lessonIdx}&wordCount=${wordCount}`);

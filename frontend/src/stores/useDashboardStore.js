@@ -1,26 +1,9 @@
 import Logger from "../utils/logger";
-/**
- * ╔══════════════════════════════════════════════════════════════╗
- * ║  MULEMA — useDashboardStore (Zustand)                         ║
- * ║  Données agrégées pour la page d'accueil                     ║
- * ║  Se recharge quand activeLanguage change                      ║
- * ╚══════════════════════════════════════════════════════════════╝
- *
- *  Usage :
- *    import { useDashboardStore } from "@/stores/useDashboardStore";
- *
- *    const { activeLanguage } = useLanguageStore();
- *    const { data, fetchDashboard } = useDashboardStore();
- *
- *    useEffect(() => {
- *      if (activeLanguage) fetchDashboard();
- *    }, [activeLanguage?.id]);
- */
-
 import { create } from "zustand";
 import { dashboardService } from "../services/dashboard.service";
 import { isSessionActive } from "../services/api";
 import { getFriendlyErrorMessage } from "../utils/errorUtils";
+import i18n from "../i18n";
 
 export const useDashboardStore = create((set) => ({
   // ── State ──
@@ -31,6 +14,7 @@ export const useDashboardStore = create((set) => ({
   // Leaderboard (séparé car indépendant de la langue)
   leaderboard: [],           // LeaderboardEntry[]
   leaderboardLoading: false,
+  leaderboardError: null,    // user-friendly error string | null
 
   // ═════════════════════════════════════════════════════════════
   // fetchDashboard — Charge les stats du dashboard
@@ -90,16 +74,30 @@ export const useDashboardStore = create((set) => ({
 
   fetchLeaderboard: async () => {
     if (!isSessionActive()) return [];
-    set({ leaderboardLoading: true });
+    set({ leaderboardLoading: true, leaderboardError: null });
     try {
       const leaderboard = await dashboardService.getLeaderboard();
-      set({ leaderboard, leaderboardLoading: false });
+      set({ leaderboard, leaderboardLoading: false, leaderboardError: null });
       return leaderboard;
     } catch (error) {
-      set({ leaderboardLoading: false });
-      if (error?.response?.status !== 401 && isSessionActive()) {
-        Logger.error("[DashboardStore] fetchLeaderboard error:", error);
+      const status = error?.response?.status;
+      // Suppress 401 errors during logout window — not a user-facing issue
+      if (status === 401 || !isSessionActive()) {
+        set({ leaderboardLoading: false });
+        return [];
       }
+
+      // Build a friendly error message for the user
+      const t = i18n.t.bind(i18n);
+      let friendlyMsg;
+      if (status === 404 || error.message === "Network Error") {
+        friendlyMsg = t("community.rankingsUnavailable", "Le classement n'est pas disponible pour le moment. Réessaie plus tard.");
+      } else {
+        friendlyMsg = getFriendlyErrorMessage(error);
+      }
+
+      set({ leaderboardLoading: false, leaderboardError: friendlyMsg });
+      Logger.warn("[DashboardStore] fetchLeaderboard:", friendlyMsg);
       return [];
     }
   },

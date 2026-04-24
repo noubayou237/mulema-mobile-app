@@ -133,12 +133,21 @@ export class ProgressController {
    */
   @Post('unlock-final/:themeId')
   @ApiOperation({ summary: 'Marquer le thème comme fini après le challenge final' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        completedLessonOrder: { type: 'number', description: '0-based index of the last lesson (used to mark it completed)' },
+      },
+    },
+  })
   async unlockFinal(
     @Req() req: any,
     @Param('themeId') themeId: string,
+    @Body() body: { completedLessonOrder?: number },
   ) {
     const userId = req.user.userId;
-    return this.progressService.markThemeCompleted(userId, themeId);
+    return this.progressService.markThemeCompleted(userId, themeId, body.completedLessonOrder);
   }
 
   /**
