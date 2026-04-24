@@ -17,7 +17,9 @@ import { useTranslation } from "react-i18next";
 
 import { Colors, Space, Radius, Shadow } from "../../../../../src/theme/tokens";
 import { useThemeStore } from "../../../../../src/stores/useThemeStore";
+import { useLanguageStore } from "../../../../../src/stores/useLanguageStore";
 import api from "../../../../../src/services/api";
+import Logger from "../../../../../src/utils/logger";
 
 
 /* ── Étoiles selon le score ────────────────────────────────── */
@@ -114,6 +116,7 @@ export default function ExerciseResults() {
     lessonIdx: lessonIdxStr,
   } = useLocalSearchParams();
   const { completeTheme, lessons } = useThemeStore();
+  const { activeLanguage } = useLanguageStore();
 
   const score          = parseInt(scoreStr   ?? "0",  10);
   const correct        = parseInt(correctStr ?? "0", 10);
@@ -122,32 +125,35 @@ export default function ExerciseResults() {
   const stars          = getStars(score);
   const msg            = getMessage(score, t);
   const success        = score >= 60;
-  
+
   const isFinalLesson  = lessonIdxParam != null && lessons && lessonIdxParam === lessons.length - 1;
   const [showFinalAnim, setShowFinalAnim] = useState(false);
 
-  /* Compléter le thème en local + débloquer la leçon suivante en base si score suffisant */
+  const langCode = (activeLanguage?.name ?? activeLanguage?.code ?? "duala")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z]/g, "")
+    .trim();
+
+  /* Persist progress to DB and update local state */
   useEffect(() => {
-    if (themeId) {
+    if (!themeId || !success || lessonIdxParam == null) return;
+
+    if (isFinalLesson) {
+      // All lessons done + exercise passed → mark theme complete and unlock next theme
       completeTheme(themeId, score);
-      // Persist unlock to DB only when the user passed (score >= 60)
-      if (success && lessonIdxParam != null) {
-        if (isFinalLesson) {
-          setShowFinalAnim(true);
-          // Unlock Final Challenge / Story Video logic in backend (if needed)
-          api.post(`/progress/unlock-final/${themeId}`, {
-            completedLessonOrder: lessonIdxParam,
-          }).catch(err => Logger.warn("[Unlock] Final challenge:", err?.message));
-        } else {
-          api
-            .post(`/progress/unlock-next-lesson/${themeId}`, {
-              completedLessonOrder: lessonIdxParam,
-            })
-            .catch((err) =>
-              Logger.warn("[Unlock] Could not unlock next lesson:", err?.message)
-            );
-        }
-      }
+      setShowFinalAnim(true);
+      api.post(`/progress/unlock-final/${themeId}`, {
+        completedLessonOrder: lessonIdxParam,
+      }).catch(err => Logger.warn("[Unlock] Final challenge:", err?.message));
+    } else {
+      // Progressive exercise → unlock the next lesson in the sequence
+      api
+        .post(`/progress/unlock-next-lesson/${themeId}`, {
+          completedLessonOrder: lessonIdxParam,
+        })
+        .catch((err) => Logger.warn("[Unlock] Could not unlock next lesson:", err?.message));
     }
   }, []);
 
@@ -233,6 +239,23 @@ export default function ExerciseResults() {
 
         {/* ── Boutons ── */}
         <View style={s.buttons}>
+          {/* Story video CTA — shown after passing the final challenge */}
+          {showFinalAnim && success && (
+            <TouchableOpacity
+              onPress={() =>
+                router.replace(`/modal/onboarding-video?themeId=${themeId}&langCode=${langCode}`)
+              }
+              style={s.videoBtnWrap}
+              activeOpacity={0.88}
+            >
+              <View style={s.videoBtn}>
+                <Ionicons name="film" size={22} color="#FFF" />
+                <Text style={s.videoBtnTxt}>{t("exercises.watchStoryVideo", "Voir la vidéo histoire")}</Text>
+              </View>
+              <Text style={s.videoBtnSub}>{t("exercises.videoUnlocksNext", "Débloque le thème suivant")}</Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity onPress={handleContinue} style={s.primaryBtn} activeOpacity={0.85}>
             <Text style={s.primaryTxt}>
               {success ? t("exercises.continueAdventure") : t("exercises.reviewLessons")}
@@ -245,7 +268,7 @@ export default function ExerciseResults() {
             <Text style={s.secondaryTxt}>{t("exercises.retry")}</Text>
           </TouchableOpacity>
 
-          {success && (
+          {success && !showFinalAnim && (
             <TouchableOpacity onPress={handleHome} style={s.ghostBtn} activeOpacity={0.7}>
               <Text style={s.ghostTxt}>{t("exercises.backToThemes")}</Text>
             </TouchableOpacity>
@@ -328,6 +351,21 @@ const s = StyleSheet.create({
     paddingHorizontal: Space["2xl"],
     gap: Space.md,
   },
+
+  /* Story video CTA */
+  videoBtnWrap: { alignItems: "center", gap: 6 },
+  videoBtn: {
+    flexDirection: "row",
+    alignItems: "center", justifyContent: "center",
+    backgroundColor: "#7F0000",
+    borderRadius: 9999,
+    paddingVertical: 16, gap: 8,
+    width: "100%",
+    borderWidth: 2, borderColor: "#B71C1C",
+  },
+  videoBtnTxt: { fontFamily: "Fredoka_700Bold", fontSize: 16, color: "#FFF" },
+  videoBtnSub: { fontFamily: "Nunito-Regular", fontSize: 12, color: Colors.textTertiary },
+
   primaryBtn: {
     flexDirection: "row",
     alignItems: "center", justifyContent: "center",

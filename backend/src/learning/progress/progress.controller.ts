@@ -127,4 +127,30 @@ export class ProgressController {
       body.completedLessonOrder,
     );
   }
+
+  /**
+   * 🔹 Débloquer le challenge final / Marquer le thème comme fini
+   */
+  @Post('unlock-final/:themeId')
+  @ApiOperation({ summary: 'Marquer le thème comme fini après le challenge final' })
+  async unlockFinal(
+    @Req() req: any,
+    @Param('themeId') themeId: string,
+  ) {
+    const userId = req.user.userId;
+    return this.progressService.markThemeCompleted(userId, themeId);
+  }
+
+  /**
+   * 🔹 Marquer la vidéo story comme visionnée
+   */
+  @Post('video-watched/:themeId')
+  @ApiOperation({ summary: 'Marquer la vidéo du thème comme visionnée' })
+  async videoWatched(
+    @Req() req: any,
+    @Param('themeId') themeId: string,
+  ) {
+    const userId = req.user.userId;
+    return this.progressService.markVideoWatched(userId, themeId);
+  }
 }

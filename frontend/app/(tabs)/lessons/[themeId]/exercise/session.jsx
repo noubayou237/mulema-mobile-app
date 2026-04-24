@@ -98,19 +98,30 @@ const triggerFeedback = (correct) => {
 };
 
 /* ── Génération des questions ───────────────────────────────── */
+const hasValidImage = (w) =>
+  w.imageUrl && typeof w.imageUrl === "string" && w.imageUrl.trim() !== "";
+
 const buildSession = (words) => {
   if (!words || words.length < 1) return [];
   const sw = shuffle(words);
   const PER = 4; // 4 questions per type
 
-  // QCM — works with as few as 1 word (binary choice with 2 options minimum)
-  const maxOpts = Math.min(4, sw.length); // use however many words we have (up to 4)
+  const wordsWithImg = sw.filter(hasValidImage);
+  const canDoImageQCM = wordsWithImg.length >= 2;
+  const maxOpts = Math.min(4, sw.length);
+
   const qcm = Array.from({ length: PER }, (_, i) => {
     const target = sw[i % sw.length];
+    if (canDoImageQCM && hasValidImage(target)) {
+      // Build image_qcm using only words that have images as options
+      const imgPool = wordsWithImg.filter((w) => w.id !== target.id);
+      const optsCount = Math.min(maxOpts - 1, imgPool.length);
+      const opts = shuffle([target, ...shuffle(imgPool).slice(0, optsCount)]);
+      return { type: "image_qcm", target, options: opts };
+    }
     const others = sw.filter((w) => w.id !== target.id);
     const opts = shuffle([target, ...shuffle(others).slice(0, maxOpts - 1)]);
-    const hasImg = opts.every((o) => o.imageUrl);
-    return { type: hasImg ? "image_qcm" : "text_qcm", target, options: opts };
+    return { type: "text_qcm", target, options: opts };
   });
 
   // Match — requires at least 2 words; use however many pairs are available (up to 3)

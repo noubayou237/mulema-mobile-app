@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -11,7 +11,8 @@ import {
 import { Video, ResizeMode } from "expo-av";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Colors, Space, Typo } from "../../src/theme/tokens";
+import { Colors, Space } from "../../src/theme/tokens";
+import { useThemeStore } from "../../src/stores/useThemeStore";
 
 const { width: SW, height: SH } = Dimensions.get("window");
 
@@ -26,12 +27,15 @@ export default function OnboardingVideoScreen() {
   const { langCode, themeId } = useLocalSearchParams();
   const videoRef = useRef(null);
   const [loading, setLoading] = useState(true);
+  const watchVideo = useThemeStore((s) => s.watchVideo);
 
   const source = VIDEOS[langCode?.toLowerCase()] || VIDEOS.duala;
 
-  const handleFinished = () => {
-    // Navigate to the theme or home after video
+  const handleFinished = async () => {
+    // If watching a story video after completing a theme's final challenge,
+    // mark videoWatched in DB and unlock the next theme.
     if (themeId) {
+      await watchVideo(themeId);
       router.replace(`/(tabs)/lessons/${themeId}`);
     } else {
       router.replace("/(tabs)/home");

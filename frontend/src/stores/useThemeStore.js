@@ -1,26 +1,7 @@
 import Logger from "../utils/logger";
-/**
- * ╔══════════════════════════════════════════════════════════════╗
- * ║  MULEMA — useThemeStore (Zustand)                             ║
- * ║  Thèmes de la langue active + leçons + mots                  ║
- * ║  Se recharge quand activeLanguage change                      ║
- * ╚══════════════════════════════════════════════════════════════╝
- *
- *  Usage :
- *    import { useThemeStore } from "@/stores/useThemeStore";
- *
- *    // Dans un écran, recharger quand la langue change :
- *    const { activeLanguage } = useLanguageStore();
- *    const { themes, fetchThemes } = useThemeStore();
- *
- *    useEffect(() => {
- *      if (activeLanguage) fetchThemes(activeLanguage.id);
- *    }, [activeLanguage?.id]);
- */
-
 import { create } from "zustand";
 import { themesService } from "../services/themes.service";
-import { isSessionActive } from "../services/api";
+import api, { isSessionActive } from "../services/api";
 import { getFriendlyErrorMessage } from "../utils/errorUtils";
 
 export const useThemeStore = create((set, get) => ({
@@ -144,14 +125,15 @@ export const useThemeStore = create((set, get) => ({
 
   getExerciseAccess: (themeId) => {
     const { lessons } = get();
-    
-    // Final Challenge (Exercises) should only be available after ALL lessons are completed
+
     const lessonsCompletedCount = lessons.reduce((acc, l) => {
       const prog = l.userProgress?.[0];
       return acc + (prog?.isCompleted ? 1 : 0);
     }, 0);
 
-    const enoughLessonsCompleted = lessons.length > 0 && lessonsCompletedCount >= lessons.length;
+    // Exercise unlocks progressively: available once the auto-unlocked lessons (first 2) are done.
+    // Each pass of the exercise unlocks the next lesson until all are complete.
+    const enoughLessonsCompleted = lessons.length > 0 && lessonsCompletedCount >= 2;
 
     return {
       e1: enoughLessonsCompleted,
@@ -203,8 +185,8 @@ export const useThemeStore = create((set, get) => ({
   },
 
   // ═════════════════════════════════════════════════════════════
-  // completeTheme — Marque un thème comme terminé + débloque le suivant
-  // Appelé depuis la page résultats quand score >= 60
+  // completeTheme — Marque un thème comme terminé (exercice final réussi)
+  // Le thème suivant ne débloque qu'après que la vidéo est regardée.
   // ═════════════════════════════════════════════════════════════
 
   completeTheme: (themeId, score) => {
@@ -213,13 +195,31 @@ export const useThemeStore = create((set, get) => ({
     if (idx === -1) return;
 
     const updated = [...themes];
-    updated[idx] = { ...updated[idx], e3Completed: score >= 60, locked: false };
+    updated[idx] = { ...updated[idx], e3Completed: score >= 60 };
+    // Do NOT unlock next theme here — video watching is required first.
+    set({ themes: updated });
+  },
 
-    // Débloquer le thème suivant si score suffisant
-    if (score >= 60 && idx + 1 < updated.length) {
+  // ═════════════════════════════════════════════════════════════
+  // watchVideo — Marque la vidéo story comme regardée, puis
+  //              débloque le thème suivant localement + en base.
+  // ═════════════════════════════════════════════════════════════
+
+  watchVideo: async (themeId) => {
+    try {
+      await api.post(`/progress/video-watched/${themeId}`);
+    } catch (err) {
+      Logger.warn("[ThemeStore] watchVideo error:", err?.message);
+    }
+    const { themes } = get();
+    const idx = themes.findIndex((t) => t.id === themeId);
+    if (idx === -1) return;
+
+    const updated = [...themes];
+    updated[idx] = { ...updated[idx], videoWatched: true };
+    if (idx + 1 < updated.length) {
       updated[idx + 1] = { ...updated[idx + 1], locked: false };
     }
-
     set({ themes: updated });
   },
 
