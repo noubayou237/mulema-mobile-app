@@ -13,7 +13,6 @@ import {
   View,
   Text,
   ScrollView,
-  FlatList,
   TouchableOpacity,
   Animated,
   Easing,
@@ -23,7 +22,9 @@ import {
   StatusBar,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -35,24 +36,27 @@ import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 // ── Stores ──
 import { useAuthStore } from "../../src/stores/useAuthStore";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
-// import { useCommunityStore } from "../../src/stores/useCommunityStore";
+import { useDashboardStore } from "../../src/stores/useDashboardStore";
+import { DrawerContent } from "../../src/components/layout/DrawerContent";
+import { useTranslation } from "react-i18next";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
 // ── Ligue tiers (inspiré Duolingo) ──
-const LEAGUE_TIERS = [
-  { id: "crevette", name: "Ligue des Crevettes", icon: "🦐", color: "#FF9800", minXP: 0 },
-  { id: "bronze", name: "Ligue Bronze", icon: "🥉", color: "#CD7F32", minXP: 500 },
-  { id: "argent", name: "Ligue Argent", icon: "🥈", color: "#9E9E9E", minXP: 1000 },
-  { id: "or", name: "Ligue Or", icon: "🥇", color: "#FFC107", minXP: 2000 },
-  { id: "diamant", name: "Ligue Diamant", icon: "💎", color: "#00BCD4", minXP: 5000 },
+const getLeagueTiers = (t) => [
+  { id: "crevette", name: t("leagues.shrimp"), icon: "🦐", color: "#FF9800", minXP: 0 },
+  { id: "bronze", name: t("leagues.bronze"), icon: "🥉", color: "#CD7F32", minXP: 500 },
+  { id: "argent", name: t("leagues.silver"), icon: "🥈", color: "#9E9E9E", minXP: 1000 },
+  { id: "or", name: t("leagues.gold"), icon: "🥇", color: "#FFC107", minXP: 2000 },
+  { id: "diamant", name: t("leagues.diamond"), icon: "💎", color: "#00BCD4", minXP: 5000 },
 ];
 
-const getLeagueTier = (xp = 0) => {
-  for (let i = LEAGUE_TIERS.length - 1; i >= 0; i--) {
-    if (xp >= LEAGUE_TIERS[i].minXP) return LEAGUE_TIERS[i];
+const getLeagueTier = (xp = 0, t) => {
+  const tiers = getLeagueTiers(t);
+  for (let i = tiers.length - 1; i >= 0; i--) {
+    if (xp >= tiers[i].minXP) return tiers[i];
   }
-  return LEAGUE_TIERS[0];
+  return tiers[0];
 };
 
 /* ══════════════════════════════════════════════════════════════
@@ -71,7 +75,7 @@ const Avatar = ({ uri, size = 48, rank, borderColor = Colors.primary }) => (
         backgroundColor: Colors.surfaceVariant,
       }}
     >
-      {uri ? (
+      {uri && typeof uri === 'string' && uri.trim() !== "" ? (
         <Image source={{ uri }} style={{ width: size, height: size }} contentFit="cover" />
       ) : (
         <View
@@ -167,17 +171,27 @@ const Podium = ({ top3 = [], leagueColor = "#FF9800" }) => {
    FILTER TABS
    ══════════════════════════════════════════════════════════════ */
 const FilterTabs = ({ active, onChange }) => {
+  const { t } = useTranslation();
   const tabs = [
-    { key: "week", label: "Semaine actuelle" },
-    { key: "month", label: "Ce mois" },
-    { key: "all", label: "Total" },
+    { key: "all", label: t("common.total") },
+    { key: "month", label: t("common.thisMonth"), comingSoon: true },
+    { key: "week", label: t("common.currentWeek"), comingSoon: true },
   ];
   return (
     <View style={ft.container}>
       {tabs.map((tab) => (
         <TouchableOpacity
           key={tab.key}
-          onPress={() => onChange(tab.key)}
+          onPress={() => {
+            if (tab.comingSoon) {
+              Alert.alert(
+                t("common.comingSoon", "Bientôt disponible"),
+                t("community.filterComingSoon", "Le filtrage par période sera disponible dans une prochaine mise à jour.")
+              );
+              return;
+            }
+            onChange(tab.key);
+          }}
           activeOpacity={0.7}
           style={[ft.tab, active === tab.key && ft.tabActive]}
         >
@@ -194,16 +208,19 @@ const FilterTabs = ({ active, onChange }) => {
    RANK ROW (joueurs 4+)
    ══════════════════════════════════════════════════════════════ */
 
-const RANK_TAGS = {
-  rising: { label: "Vient de monter", color: Colors.primary },
-  top10: { label: "Top 10% cette semaine", color: "#FF9800" },
-  streak: (days) => ({ label: `Série de ${days} jours`, color: "#E53935" }),
-  newcomer: { label: "Nouveau", color: "#9C27B0" },
-};
+const getRankTags = (t) => ({
+  rising: { label: t("community.ranks.rising"), color: Colors.primary },
+  top10: { label: t("community.ranks.top10"), color: "#FF9800" },
+  streak: (days) => ({ label: t("community.ranks.streak", { count: days }), color: Colors.success }),
+  newcomer: { label: t("community.ranks.newcomer"), color: "#9C27B0" },
+});
 
 const RankRow = ({ item, isCurrentUser = false }) => {
+  const { t } = useTranslation();
+  const RANK_TAGS = getRankTags(t);
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -250,11 +267,11 @@ const RankRow = ({ item, isCurrentUser = false }) => {
         {/* Name + tag */}
         <View style={rr.nameCol}>
           <Text style={[rr.name, isCurrentUser && { color: "#FFF" }]} numberOfLines={1}>
-            {isCurrentUser ? "C'est vous !" : item.name}
+            {isCurrentUser ? t("community.isYou") : item.name}
           </Text>
           {isCurrentUser ? (
             <Text style={rr.currentSubtitle}>
-              Plus que {item.xpToNextRank || 50} XP pour monter
+              {t("community.xpToNextRank", { xp: item.xpToNextRank || 50 })}
             </Text>
           ) : tag ? (
             <Text style={[rr.tag, { color: tag.color }]}>{tag.label}</Text>
@@ -265,7 +282,7 @@ const RankRow = ({ item, isCurrentUser = false }) => {
         <View style={rr.xpCol}>
           <Text style={[rr.xp, isCurrentUser && { color: "#FFF" }]}>{item.totalXP}</Text>
           <Text style={[rr.xpLabel, isCurrentUser && { color: "rgba(255,255,255,0.7)" }]}>
-            {isCurrentUser ? "VOTRESCORE" : "XP"}
+            {isCurrentUser ? t("community.yourScore") : t("stats.xp")}
           </Text>
         </View>
       </View>
@@ -277,6 +294,7 @@ const RankRow = ({ item, isCurrentUser = false }) => {
    LEAGUE HEADER CARD
    ══════════════════════════════════════════════════════════════ */
 const LeagueHeader = ({ league, timeLeft, onMenuPress, streak, hearts }) => {
+  const { t } = useTranslation();
   const pulseAnim = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     Animated.loop(
@@ -294,10 +312,10 @@ const LeagueHeader = ({ league, timeLeft, onMenuPress, streak, hearts }) => {
         <TouchableOpacity onPress={onMenuPress} activeOpacity={0.7} style={lh.menuBtn}>
           <Ionicons name="menu" size={22} color={Colors.onSurface} />
         </TouchableOpacity>
-        <Text style={lh.pageTitle}>Classement</Text>
+        <Text style={lh.pageTitle}>{t("nav.community")}</Text>
         <View style={lh.navBadges}>
           <View style={lh.badge}>
-            <Ionicons name="flame" size={16} color={Colors.secondary} />
+            <Ionicons name="flame" size={16} color={Colors.success} />
             <Text style={lh.badgeNum}>{streak}</Text>
           </View>
           <View style={[lh.badge, lh.heartBadge]}>
@@ -313,12 +331,12 @@ const LeagueHeader = ({ league, timeLeft, onMenuPress, streak, hearts }) => {
       </Animated.Text>
 
       {/* League name */}
-      <Text style={lh.leagueName}>{league?.name || "Ligue des Crevettes"}</Text>
+      <Text style={lh.leagueName}>{league?.name}</Text>
 
       {/* Timer */}
       {timeLeft && (
         <View style={lh.timerRow}>
-          <Text style={lh.timerLabel}>Se termine dans </Text>
+          <Text style={lh.timerLabel}>{t("community.endsIn")}</Text>
           <Text style={[lh.timerValue, { color: league?.color || Colors.secondary }]}>
             {timeLeft}
           </Text>
@@ -332,7 +350,7 @@ const LeagueHeader = ({ league, timeLeft, onMenuPress, streak, hearts }) => {
    MAIN SCREEN
    ══════════════════════════════════════════════════════════════ */
 
-// Mock data fallback (à remplacer par l'API réelle)
+// Mock data — shown only when no error AND no real data yet (e.g. first load before API responds)
 const MOCK_RANKING = [
   { id: "1", rank: 1, name: "Fatou D.", totalXP: 1850, avatar: null, streakDays: 12, tag: null },
   { id: "2", rank: 2, name: "Amadou", totalXP: 1420, avatar: null, streakDays: 8, tag: null },
@@ -344,49 +362,132 @@ const MOCK_RANKING = [
   { id: "8", rank: 8, name: "Léon K.", totalXP: 590, avatar: null, streakDays: 0, tag: "newcomer" },
 ];
 
+// Normalise a raw leaderboard entry from the API into the shape this UI expects
+const normaliseEntry = (entry, index) => ({
+  id:          entry.id ?? String(index),
+  rank:        entry.rank ?? index + 1,
+  name:        entry.name ?? entry.username ?? "—",
+  totalXP:     entry.totalXP ?? entry.totalPoints ?? entry.xp ?? 0,
+  avatar:      entry.avatarUrl ?? entry.avatar ?? null,
+  streakDays:  entry.streakDays ?? 0,
+  tag:         entry.tag ?? null,
+  xpToNextRank: entry.xpToNextRank ?? 50,
+});
+
 export default function CommunityScreen() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { t } = useTranslation();
+  const { user, logout } = useAuthStore();
   const { activeLanguage } = useLanguageStore();
+  const {
+    leaderboard: rawLeaderboard,
+    leaderboardLoading,
+    leaderboardError,
+    data: dashData,
+    fetchLeaderboard,
+    fetchDashboard,
+  } = useDashboardStore();
 
-  // Fallback to mock if store not wired
-  const [ranking, setRanking] = useState(MOCK_RANKING);
-  const [currentUserRank, setCurrentUserRank] = useState({
-    id: "me",
-    rank: 42,
-    name: user?.name || "Vous",
-    totalXP: 310,
-    avatar: user?.avatar,
-    streakDays: 0,
-    xpToNextRank: 50,
-    tag: null,
-  });
-  const [filter, setFilter] = useState("week");
-  const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
-  const [timeLeft, setTimeLeft] = useState("2j 14h");
 
-  // Try to use community store if available
-  let storeRanking = null;
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const store = require("../../src/stores/useCommunityStore");
-    if (store?.useCommunityStore) {
-      // Would use store here
-    }
-  } catch (_) {}
+  /* ── Drawer ── */
+  const { width: SCREEN_W } = Dimensions.get("window");
+  const DRAWER_WIDTH = SCREEN_W * 0.78;
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
+  const overlayAnim = useRef(new Animated.Value(0)).current;
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1200);
+  const openDrawer = useCallback(() => {
+    setDrawerOpen(true);
+    Animated.parallel([
+      Animated.spring(drawerAnim, { toValue: 0, tension: 65, friction: 11, useNativeDriver: true }),
+      Animated.timing(overlayAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+    ]).start();
   }, []);
 
-  const top3 = ranking.slice(0, 3);
-  const rest = ranking.slice(3);
-  const league = getLeagueTier(currentUserRank.totalXP);
+  const closeDrawer = useCallback(() => {
+    Animated.parallel([
+      Animated.spring(drawerAnim, { toValue: -DRAWER_WIDTH, tension: 65, friction: 11, useNativeDriver: true }),
+      Animated.timing(overlayAnim, { toValue: 0, duration: 250, useNativeDriver: true }),
+    ]).start(() => setDrawerOpen(false));
+  }, []);
+
+  const handleDrawerNav = (target) => {
+    closeDrawer();
+    setTimeout(() => {
+      switch (target) {
+        case "quests": router.push("/modal/quests"); break;
+        case "notifications": router.push("/(tabs)/profile/notifications"); break;
+        case "change-language": router.push("/modal/change-language"); break;
+        case "settings": router.push("/(tabs)/profile/settings"); break;
+      }
+    }, 300);
+  };
+
+  const handleLogout = () => {
+    closeDrawer();
+    setTimeout(() => {
+      Alert.alert(
+        t("profile.logout"),
+        t("profile.logoutConfirm"),
+        [
+          { text: t("common.cancel"), style: "cancel" },
+          { text: t("common.confirm"), style: "destructive", onPress: () => logout() },
+        ]
+      );
+    }, 300);
+  };
+
+  // Fetch on mount
+  useEffect(() => {
+    fetchLeaderboard();
+    fetchDashboard();
+  }, []);
+
+  const userXP = dashData?.totalPoints ?? 0;
+  const streak = dashData?.streakDays  ?? 0;
+  const hearts = dashData?.hearts      ?? 5;
+
+  // Use real data when available, fall back to mock only if there's no error
+  const hasRealData = rawLeaderboard.length > 0;
+  const showMock    = !hasRealData && !leaderboardError;
+  const ranking     = hasRealData
+    ? rawLeaderboard.map(normaliseEntry)
+    : showMock ? MOCK_RANKING : [];
+
+  // Find current user's entry from the API response (backend sets isCurrentUser flag)
+  const myRawEntry   = hasRealData ? rawLeaderboard.find((e) => e.isCurrentUser) : null;
+  const myRankInList = hasRealData
+    ? rawLeaderboard.findIndex((e) => e.isCurrentUser)
+    : -1;
+
+  const currentUserRank = {
+    id:           user?.id ?? "me",
+    rank:         myRankInList >= 0 ? myRankInList + 1 : "—",
+    name:         user?.name || t("community.isYou"),
+    totalXP:      myRawEntry?.totalXP ?? userXP,
+    avatar:       myRawEntry?.avatar ?? user?.avatar ?? null,
+    streakDays:   myRawEntry?.streakDays ?? streak,
+    xpToNextRank: myRawEntry?.xpToNextRank ?? 50,
+    tag:          null,
+  };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([fetchLeaderboard(), fetchDashboard()]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchLeaderboard, fetchDashboard]);
+
+  const top3  = ranking.slice(0, 3);
+  const rest  = ranking.slice(3);
+  const league = getLeagueTier(currentUserRank.totalXP, t);
 
   return (
-    <View style={s.root}>
+    <SafeAreaView style={s.root} edges={["top"]}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.surface} />
 
       <ScrollView
@@ -403,10 +504,10 @@ export default function CommunityScreen() {
         {/* ── Header avec ligue ── */}
         <LeagueHeader
           league={league}
-          timeLeft={timeLeft}
-          streak={3}
-          hearts={5}
-          onMenuPress={() => router.push("/modal/menu")}
+          timeLeft={null}
+          streak={streak}
+          hearts={hearts}
+          onMenuPress={openDrawer}
         />
 
         {/* ── Podium ── */}
@@ -414,12 +515,26 @@ export default function CommunityScreen() {
 
         {/* ── Filter + Section label ── */}
         <View style={s.filterRow}>
-          <Text style={s.sectionLabel}>LE RESTE DE LA MEUTE</Text>
+          <Text style={s.sectionLabel}>{t("community.otherPlayers")}</Text>
           <FilterTabs active={filter} onChange={setFilter} />
         </View>
 
+        {/* ── Error banner (Standardized) ── */}
+        {leaderboardError && !leaderboardLoading && (
+          <View style={s.errorBanner}>
+            <Ionicons name="cloud-offline-outline" size={24} color={Colors.primary} />
+            <View style={{ flex: 1 }}>
+              <Text style={s.errorTitle}>{t("common.error", "Erreur")}</Text>
+              <Text style={s.errorTxt}>{leaderboardError}</Text>
+            </View>
+            <TouchableOpacity onPress={onRefresh} style={s.retryBtn}>
+              <Ionicons name="refresh" size={18} color={Colors.primary} />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* ── List rang 4+ ── */}
-        {loading ? (
+        {leaderboardLoading && !hasRealData ? (
           <ActivityIndicator
             color={Colors.primary}
             size="large"
@@ -434,6 +549,12 @@ export default function CommunityScreen() {
                 isCurrentUser={item.id === currentUserRank.id}
               />
             ))}
+            {ranking.length === 0 && !leaderboardError && !leaderboardLoading && (
+              <View style={s.emptyState}>
+                <Text style={s.emptyStateEmoji}>🏆</Text>
+                <Text style={s.emptyStateTxt}>{t("community.noPlayersYet", "Sois le premier à rejoindre le classement !")}</Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -451,18 +572,39 @@ export default function CommunityScreen() {
             borderColor="#FFF"
           />
           <View style={cu.textCol}>
-            <Text style={cu.name}>C'est vous !</Text>
+            <Text style={cu.name}>{t("community.isYou")}</Text>
             <Text style={cu.hint}>
-              Plus que {currentUserRank.xpToNextRank} XP pour monter
+              {t("community.xpToNextRank", { xp: currentUserRank.xpToNextRank })}
             </Text>
           </View>
           <View style={cu.xpCol}>
             <Text style={cu.xp}>{currentUserRank.totalXP}</Text>
-            <Text style={cu.xpLabel}>VOTRESCORE</Text>
+            <Text style={cu.xpLabel}>{t("community.yourScore")}</Text>
           </View>
         </View>
       </View>
-    </View>
+
+      {/* ══ DRAWER OVERLAY ══ */}
+      {drawerOpen && (
+        <Animated.View
+          style={[StyleSheet.absoluteFillObject, { backgroundColor: "rgba(0,0,0,0.38)", zIndex: 90, opacity: overlayAnim }]}
+          pointerEvents="box-none"
+        >
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={closeDrawer} />
+        </Animated.View>
+      )}
+
+      {/* ══ DRAWER PANEL ══ */}
+      <Animated.View style={[lh.drawer, { transform: [{ translateX: drawerAnim }] }]}>
+        <DrawerContent
+          user={user}
+          dashboard={dashData}
+          onClose={closeDrawer}
+          onNav={handleDrawerNav}
+          onLogout={handleLogout}
+        />
+      </Animated.View>
+    </SafeAreaView>
   );
 }
 
@@ -492,6 +634,57 @@ const s = StyleSheet.create({
   rankList: {
     paddingHorizontal: Space["2xl"],
     gap: Space.sm,
+  },
+
+  /* Error banner (Standardized) */
+  errorBanner: {
+    backgroundColor: Colors.primary + "15",
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Space.lg,
+    borderRadius: Radius.lg,
+    marginBottom: Space.lg,
+    marginHorizontal: Space["2xl"],
+    gap: Space.md,
+    borderWidth: 1,
+    borderColor: Colors.primary + "30",
+  },
+  errorTitle: {
+    fontSize: 14,
+    fontFamily: "Fredoka_600SemiBold",
+    color: Colors.primary,
+    marginBottom: 2,
+  },
+  errorTxt: {
+    color: Colors.textTertiary,
+    fontFamily: "Nunito-Regular",
+    fontSize: 13,
+    flex: 1,
+    lineHeight: 18,
+  },
+  retryBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#FFF",
+    alignItems: "center",
+    justifyContent: "center",
+    ...Shadow.sm,
+  },
+
+  /* Empty state */
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: Space["4xl"],
+    gap: Space.md,
+  },
+  emptyStateEmoji: { fontSize: 48 },
+  emptyStateTxt: {
+    fontFamily: "Nunito-Regular",
+    fontSize: 14,
+    color: Colors.textTertiary,
+    textAlign: "center",
+    paddingHorizontal: Space["2xl"],
   },
 });
 
@@ -564,6 +757,14 @@ const lh = StyleSheet.create({
   timerValue: {
     fontSize: 14,
     fontFamily: "Fredoka_600SemiBold",
+  },
+  drawer: {
+    position: "absolute",
+    top: 0, bottom: 0, left: 0,
+    width: Dimensions.get("window").width * 0.78,
+    backgroundColor: "#FFF",
+    zIndex: 100,
+    ...Shadow.lg,
   },
 });
 

@@ -27,6 +27,7 @@ import { Ionicons } from "@expo/vector-icons";
 // import { useUser } from "../../src/context/UserContext";
 import { useAuthStore } from "../../src/stores/useAuthStore";
 import { useTranslation } from "react-i18next";
+import { getFriendlyErrorMessage } from "../../src/utils/errorUtils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../../src/services/api";
 
@@ -35,9 +36,6 @@ import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 import {
   MInput,
   MButton,
-  MDivider,
-  MSocialButton,
-  MCulturalCard,
   MLinkText,
   MFooter,
 } from "../../src/components/ui/MComponents";
@@ -59,14 +57,13 @@ const SignInScreen = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [socialLoading, setSocialLoading] = useState(false);
 
   // ── Animations ──
-  const logoAnim   = useRef(new Animated.Value(0)).current;
-  const titleAnim  = useRef(new Animated.Value(0)).current;
-  const formAnim   = useRef(new Animated.Value(0)).current;
+  const logoAnim = useRef(new Animated.Value(0)).current;
+  const titleAnim = useRef(new Animated.Value(0)).current;
+  const formAnim = useRef(new Animated.Value(0)).current;
   const footerAnim = useRef(new Animated.Value(0)).current;
-  const logoScale  = useRef(new Animated.Value(0.6)).current;
+  const logoScale = useRef(new Animated.Value(0.6)).current;
 
   useEffect(() => {
     Animated.stagger(140, [
@@ -90,57 +87,13 @@ const SignInScreen = () => {
     try {
       await login(email, password);
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || t("signIn.signInFailed");
-      Alert.alert(t("common.error"), msg);
+      Alert.alert(t("common.error"), getFriendlyErrorMessage(err));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSocialLogin = async (provider) => {
-    // Placeholder — wire up your actual Google / Apple / Facebook SDK here
-    setSocialLoading(true);
-    try {
-      // For Google:  call Google sign-in → get idToken → POST /auth/social
-      // For Apple:   call Apple sign-in → get identityToken → POST /auth/social
-      // For Facebook: call Facebook login → get accessToken → POST /auth/social
-      Alert.alert("Info", `${provider} login sera intégré ici.`);
-    } catch (error) {
-      console.error(`${provider} login error:`, error);
-      Alert.alert(t("common.error"), t("auth.socialLoginError"));
-    } finally {
-      setSocialLoading(false);
-    }
-  };
-
-  const handleSocialLoginSuccess = async (socialData) => {
-    try {
-      setSocialLoading(true);
-      if (!socialData?.success) {
-        Alert.alert(t("common.error"), socialData?.error || t("auth.socialLoginError"));
-        return;
-      }
-      if (socialData?.accessToken) {
-        const STORAGE_KEY = "userSession";
-        await AsyncStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({
-            accessToken: socialData.accessToken,
-            refreshToken: socialData.refreshToken,
-          })
-        );
-        await api.get("/auth/me");
-        router.replace("/(tabs)/home");
-      } else {
-        Alert.alert(t("common.error"), "Unable to complete login. Please make sure the backend server is running.");
-      }
-    } catch (error) {
-      console.error("Social login error:", error);
-      Alert.alert(t("common.error"), t("auth.socialLoginError"));
-    } finally {
-      setSocialLoading(false);
-    }
-  };
+  // Social login removed — will be implemented in a future release
 
   // ── Render helpers ──
 
@@ -166,10 +119,16 @@ const SignInScreen = () => {
 
           {/* ── Header nav ── */}
           <View style={s.header}>
-            <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <TouchableOpacity 
+              onPress={() => {
+                if (router.canGoBack()) router.back();
+                else router.replace("/(onboarding)/PageVideo");
+              }} 
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
               <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
             </TouchableOpacity>
-            <Text style={[Typo.titleMd, { flex: 1, textAlign: "center" }]}>Connexion</Text>
+            <Text style={[Typo.titleMd, { flex: 1, textAlign: "center" }]}>{t("auth.signIn")}</Text>
             <View style={{ width: 24 }} />
           </View>
 
@@ -177,7 +136,7 @@ const SignInScreen = () => {
           <Animated.View style={[s.logoWrap, { opacity: logoAnim, transform: [{ scale: logoScale }] }]}>
             <View style={s.logoCircle}>
               <Image
-                source={require("../../assets/images/logo.png")}
+                source={require("../../assets/Avatar-images -profile-picker/logo.png")}
                 style={s.logoImg}
                 contentFit="contain"
               />
@@ -186,9 +145,9 @@ const SignInScreen = () => {
 
           {/* ── Title block ── */}
           <Animated.View style={[s.titleBlock, animStyle(titleAnim, 15)]}>
-            <Text style={Typo.displayMd}>Bienvenue</Text>
+            <Text style={Typo.displayMd}>{t("auth.welcomeBack")}</Text>
             <Text style={[Typo.bodyLg, { textAlign: "center", marginTop: Space.sm }]}>
-              Continuez votre voyage culturel avec Mulema
+              {t("signIn.continueAdventure")}
             </Text>
           </Animated.View>
 
@@ -197,20 +156,21 @@ const SignInScreen = () => {
 
             {/* Email */}
             <MInput
-              label={t("signIn.emailLabel") || "Email ou Nom d'utilisateur"}
+              label={t("signIn.emailLabel")}
               value={email}
               onChangeText={setEmail}
-              placeholder={t("signIn.emailPlaceholder") || "nom@exemple.com"}
+              placeholder={t("signIn.emailPlaceholder")}
               keyboardType="email-address"
               autoCapitalize="none"
+              editable={!loading}
             />
 
             {/* Password — label row with "Mot de passe oublié ?" */}
             <View style={s.passwordLabelRow}>
-              <Text style={[Typo.labelLg]}>{t("signIn.passwordLabel") || "Mot de passe"}</Text>
+              <Text style={[Typo.labelLg]}>{t("signIn.passwordLabel")}</Text>
               <TouchableOpacity onPress={() => router.push("/forgotpass")} activeOpacity={0.7}>
                 <Text style={[Typo.labelMd, { color: Colors.primary }]}>
-                  {t("signIn.forgotPassword") || "Mot de passe oublié ?"}
+                  {t("signIn.forgotPassword")}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -221,43 +181,31 @@ const SignInScreen = () => {
               secureTextEntry={!showPassword}
               rightIcon={showPassword ? "eye-outline" : "eye-off-outline"}
               onRightPress={() => setShowPassword(!showPassword)}
+              editable={!loading}
             />
 
             {/* Sign in button */}
             <MButton
-              title="Se connecter"
+              title={t("signIn.signInButton")}
               onPress={handleSignIn}
               loading={loading}
               disabled={loading}
               style={{ marginTop: Space.lg }}
             />
 
-            {/* Divider */}
-            <MDivider text={t("signIn or Continue With") || "OU CONTINUER AVEC"} />
-
-            {/* Social buttons row */}
-            <View style={s.socialRow}>
-              <MSocialButton provider="google"   onPress={() => handleSocialLogin("Google")} disabled={socialLoading} />
-              <View style={{ width: Space.md }} />
-              <MSocialButton provider="apple"    onPress={() => handleSocialLogin("Apple")} disabled={socialLoading} />
-            </View>
+            {/* Social login removed per directive */}
           </Animated.View>
 
           {/* ── Sign up link ── */}
           <Animated.View style={animStyle(footerAnim, 10)}>
             <MLinkText
-              text={t("signIn.noAccount") || "Pas encore de compte ?"}
-              linkText={t("signIn.signUpFree") || "S'inscrire"}
+              text={t("signIn.noAccount")}
+              linkText={t("signIn.signUpFree")}
               onPress={() => router.push("/sign-up")}
             />
           </Animated.View>
 
-          {/* ── Cultural card ── */}
-          <Animated.View style={[{ width: "100%", marginTop: Space.lg }, animStyle(footerAnim, 10)]}>
-            <MCulturalCard
-              body={'Le nom Mulema signifie « cœur » dans plusieurs langues d\'Afrique Centrale. Nous mettons le cœur au centre de l\'apprentissage.'}
-            />
-          </Animated.View>
+          {/* Cultural card removed per directive */}
 
           {/* ── Footer ── */}
           <Animated.View style={animStyle(footerAnim, 5)}>
@@ -336,11 +284,7 @@ const s = StyleSheet.create({
     marginBottom: Space.sm,
   },
 
-  // Social row
-  socialRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-  },
+  // Social row removed
 });
 
 export default SignInScreen;

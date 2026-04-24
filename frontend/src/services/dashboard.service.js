@@ -27,7 +27,16 @@ export const dashboardService = {
    * @returns LeaderboardEntry[]
    */
   getLeaderboard: async () => {
-    const { data } = await api.get("/leaderboard");
+    const { data } = await api.get("/user/leaderboard");
+    return data;
+  },
+
+  /**
+   * Deduct user cowries
+   * PUT /user/cowries
+   */
+  deductCowry: async (amount = 1) => {
+    const { data } = await api.put("/user/cowries", { amount });
     return data;
   },
 };

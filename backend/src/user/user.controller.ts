@@ -13,7 +13,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
 
 interface AuthUser {
   userId: string;
@@ -25,7 +25,7 @@ interface AuthUser {
 export class UserController {
   private readonly logger = new Logger(UserController.name);
 
-  constructor(private userService: UserService) {}
+  constructor(private userService: UserService) { }
 
   // =====================
   // GET DASHBOARD
@@ -33,6 +33,14 @@ export class UserController {
   @Get('dashboard')
   async getDashboard(@CurrentUser() user: AuthUser) {
     return this.userService.getDashboard(user.userId);
+  }
+
+  // =====================
+  // GET LEADERBOARD
+  // =====================
+  @Get('leaderboard')
+  async getLeaderboard(@CurrentUser() user: AuthUser) {
+    return this.userService.getLeaderboard(user.userId);
   }
 
   // =====================
@@ -62,13 +70,7 @@ export class UserController {
   @Put('profile-picture')
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads/avatars',
-        filename: (req, file, cb) => {
-          // We'll handle filename in service
-          cb(null, file.originalname);
-        },
-      }),
+      storage: memoryStorage(),
       limits: {
         fileSize: 5 * 1024 * 1024, // 5MB
       },
@@ -121,5 +123,49 @@ export class UserController {
       `Update language request for user: ${user.userId}, language: ${body.language}`,
     );
     return this.userService.updateLanguage(user.userId, body.language);
+  }
+
+  // =====================
+  // DELETE ACCOUNT
+  // =====================
+  @Delete()
+  async deleteAccount(@CurrentUser() user: AuthUser) {
+    this.logger.log(`Delete account request for user: ${user.userId}`);
+    return this.userService.deleteAccount(user.userId);
+  }
+
+  // =====================
+  // CHANGE PASSWORD
+  // =====================
+  @Put('change-password')
+  async changePassword(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { oldPassword?: string; newPassword?: string },
+  ) {
+    this.logger.log(`Change password request for user: ${user.userId}`);
+    return this.userService.changePassword(user.userId, body);
+  }
+  // =====================
+  // DEDUCT COWRIES
+  // =====================
+  @Put('cowries')
+  async deductCowries(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { amount?: number },
+  ) {
+    this.logger.log(`Deduct cowries request for user: ${user.userId}`);
+    return this.userService.deductCowries(user.userId, body.amount || 1);
+  }
+
+  // =====================
+  // SELECT PRE-DRAWN AVATAR
+  // =====================
+  @Put('avatar/select')
+  async selectAvatar(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { avatarId: string },
+  ) {
+    this.logger.log(`Select pre-drawn avatar request for user: ${user.userId}`);
+    return this.userService.selectAvatar(user.userId, body.avatarId);
   }
 }

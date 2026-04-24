@@ -11,14 +11,38 @@
     "back": "Back",
     "next": "Next",
     "done": "Done",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "didYouKnow": "DID YOU KNOW?",
+    "clear": "Clear",
+    "user": "User",
+    "quickAccess": "QUICK ACCESS",
+    "change": "Change",
+    "days": "days",
+    "daysShort": "MON,TUE,WED,THU,FRI,SAT,SUN",
+    "ok": "OK",
+    "currentWeek": "Current Week",
+    "thisMonth": "This Month",
+    "total": "Total",
+    "continue": "Continue",
+    "theLanguage": "{{name}}",
+    "percentCompleted": "{{percent}}% Completed",
+    "oops": "Oops!",
+    "theme": "Theme",
+    "timerFormat": "{{days}}d {{hours}}h",
+    "prawns": "XP",
+    "verify": "Check",
+    "tip": "Tip",
+    "retry": "Try Again",
+    "progress": "Progress",
+    "comingSoon": "Coming soon"
   },
   "nav": {
     "lessons": "Lessons",
     "exercises": "Exercises",
     "home": "Home",
     "community": "Community",
-    "profile": "Profile"
+    "profile": "Profile",
+    "quests": "Quests"
   },
   "auth": {
     "signIn": "Sign In",
@@ -35,7 +59,7 @@
     "alreadyHaveAccount": "Already have an account?",
     "createAccount": "Create Account",
     "verifyEmail": "Verify Email",
-    "verifyCode": "Verify Code",
+    "verifyCode": "Verify",
     "enterOtp": "Enter OTP",
     "resendOtp": "Resend OTP",
     "welcomeBack": "Welcome Back",
@@ -48,12 +72,14 @@
     "passwordResetSuccess": "Password updated. You can now sign in.",
     "passwordResetError": "Unable to reset password.",
     "account": "Account",
-    "saving": "Saving...",
     "orContinueWith": "or continue with",
     "signInWithGoogle": "Sign in with Google",
     "signInWithFacebook": "Sign in with Facebook",
     "signInWithApple": "Sign in with Apple",
-    "socialLoginError": "Social login error. Please try again."
+    "socialLoginError": "Social login error. Please try again.",
+    "dontHaveCode": "Didn't receive a code?",
+    "resendOtpIn": "Resend in {{count}}s",
+    "welcome": "Welcome"
   },
   "profile": {
     "title": "Profile",
@@ -66,16 +92,18 @@
     "chooseFromGallery": "Choose from Gallery",
     "points": "Points",
     "completed": "Completed",
-    "rank": "Rank",
+    "rank": "Elite Learner",
     "logout": "Logout",
     "logoutConfirm": "Are you sure you want to logout?",
     "profileUpdated": "Profile updated successfully",
-    "profilePictureUpdated": "Profile picture updated successfully"
+    "profilePictureUpdated": "Profile picture updated successfully",
+    "editSubtitle": "Update your avatar and bio"
   },
   "settings": {
     "title": "Settings",
     "language": "Language",
     "selectLanguage": "Select Language",
+    "selectLanguageDesc": "Choose the interface language",
     "english": "English",
     "french": "French",
     "notifications": "Notifications",
@@ -84,11 +112,25 @@
     "helpSupport": "Help & Support",
     "about": "About",
     "privacy": "Privacy Policy",
-    "terms": "Terms of Service"
+    "terms": "Terms of Service",
+    "dailyReminders": "Daily Reminders",
+    "preferences": "PREFERENCES",
+    "interfaceLanguage": "Interface Language",
+    "supportLegal": "SUPPORT & LEGAL",
+    "madeWithLove": "MADE WITH LOVE FOR CULTURE",
+    "deleteAccountTitle": "Delete my account?",
+    "deleteAccountDesc": "This action is irreversible. All your data will be erased.",
+    "typeDeleteToConfirm": "Type DELETE to confirm:",
+    "emailChangeHint": "Contact support to change your email address.",
+    "passwordChangeHint": "Use 'Forgot Password' on the login screen to reset your password.",
+    "notificationsComingSoon": "Push notifications will be available in a future update.",
+    "contactSupport": "Contact us at support@mulema.app",
+    "termsUrlNotSet": "Terms of Service URL not configured."
   },
   "home": {
     "title": "Home",
     "welcome": "Welcome",
+    "welcomeUser": "Welcome, {{name}}",
     "continueLearning": "Continue Learning",
     "startLearning": "Start Learning",
     "yourProgress": "Your Progress",
@@ -102,7 +144,39 @@
     "levelIV": "LEVEL IV",
     "start": "START",
     "unlockMessage": "Unlock the next levels by completing the exercises from the previous level",
-    "niveau": "Level"
+    "niveau": "Level",
+    "themesToExplore": "Themes to explore",
+    "seeAll": "See all",
+    "noThemes": "No themes available.",
+    "dailyGoal": "DAILY GOAL",
+    "goalReached": "Goal reached!",
+    "remainingPercent": "{{count}}% remaining",
+    "levels": {
+      "level": "LEVEL",
+      "unlocked": "Unlocked",
+      "startAdventure": "Start the adventure",
+      "completePrevious": "Complete the previous level to unlock",
+      "startPoint": "STARTING POINT",
+      "locked": "Locked",
+      "completed": "Completed",
+      "progression": "Progress",
+      "levelsUnlocked": "{{unlocked}}/{{total}} levels",
+      "masterAwaits": "{{language}} master awaits!",
+      "completeAll": "Complete all levels to get the {{language}} certificate.",
+      "lessonsCompleted": "{{completed}}/{{total}} lessons completed"
+    },
+    "scholarLevel": "SCHOLAR LV {{level}}",
+    "universDuala": "DUALA UNIVERSE",
+    "universGhomala": "GHOMALA UNIVERSE",
+    "universBassa": "BASSA UNIVERSE",
+    "finalChallenge": "⚡ FINAL CHALLENGE",
+    "exerciseCount": "{{count}} questions · {{types}} types",
+    "xpPotential": "+{{points}} XP",
+    "masteryStats": "{{count}} lessons · {{percent}}% mastered",
+    "completed": "completed",
+    "remainingNodes": "remaining",
+    "mastery": "mastery",
+    "noLessons": "No lessons available."
   },
   "lessons": {
     "title": "Lessons",
@@ -116,7 +190,20 @@
     "stepByStep": "Step by step, you build your knowledge",
     "completeToUnlock": "Complete this lesson to unlock the next one",
     "locked": "Locked",
-    "unlocked": "Unlocked"
+    "unlocked": "Unlocked",
+    "lessonsCount": "{{count}} LESSONS",
+    "percentCompleted": "{{percent}}% Completed",
+    "available": "Available Lessons",
+    "dailyLearning": "Daily\nLearning",
+    "lessonNum": "Lesson {{num}}",
+    "whatDoesThisMean": "What does this word mean?",
+    "frenchLabel": "FRENCH",
+    "translationIn": "TRANSLATION IN {{lang}}",
+    "listenPronunciation": "Listen to pronunciation",
+    "noAudioAvailable": "No audio available",
+    "finishLessons": "Finish lessons",
+    "startWith": "💡 Start with:",
+    "finalChallenge": "⚡ FINAL CHALLENGE"
   },
   "exercises": {
     "title": "Exercises",
@@ -131,55 +218,138 @@
       "clothingDesc": "Train yourself to recognize and use the vocabulary of clothes and everyday accessories",
       "faunaFlora": "FAUNA & FLORA",
       "faunaFloraDesc": "Train yourself to recognize and use the vocabulary of..."
-    }
+    },
+    "checkAnswer": "Check Answer",
+    "nextQuestion": "Next Question",
+    "correct": "Correct!",
+    "incorrect": "Incorrect",
+    "tryAgain": "Try Again",
+    "continue": "Continue",
+    "completed": "Completed!",
+    "score": "Your score: {{score}}",
+    "questionOf": "Question {{current}} of {{total}}",
+    "done": "Done",
+    "todo": "To do",
+    "allDone": "✅ All exercises completed",
+    "practice": "Practice\nExercises",
+    "byTheme": "Exercises by theme",
+    "rewardHint": "Complete all exercises to unlock a cultural video 🎬",
+    "count": "{{count}}/{{total}} exercises",
+    "excellent": "Excellent!",
+    "daily": {
+      "salutations": "Basic Greetings",
+      "family": "My family in Ghomálá'",
+      "animals": "Village Animals"
+    },
+    "correctAnswerIs": "It was: ",
+    "progressingFast": "You are progressing fast!",
+    "explanation": "EXPLANATION",
+    "pickImageFor": "Select the image for:",
+    "howToSayIn": "How do you say this word in {{lang}}?",
+    "matchingPairs": "Match the pairs",
+    "matchFrToLang": "Match French to {{lang}}.",
+    "translateTo": "Translate this word into {{lang}}",
+    "howToSay": "How do you say...",
+    "typeTranslation": "Type the translation...",
+    "keyboardInstruction": "Use the bar below to insert {{lang}} special characters like {{chars}}.",
+    "correct_label": "Correct",
+    "errors_label": "Errors",
+    "continueAdventure": "🎉 Continue the adventure",
+    "reviewLessons": "Review the lessons",
+    "retry": "Restart the exercises",
+    "backToThemes": "Back to themes",
+    "loading": "Loading exercises…",
+    "sessionComplete": "Session complete!",
+    "seeResults": "See results →",
+    "veryGood": "Very good!",
+    "veryGoodSub": "Keep it up, you're making great progress.",
+    "notBad": "Not bad!",
+    "notBadSub": "A few more reviews and you'll master this.",
+    "keepGoing": "Keep going!",
+    "keepGoingSub": "Review the lessons and try again, you can do better!",
+    "retryMistakes": "Let's go back to your mistakes",
+    "tipIn": "In {{langName}},",
+    "tipIsSaid": "is said"
   },
   "errors": {
     "networkError": "Network error. Please check your connection.",
     "serverError": "Server error. Please try again later.",
-    "invalidCredentials": "Invalid email or password.",
+    "invalidCredentials": "The email or password you entered is incorrect. Please check and try again.",
     "emailAlreadyExists": "Email already exists.",
     "passwordMismatch": "Passwords do not match.",
     "requiredField": "This field is required.",
     "invalidEmail": "Please enter a valid email address.",
     "uploadFailed": "Failed to upload. Please try again.",
     "somethingWentWrong": "Something went wrong. Please try again.",
+    "invalidPassword": "Incorrect password. Please try again.",
+    "accountNotFound": "No account found with this email.",
+    "passwordTooShort": "Your password is too short. It must have at least 6 characters.",
     "codeRequired": "Code required",
     "enterCode": "Please enter your verification code.",
     "audioError": "Audio Error",
     "audioNotAvailable": "Audio is not available. Please try again.",
-    "languageNotSelected": "Language not selected. Please select a language from settings."
+    "languageNotSelected": "Language not selected. Please select a language from settings.",
+    "verifyFailed": "Verification failed.",
+    "noThemesRefresh": "No themes available.\nPull down to refresh.",
+    "privacyUrlNotSet": "Privacy policy URL not configured.",
+    "deleteConfirmType": "Please type 'DELETE' to confirm.",
+    "deleteFailed": "Unable to delete account. Please try again later.",
+    "noInternet": "No internet connection",
+    "backOnline": "Back online"
   },
   "messages": {
     "accountCreated": "Account created successfully!",
     "emailVerified": "Email verified successfully!",
     "passwordReset": "Password reset successfully!",
     "languageChanged": "Language changed successfully!",
-    "profileSaved": "Profile saved successfully!"
+    "profileSaved": "Profile saved successfully!",
+    "mulemaMeaning": "Mulema means 'Heart' in several Bantu languages. We protect yours.",
+    "mulemaMeaningLong": "The word 'Mulema' means 'Heart' in several Bantu languages of Central Africa. Learning a language is touching the heart of a culture.",
+    "accountDeleted": "Account deleted successfully."
   },
   "stats": {
     "title": "Statistics",
     "myStats": "My Statistics",
     "weeklyGoal": "of weekly goals achieved",
     "dayStreak": "Day streak",
+    "dayStreakCount": "{{count}} day streak",
     "daysMin": "7 days",
     "daysMax": "30 days",
     "detailedProgress": "Detailed Progress",
     "dailyGoal": "Your daily goal",
     "learnWords": "Learn {{count}} words",
-    "completedCount": "{{completed}}/{{goal}} completed"
-  },
-  "nav": {
-    "home": "Home",
-    "lessons": "Lessons",
-    "exercises": "Exercises",
-    "community": "Community"
+    "completedCount": "{{completed}}/{{goal}} completed",
+    "streakDaysShort": "STREAK OF {{count}} DAYS",
+    "wordsLearned": "Words learned",
+    "totalTime": "Total time",
+    "weeklyActivity": "Weekly activity",
+    "streakGood": "You are on fire! Keep it up.",
+    "streakKeepGoing": "Keep your streak going!",
+    "rootsCount": "{{count}} roots",
+    "xp": "XP"
   },
   "community": {
     "title": "Community",
     "subtitle": "Learn together, progress together",
     "activityFeed": "Activity Feed",
-    "viewStats": "📊 View my statistics",
+    "viewStats": "View my statistics",
     "points": "points",
+    "completedTheme": "completed the {{theme}} theme",
+    "streak": "reached {{days}} consecutive days",
+    "learnedWords": "learned {{count}} new words today",
+    "completedExercise": "completed the '{{exercise}}' exercise",
+    "earnedPoints": "won {{count}} challenge points",
+    "isYou": "It's you!",
+    "xpToNextRank": "{{xp}} XP more to level up",
+    "yourScore": "YOUR SCORE",
+    "endsIn": "Ends in ",
+    "otherPlayers": "THE REST OF THE PACK",
+    "ranks": {
+      "rising": "Just moved up",
+      "top10": "Top 10% this week",
+      "streak": "{{count}} day streak",
+      "newcomer": "Newcomer"
+    },
     "actions": {
       "completedTheme": "completed the Family theme",
       "streak10": "reached 10 consecutive days",
@@ -187,9 +357,6 @@
       "completedExercise": "completed the 'Verbs' exercise",
       "earnedPoints": "won {{count}} challenge points"
     }
-  },
-  "header": {
-    "welcome": "Welcome"
   },
   "signIn": {
     "title": "Sign In",
@@ -199,7 +366,7 @@
     "passwordLabel": "Password",
     "passwordPlaceholder": "••••••••",
     "forgotPassword": "Forgot password?",
-    "signInButton": "Sign in",
+    "signInButton": "Sign In",
     "noAccount": "Don't have an account?",
     "signUpFree": "Sign up for free",
     "languages": "Cameroonian Languages",
@@ -250,93 +417,160 @@
       "profile": "Profile",
       "email": "Email",
       "security": "Security"
-    }
-  },
-  "home": {
-    "levels": {
-      "level": "LEVEL",
-      "unlocked": "Unlocked",
-      "startAdventure": "Start the adventure",
-      "completePrevious": "Complete the previous level to unlock",
-      "startPoint": "STARTING POINT",
-      "locked": "Locked",
-      "completed": "Completed",
-      "progression": "Progress",
-      "levelsUnlocked": "{{unlocked}}/{{total}} levels",
-      "masterAwaits": "{{language}} master awaits!",
-      "completeAll": "Complete all levels to get the {{language}} certificate."
     },
-    "welcome": "Welcome",
-    "continueLearning": "Continue Learning",
-    "yourProgress": "Your Progress"
+    "joinAdventure": "Join the Mulema adventure"
   },
-  "lessons": {
-    "title": "Lessons",
-    "lesson": "Lesson",
-    "exercise": "Exercise",
-    "startLesson": "Start Lesson",
-    "continueLesson": "Continue Lesson",
-    "completeLesson": "Complete Lesson",
-    "lessonCompleted": "Lesson Completed!",
-    "tryAgain": "Try Again",
-    "stepByStep": "Step by step, you build your knowledge",
-    "completeToUnlock": "Complete this lesson to unlock the next one",
-    "locked": "Locked",
-    "unlocked": "Unlocked"
+  "onboarding": {
+    "welcome": "Welcome to Mulema",
+    "subtitle": "Learn local Cameroonian languages",
+    "selectLanguage": "Which language do you want to learn?",
+    "noLanguages": "No languages available. Check your connection.",
+    "choiceRequired": "Choice required",
+    "pleaseSelect": "Please select a language.",
+    "videoDesc": "Discover Mulema in action — {{lang}}",
+    "videoDescDefault": "Discover Mulema in action"
   },
-  "exercises": {
-    "title": "Exercises",
-    "introText": "Choose a theme and train yourself to learn new words and expressions. The more you practice, the more you progress!",
-    "start": "Start",
-    "checkAnswer": "Check Answer",
-    "nextQuestion": "Next Question",
-    "correct": "Correct!",
-    "incorrect": "Incorrect",
-    "tryAgain": "Try Again",
-    "continue": "Continue",
-    "completed": "Completed!",
-    "score": "Your score: {{score}}",
-    "questionOf": "Question {{current}} of {{total}}"
+  "leagues": {
+    "shrimp": "Shrimp League",
+    "bronze": "Bronze League",
+    "silver": "Silver League",
+    "gold": "Gold League",
+    "diamond": "Diamond League"
   },
-  "community": {
-    "title": "Community",
-    "subtitle": "Learn together, progress together",
-    "activityFeed": "Activity Feed",
-    "viewStats": "View my statistics",
-    "points": "points",
-    "completedTheme": "completed the {{theme}} theme",
-    "streak": "reached {{days}} consecutive days",
-    "learnedWords": "learned {{count}} new words today",
-    "completedExercise": "completed the '{{exercise}}' exercise",
-    "earnedPoints": "won {{count}} challenge points"
+  "quests": {
+    "title": "Daily Quests",
+    "dailyProgress": "DAILY PROGRESS",
+    "remainingDefis": "{{count}} more challenge{{plural}} for the mythical chest!",
+    "challenges": "Daily Challenges",
+    "learnWords": "Complete 5 lessons",
+    "learnWordsSub": "Learn new words in your active theme",
+    "finishLessons": "Complete 3 exercises",
+    "finishLessonsSub": "Practice with matching, writing and selection",
+    "practiceTime": "Practice 30 minutes",
+    "practiceTimeSub": "Consistency is the key to success"
   },
-  "profile": {
-    "title": "Profile",
-    "editProfile": "Edit Profile",
-    "name": "Name",
-    "username": "Username",
-    "email": "Email",
-    "changeProfilePicture": "Change Profile Picture",
-    "takePhoto": "Take Photo",
-    "chooseFromGallery": "Choose from Gallery",
-    "points": "Points",
-    "completed": "Completed",
-    "rank": "Rank",
-    "logout": "Logout",
-    "logoutConfirm": "Are you sure you want to logout?",
-    "profileUpdated": "Profile updated successfully",
-    "profilePictureUpdated": "Profile picture updated successfully"
+  "notifications": {
+    "subtitle": "Stay on track with your journey.",
+    "clearAll": "Clear all",
+    "allClear": "All caught up!",
+    "allClearSub": "No new notifications right now.",
+    "urgent": "URGENT",
+    "sections": {
+      "streak": "STREAK & HEARTS",
+      "community": "COMMUNITY",
+      "newContent": "NEW CONTENT"
+    },
+    "streakTitle": "Keep your streak alive!",
+    "streakStartTitle": "Start your streak today!",
+    "streakBody": "Your {{days}}-day streak is active. Keep it going with a quick lesson!",
+    "streakStartBody": "Complete your first lesson to start building your streak.",
+    "goLearn": "Go learn",
+    "leagueTitle": "Climb the leaderboard",
+    "leagueBody": "Complete exercises to earn XP and rise in the rankings.",
+    "viewRanking": "View ranking",
+    "newContent": "NEW CONTENT",
+    "exercisesTitle": "Exercises available",
+    "exercisesBody": "New exercises are ready for your active themes. Practice to earn XP and unlock the next lessons.",
+    "goExercises": "Go to exercises"
   },
-  "stats": {
-    "title": "Statistics",
-    "myStats": "My Statistics",
-    "weeklyGoal": "of weekly goals achieved",
-    "dayStreak": "Day streak",
-    "daysMin": "7 days",
-    "daysMax": "30 days",
-    "detailedProgress": "Detailed Progress",
-    "dailyGoal": "Your daily goal",
-    "learnWords": "Learn {{count}} words",
-    "completedCount": "{{completed}}/{{goal}} completed"
+  "settingsModal": {
+    "myLanguages": "My Languages",
+    "manageLearning": "Manage your learning journey",
+    "activeSession": "ACTIVE SESSION",
+    "otherLanguages": "OTHER LANGUAGES",
+    "exploreLanguages": "Explore new languages",
+    "languageChangeWarning": "Changing languages never erases your progress in other sessions!"
+  },
+  "culturalTips": {
+    "duala": {
+      "famille": [
+        "In Duala, the family is at the heart of all social relations. Addressing elders correctly is a fundamental sign of respect.",
+        "The term 'Mbia' (family) also includes cousins and close neighbors. Family solidarity is a cardinal value.",
+        "In Duala, paternal and maternal uncles/aunts are distinguished by different terms, reflecting the importance of blood ties.",
+        "The grandparents 'Ɓambámbɛ́' are guardians of traditions and the collective memory of the Duala people.",
+        "In Duala culture, 'Makɔ́m' (close friends) are often treated as family members."
+      ],
+      "animaux": [
+        "The lion 'Ŋgila' is a symbol of bravery and royalty in the traditions of the Duala people.",
+        "The Wouri River is home to many 'Súe' (fish) which are a vital resource for the Duala, a fishing people.",
+        "The elephant 'Njɔu' is respected for its wisdom. Duala elders lent it an unfailing memory.",
+        "The monkey 'Kéma' often appears in Duala tales, a symbol of cunning and intelligence.",
+        "The 'Ndɔ́mbí' (bees) are associated with collective work and prosperity in Duala culture."
+      ],
+      "cuisine": [
+        "Water 'Madíɓá' and fire 'Wéá' are the two fundamental elements of traditional Duala cuisine.",
+        "Salt 'Wáŋga' was once a precious exchange currency along the coast of Cameroon.",
+        "The fish 'Súe' is at the heart of Duala gastronomy. The Duala people are historically a fishing people.",
+        "The pestle and mortar 'Mbɔlɔki na eɓokí' are sacred utensils in every traditional Duala home.",
+        "Duala cuisine makes extensive use of palm oil 'Mǔla', extracted locally for generations."
+      ],
+      "vetements": [
+        "The 'Ɓé ɓebuɓá' (robes) are worn during major ceremonies and reflect social status in Duala country.",
+        "The tie 'Kɔ́la' illustrates the blend of modernity and tradition in the urban fashion of Douala.",
+        "The traditional 'Yé ekótó' hat is often adorned with symbols representing the clan or family.",
+        "In Duala, clothing is meaningful. Colors and patterns communicate belonging and rank.",
+        "Handcrafted 'Yé etámbí' shoes remain a symbol of Duala cultural pride."
+      ]
+    },
+    "ghomala": {
+      "famille": [
+        "In Ghomálá', the head of the family (Fo) is the guardian of the memory and honor of the Bamileke clan.",
+        "The Bamileke carefully distinguish between paternal and maternal uncles — each link carries a specific term.",
+        "The birth of twins is a sacred event among the Bamileke, celebrated with special rituals.",
+        "Among the Bamileke, family solidarity ('tontine') is an economic and social pillar passed down through generations.",
+        "In Ghomálá', greeting elders before entering a house is an essential mark of respect."
+      ],
+      "animaux": [
+        "The lion is the royal symbol among the Bamileke — only the Fo (chief) can wear its skin during ceremonies.",
+        "The elephant represents wisdom and power. Bamileke secret societies pay it a particular cult.",
+        "The python is a sacred animal in several Bamileke chiefdoms — killing it is considered a serious act.",
+        "Bees 'Nyǐ' symbolize collective work and prosperity in the culture of the Highlands.",
+        "The monkey appears in many Ghomálá' tales as a figure of cunning in the face of brute force."
+      ],
+      "cuisine": [
+        "Corn is the basis of the Bamileke diet — it is used in the preparation of 'koki', an emblematic traditional dish.",
+        "Raphia wine is a sacred drink among the Bamileke, offered to ancestors during ceremonies.",
+        "Beans and plantain form the traditional daily meal of Highlands families.",
+        "Rock salt (natron) was once a rare and precious commodity in the markets of West Cameroon.",
+        "Bamileke cuisine is known for its spicy sauces and generous use of leaf vegetables."
+      ],
+      "vetements": [
+        "Multicolored beads adorn Bamileke royal outfits — each color carries a precise meaning.",
+        "The embroidered robe is worn by dignitaries during major traditional dances like the 'Nkeng'.",
+        "Hand-woven wraps are a precious artisanal heritage passed down by Bamileke women.",
+        "The Fo's feathered headdress symbolizes his link with the world of ancestors and protective spirits.",
+        "In Ghomálá', dressing cleanly to meet a chief is an imperative cultural obligation."
+      ]
+    },
+    "bassa": {
+      "famille": [
+        "In Bassa, the 'Hiala' extended family often lives under the same roof or in neighboring huts, strengthening community ties.",
+        "The father (itâ) is the head of the house, but it is often the mother (inī) who passes on values and language to children.",
+        "The Bassa practice the dowry as a sign of mutual respect between families — it is not a purchase but an alliance.",
+        "Grandparents 'màjò' play a central role in children's education, passing on tales and traditional wisdom.",
+        "Solidarity ('hiala') is fundamental in Bassa culture: no one is abandoned by their community in times of need."
+      ],
+      "animaux": [
+        "The lion 'hɔsì' is a symbol of strength and bravery in traditional Bassa stories.",
+        "The fish 'nyɔɔ' is central to the Bassa diet — the rivers of the Littoral are true pantries.",
+        "The elephant 'Njɔk' represents calm power and long memory in Bassa proverbs.",
+        "The snake 'nyàgà' is often an ambivalent character in Bassa tales: dangerous but wise.",
+        "Bees 'Nyǒy' embody collective harmony — their organization is cited as an example in children's education."
+      ],
+      "cuisine": [
+        "Salt 'ɓás' was once extracted from the salt springs of the Littoral and served as a currency of exchange.",
+        "Water 'màlép' is sacred in Bassa culture — springs and rivers are places of meditation.",
+        "Smoked fish is a Bassa specialty prepared on a 'hyèé bí ŋkwàs' (wood fire) according to ancestral recipes.",
+        "The terracotta 'Hìɓɛɛ' pot is the traditional Bassa utensil par excellence, passed from mother to daughter.",
+        "Vegetables 'bìkáy bí jɛ́' harvested in the forest are part of many traditional Bassa dishes."
+      ],
+      "vetements": [
+        "The traditional Bassa 'mbɔt' (clothing) is often made of raffia fabric or hand-woven cotton during ceremonies.",
+        "Bright colors in Bassa outfits symbolize the joy of living and cultural pride.",
+        "Handcrafted 'támb' shoes are made of tanned leather using techniques passed down by Bassa shoemakers.",
+        "The 'ɓùba' (robe) is worn during weddings and funerals — each color communicates a precise social message.",
+        "Among the Bassa, women wear wraps (ŋkāndā) with symbolic patterns during passage ceremonies."
+      ]
+    }
   }
 }

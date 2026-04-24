@@ -64,6 +64,21 @@ export const exercisesService = {
     const { data } = await api.post("/exercises/word-progress", payload);
     return data;
   },
+
+  /**
+   * Marque une session d'exercice thématique comme terminée
+   * PATCH /exercises/:id/complete
+   * @param {string} exerciseId
+   * @param {number} accuracy (0-100)
+   * @param {number} timeSpent (seconds)
+   */
+  completeSession: async (exerciseId, accuracy, timeSpent) => {
+    const { data } = await api.patch(`/exercises/${exerciseId}/complete`, {
+      accuracy,
+      timeSpent,
+    });
+    return data;
+  },
 };
 
 export default exercisesService;

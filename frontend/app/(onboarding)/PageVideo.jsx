@@ -6,13 +6,14 @@
  * ║  All business logic preserved (lang resolve, persist, nav).   ║
  * ╚══════════════════════════════════════════════════════════════╝
  *
- *  NOTE: Place a fallback image at assets/images/video_placeholder.jpg
+ *  NOTE: Place a fallback image at assets/Avatar-images -profile-picker/video_placeholder.jpg
  *  (a photo of an African market scene, sunset, or cultural scene).
  *  If missing, a dark gradient is shown until the video loads.
  */
 
 import React, { useRef, useState, useEffect } from "react";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
+import Logger from "../../src/utils/logger";
 import {
   View,
   Text,
@@ -29,6 +30,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 // ── Design system ──
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
@@ -38,10 +40,10 @@ const HAS_SEEN_INTRO = "hasSeenIntro";
 const HAS_SELECTED_LANGUAGE = "selectedLanguage";
 
 const VIDEO_BY_LANG = {
-  bassa: "https://example.com/videos/bassa/intro.m3u8",
-  duala: "https://example.com/videos/duala/intro.m3u8",
-  ghomala: "https://example.com/videos/ghomala/intro.m3u8",
-  default: "https://example.com/videos/default/intro.m3u8",
+  bassa: require("../../assets/bassa-intro-vid.mp4"),
+  duala: require("../../assets/duala-intro-vid.mp4"),
+  ghomala: require("../../assets/ghomala-intro-vid.mp4"),
+  default: require("../../assets/duala-intro-vid.mp4"),
 };
 
 const { width, height } = Dimensions.get("window");
@@ -92,6 +94,7 @@ const ProgressDots = ({ active = 0, total = 3 }) => (
 
 export default function PageVideo() {
   const router = useRouter();
+  const { t } = useTranslation();
   const params = useLocalSearchParams?.() ?? {};
   const paramLang = params?.lang ?? null;
 
@@ -116,17 +119,30 @@ export default function PageVideo() {
         }
 
         if (!chosen) {
+          // If still no language, maybe check the store
+          const active = useLanguageStore.getState().activeLanguage;
+          if (active) chosen = active.code || active.name;
+        }
+
+        if (!chosen) {
           router.replace("/ChoiceLanguage");
           return;
         }
 
-        chosen = String(chosen).toLowerCase();
+        // Normalize: lowercase, remove special chars if any
+        chosen = String(chosen)
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]/g, "")
+          .trim();
 
         if (mounted) {
           setLangResolved(chosen);
           setResolving(false);
         }
-      } catch {
+      } catch (err) {
+        Logger.error("PageVideo resolution error:", err);
         router.replace("/ChoiceLanguage");
       }
     })();
@@ -137,24 +153,26 @@ export default function PageVideo() {
   const videoUri = VIDEO_BY_LANG[langResolved] ?? VIDEO_BY_LANG.default;
 
   // ── Persist & navigate — ORIGINAL LOGIC ──
-// ✅ NOUVEAU — utilise le store pour que le root layout détecte la langue
-const persistAndGoHome = async () => {
-  // Trouver l'objet langue complet dans le store
-  const { languages, setActiveLanguage } = useLanguageStore.getState();
-  const lang = languages.find(
-    (l) => l.code === langResolved || l.name.toLowerCase() === langResolved
-  );
-  
-  if (lang) {
-    await setActiveLanguage(lang);
-  } else {
-    // Fallback si la langue n'est pas trouvée dans le store
-    await AsyncStorage.setItem(HAS_SELECTED_LANGUAGE, langResolved);
-  }
-  
-  await AsyncStorage.setItem(HAS_SEEN_INTRO, "true");
-  router.replace("/(tabs)/home");
-};
+  // ✅ NOUVEAU — utilise le store pour que le root layout détecte la langue
+  const persistAndGoHome = async () => {
+    const { languages, setActiveLanguage, setHasSeenIntro } = useLanguageStore.getState();
+
+    // 1. S'assurer que la langue est bien active dans le store
+    const lang = languages.find(
+      (l) => l.code === langResolved || l.name.toLowerCase() === langResolved
+    );
+    if (lang) {
+      await setActiveLanguage(lang);
+    } else {
+      await AsyncStorage.setItem(HAS_SELECTED_LANGUAGE, langResolved);
+    }
+
+    // 2. Marquer l'intro comme vue (déclenche la redirection dans RootLayout)
+    await setHasSeenIntro(true);
+
+    // 3. Navigation explicite au cas où
+    router.replace("/(tabs)/home");
+  };
 
   // ── Play handler ──
   const handlePlay = async () => {
@@ -166,16 +184,17 @@ const persistAndGoHome = async () => {
         await videoRef.current?.replayAsync?.();
         setIsPlaying(true);
       }
-    } catch {}
+    } catch { }
   };
 
   // ── Get description — ORIGINAL LOGIC ──
   const getDescription = (lang) => {
-    switch ((lang || "").toLowerCase()) {
-      case "bassa": return "Découvrez Mulema en action — Bassa";
-      case "duala": return "Découvrez Mulema en action — Duala";
-      case "ghomala": return "Découvrez Mulema en action — Ghomala";
-      default: return "Découvrez Mulema en action";
+    const l = (lang || "").toLowerCase();
+    switch (l) {
+      case "bassa": return t("onboarding.videoDesc", { lang: "Bassa" });
+      case "duala": return t("onboarding.videoDesc", { lang: "Duala" });
+      case "ghomala": return t("onboarding.videoDesc", { lang: "Ghomala" });
+      default: return t("onboarding.videoDescDefault", "Découvrez Mulema en action");
     }
   };
 
@@ -197,7 +216,7 @@ const persistAndGoHome = async () => {
   // Otherwise the gradient acts as the fallback.
   let placeholderImage = null;
   try {
-    placeholderImage = require("../../assets/images/video_placeholder.jpg");
+    placeholderImage = require("../../assets/Avatar-images -profile-picker/video_placeholder.jpg");
   } catch {
     placeholderImage = null;
   }
@@ -225,7 +244,7 @@ const persistAndGoHome = async () => {
         {/* Video layer */}
         <Video
           ref={videoRef}
-          source={{ uri: videoUri }}
+          source={videoUri}
           resizeMode="cover"
           shouldPlay={false}
           isLooping={false}
@@ -278,7 +297,7 @@ const persistAndGoHome = async () => {
 
           {/* Continue button */}
           <MButton
-            title="Continuer"
+            title={t("common.continue")}
             onPress={persistAndGoHome}
             // icon="arrow-forward"
             style={{ width: "100%" }}

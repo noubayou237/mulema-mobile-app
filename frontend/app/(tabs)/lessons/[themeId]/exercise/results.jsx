@@ -13,9 +13,14 @@ import {
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
 
 import { Colors, Space, Radius, Shadow } from "../../../../../src/theme/tokens";
 import { useThemeStore } from "../../../../../src/stores/useThemeStore";
+import { useLanguageStore } from "../../../../../src/stores/useLanguageStore";
+import api from "../../../../../src/services/api";
+import Logger from "../../../../../src/utils/logger";
+
 
 /* ── Étoiles selon le score ────────────────────────────────── */
 const getStars = (score) => {
@@ -25,12 +30,12 @@ const getStars = (score) => {
   return 0;
 };
 
-const getMessage = (score) => {
-  if (score >= 90) return { title: "Excellent !", sub: "Tu maîtrises parfaitement ce thème !" };
-  if (score >= 70) return { title: "Très bien !", sub: "Continue sur cette lancée, tu progresses vite." };
-  if (score >= 50) return { title: "Pas mal !", sub: "Encore quelques révisions et tu vas maîtriser ça." };
-  if (score >= 30) return { title: "Courage !", sub: "Revois les leçons et réessaie, tu peux faire mieux !" };
-  return { title: "Recommençons !", sub: "Pas d'inquiétude, la pratique mène à la perfection." };
+const getMessage = (score, t) => {
+  if (score >= 90) return { title: t("exercises.excellent"), sub: t("exercises.progressingFast") };
+  if (score >= 70) return { title: t("exercises.veryGood"), sub: t("exercises.veryGoodSub") };
+  if (score >= 50) return { title: t("exercises.notBad"), sub: t("exercises.notBadSub") };
+  if (score >= 30) return { title: t("exercises.keepGoing"), sub: t("exercises.keepGoingSub") };
+  return { title: t("exercises.retry"), sub: t("exercises.keepGoingSub") };
 };
 
 /* ── Anneau de score animé ─────────────────────────────────── */
@@ -48,13 +53,7 @@ const ScoreRing = ({ score }) => {
 
   return (
     <View style={r.ringWrap}>
-      <View style={r.ringBg}>
-        <Animated.Text style={r.scoreNum}>
-          {anim.interpolate
-            ? undefined
-            : `${score}%`}
-        </Animated.Text>
-      </View>
+      <View style={r.ringBg} />
       <AnimatedScore anim={anim} />
     </View>
   );
@@ -108,20 +107,56 @@ const StarIcon = ({ filled, delay }) => {
    ────────────────────────────────────────────────────────────── */
 export default function ExerciseResults() {
   const router = useRouter();
-  const { themeId, score: scoreStr, correct: correctStr, total: totalStr } = useLocalSearchParams();
-  const { completeTheme } = useThemeStore();
+  const { t } = useTranslation();
+  const {
+    themeId,
+    score: scoreStr,
+    correct: correctStr,
+    total: totalStr,
+    lessonIdx: lessonIdxStr,
+  } = useLocalSearchParams();
+  const { completeTheme, lessons } = useThemeStore();
+  const { activeLanguage } = useLanguageStore();
 
-  const score   = parseInt(scoreStr  ?? "0",  10);
-  const correct = parseInt(correctStr ?? "0", 10);
-  const total   = parseInt(totalStr  ?? "15", 10);
-  const stars   = getStars(score);
-  const msg     = getMessage(score);
-  const success = score >= 60;
+  const score          = parseInt(scoreStr   ?? "0",  10);
+  const correct        = parseInt(correctStr ?? "0", 10);
+  const total          = parseInt(totalStr   ?? "0",  10);
+  const lessonIdxParam = lessonIdxStr != null ? parseInt(lessonIdxStr, 10) : null;
+  const stars          = getStars(score);
+  const msg            = getMessage(score, t);
+  const success        = score >= 60;
 
-  /* Compléter le thème + débloquer le suivant si score suffisant */
+  const isFinalLesson  = lessonIdxParam != null && lessons && lessonIdxParam === lessons.length - 1;
+  const [showFinalAnim, setShowFinalAnim] = useState(false);
+
+  const langCode = (activeLanguage?.name ?? activeLanguage?.code ?? "duala")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z]/g, "")
+    .trim();
+
+  /* Persist progress to DB and update local state */
   useEffect(() => {
-    if (themeId) completeTheme(themeId, score);
+    if (!themeId || !success || lessonIdxParam == null) return;
+
+    if (isFinalLesson) {
+      // All lessons done + exercise passed → mark theme complete and unlock next theme
+      completeTheme(themeId, score);
+      setShowFinalAnim(true);
+      api.post(`/progress/unlock-final/${themeId}`, {
+        completedLessonOrder: lessonIdxParam,
+      }).catch(err => Logger.warn("[Unlock] Final challenge:", err?.message));
+    } else {
+      // Progressive exercise → unlock the next lesson in the sequence
+      api
+        .post(`/progress/unlock-next-lesson/${themeId}`, {
+          completedLessonOrder: lessonIdxParam,
+        })
+        .catch((err) => Logger.warn("[Unlock] Could not unlock next lesson:", err?.message));
+    }
   }, []);
+
 
   /* Animations d'entrée */
   const fadeAnim  = useRef(new Animated.Value(0)).current;
@@ -138,15 +173,12 @@ export default function ExerciseResults() {
     router.replace(`/(tabs)/lessons/${themeId}/exercise/session`);
   };
 
-  // Succès → retour aux thèmes (le prochain est débloqué)
-  // Échec → retour au détail du thème pour réessayer les leçons
+  // Succès → retour au détail du thème pour voir la leçon débloquée
+  // Échec → pareil, pour réessayer les leçons
   const handleContinue = () => {
-    if (success) {
-      router.replace("/(tabs)/lessons");
-    } else {
-      router.push(`/(tabs)/lessons/${themeId}`);
-    }
+    router.replace(`/(tabs)/lessons/${themeId}`);
   };
+
 
   const handleHome = () => {
     router.replace("/(tabs)/lessons");
@@ -164,12 +196,12 @@ export default function ExerciseResults() {
           <View style={s.bannerBlob1} />
           <View style={s.bannerBlob2} />
           <Ionicons
-            name={score >= 60 ? "trophy" : "refresh"}
+            name={showFinalAnim ? "film" : (score >= 60 ? "trophy" : "refresh")}
             size={48}
             color="rgba(255,255,255,0.9)"
           />
-          <Text style={s.bannerTitle}>{msg.title}</Text>
-          <Text style={s.bannerSub}>{msg.sub}</Text>
+          <Text style={s.bannerTitle}>{showFinalAnim ? t("exercises.finalChallengeUnlocked", "Final Challenge Unlocked!") : msg.title}</Text>
+          <Text style={s.bannerSub}>{showFinalAnim ? t("exercises.storyVideoAvailable", "The story video is now available!") : msg.sub}</Text>
         </View>
 
         {/* ── Score + étoiles ── */}
@@ -191,37 +223,54 @@ export default function ExerciseResults() {
           <View style={[s.statCard, Shadow.sm]}>
             <Ionicons name="checkmark-circle" size={24} color="#2ECC71" />
             <Text style={s.statNum}>{correct}</Text>
-            <Text style={s.statLabel}>Correctes</Text>
+            <Text style={s.statLabel}>{t("exercises.correct_label")}</Text>
           </View>
           <View style={[s.statCard, Shadow.sm]}>
             <Ionicons name="close-circle" size={24} color={Colors.error} />
             <Text style={s.statNum}>{total - correct}</Text>
-            <Text style={s.statLabel}>Erreurs</Text>
+            <Text style={s.statLabel}>{t("exercises.errors_label")}</Text>
           </View>
           <View style={[s.statCard, Shadow.sm]}>
             <Ionicons name="list" size={24} color={Colors.primary} />
             <Text style={s.statNum}>{total}</Text>
-            <Text style={s.statLabel}>Total</Text>
+            <Text style={s.statLabel}>{t("common.total")}</Text>
           </View>
         </View>
 
         {/* ── Boutons ── */}
         <View style={s.buttons}>
+          {/* Story video CTA — shown after passing the final challenge */}
+          {showFinalAnim && success && (
+            <TouchableOpacity
+              onPress={() =>
+                router.replace(`/modal/onboarding-video?themeId=${themeId}&langCode=${langCode}`)
+              }
+              style={s.videoBtnWrap}
+              activeOpacity={0.88}
+            >
+              <View style={s.videoBtn}>
+                <Ionicons name="film" size={22} color="#FFF" />
+                <Text style={s.videoBtnTxt}>{t("exercises.watchStoryVideo", "Voir la vidéo histoire")}</Text>
+              </View>
+              <Text style={s.videoBtnSub}>{t("exercises.videoUnlocksNext", "Débloque le thème suivant")}</Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity onPress={handleContinue} style={s.primaryBtn} activeOpacity={0.85}>
             <Text style={s.primaryTxt}>
-              {success ? "🎉 Continuer l'aventure" : "Revoir les leçons"}
+              {success ? t("exercises.continueAdventure") : t("exercises.reviewLessons")}
             </Text>
             <Ionicons name="arrow-forward" size={18} color="#FFF" />
           </TouchableOpacity>
 
           <TouchableOpacity onPress={handleRetry} style={s.secondaryBtn} activeOpacity={0.8}>
             <Ionicons name="refresh" size={16} color={Colors.primary} />
-            <Text style={s.secondaryTxt}>Recommencer les exercices</Text>
+            <Text style={s.secondaryTxt}>{t("exercises.retry")}</Text>
           </TouchableOpacity>
 
-          {success && (
+          {success && !showFinalAnim && (
             <TouchableOpacity onPress={handleHome} style={s.ghostBtn} activeOpacity={0.7}>
-              <Text style={s.ghostTxt}>Retour aux thèmes</Text>
+              <Text style={s.ghostTxt}>{t("exercises.backToThemes")}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -302,6 +351,21 @@ const s = StyleSheet.create({
     paddingHorizontal: Space["2xl"],
     gap: Space.md,
   },
+
+  /* Story video CTA */
+  videoBtnWrap: { alignItems: "center", gap: 6 },
+  videoBtn: {
+    flexDirection: "row",
+    alignItems: "center", justifyContent: "center",
+    backgroundColor: "#7F0000",
+    borderRadius: 9999,
+    paddingVertical: 16, gap: 8,
+    width: "100%",
+    borderWidth: 2, borderColor: "#B71C1C",
+  },
+  videoBtnTxt: { fontFamily: "Fredoka_700Bold", fontSize: 16, color: "#FFF" },
+  videoBtnSub: { fontFamily: "Nunito-Regular", fontSize: 12, color: Colors.textTertiary },
+
   primaryBtn: {
     flexDirection: "row",
     alignItems: "center", justifyContent: "center",

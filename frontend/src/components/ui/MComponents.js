@@ -5,7 +5,7 @@
  * ╚══════════════════════════════════════════════════════════════╝
  *
  *  Usage:
- *    import { MInput, MButton, MDivider, MSocialButton, MCulturalCard, MChip }
+ *    import { MInput, MButton, MDivider, MSocialButton, MChip }
  *      from "@/components/ui/MComponents";
  */
 
@@ -20,7 +20,9 @@ import {
   StyleSheet,
   ActivityIndicator,
   Platform,
+  Vibration,
 } from "react-native";
+import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Colors, Typo, Space, Radius, Shadow } from "../../theme/tokens";
@@ -41,6 +43,7 @@ export const MInput = ({
   rightIcon,
   onRightPress,
   error,
+  ...rest
 }) => {
   const [focused, setFocused] = useState(false);
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -111,6 +114,7 @@ export const MInput = ({
           autoCapitalize={autoCapitalize}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          {...rest}
         />
         {rightIcon && (
           <TouchableOpacity
@@ -151,6 +155,7 @@ export const MButton = ({
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const onPressIn = () => {
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
     Animated.spring(scaleAnim, {
       toValue: 0.97,
       tension: 300,
@@ -282,7 +287,10 @@ export const MSocialButton = ({ provider, onPress, disabled = false }) => {
 
   return (
     <TouchableOpacity
-      onPress={onPress}
+      onPress={() => {
+        try { Haptics.selectionAsync(); } catch {}
+        onPress?.();
+      }}
       disabled={disabled}
       activeOpacity={0.7}
       style={[styles.socialBtn, { backgroundColor: c.bg }, Shadow.sm]}
@@ -296,20 +304,6 @@ export const MSocialButton = ({ provider, onPress, disabled = false }) => {
 };
 
 
-/* ══════════════════════════════════════════════════════════════
-   MCulturalCard — "Le saviez-vous ?" card with asymmetric radius
-   ══════════════════════════════════════════════════════════════ */
-
-export const MCulturalCard = ({ title, body }) => (
-  <View style={[styles.culturalCard, Shadow.sm]}>
-    <Text style={[Typo.labelSm, { color: Colors.secondary, marginBottom: Space.sm }]}>
-      {title || "LE SAVIEZ-VOUS ?"}
-    </Text>
-    <Text style={[Typo.bodyMd, { color: Colors.onSurface }]}>{body}</Text>
-    {/* Orange decorative blob */}
-    <View style={styles.culturalBlob} />
-  </View>
-);
 
 
 /* ══════════════════════════════════════════════════════════════
@@ -414,26 +408,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Cultural card
-  culturalCard: {
-    backgroundColor: Colors.secondaryFixed,
-    borderTopLeftRadius: Radius.xl,
-    borderTopRightRadius: Radius["2xl"],
-    borderBottomLeftRadius: Radius.xl,
-    borderBottomRightRadius: Radius.md,
-    padding: Space["2xl"],
-    overflow: "hidden",
-    position: "relative",
-  },
-  culturalBlob: {
-    position: "absolute",
-    right: -20,
-    bottom: -20,
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.secondaryContainer + "60",
-  },
 
   // Chip
   chip: {

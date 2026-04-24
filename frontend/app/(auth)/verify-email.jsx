@@ -23,18 +23,18 @@ import {
   StatusBar,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../../src/services/api";
 import { useTranslation } from "react-i18next";
+import * as Clipboard from "expo-clipboard";
 
 // ── Design system ──
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
-import { MButton, MCulturalCard } from "../../src/components/ui/MComponents";
+import { getFriendlyErrorMessage } from "../../src/utils/errorUtils";
+import { useAuthStore } from "../../src/stores/useAuthStore";
+import api from "../../src/services/api";
+import { MButton } from "../../src/components/ui/MComponents";
 
 const RESEND_COOLDOWN = 60;
-const STORAGE_KEY = "userSession";
 const CODE_LENGTH = 6;
 
 /* ══════════════════════════════════════════════════════════════
@@ -51,7 +51,7 @@ const DigitBox = ({ digit, focused }) => {
       friction: 8,
       useNativeDriver: true,
     }).start();
-  }, [focused, digit]);
+  }, [focused, digit, scaleAnim]);
 
   return (
     <Animated.View
@@ -122,8 +122,24 @@ const VerifyEmail = () => {
     ]).start();
 
     startCountdown();
+    checkClipboard(); // Initial check
+
     return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
-  }, []);
+  }, [footerAnim, formAnim, heroAnim, heroScale, titleAnim, checkClipboard]);
+
+  // ── Clipboard Detection ──
+  const checkClipboard = async () => {
+    try {
+      const text = await Clipboard.getStringAsync();
+      const clean = text?.trim();
+      // If it's a 6-digit number and we don't have a code yet
+      if (clean && /^\d{6}$/.test(clean) && code === "") {
+        setCode(clean);
+      }
+    } catch (_e) {
+      // Ignore clipboard errors
+    }
+  };
 
   // ── Countdown — ORIGINAL LOGIC ──
   const startCountdown = () => {
@@ -141,11 +157,17 @@ const VerifyEmail = () => {
     }, 1000);
   };
 
-  // ── Auto login — ORIGINAL LOGIC ──
+  // ── Auto login — delegates routing entirely to AuthGate ──
+  // loginWithTokens() now resets the language store first, so AsyncStorage is always
+  // clean. The AuthGate will then see: isAuthenticated=true, activeLanguage=null →
+  // and automatically redirect to /(onboarding)/ChoiceLanguage. No explicit nav needed.
   const autoLogin = async (responseData) => {
     const { accessToken, refreshToken } = responseData;
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ accessToken, refreshToken }));
-    router.replace("/ChoiceLanguage");
+    const { loginWithTokens } = useAuthStore.getState();
+    await loginWithTokens({ accessToken, refreshToken });
+    // ✅ Do NOT push a route here — AuthGate handles it via the routing effect.
+    // Adding an explicit router.replace() here races with AuthGate's async
+    // loadActiveLanguage() and can cause it to redirect to home instead.
   };
 
   // ── Verify — ORIGINAL LOGIC ──
@@ -163,12 +185,11 @@ const VerifyEmail = () => {
           email,
           otpCode: code.trim(),
         });
-        Alert.alert("Succès", "Email vérifié ! Connexion en cours...");
+        Alert.alert(t("common.success"), t("messages.emailVerified"));
         await autoLogin(response.data);
       }
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || "Échec de la vérification.";
-      Alert.alert("Erreur", msg);
+      Alert.alert(t("common.error"), getFriendlyErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -180,10 +201,10 @@ const VerifyEmail = () => {
     setResendLoading(true);
     try {
       await api.post("/auth/request-otp", { email });
-      Alert.alert("Envoyé", `Nouveau code envoyé à ${email}`);
+      Alert.alert(t("common.success"), `${t("auth.codeSentTo")} ${email}`);
       startCountdown();
     } catch (err) {
-      Alert.alert("Erreur", err?.response?.data?.message || "Impossible de renvoyer le code.");
+      Alert.alert(t("common.error"), getFriendlyErrorMessage(err));
     } finally {
       setResendLoading(false);
     }
@@ -191,7 +212,7 @@ const VerifyEmail = () => {
 
   // ── Derived ──
   const digits = Array(CODE_LENGTH).fill("").map((_, i) => code[i] || "");
-  const isReady = code.length >= 4;
+  const isReady = code.length === CODE_LENGTH;
 
   // ── Render helpers ──
   const animStyle = (anim, yOffset = 20) => ({
@@ -203,18 +224,7 @@ const VerifyEmail = () => {
     <View style={s.root}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.surface} />
 
-      {/* Hidden real input for OTP */}
-      <TextInput
-        ref={inputRef}
-        value={code}
-        onChangeText={(val) => setCode(val.replace(/[^0-9]/g, "").slice(0, CODE_LENGTH))}
-        keyboardType="number-pad"
-        maxLength={CODE_LENGTH}
-        style={{ position: "absolute", opacity: 0, width: 0, height: 0 }}
-        onFocus={() => setInputFocused(true)}
-        onBlur={() => setInputFocused(false)}
-        autoFocus={false}
-      />
+      {/* Hidden real input for OTP moved into the OTP section for better focus interaction */}
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -228,10 +238,16 @@ const VerifyEmail = () => {
         >
           {/* ── Header ── */}
           <View style={s.header}>
-            <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <TouchableOpacity 
+              onPress={() => {
+                if (router.canGoBack()) router.back();
+                else router.replace("/(auth)/sign-in");
+              }} 
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
               <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
             </TouchableOpacity>
-            <Text style={[Typo.titleMd, { flex: 1, textAlign: "center" }]}>Vérification</Text>
+            <Text style={[Typo.titleMd, { flex: 1, textAlign: "center" }]}>{t("auth.verifyEmail")}</Text>
             <View style={{ width: 24 }} />
           </View>
 
@@ -252,28 +268,49 @@ const VerifyEmail = () => {
 
           {/* ── Title block ── */}
           <Animated.View style={[s.titleBlock, animStyle(titleAnim, 15)]}>
-            <Text style={Typo.displayMd}>Vérification</Text>
+            <Text style={Typo.displayMd}>{t("auth.verifyEmail")}</Text>
             <Text style={[Typo.bodyLg, { textAlign: "center", marginTop: Space.md, lineHeight: 24 }]}>
-              Nous avons envoyé un code à votre email pour sécuriser votre compte Mulema.
+              {t("auth.loginSubtitle")}
             </Text>
           </Animated.View>
 
           {/* ── OTP boxes ── */}
           <Animated.View style={[s.otpSection, animStyle(formAnim, 20)]}>
-            <TouchableOpacity
-              onPress={() => inputRef.current?.focus()}
-              activeOpacity={1}
-              style={s.otpRow}
-            >
-              {digits.map((d, i) => (
-                <DigitBox key={i} digit={d} focused={inputFocused && code.length === i} />
-              ))}
-            </TouchableOpacity>
+            <View style={s.otpContainer}>
+              <View style={s.otpRow} pointerEvents="none">
+                {digits.map((d, i) => (
+                  <DigitBox key={i} digit={d} focused={inputFocused && code.length === i} />
+                ))}
+              </View>
+
+              {/* The "Invisible" Input Overlay */}
+              <TextInput
+                ref={inputRef}
+                value={code}
+                onChangeText={(val) => setCode(val.replace(/[^0-9]/g, "").slice(0, CODE_LENGTH))}
+                keyboardType="number-pad"
+                textContentType="oneTimeCode"
+                maxLength={CODE_LENGTH}
+                style={s.hiddenInputOverlay}
+                onFocus={() => {
+                  setInputFocused(true);
+                  checkClipboard();
+                }}
+                onBlur={() => setInputFocused(false)}
+                autoFocus={true}
+                editable={!loading && !resendLoading}
+                caretHidden={true}
+                selectionColor="transparent"
+                autoCapitalize="none"
+                autoCorrect={false}
+                spellCheck={false}
+              />
+            </View>
 
             {code.length > 0 && (
               <TouchableOpacity onPress={() => setCode("")} style={s.clearBtn}>
                 <Ionicons name="close-circle" size={14} color={Colors.textTertiary} />
-                <Text style={[Typo.bodySm, { color: Colors.textTertiary, marginLeft: Space.xs }]}>Effacer</Text>
+                <Text style={[Typo.bodySm, { color: Colors.textTertiary, marginLeft: Space.xs }]}>{t("common.clear")}</Text>
               </TouchableOpacity>
             )}
           </Animated.View>
@@ -281,7 +318,7 @@ const VerifyEmail = () => {
           {/* ── Verify button ── */}
           <Animated.View style={[{ width: "100%", marginBottom: Space["2xl"] }, animStyle(formAnim, 15)]}>
             <MButton
-              title="Vérifier"
+              title={t("auth.verifyCode")}
               onPress={handleVerification}
               loading={loading}
               disabled={loading || !isReady}
@@ -291,28 +328,21 @@ const VerifyEmail = () => {
           {/* ── Resend section ── */}
           <Animated.View style={[{ alignItems: "center", marginBottom: Space["3xl"] }, animStyle(footerAnim, 10)]}>
             <Text style={[Typo.bodyMd, { color: Colors.textSecondary, marginBottom: Space.sm }]}>
-              Vous n'avez pas reçu de code ?
+              {t("auth.dontHaveCode")}
             </Text>
             {resendCooldown > 0 ? (
               <Text style={[Typo.bodyMd, { color: Colors.textTertiary }]}>
-                Renvoyer dans {resendCooldown}s
+                {t("auth.resendOtpIn", { count: resendCooldown })}
               </Text>
             ) : (
               <TouchableOpacity onPress={handleResend} disabled={resendLoading} activeOpacity={0.7}>
                 <Text style={[Typo.titleSm, { color: Colors.primary }]}>
-                  {resendLoading ? "Envoi en cours..." : "Renvoyer le code"}
+                  {resendLoading ? t("common.loading") : t("auth.resendOtp")}
                 </Text>
               </TouchableOpacity>
             )}
           </Animated.View>
 
-          {/* ── Cultural card ── */}
-          <Animated.View style={[{ width: "100%" }, animStyle(footerAnim, 10)]}>
-            <MCulturalCard
-              title="LE SAVIEZ-VOUS ?"
-              body={'Mulema signifie "Cœur" dans plusieurs langues bantoues. Nous protégeons le vôtre.'}
-            />
-          </Animated.View>
 
         </ScrollView>
       </KeyboardAvoidingView>
@@ -391,10 +421,28 @@ const s = StyleSheet.create({
     alignItems: "center",
     marginBottom: Space["3xl"],
   },
+  otpContainer: {
+    position: "relative",
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   otpRow: {
     flexDirection: "row",
     gap: Space.md,
     justifyContent: "center",
+  },
+  hiddenInputOverlay: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    opacity: 1,
+    color: "transparent",
+    backgroundColor: "transparent",
+    zIndex: 10,
+    fontSize: 24,
   },
   clearBtn: {
     flexDirection: "row",

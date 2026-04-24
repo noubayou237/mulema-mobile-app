@@ -28,10 +28,10 @@ import api from "../../src/services/api";
 
 // ── Design system ──
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
+import { getFriendlyErrorMessage } from "../../src/utils/errorUtils";
 import {
   MInput,
   MButton,
-  MCulturalCard,
 } from "../../src/components/ui/MComponents";
 
 /* ══════════════════════════════════════════════════════════════
@@ -129,11 +129,11 @@ const ForgotPasswordScreen = () => {
   const [sent, setSent] = useState(false);
 
   // ── Animations ──
-  const heroAnim   = useRef(new Animated.Value(0)).current;
-  const titleAnim  = useRef(new Animated.Value(0)).current;
-  const formAnim   = useRef(new Animated.Value(0)).current;
+  const heroAnim = useRef(new Animated.Value(0)).current;
+  const titleAnim = useRef(new Animated.Value(0)).current;
+  const formAnim = useRef(new Animated.Value(0)).current;
   const footerAnim = useRef(new Animated.Value(0)).current;
-  const heroScale  = useRef(new Animated.Value(0.8)).current;
+  const heroScale = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
     Animated.stagger(130, [
@@ -159,8 +159,7 @@ const ForgotPasswordScreen = () => {
       await api.post("/auth/request-password-reset", { email: email.trim() });
       setSent(true);
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || "Impossible d'envoyer le code.";
-      Alert.alert("Erreur", msg);
+      Alert.alert("Erreur", getFriendlyErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -195,7 +194,13 @@ const ForgotPasswordScreen = () => {
         >
           {/* ── Header ── */}
           <View style={s.header}>
-            <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <TouchableOpacity 
+              onPress={() => {
+                if (router.canGoBack()) router.back();
+                else router.replace("/(auth)/sign-in");
+              }} 
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
               <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
             </TouchableOpacity>
             <Text style={[Typo.titleMd, { flex: 1, textAlign: "center" }]}>Account Recovery</Text>
@@ -206,7 +211,7 @@ const ForgotPasswordScreen = () => {
           <Animated.View style={[s.heroWrap, { opacity: heroAnim, transform: [{ scale: heroScale }] }]}>
             <View style={s.heroCard}>
               <Image
-                source={require("../../assets/images/logo.png")}
+                source={require("../../assets/Avatar-images -profile-picker/logo.png")}
                 style={s.heroImg}
                 contentFit="contain"
               />
@@ -238,6 +243,7 @@ const ForgotPasswordScreen = () => {
                   placeholder="nom@exemple.com"
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  editable={!loading}
                 />
 
                 {/* Send button */}

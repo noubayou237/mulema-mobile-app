@@ -15,9 +15,12 @@ import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import api from "../../src/services/api";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
+import { useTranslation } from "react-i18next";
+import Logger from "../../src/utils/logger";
 
 export default function ChoiceLanguage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { setActiveLanguage } = useLanguageStore();
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -32,13 +35,21 @@ export default function ChoiceLanguage() {
   const loadLanguages = async () => {
     try {
       const { data } = await api.get("/patrimonial-languages");
-      const langs = (data || []).map((l) => ({
-        id: l.id,
-        name: l.name,
-        code: l.name.toLowerCase(),
-        label: `Le ${l.name}`,
-        type: "patrimonial",
-      }));
+      
+      const uniqueLangsMap = new Map();
+      (data || []).forEach((l) => {
+        const code = l.name.toLowerCase();
+        if (!uniqueLangsMap.has(code)) {
+          uniqueLangsMap.set(code, {
+            id: l.id,
+            name: l.name,
+            code: code,
+            label: t("common.theLanguage", { name: l.name }),
+            type: "patrimonial",
+          });
+        }
+      });
+      const langs = Array.from(uniqueLangsMap.values());
       setLanguages(langs);
 
       // Restaurer la sélection précédente
@@ -49,7 +60,6 @@ export default function ChoiceLanguage() {
         if (code) setSelected(code);
       }
     } catch (error) {
-      console.log("Error fetching languages:", error.message);
     } finally {
       setInitializing(false);
     }
@@ -67,16 +77,16 @@ export default function ChoiceLanguage() {
           patrimonialLanguageId: language.id,
         });
       } catch (apiError) {
-        console.log("Language might already exist:", apiError.message);
+        Logger.warn("[ChoiceLanguage] Language might already exist:", apiError.message);
       }
 
       // Mettre à jour le store (synchronise AsyncStorage + state)
       await setActiveLanguage(language);
 
-      router.replace(`/PageVideo?lang=${encodeURIComponent(language.code)}`);
+      router.replace(`/(onboarding)/PageVideo?lang=${encodeURIComponent(language.code)}`);
     } catch (e) {
-      console.error("Error saving language:", e);
-      Alert.alert("Erreur", "Impossible d'enregistrer la langue.");
+      Logger.error("Error saving language:", e);
+      Alert.alert(t("common.error"), t("errors.languageNotSelected"));
     } finally {
       setLoading(false);
     }
@@ -84,7 +94,7 @@ export default function ChoiceLanguage() {
 
   const handleContinue = async () => {
     if (!selected) {
-      return Alert.alert("Choix requis", "Veuillez sélectionner une langue.");
+      return Alert.alert(t("onboarding.choiceRequired"), t("onboarding.pleaseSelect"));
     }
 
     const language = languages.find((l) => l.code === selected);
@@ -104,13 +114,13 @@ export default function ChoiceLanguage() {
   return (
     <ScreenWrapper>
       <View style={styles.container}>
-        <AppTitle style={styles.mainTitle}>Bienvenue sur Mulema</AppTitle>
+        <AppTitle style={styles.mainTitle}>{t("onboarding.welcome")}</AppTitle>
         <AppText variant='muted' style={styles.subtitle}>
-          Apprenez les langues locales camerounaises
+          {t("onboarding.subtitle")}
         </AppText>
 
         <AppTitle style={styles.sectionTitle}>
-          Quelle langue voulez-vous apprendre ?
+          {t("onboarding.selectLanguage")}
         </AppTitle>
 
         <View style={styles.langList}>
@@ -138,14 +148,14 @@ export default function ChoiceLanguage() {
           ))}
           {languages.length === 0 && !initializing && (
             <AppText variant="muted" style={{ textAlign: "center" }}>
-              Aucune langue disponible. Vérifiez votre connexion.
+              {t("onboarding.noLanguages")}
             </AppText>
           )}
         </View>
 
         <View style={styles.buttonContainer}>
           <Button
-            title={loading ? "Chargement..." : "Continuer"}
+            title={loading ? t("common.loading") : t("common.next")}
             onPress={handleContinue}
             disabled={!selected || loading}
             style={[

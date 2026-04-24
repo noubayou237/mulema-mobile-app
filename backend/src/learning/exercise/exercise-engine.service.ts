@@ -68,7 +68,9 @@ export class ExerciseEngineService {
     });
 
     if (!block || block.words.length === 0) {
-      throw new Error(`Block not found or has no words: ${blockId}`);
+      // Instead of crashing, gracefully return empty exercises if the block has no words
+      console.warn(`Block not found or has no words: ${blockId}`);
+      return [];
     }
 
     const words = block.words as unknown as Word[];

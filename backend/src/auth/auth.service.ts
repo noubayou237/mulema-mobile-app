@@ -9,7 +9,7 @@ import { PrismaService } from './prisma/prisma.service';
 import { EmailService } from './email/email.service';
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
-import { randomBytes } from 'crypto';
+import { randomBytes, createHash } from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -20,29 +20,6 @@ export class AuthService {
     private emailService: EmailService,
   ) {}
 
-  // Build a unique username from a base string (email prefix or name)
-  private async generateUniqueUsername(base: string) {
-    const sanitizedBase =
-      base?.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20) || 'user';
-
-    let candidate = sanitizedBase || 'user';
-    let suffix = 0;
-
-    // Iterate until we find a username that is not taken
-    // The loop is bounded by the database constraint and will exit quickly in practice
-    while (true) {
-      const existing = await this.prisma.user.findUnique({
-        where: { username: candidate },
-      });
-
-      if (!existing) {
-        return candidate;
-      }
-
-      suffix += 1;
-      candidate = `${sanitizedBase}${suffix}`;
-    }
-  }
 
   // =====================
   // REGISTER
@@ -52,6 +29,7 @@ export class AuthService {
     username: string;
     name: string;
     password: string;
+    language?: string; // Ajouté
   }) {
     if (!body?.email || !body?.password || !body?.username || !body?.name) {
       throw new BadRequestException('Missing fields');
@@ -66,6 +44,29 @@ export class AuthService {
           username: body.username,
           name: body.name,
           passwordHash,
+          language: body.language || 'fr', // Par défaut français
+          // Initialiser les records liés
+          statistics: {
+            create: {
+              totalLearningTime: 0,
+              lessonsCompleted: 0,
+              exercisesCompleted: 0,
+              totalPrawns: 0,
+            },
+          },
+          rootsStreak: {
+            create: {
+              daysConnected: 0,
+              lastConnectedAt: new Date(Date.now() - 48 * 60 * 60 * 1000), // 2 days ago
+            },
+          },
+          cowry: {
+            create: {
+              maxCowries: 5,
+              currentCowries: 5,
+              rechargeTime: 0,
+            },
+          },
         },
       });
 
@@ -126,17 +127,18 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const accessToken = (jwt as any).sign(
+    const accessToken = jwt.sign(
       { sub: user.id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: 60 * 15 }, // 15 min
     );
 
     const refreshToken = randomBytes(64).toString('hex');
+    const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
 
     await this.prisma.refreshToken.create({
       data: {
-        tokenHash: refreshToken,
+        tokenHash,
         userId: user.id,
         expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
       },
@@ -156,8 +158,10 @@ export class AuthService {
       throw new BadRequestException('Refresh token missing');
     }
 
+    const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
+
     const storedToken = await this.prisma.refreshToken.findUnique({
-      where: { tokenHash: refreshToken },
+      where: { tokenHash },
       include: { user: true },
     });
 
@@ -165,7 +169,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const newAccessToken = (jwt as any).sign(
+    const newAccessToken = jwt.sign(
       { sub: storedToken.user.id, role: storedToken.user.role },
       process.env.JWT_SECRET,
       { expiresIn: 60 * 15 },
@@ -182,8 +186,10 @@ export class AuthService {
       throw new BadRequestException('Refresh token missing');
     }
 
+    const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
+
     await this.prisma.refreshToken.deleteMany({
-      where: { tokenHash: refreshToken },
+      where: { tokenHash },
     });
 
     return { success: true };
@@ -390,17 +396,18 @@ export class AuthService {
     });
 
     // Generate tokens (auto-login)
-    const accessToken = (jwt as any).sign(
+    const accessToken = jwt.sign(
       { sub: user.id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: 60 * 15 }, // 15 min
     );
 
     const refreshToken = randomBytes(64).toString('hex');
+    const tokenHash = createHash('sha256').update(refreshToken).digest('hex');
 
     await this.prisma.refreshToken.create({
       data: {
-        tokenHash: refreshToken,
+        tokenHash,
         userId: user.id,
         expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
       },
@@ -413,103 +420,4 @@ export class AuthService {
     };
   }
 
-  // =====================
-  // SOCIAL LOGIN (Google, Facebook, Apple)
-  // =====================
-  async socialLogin(
-    body: any,
-    provider: 'GOOGLE' | 'FACEBOOK' | 'APPLE',
-  ) {
-    const email = body?.email;
-    const name =
-      body?.name ||
-      body?.fullName?.givenName ||
-      body?.fullName?.familyName ||
-      'New User';
-    
-    // Get the provider-specific ID
-    let providerId: string | undefined;
-    if (provider === 'GOOGLE') {
-      providerId = body?.idToken ? undefined : body?.googleId;
-    } else if (provider === 'FACEBOOK') {
-      providerId = body?.facebookId;
-    } else if (provider === 'APPLE') {
-      providerId = body?.user;
-    }
-
-    if (!email) {
-      throw new BadRequestException('Email is required for social login');
-    }
-
-    let user = await this.prisma.user.findUnique({ where: { email } });
-
-    // Create the user on first social login
-    if (!user) {
-      const username = await this.generateUniqueUsername(
-        email.split('@')[0] || name,
-      );
-
-      const randomPassword = randomBytes(32).toString('hex');
-      const passwordHash = await bcrypt.hash(randomPassword, 10);
-
-      user = await this.prisma.user.create({
-        data: {
-          email,
-          username,
-          name,
-          passwordHash,
-          isVerified: true,
-          isSocial: true,
-          provider,
-          providerId,
-        },
-      });
-    } else {
-      // Update existing user with social login info if not already set
-      const updateData: any = { 
-        isVerified: true, 
-        name: name || user.name 
-      };
-      
-      // Only update provider info if user is logging in via social for first time
-      if (!user.provider) {
-        updateData.isSocial = true;
-        updateData.provider = provider;
-        updateData.providerId = providerId;
-      }
-      
-      user = await this.prisma.user.update({
-        where: { id: user.id },
-        data: updateData,
-      });
-    }
-
-    const accessToken = (jwt as any).sign(
-      { sub: user.id, role: user.role, provider },
-      process.env.JWT_SECRET,
-      { expiresIn: 60 * 15 },
-    );
-
-    const refreshToken = randomBytes(64).toString('hex');
-
-    await this.prisma.refreshToken.create({
-      data: {
-        tokenHash: refreshToken,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-      },
-    });
-
-    return {
-      accessToken,
-      refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        name: user.name,
-      },
-      provider,
-    };
-  }
 }

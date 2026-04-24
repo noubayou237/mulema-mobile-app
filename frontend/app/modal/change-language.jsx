@@ -13,36 +13,33 @@ import {
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useTranslation } from "react-i18next";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
-import { MButton, MCulturalCard } from "../../src/components/ui/MComponents";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
+
+/* ── 3 heritage languages are available ── */
+const ALLOWED_LANGUAGES = ["bassa", "duala", "ghomala"];
+const isAllowedLanguage = (lang) => {
+  const name = (lang?.name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return ALLOWED_LANGUAGES.some(allowed => name.includes(allowed));
+};
 import { useAuthStore } from "../../src/stores/useAuthStore";
 
 /* ── Language Row ── */
 const LanguageRow = ({ language, isActive, onPress }) => {
-  // Placeholder progress — will come from backend per-language stats
-  const progress = Math.floor(Math.random() * 100);
-
   return (
     <TouchableOpacity
       onPress={() => onPress(language)}
       activeOpacity={0.7}
       style={[s.langRow, Shadow.sm]}
     >
-      {/* Flag placeholder */}
       <View style={s.flagCircle}>
         <Text style={{ fontSize: 24 }}>{getFlag(language.code)}</Text>
       </View>
 
       <View style={{ flex: 1, marginLeft: Space.lg }}>
         <Text style={Typo.titleMd}>{language.name}</Text>
-        <Text style={[Typo.bodySm, { marginTop: 2 }]}>{progress}% complété</Text>
-      </View>
-
-      {/* Mini progress bar */}
-      <View style={s.miniProgress}>
-        <View style={[s.miniProgressFill, { height: `${Math.max(progress, 5)}%` }]} />
       </View>
 
       <Ionicons name="chevron-forward" size={18} color={Colors.textTertiary} style={{ marginLeft: Space.md }} />
@@ -64,6 +61,7 @@ const getFlag = (code) => {
 
 export default function ChangeLanguageScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const { activeLanguage, languages, isLoading, fetchLanguages, setActiveLanguage } = useLanguageStore();
 
@@ -74,29 +72,50 @@ export default function ChangeLanguageScreen() {
   const handleSelectLanguage = async (language) => {
     if (language.id === activeLanguage?.id) return; // déjà active
     await setActiveLanguage(language);
-    router.back();
+    
+    // Au lieu de router.back(), on va vers la vidéo d'onboarding
+    router.replace({
+      pathname: "/modal/onboarding-video",
+      params: { langCode: language.code }
+    });
   };
 
-  const otherLanguages = languages.filter((l) => l.id !== activeLanguage?.id);
+  const otherLanguages = React.useMemo(() => {
+    const activeName = (activeLanguage?.name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const seen = new Set([activeName]);
+    
+    return languages.filter((l) => {
+      const name = (l?.name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (seen.has(name) || !isAllowedLanguage(l)) return false;
+      seen.add(name);
+      return true;
+    });
+  }, [languages, activeLanguage]);
 
   return (
     <View style={s.root}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.surface} />
+      {/* ── Header ── */}
+      <View style={[s.header, { paddingHorizontal: Space["2xl"] }]}>
+        <TouchableOpacity 
+          onPress={() => {
+            if (router.canGoBack()) router.back();
+            else router.replace("/(tabs)/home");
+          }} 
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
+        </TouchableOpacity>
+        {/* <Text style={[Typo.titleLg, { marginLeft: Space.md, flex: 1 }]}>Mes Langues</Text> */}
+        <View style={{ width: 24 }} />
+      </View>
+
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* ── Header ── */}
-        <View style={s.header}>
-          <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />
-</TouchableOpacity>
-{/* <Text style={[Typo.titleLg, { marginLeft: Space.md, flex: 1 }]}>Mes Langues</Text> */}
-<View style={{ width: 24 }} />
-        </View>
-
         {/* ── Title ── */}
-        <Text style={Typo.displayMd}>Mes Langues</Text>
+        <Text style={Typo.displayMd}>{t("settingsModal.myLanguages")}</Text>
         <Text style={[Typo.bodyLg, { marginTop: Space.sm, marginBottom: Space["2xl"] }]}>
-          Gérez votre parcours d'apprentissage
+          {t("settingsModal.manageLearning")}
         </Text>
 
         {/* ── Active Session Card ── */}
@@ -108,7 +127,7 @@ export default function ChangeLanguageScreen() {
           >
             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: Space.lg }}>
               <View style={s.activeDot} />
-              <Text style={[Typo.labelSm, { color: Colors.onPrimary, marginLeft: Space.sm }]}>SESSION ACTIVE</Text>
+              <Text style={[Typo.labelSm, { color: Colors.onPrimary, marginLeft: Space.sm }]}>{t("settingsModal.activeSession")}</Text>
             </View>
 
             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: Space.lg }}>
@@ -117,13 +136,6 @@ export default function ChangeLanguageScreen() {
               </View>
               <View style={{ marginLeft: Space.lg, flex: 1 }}>
                 <Text style={[Typo.headlineMd, { color: Colors.onPrimary }]}>{activeLanguage.name}</Text>
-                {/* Mini progress */}
-                <View style={{ flexDirection: "row", alignItems: "center", marginTop: Space.sm }}>
-                  <View style={s.activeProgressTrack}>
-                    <View style={[s.activeProgressFill, { width: "65%" }]} />
-                  </View>
-                  <Text style={[Typo.labelMd, { color: Colors.onPrimary, marginLeft: Space.sm }]}>65%</Text>
-                </View>
               </View>
             </View>
 
@@ -132,13 +144,13 @@ export default function ChangeLanguageScreen() {
               activeOpacity={0.8}
               style={s.continueBtn}
             >
-              <Text style={[Typo.titleSm, { color: Colors.primary }]}>Continuer</Text>
+              <Text style={[Typo.titleSm, { color: Colors.primary }]}>{t("common.continue")}</Text>
             </TouchableOpacity>
           </LinearGradient>
         )}
 
         {/* ── Autres Langues ── */}
-        <Text style={[Typo.labelSm, { marginTop: Space["3xl"], marginBottom: Space.lg }]}>AUTRES LANGUES</Text>
+        <Text style={[Typo.labelSm, { marginTop: Space["3xl"], marginBottom: Space.lg }]}>{t("settingsModal.otherLanguages")}</Text>
 
         {isLoading ? (
           <ActivityIndicator size="large" color={Colors.primary} style={{ marginVertical: Space["3xl"] }} />
@@ -159,16 +171,10 @@ export default function ChangeLanguageScreen() {
             <Ionicons name="add" size={28} color={Colors.primary} />
           </View>
           <Text style={[Typo.titleSm, { color: Colors.primary, marginTop: Space.md }]}>
-            Explorer de nouvelles langues
+            {t("settingsModal.exploreLanguages")}
           </Text>
         </TouchableOpacity>
 
-        {/* ── Cultural Card ── */}
-        <View style={{ marginTop: Space["2xl"] }}>
-          <MCulturalCard
-            body={"Changer de langue n'efface jamais votre progression dans vos autres sessions !"}
-          />
-        </View>
 
         <View style={{ height: Space["4xl"] }} />
       </ScrollView>

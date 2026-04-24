@@ -12,17 +12,17 @@ model User {
   name               String
   email              String            @unique
   username           String            @unique
-  passwordHash       String?
-  role               Role              @default(USER)
-  isVerified         Boolean           @default(false)
   totalPrawns        Int               @default(0)
-  officialLanguageId String?
   createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-  language           String            @default("en")
+  role               Role              @default(USER)
+  officialLanguageId String?
   isSocial           Boolean           @default(false)
+  isVerified         Boolean           @default(false)
+  language           String            @default("en")
+  passwordHash       String?
   provider           SocialProvider?
   providerId         String?
+  updatedAt          DateTime          @updatedAt
   avatar             Avatar?
   cowry              Cowry?
   otps               Otp[]
@@ -33,15 +33,16 @@ model User {
   officialLanguage   OfficialLanguage? @relation(fields: [officialLanguageId], references: [id])
   languages          UserLanguage[]
   progress           UserProgress[]
+  mulemThemeProgress UserMulemThemeProgress[]
   communities        Community[]       @relation("CommunityToUser")
 }
 
 model RefreshToken {
   id        String   @id @default(uuid())
-  tokenHash String   @unique
+  userId    String
   expiresAt DateTime
   createdAt DateTime @default(now())
-  userId    String
+  tokenHash String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -66,10 +67,18 @@ model Statistics {
 }
 
 model RootsStreak {
+<<<<<<< HEAD
   id            String @id @default(uuid())
   daysConnected Int
   userId        String @unique
   user          User   @relation(fields: [userId], references: [id])
+=======
+  id              String   @id @default(uuid())
+  daysConnected   Int      @default(0)
+  userId          String   @unique
+  lastConnectedAt DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+>>>>>>> 05d59aa94cded19d34e4805b2c7a1da2b701d38b
 }
 
 model Settings {
@@ -206,8 +215,8 @@ model Story {
 model Level {
   id                    String              @id @default(uuid())
   levelNumber           Int
-  title                 String?
   patrimonialLanguageId String
+  title                 String?
   lessons               Lesson[]
   patrimonialLanguage   PatrimonialLanguage @relation(fields: [patrimonialLanguageId], references: [id])
 }
@@ -215,9 +224,9 @@ model Level {
 model Lesson {
   id           String         @id @default(uuid())
   title        String
-  order        Int
   contentUrl   String?
   levelId      String
+  order        Int
   themeId      String?
   exercises    Exercise[]     @relation("ExerciseLesson")
   level        Level          @relation(fields: [levelId], references: [id])
@@ -226,16 +235,39 @@ model Lesson {
 }
 
 model UserProgress {
-  id          String  @id @default(uuid())
-  isUnlocked  Boolean @default(false)
-  isCompleted Boolean @default(false)
-  stars       Int     @default(0)
+  id          String     @id @default(uuid())
+  isUnlocked  Boolean    @default(false)
+  isCompleted Boolean    @default(false)
+  stars       Int        @default(0)
   userId      String
+<<<<<<< HEAD
   lessonId    String
   lesson      Lesson  @relation(fields: [lessonId], references: [id])
   user        User    @relation(fields: [userId], references: [id])
+=======
+  lessonId    String?
+  mulemWordId String?
+  lesson      Lesson?    @relation(fields: [lessonId], references: [id])
+  mulemWord   MulemWord? @relation(fields: [mulemWordId], references: [id])
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+>>>>>>> 05d59aa94cded19d34e4805b2c7a1da2b701d38b
 
   @@unique([userId, lessonId])
+  @@unique([userId, mulemWordId])
+}
+
+model UserMulemThemeProgress {
+  id            String     @id @default(uuid())
+  userId        String
+  themeId       String
+  isCompleted   Boolean    @default(false)
+  videoWatched  Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme         MulemTheme @relation(fields: [themeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, themeId])
 }
 
 model Exercise {
@@ -243,8 +275,8 @@ model Exercise {
   theme     String
   timeSpent Float
   accuracy  Float
-  lessonId  String?
   storyId   String?
+  lessonId  String?
   lesson    Lesson?    @relation("ExerciseLesson", fields: [lessonId], references: [id])
   story     Story?     @relation("ExerciseStory", fields: [storyId], references: [id])
   questions Question[]
@@ -293,24 +325,27 @@ model MulemTheme {
   exercises             MulemExercise[]
   patrimonialLanguage   PatrimonialLanguage @relation(fields: [patrimonialLanguageId], references: [id])
   words                 MulemWord[]
+  userMulemThemeProgress UserMulemThemeProgress[]
 
   @@unique([patrimonialLanguageId, code])
 }
 
 model MulemWord {
-  id         String     @id @default(uuid())
-  themeId    String
-  order      Int        @default(0)
-  word_fr    String
-  word_local String
-  hint       String?
-  audio_key  String?
-  audio_url  String?
-  image_key  String?
-  image_url  String?
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  theme      MulemTheme @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  id           String         @id @default(uuid())
+  themeId      String
+  order        Int            @default(0)
+  word_fr      String
+  word_local   String
+  category     String?        @default("basics")
+  hint         String?
+  audio_key    String?
+  audio_url    String?
+  image_key    String?
+  image_url    String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  theme        MulemTheme     @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  userProgress UserProgress[]
 
   @@index([themeId])
 }
