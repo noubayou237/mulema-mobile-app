@@ -350,7 +350,7 @@ const LeagueHeader = ({ league, timeLeft, onMenuPress, streak, hearts }) => {
    MAIN SCREEN
    ══════════════════════════════════════════════════════════════ */
 
-// Mock data fallback (à remplacer par l'API réelle)
+// Mock data — shown only when no error AND no real data yet (e.g. first load before API responds)
 const MOCK_RANKING = [
   { id: "1", rank: 1, name: "Fatou D.", totalXP: 1850, avatar: null, streakDays: 12, tag: null },
   { id: "2", rank: 2, name: "Amadou", totalXP: 1420, avatar: null, streakDays: 8, tag: null },
@@ -382,6 +382,7 @@ export default function CommunityScreen() {
   const {
     leaderboard: rawLeaderboard,
     leaderboardLoading,
+    leaderboardError,
     data: dashData,
     fetchLeaderboard,
     fetchDashboard,
@@ -444,31 +445,31 @@ export default function CommunityScreen() {
     fetchDashboard();
   }, []);
 
-  // Use real data when available, fall back to mock
+  const userXP = dashData?.totalPoints ?? 0;
+  const streak = dashData?.streakDays  ?? 0;
+  const hearts = dashData?.hearts      ?? 5;
+
+  // Use real data when available, fall back to mock only if there's no error
   const hasRealData = rawLeaderboard.length > 0;
-  const ranking = hasRealData
+  const showMock    = !hasRealData && !leaderboardError;
+  const ranking     = hasRealData
     ? rawLeaderboard.map(normaliseEntry)
-    : MOCK_RANKING;
+    : showMock ? MOCK_RANKING : [];
 
-  const userXP   = dashData?.totalPoints ?? 310;
-  const streak   = dashData?.streakDays  ?? 0;
-  const hearts   = dashData?.hearts      ?? 5;
-
-  // Find the current user's leaderboard entry to get real xpToNextRank
-  const myLeaderboardEntry = hasRealData
-    ? rawLeaderboard.find((e) => e.isCurrentUser)
-    : null;
-
-  const myRankInList = ranking.findIndex((r) => r.id === user?.id);
+  // Find current user's entry from the API response (backend sets isCurrentUser flag)
+  const myRawEntry   = hasRealData ? rawLeaderboard.find((e) => e.isCurrentUser) : null;
+  const myRankInList = hasRealData
+    ? rawLeaderboard.findIndex((e) => e.isCurrentUser)
+    : -1;
 
   const currentUserRank = {
-    id:           "me",
-    rank:         myRankInList >= 0 ? myRankInList + 1 : 42,
+    id:           user?.id ?? "me",
+    rank:         myRankInList >= 0 ? myRankInList + 1 : "—",
     name:         user?.name || t("community.isYou"),
-    totalXP:      userXP,
-    avatar:       user?.avatar ?? null,
-    streakDays:   streak,
-    xpToNextRank: myLeaderboardEntry?.xpToNextRank ?? 50,
+    totalXP:      myRawEntry?.totalXP ?? userXP,
+    avatar:       myRawEntry?.avatar ?? user?.avatar ?? null,
+    streakDays:   myRawEntry?.streakDays ?? streak,
+    xpToNextRank: myRawEntry?.xpToNextRank ?? 50,
     tag:          null,
   };
 
@@ -518,6 +519,19 @@ export default function CommunityScreen() {
           <FilterTabs active={filter} onChange={setFilter} />
         </View>
 
+        {/* ── Error banner (user-friendly, no dev jargon) ── */}
+        {leaderboardError && !leaderboardLoading && (
+          <View style={s.errorBanner}>
+            <Ionicons name="cloud-offline-outline" size={28} color={Colors.textTertiary} />
+            <Text style={s.errorTitle}>{t("community.rankingsUnavailable", "Classement indisponible")}</Text>
+            <Text style={s.errorSub}>{leaderboardError}</Text>
+            <TouchableOpacity onPress={onRefresh} style={s.retryBtn} activeOpacity={0.75}>
+              <Ionicons name="refresh" size={15} color={Colors.primary} />
+              <Text style={s.retryTxt}>{t("common.retry", "Réessayer")}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* ── List rang 4+ ── */}
         {leaderboardLoading && !hasRealData ? (
           <ActivityIndicator
@@ -534,6 +548,12 @@ export default function CommunityScreen() {
                 isCurrentUser={item.id === currentUserRank.id}
               />
             ))}
+            {ranking.length === 0 && !leaderboardError && !leaderboardLoading && (
+              <View style={s.emptyState}>
+                <Text style={s.emptyStateEmoji}>🏆</Text>
+                <Text style={s.emptyStateTxt}>{t("community.noPlayersYet", "Sois le premier à rejoindre le classement !")}</Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -613,6 +633,62 @@ const s = StyleSheet.create({
   rankList: {
     paddingHorizontal: Space["2xl"],
     gap: Space.sm,
+  },
+
+  /* Error banner */
+  errorBanner: {
+    marginHorizontal: Space["2xl"],
+    marginBottom: Space.lg,
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.xl,
+    padding: Space["2xl"],
+    alignItems: "center",
+    gap: Space.sm,
+    borderWidth: 1,
+    borderColor: Colors.surfaceVariant,
+  },
+  errorTitle: {
+    fontFamily: "Fredoka_600SemiBold",
+    fontSize: 16,
+    color: Colors.onSurface,
+    textAlign: "center",
+  },
+  errorSub: {
+    fontFamily: "Nunito-Regular",
+    fontSize: 13,
+    color: Colors.textTertiary,
+    textAlign: "center",
+    lineHeight: 19,
+  },
+  retryBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: Space.sm,
+    paddingHorizontal: Space.xl,
+    paddingVertical: Space.md,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.primary + "15",
+  },
+  retryTxt: {
+    fontFamily: "Fredoka_600SemiBold",
+    fontSize: 14,
+    color: Colors.primary,
+  },
+
+  /* Empty state */
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: Space["4xl"],
+    gap: Space.md,
+  },
+  emptyStateEmoji: { fontSize: 48 },
+  emptyStateTxt: {
+    fontFamily: "Nunito-Regular",
+    fontSize: 14,
+    color: Colors.textTertiary,
+    textAlign: "center",
+    paddingHorizontal: Space["2xl"],
   },
 });
 
