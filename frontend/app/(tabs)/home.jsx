@@ -69,7 +69,7 @@ const getThemeExos = (themes) => {
   if (!themes || themes.length === 0) return [];
   // Afficher les thèmes actifs (commencés)
   const activeThemes = themes.filter((t) => t.lessonsCount > 0 && t.lessonsCompleted > 0);
-  
+
   if (activeThemes.length === 0) {
     // S'il n'a rien commencé, on propose le premier thème dispo
     const first = themes[0];
@@ -100,7 +100,7 @@ const getThemeExos = (themes) => {
 
 const HomeHeader = ({ streak = 0, xp = 0, hearts = 5, nextRechargeIn = 0, onMenuPress, currentLang, onToggleLang }) => {
   const { t } = useTranslation();
-  
+
   // Format nextRechargeIn (seconds) to mm:ss
   const formatTime = (secs) => {
     if (!secs) return "";
@@ -115,7 +115,7 @@ const HomeHeader = ({ streak = 0, xp = 0, hearts = 5, nextRechargeIn = 0, onMenu
         <TouchableOpacity onPress={onMenuPress} activeOpacity={0.7} style={s.menuBtn}>
           <Ionicons name="menu" size={22} color={RED} />
         </TouchableOpacity>
-        <Image source={require("../../assets/images/logo.png")} style={{ width: 72, height: 72, marginLeft: Space.sm }} contentFit="contain" />
+        <Image source={require("../../assets/Avatar-images -profile-picker/logo.png")} style={{ width: 72, height: 72, marginLeft: Space.sm }} contentFit="contain" />
       </View>
 
       <View style={s.headerRight}>
@@ -351,7 +351,7 @@ export default function HomeScreen() {
     const init = async () => {
       if (activeLanguage) {
         const langId = getPatrimonialId(activeLanguage, languages);
-      if (langId) fetchThemes(langId);
+        if (langId) fetchThemes(langId);
         fetchDashboard();
         return;
       }
@@ -480,7 +480,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-          <ScrollView
+        <ScrollView
           contentContainerStyle={[s.scroll, { paddingTop: 140 }]}
           showsVerticalScrollIndicator={false}
         >

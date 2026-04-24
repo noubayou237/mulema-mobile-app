@@ -129,21 +129,21 @@ export const THEME_VETEMENTS_WORDS = [
  */
 export const THEME_IMAGES = {
   famille: {
-    p1: require("../../assets/images/avatar-paul.png"),
-    p2: require("../../assets/images/avatar-sophie.png"),
-    p3: require("../../assets/images/avatar-ngon.png"),
-    p4: require("../../assets/images/avatar-tjega.png"),
-    p5: require("../../assets/images/avatar-paul.png"),
-    p6: require("../../assets/images/avatar-sophie.png"),
+    p1: require("../../assets/Avatar-images -profile-picker/avatar-paul.png"),
+    p2: require("../../assets/Avatar-images -profile-picker/avatar-sophie.png"),
+    p3: require("../../assets/Avatar-images -profile-picker/avatar-ngon.png"),
+    p4: require("../../assets/Avatar-images -profile-picker/avatar-tjega.png"),
+    p5: require("../../assets/Avatar-images -profile-picker/avatar-paul.png"),
+    p6: require("../../assets/Avatar-images -profile-picker/avatar-sophie.png"),
   },
   vetements: {
-    tie: require("../../assets/Images du thème 3/DALL·E 2025-02-13 13.29.49 - A cartoon-style drawing of a long, stylish necktie with a modern design. The tie features bold diagonal stripes in vibrant colors, such as red and bla.webp"),
-    jacket: require("../../assets/Images du thème 3/DALL·E 2025-02-13 13.30.57 - A cartoon-style drawing of a stylish jacket with a modern design. The jacket has a sleek fit, elegant lapels, and bold, exaggerated lines for a fun an.webp"),
-    shoes: require("../../assets/Images du thème 3/DALL·E 2025-02-13 13.36.50 - A cartoon-style drawing of a pair of African traditional shoes with bold outlines and vibrant colors. The shoes feature intricate patterns inspired by.webp"),
-    babouches: require("../../assets/Images du thème 3/DALL·E 2025-02-13 13.48.37 - A cartoon-style drawing of a simple pair of traditional babouches. The shoes have a minimalistic design with smooth curves, warm earthy colors like be.webp"),
-    tshirt: require("../../assets/Images du thème 3/Leonardo_Phoenix_10_a_white_casual_crewneck_tshirt_with_a_cart_0.jpg"),
-    pants: require("../../assets/Images du thème 3/Leonardo_Phoenix_10_a_single_isolated_and_whimsically_stylized_0.jpg"),
-    boubou: require("../../assets/Images du thème 3/Leonardo_Phoenix_10_a_white_casual_crewneck_tshirt_with_a_cart_0.jpg"), // Fallback for boubou
+    tie: require("../../assets/Images du thème 3/tie.webp"),
+    jacket: require("../../assets/Images du thème 3/suit.webp"),
+    shoes: require("../../assets/Images du thème 3/shoes.webp"),
+    babouches: require("../../assets/Images du thème 3/ladder-shoes.webp"),
+    tshirt: require("../../assets/Images du thème 3/t-shirt.jpg"),
+    pants: require("../../assets/Images du thème 3/trouser.jpg"),
+    boubou: require("../../assets/Images du thème 3/t-shirt.jpg"), // Fallback for boubou
   }
 };
 

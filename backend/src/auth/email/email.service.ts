@@ -48,7 +48,7 @@ export class EmailService {
 
     try {
       const info = await this.transporter.sendMail({
-        from: process.env.SMTP_FROM || 'Mulema App <lavsfabrice16@gmail.com>',
+        from: process.env.SMTP_FROM,
         to: email,
         subject: subject,
         text: text,

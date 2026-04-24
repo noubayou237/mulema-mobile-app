@@ -23,6 +23,7 @@ export class AuthController {
     private emailService: EmailService,
   ) {}
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('register')
   async register(@Body() body: RegisterDto) {
     this.logger.log(`Register request for email: ${body.email}`);

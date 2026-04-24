@@ -32,7 +32,9 @@
     "prawns": "Crevettes",
     "verify": "Vérifier",
     "tip": "Astuce",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "progress": "Progression",
+    "comingSoon": "Bientôt disponible"
   },
   "nav": {
     "lessons": "Leçons",
@@ -120,7 +122,10 @@
     "deleteAccountDesc": "Cette action est irréversible. Toutes vos données seront effacées.",
     "typeDeleteToConfirm": "Tapez DELETE pour confirmer :",
     "emailChangeHint": "Contactez le support pour modifier votre adresse email.",
-    "passwordChangeHint": "Utilisez 'Mot de passe oublié' sur l'écran de connexion pour réinitialiser votre mot de passe."
+    "passwordChangeHint": "Utilisez 'Mot de passe oublié' sur l'écran de connexion pour réinitialiser votre mot de passe.",
+    "notificationsComingSoon": "Les notifications push seront disponibles dans une prochaine mise à jour.",
+    "contactSupport": "Contactez-nous à support@mulema.app",
+    "termsUrlNotSet": "URL des conditions d'utilisation non configurée."
   },
   "home": {
     "title": "Accueil",
@@ -269,13 +274,16 @@
   "errors": {
     "networkError": "Erreur réseau. Veuillez vérifier votre connexion.",
     "serverError": "Erreur serveur. Veuillez réessayer plus tard.",
-    "invalidCredentials": "Email ou mot de passe invalide.",
+    "invalidCredentials": "L'e-mail ou le mot de passe est incorrect. Vérifie et réessaie.",
     "emailAlreadyExists": "L'email existe déjà.",
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
     "requiredField": "Ce champ est obligatoire.",
     "invalidEmail": "Veuillez entrer une adresse email valide.",
     "uploadFailed": "Échec du téléchargement. Veuillez réessayer.",
     "somethingWentWrong": "Une erreur s'est produite. Veuillez réessayer.",
+    "invalidPassword": "Le mot de passe est incorrect. Réessaie.",
+    "accountNotFound": "Aucun compte trouvé avec cet email.",
+    "passwordTooShort": "Ton mot de passe est trop court. Il doit faire au moins 6 caractères.",
     "codeRequired": "Code requis",
     "enterCode": "Veuillez entrer votre code de vérification.",
     "audioError": "Erreur audio",

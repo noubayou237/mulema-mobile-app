@@ -27,7 +27,7 @@ import { Ionicons } from "@expo/vector-icons";
 // import { useUser } from "../../src/context/UserContext";
 import { useAuthStore } from "../../src/stores/useAuthStore";
 import { useTranslation } from "react-i18next";
-import { getErrorMessage } from "../../src/utils/errorUtils";
+import { getFriendlyErrorMessage } from "../../src/utils/errorUtils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../../src/services/api";
 
@@ -59,11 +59,11 @@ const SignInScreen = () => {
   const [loading, setLoading] = useState(false);
 
   // ── Animations ──
-  const logoAnim   = useRef(new Animated.Value(0)).current;
-  const titleAnim  = useRef(new Animated.Value(0)).current;
-  const formAnim   = useRef(new Animated.Value(0)).current;
+  const logoAnim = useRef(new Animated.Value(0)).current;
+  const titleAnim = useRef(new Animated.Value(0)).current;
+  const formAnim = useRef(new Animated.Value(0)).current;
   const footerAnim = useRef(new Animated.Value(0)).current;
-  const logoScale  = useRef(new Animated.Value(0.6)).current;
+  const logoScale = useRef(new Animated.Value(0.6)).current;
 
   useEffect(() => {
     Animated.stagger(140, [
@@ -87,7 +87,7 @@ const SignInScreen = () => {
     try {
       await login(email, password);
     } catch (err) {
-      Alert.alert(t("common.error"), getErrorMessage(err));
+      Alert.alert(t("common.error"), getFriendlyErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -131,7 +131,7 @@ const SignInScreen = () => {
           <Animated.View style={[s.logoWrap, { opacity: logoAnim, transform: [{ scale: logoScale }] }]}>
             <View style={s.logoCircle}>
               <Image
-                source={require("../../assets/images/logo.png")}
+                source={require("../../assets/Avatar-images -profile-picker/logo.png")}
                 style={s.logoImg}
                 contentFit="contain"
               />

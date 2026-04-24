@@ -22,6 +22,8 @@ import { useDashboardStore } from "../../../../../src/stores/useDashboardStore";
 import { useLanguageStore } from "../../../../../src/stores/useLanguageStore";
 import { pauseBackgroundMusic, resumeBackgroundMusic } from "../../../../../src/hooks/useBackgroundMusic";
 import { setAudioMode, playAudioUrl } from "../../../../../src/utils/audioUtils";
+import Logger from "../../../../../src/utils/logger";
+import MatchScreen from "../../../../components/ui/MatchScreen";
 
 const { width: SW } = Dimensions.get("window");
 const CARD_W = (SW - 40 - 12) / 2;
@@ -75,7 +77,7 @@ const playWordAudio = async (audioUrl) => {
   try {
     await playAudioUrl(audioUrl);
   } catch (e) {
-    console.warn("Audio play error", e);
+    Logger.warn("Audio play error", e);
   }
 };
 
@@ -326,7 +328,7 @@ const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
               style={[iq.card, cardBorder(opt)]}
             >
               <View style={iq.imgWrap}>
-                {opt.imageUrl ? (
+                {opt.imageUrl && typeof opt.imageUrl === 'string' && opt.imageUrl.trim() !== "" ? (
                   <Image source={IMAGES_MAP[opt.imageUrl] ? IMAGES_MAP[opt.imageUrl] : { uri: opt.imageUrl }} style={iq.img} contentFit="cover" />
                 ) : (
                   <View style={[iq.img, iq.imgPlaceholder]}>
@@ -468,7 +470,7 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
               activeOpacity={0.8}
               style={cardStyle(opt)}
             >
-              {opt.imageUrl ? (
+              {opt.imageUrl && typeof opt.imageUrl === 'string' && opt.imageUrl.trim() !== "" ? (
                 <Image source={IMAGES_MAP[opt.imageUrl] ? IMAGES_MAP[opt.imageUrl] : { uri: opt.imageUrl }} style={qx.optImg} contentFit="cover" />
               ) : (
                 <View style={qx.optImgPlaceholder}>
@@ -523,132 +525,8 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
   );
 };
 
-/* ════════════════════════════════════════════════════════════════
-   TYPE 3 — PAIRES
-   Feedback haptic immédiat à chaque paire (style Duolingo)
-   ════════════════════════════════════════════════════════════════ */
-const MatchScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
-  const { t } = useTranslation();
-  const [leftSel, setLeftSel] = useState(null);
-  const [matched, setMatched] = useState({});
-  const [wrongFlash, setWrong] = useState(null);
-  const [done, setDone] = useState(false);
+/* TYPE 3 — PAIRES → Redesigned component in app/components/ui/MatchScreen.jsx */
 
-  const isRightMatched = (w) => Object.values(matched).includes(w.id);
-
-  const pickLeft = (w) => {
-    if (matched[w.id] || done) return;
-    setLeftSel((l) => (l === w.id ? null : w.id));
-  };
-
-  const pickRight = (w) => {
-    if (!leftSel || done || isRightMatched(w)) return;
-
-    if (leftSel === w.id) {
-      const next = { ...matched, [leftSel]: w.id };
-      setMatched(next);
-      setLeftSel(null);
-      onCorrect();
-      triggerFeedback(true);
-      if (Object.keys(next).length === q.pairs.length) setDone(true);
-    } else {
-      setWrong({ l: leftSel, r: w.id });
-      onWrong();
-      triggerFeedback(false);
-      setTimeout(() => { setWrong(null); setLeftSel(null); }, 700);
-    }
-  };
-
-  const lStyle = (w) => {
-    if (matched[w.id]) return [mx.cell, mx.cellMatchedL];
-    if (leftSel === w.id) return [mx.cell, mx.cellSel];
-    if (wrongFlash?.l === w.id) return [mx.cell, mx.cellErr];
-    return mx.cell;
-  };
-  const rStyle = (w) => {
-    if (isRightMatched(w)) return [mx.cell, mx.cellMatchedR];
-    if (wrongFlash?.r === w.id) return [mx.cell, mx.cellErr];
-    return mx.cell;
-  };
-
-  return (
-    <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={mx.scroll} showsVerticalScrollIndicator={false}>
-        <Text style={mx.title}>{t("exercises.matchingPairs")}</Text>
-        <Text style={mx.sub}>{t("exercises.matchFrToLang", { lang: langName })}</Text>
-
-        <View style={mx.columns}>
-          {/* Gauche — FR */}
-          <View style={mx.col}>
-            {q.pairs.map((w) => (
-              <TouchableOpacity
-                key={w.id}
-                onPress={() => pickLeft(w)}
-                activeOpacity={matched[w.id] ? 1 : 0.8}
-                style={lStyle(w)}
-              >
-                <Text style={[
-                  mx.cellTxt,
-                  leftSel === w.id && { color: C.primary, fontWeight: "800" },
-                  !!matched[w.id] && { color: C.correct },
-                ]}>
-                  {w.title}
-                </Text>
-                {!!matched[w.id] && (
-                  <Ionicons name="checkmark-circle" size={18} color={C.correct} />
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Droite — Duala */}
-          <View style={mx.col}>
-            {q.right.map((w) => {
-              const isMatchedR = isRightMatched(w);
-              return (
-                <TouchableOpacity
-                  key={w.id}
-                  onPress={() => pickRight(w)}
-                  activeOpacity={isMatchedR ? 1 : 0.8}
-                  style={rStyle(w)}
-                >
-                  <View style={{ flex: 1 }}>
-                    <Text style={[mx.cellTxt, mx.cellTxtR, isMatchedR && { color: "#FFF" }]}>
-                      {w.subtitle}
-                    </Text>
-                    <Text style={[mx.cellLang, isMatchedR && { color: "rgba(255,255,255,0.7)" }]}>
-                      {langName.toUpperCase()}
-                    </Text>
-                  </View>
-                  {!isMatchedR && w.audioUrl && (
-                    <AudioBtn url={w.audioUrl} size={15} color={C.primary} style={{ marginLeft: 4 }} />
-                  )}
-                  {isMatchedR && (
-                    <Ionicons name="star" size={16} color="#FFF" />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
-
-        <View style={{ height: 120 }} />
-      </ScrollView>
-
-      <View style={footer.wrap}>
-        <TouchableOpacity
-          onPress={done ? onNext : undefined}
-          style={[footer.verifyBtn, !done && { opacity: 0.35 }]}
-          disabled={!done}
-          activeOpacity={0.85}
-        >
-          <Text style={footer.verifyTxt}>{t("common.continue")}</Text>
-          <Ionicons name="arrow-forward" size={20} color="#FFF" />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-};
 
 /* ════════════════════════════════════════════════════════════════
    TYPE 4 — ÉCRITURE
@@ -989,6 +867,7 @@ export default function ExerciseSession() {
             onCorrect={handleCorrect}
             onWrong={() => handleWrong(null)}
             onNext={advance}
+            playAudio={playWordAudio}
           />
         )}
         {curQ.type === "write" && (
@@ -1200,31 +1079,7 @@ const qx = StyleSheet.create({
   badge: { position: "absolute", top: 8, right: 8 },
 });
 
-/* Paires */
-const mx = StyleSheet.create({
-  scroll: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 140 },
-  title: { fontSize: 26, fontWeight: "800", color: C.text, marginBottom: 6 },
-  sub: { fontSize: 14, color: C.textSub, marginBottom: 24, lineHeight: 21 },
-  columns: { flexDirection: "row", gap: 12 },
-  col: { flex: 1, gap: 10 },
-  cell: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    backgroundColor: C.card,
-    borderRadius: 18, padding: 14, minHeight: 60,
-    borderWidth: 2.5, borderColor: C.border,
-    ...SHADOW,
-  },
-  cellSel: { borderColor: C.primary, backgroundColor: C.primaryLight },
-  cellErr: { borderColor: "#FF6B6B", backgroundColor: "#FFF0F0" },
-  cellMatchedL: { borderColor: C.correct, backgroundColor: C.correctLight },
-  cellMatchedR: { borderColor: C.correct, backgroundColor: C.correct },
-  cellTxt: { fontSize: 13, fontWeight: "700", color: C.text, flex: 1 },
-  cellTxtR: { color: C.primary },
-  cellLang: {
-    fontSize: 9, fontWeight: "700",
-    color: C.textFaint, letterSpacing: 0.5, marginTop: 2,
-  },
-});
+/* Paires → styles moved to app/components/ui/MatchScreen.jsx */
 
 /* Écriture */
 const wx = StyleSheet.create({

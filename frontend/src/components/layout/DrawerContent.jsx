@@ -46,7 +46,7 @@ export const DrawerContent = ({ user, dashboard, onClose, onNav, onLogout }) => 
       {/* Profil */}
       <View style={dr.profileRow}>
         <View style={dr.avatarRing}>
-          {user?.avatar ? (
+          {user?.avatar && typeof user.avatar === 'string' && user.avatar.trim() !== "" ? (
             <Image source={{ uri: user.avatar }} style={dr.avatar} contentFit="cover" />
           ) : (
             <View style={[dr.avatar, { backgroundColor: RED_L, alignItems: "center", justifyContent: "center" }]}>

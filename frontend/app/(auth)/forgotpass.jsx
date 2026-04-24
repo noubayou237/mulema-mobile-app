@@ -28,7 +28,7 @@ import api from "../../src/services/api";
 
 // ── Design system ──
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
-import { getErrorMessage } from "../../src/utils/errorUtils";
+import { getFriendlyErrorMessage } from "../../src/utils/errorUtils";
 import {
   MInput,
   MButton,
@@ -129,11 +129,11 @@ const ForgotPasswordScreen = () => {
   const [sent, setSent] = useState(false);
 
   // ── Animations ──
-  const heroAnim   = useRef(new Animated.Value(0)).current;
-  const titleAnim  = useRef(new Animated.Value(0)).current;
-  const formAnim   = useRef(new Animated.Value(0)).current;
+  const heroAnim = useRef(new Animated.Value(0)).current;
+  const titleAnim = useRef(new Animated.Value(0)).current;
+  const formAnim = useRef(new Animated.Value(0)).current;
   const footerAnim = useRef(new Animated.Value(0)).current;
-  const heroScale  = useRef(new Animated.Value(0.8)).current;
+  const heroScale = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
     Animated.stagger(130, [
@@ -159,7 +159,7 @@ const ForgotPasswordScreen = () => {
       await api.post("/auth/request-password-reset", { email: email.trim() });
       setSent(true);
     } catch (err) {
-      Alert.alert("Erreur", getErrorMessage(err));
+      Alert.alert("Erreur", getFriendlyErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -206,7 +206,7 @@ const ForgotPasswordScreen = () => {
           <Animated.View style={[s.heroWrap, { opacity: heroAnim, transform: [{ scale: heroScale }] }]}>
             <View style={s.heroCard}>
               <Image
-                source={require("../../assets/images/logo.png")}
+                source={require("../../assets/Avatar-images -profile-picker/logo.png")}
                 style={s.heroImg}
                 contentFit="contain"
               />

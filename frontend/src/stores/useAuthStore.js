@@ -144,6 +144,21 @@ export const useAuthStore = create((set, get) => ({
     return user;
   },
 
+  fetchProfile: async () => {
+    try {
+      const { data } = await api.get("/user/profile");
+      const current = get().user || {};
+      const updatedUser = { ...current, ...data };
+      set({ user: updatedUser });
+      // We don't necessarily need await here, but it's fine.
+      cacheUser(updatedUser);
+      return updatedUser;
+    } catch (err) {
+      Logger.warn("[AuthStore] fetchProfile failed:", err?.message);
+      return null;
+    }
+  },
+
   updateUser: (updates) => {
     const current = get().user;
     if (!current) return;

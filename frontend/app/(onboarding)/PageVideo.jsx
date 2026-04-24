@@ -6,13 +6,14 @@
  * ║  All business logic preserved (lang resolve, persist, nav).   ║
  * ╚══════════════════════════════════════════════════════════════╝
  *
- *  NOTE: Place a fallback image at assets/images/video_placeholder.jpg
+ *  NOTE: Place a fallback image at assets/Avatar-images -profile-picker/video_placeholder.jpg
  *  (a photo of an African market scene, sunset, or cultural scene).
  *  If missing, a dark gradient is shown until the video loads.
  */
 
 import React, { useRef, useState, useEffect } from "react";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
+import Logger from "../../src/utils/logger";
 import {
   View,
   Text,
@@ -133,6 +134,7 @@ export default function PageVideo() {
           .toLowerCase()
           .normalize("NFD")
           .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]/g, "")
           .trim();
 
         if (mounted) {
@@ -140,7 +142,7 @@ export default function PageVideo() {
           setResolving(false);
         }
       } catch (err) {
-        console.error("❌ PageVideo resolution error:", err);
+        Logger.error("PageVideo resolution error:", err);
         router.replace("/ChoiceLanguage");
       }
     })();
@@ -151,26 +153,26 @@ export default function PageVideo() {
   const videoUri = VIDEO_BY_LANG[langResolved] ?? VIDEO_BY_LANG.default;
 
   // ── Persist & navigate — ORIGINAL LOGIC ──
-// ✅ NOUVEAU — utilise le store pour que le root layout détecte la langue
-const persistAndGoHome = async () => {
-  const { languages, setActiveLanguage, setHasSeenIntro } = useLanguageStore.getState();
-  
-  // 1. S'assurer que la langue est bien active dans le store
-  const lang = languages.find(
-    (l) => l.code === langResolved || l.name.toLowerCase() === langResolved
-  );
-  if (lang) {
-    await setActiveLanguage(lang);
-  } else {
-    await AsyncStorage.setItem(HAS_SELECTED_LANGUAGE, langResolved);
-  }
-  
-  // 2. Marquer l'intro comme vue (déclenche la redirection dans RootLayout)
-  await setHasSeenIntro(true);
-  
-  // 3. Navigation explicite au cas où
-  router.replace("/(tabs)/home");
-};
+  // ✅ NOUVEAU — utilise le store pour que le root layout détecte la langue
+  const persistAndGoHome = async () => {
+    const { languages, setActiveLanguage, setHasSeenIntro } = useLanguageStore.getState();
+
+    // 1. S'assurer que la langue est bien active dans le store
+    const lang = languages.find(
+      (l) => l.code === langResolved || l.name.toLowerCase() === langResolved
+    );
+    if (lang) {
+      await setActiveLanguage(lang);
+    } else {
+      await AsyncStorage.setItem(HAS_SELECTED_LANGUAGE, langResolved);
+    }
+
+    // 2. Marquer l'intro comme vue (déclenche la redirection dans RootLayout)
+    await setHasSeenIntro(true);
+
+    // 3. Navigation explicite au cas où
+    router.replace("/(tabs)/home");
+  };
 
   // ── Play handler ──
   const handlePlay = async () => {
@@ -182,7 +184,7 @@ const persistAndGoHome = async () => {
         await videoRef.current?.replayAsync?.();
         setIsPlaying(true);
       }
-    } catch {}
+    } catch { }
   };
 
   // ── Get description — ORIGINAL LOGIC ──
@@ -214,7 +216,7 @@ const persistAndGoHome = async () => {
   // Otherwise the gradient acts as the fallback.
   let placeholderImage = null;
   try {
-    placeholderImage = require("../../assets/images/video_placeholder.jpg");
+    placeholderImage = require("../../assets/Avatar-images -profile-picker/video_placeholder.jpg");
   } catch {
     placeholderImage = null;
   }

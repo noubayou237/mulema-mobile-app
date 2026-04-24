@@ -29,6 +29,7 @@ import { useDashboardStore } from "../../../../../src/stores/useDashboardStore";
 import { useLanguageStore } from "../../../../../src/stores/useLanguageStore";
 import { pauseBackgroundMusic, resumeBackgroundMusic } from "../../../../../src/hooks/useBackgroundMusic";
 import { playAudioUrl } from "../../../../../src/utils/audioUtils";
+import Logger from "../../../../../src/utils/logger";
 
 const playAudio = async (url) => {
   if (!url) {
@@ -38,7 +39,7 @@ const playAudio = async (url) => {
   try {
     await playAudioUrl(url);
   } catch (e) {
-    console.warn("Audio play error", e);
+    Logger.warn("Audio play error", e);
   }
 };
 

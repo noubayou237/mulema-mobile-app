@@ -76,9 +76,11 @@ export const useDashboardStore = create((set) => ({
         error: null
       }));
     } catch (error) {
-      const msg = getFriendlyErrorMessage(error);
-      set({ error: msg });
-      Logger.error("[DashboardStore] deductHeart error:", msg);
+      // Revert optimistic update gracefully without displaying developer logs
+      set((state) => ({
+        data: { ...(state.data || {}), hearts: (state.data?.hearts || 0) + 1 },
+        error: "Impossible de synchroniser tes cœurs. Vérifie ta connexion."
+      }));
     }
   },
 

@@ -16,6 +16,7 @@ import Card from "../components/ui/Card";
 import api from "../../src/services/api";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
 import { useTranslation } from "react-i18next";
+import Logger from "../../src/utils/logger";
 
 export default function ChoiceLanguage() {
   const router = useRouter();
@@ -76,7 +77,7 @@ export default function ChoiceLanguage() {
           patrimonialLanguageId: language.id,
         });
       } catch (apiError) {
-        console.warn("[ChoiceLanguage] Language might already exist:", apiError.message);
+        Logger.warn("[ChoiceLanguage] Language might already exist:", apiError.message);
       }
 
       // Mettre à jour le store (synchronise AsyncStorage + state)
@@ -84,7 +85,7 @@ export default function ChoiceLanguage() {
 
       router.replace(`/(onboarding)/PageVideo?lang=${encodeURIComponent(language.code)}`);
     } catch (e) {
-      console.error("Error saving language:", e);
+      Logger.error("Error saving language:", e);
       Alert.alert(t("common.error"), t("errors.languageNotSelected"));
     } finally {
       setLoading(false);

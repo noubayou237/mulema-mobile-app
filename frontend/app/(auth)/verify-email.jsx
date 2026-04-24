@@ -29,7 +29,7 @@ import * as Clipboard from "expo-clipboard";
 
 // ── Design system ──
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
-import { getErrorMessage } from "../../src/utils/errorUtils";
+import { getFriendlyErrorMessage } from "../../src/utils/errorUtils";
 import { useAuthStore } from "../../src/stores/useAuthStore";
 import api from "../../src/services/api";
 import { MButton } from "../../src/components/ui/MComponents";
@@ -189,7 +189,7 @@ const VerifyEmail = () => {
         await autoLogin(response.data);
       }
     } catch (err) {
-      Alert.alert(t("common.error"), getErrorMessage(err));
+      Alert.alert(t("common.error"), getFriendlyErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -204,7 +204,7 @@ const VerifyEmail = () => {
       Alert.alert(t("common.success"), `${t("auth.codeSentTo")} ${email}`);
       startCountdown();
     } catch (err) {
-      Alert.alert(t("common.error"), getErrorMessage(err));
+      Alert.alert(t("common.error"), getFriendlyErrorMessage(err));
     } finally {
       setResendLoading(false);
     }
@@ -323,16 +323,16 @@ const VerifyEmail = () => {
           {/* ── Resend section ── */}
           <Animated.View style={[{ alignItems: "center", marginBottom: Space["3xl"] }, animStyle(footerAnim, 10)]}>
             <Text style={[Typo.bodyMd, { color: Colors.textSecondary, marginBottom: Space.sm }]}>
-              {"Vous n'avez pas reçu de code ?"}
+              {t("auth.dontHaveCode")}
             </Text>
             {resendCooldown > 0 ? (
               <Text style={[Typo.bodyMd, { color: Colors.textTertiary }]}>
-                Renvoyer dans {resendCooldown}s
+                {t("auth.resendOtpIn", { count: resendCooldown })}
               </Text>
             ) : (
               <TouchableOpacity onPress={handleResend} disabled={resendLoading} activeOpacity={0.7}>
                 <Text style={[Typo.titleSm, { color: Colors.primary }]}>
-                  {resendLoading ? "Envoi en cours..." : "Renvoyer le code"}
+                  {resendLoading ? t("common.loading") : t("auth.resendOtp")}
                 </Text>
               </TouchableOpacity>
             )}

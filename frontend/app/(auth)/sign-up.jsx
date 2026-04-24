@@ -25,10 +25,8 @@ import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../../src/services/api";
+import { getFriendlyErrorMessage } from "../../src/utils/errorUtils";
 import { useTranslation } from "react-i18next";
-import { getErrorMessage } from "../../src/utils/errorUtils";
-
-// ── Design system ──
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 import {
   MInput,
@@ -142,11 +140,11 @@ const SignUpScreen = () => {
   const onChange = (key) => (val) => setForm((prev) => ({ ...prev, [key]: val }));
 
   // ── Animations ──
-  const logoAnim   = useRef(new Animated.Value(0)).current;
-  const titleAnim  = useRef(new Animated.Value(0)).current;
-  const formAnim   = useRef(new Animated.Value(0)).current;
+  const logoAnim = useRef(new Animated.Value(0)).current;
+  const titleAnim = useRef(new Animated.Value(0)).current;
+  const formAnim = useRef(new Animated.Value(0)).current;
   const footerAnim = useRef(new Animated.Value(0)).current;
-  const logoScale  = useRef(new Animated.Value(0.6)).current;
+  const logoScale = useRef(new Animated.Value(0.6)).current;
 
   useEffect(() => {
     Animated.stagger(130, [
@@ -191,7 +189,7 @@ const SignUpScreen = () => {
         params: { email: form.email, flow: "verify" },
       });
     } catch (err) {
-      const message = getErrorMessage(err, t("signUp.error.creationFailed"));
+      const message = getFriendlyErrorMessage(err);
       Alert.alert(t("signUp.error.title"), message);
     } finally {
       setLoading(false);
@@ -234,7 +232,7 @@ const SignUpScreen = () => {
           <Animated.View style={[s.logoWrap, { opacity: logoAnim, transform: [{ scale: logoScale }] }]}>
             <View style={s.logoCircle}>
               <Image
-                source={require("../../assets/images/logo.png")}
+                source={require("../../assets/Avatar-images -profile-picker/logo.png")}
                 style={s.logoImg}
                 contentFit="contain"
               />
@@ -452,7 +450,7 @@ const styles = StyleSheet.create({
     marginTop: -Space.sm,
     marginBottom: Space.md,
   },
-  
+
   // Official Language toggle
   langToggle: {
     flex: 1,

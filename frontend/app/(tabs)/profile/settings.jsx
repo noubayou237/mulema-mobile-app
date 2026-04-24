@@ -10,11 +10,10 @@ import React, { useState } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, Switch, Alert,
   StyleSheet, Platform, StatusBar, Modal, TextInput, ActivityIndicator,
+  Linking,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
-// LinearGradient removed — premium banner removed per directive
 import * as WebBrowser from "expo-web-browser";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../../src/theme/tokens";
@@ -23,6 +22,8 @@ import api from "../../../src/services/api";
 
 import { useTranslation } from "react-i18next";
 import { changeLanguage } from "../../../src/i18n";
+import Logger from "../../../src/utils/logger";
+import { getFriendlyErrorMessage } from "../../../src/utils/errorUtils";
 
 /* ── Reusable Setting Row ── */
 const SettingRow = ({ icon, iconColor, label, subtitle, right, onPress }) => (
@@ -56,7 +57,6 @@ export default function SettingsScreen() {
   const { user, logout } = useAuthStore();
 
   const [notificationsOn, setNotificationsOn] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
 
   const handleNotificationsToggle = (value) => {
     if (value) {
@@ -67,17 +67,6 @@ export default function SettingsScreen() {
       return;
     }
     setNotificationsOn(false);
-  };
-
-  const handleDarkModeToggle = (value) => {
-    if (value) {
-      Alert.alert(
-        t("common.comingSoon", "Bientôt disponible"),
-        t("settings.darkModeComingSoon", "Le mode sombre sera disponible dans une prochaine mise à jour.")
-      );
-      return;
-    }
-    setDarkMode(false);
   };
 
   const { t, i18n } = useTranslation();
@@ -105,6 +94,28 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleOpenTerms = async () => {
+    const url = process.env.EXPO_PUBLIC_TERMS_URL;
+    if (url) {
+      await WebBrowser.openBrowserAsync(url);
+    } else {
+      Alert.alert(t("common.error"), t("errors.termsUrlNotSet", "Terms URL not configured."));
+    }
+  };
+
+  const handleOpenSupport = async () => {
+    const mailto = "mailto:support@mulema.app?subject=Mulema%20Support";
+    const canOpen = await Linking.canOpenURL(mailto);
+    if (canOpen) {
+      await Linking.openURL(mailto);
+    } else {
+      Alert.alert(
+        t("settings.helpSupport", "Aide & Support"),
+        t("settings.contactSupport", "Contactez-nous à support@mulema.app")
+      );
+    }
+  };
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -123,8 +134,8 @@ export default function SettingsScreen() {
         { text: t("common.ok"), onPress: () => logout() }
       ]);
     } catch (error) {
-      console.error("Delete account error:", error);
-      Alert.alert(t("common.error"), t("errors.deleteFailed"));
+      Logger.error("Delete account error:", error);
+      Alert.alert(t("common.error"), getFriendlyErrorMessage(error));
     } finally {
       setIsDeleting(false);
     }
@@ -189,39 +200,11 @@ export default function SettingsScreen() {
               />
             }
           />
-          <View style={s.divider} />
-          <SettingRow
-            icon="alarm"
-            label={t("settings.dailyReminders")}
-            right={
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text style={[Typo.bodyMd, { color: Colors.textSecondary }]}>20:00</Text>
-                <Ionicons name="pencil" size={14} color={Colors.textTertiary} style={{ marginLeft: Space.sm }} />
-              </View>
-            }
-            onPress={() => Alert.alert(
-              t("common.comingSoon", "Bientôt disponible"),
-              t("settings.dailyRemindersComingSoon", "Les rappels quotidiens seront disponibles dans une prochaine mise à jour.")
-            )}
-          />
         </View>
 
         {/* ── PRÉFÉRENCES ── */}
         <SectionHeader title={t("settings.preferences")} />
         <View style={[s.sectionCard, Shadow.sm]}>
-          <SettingRow
-            icon="moon"
-            label={t("settings.darkMode", "Mode sombre")}
-            right={
-              <Switch
-                value={darkMode}
-                onValueChange={handleDarkModeToggle}
-                trackColor={{ false: Colors.surfaceVariant, true: Colors.primary + "60" }}
-                thumbColor={darkMode ? Colors.primary : Colors.surfaceContainerHigh}
-              />
-            }
-          />
-          <View style={s.divider} />
           <SettingRow
             icon="globe"
             label={t("settings.interfaceLanguage")}
@@ -243,21 +226,16 @@ export default function SettingsScreen() {
           <SettingRow
             icon="help-circle"
             iconColor={Colors.primary}
-            label={t("settings.helpSupport", "Aide")}
+            label={t("settings.helpSupport", "Aide & Support")}
             right={<Ionicons name="open-outline" size={16} color={Colors.textTertiary} />}
-            onPress={() => Alert.alert(
-              t("common.comingSoon", "Bientôt disponible"),
-              t("settings.helpComingSoon", "Le centre d'aide sera disponible dans une prochaine mise à jour.")
-            )}
+            onPress={handleOpenSupport}
           />
           <View style={s.divider} />
           <SettingRow
             icon="document-text"
             label={t("settings.terms", "Conditions d'utilisation")}
-            onPress={() => Alert.alert(
-              t("common.comingSoon", "Bientôt disponible"),
-              t("settings.termsComingSoon", "Les conditions d'utilisation seront disponibles dans une prochaine mise à jour.")
-            )}
+            right={<Ionicons name="open-outline" size={16} color={Colors.textTertiary} />}
+            onPress={handleOpenTerms}
           />
           <View style={s.divider} />
           <SettingRow

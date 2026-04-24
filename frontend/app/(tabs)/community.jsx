@@ -75,7 +75,7 @@ const Avatar = ({ uri, size = 48, rank, borderColor = Colors.primary }) => (
         backgroundColor: Colors.surfaceVariant,
       }}
     >
-      {uri ? (
+      {uri && typeof uri === 'string' && uri.trim() !== "" ? (
         <Image source={{ uri }} style={{ width: size, height: size }} contentFit="cover" />
       ) : (
         <View

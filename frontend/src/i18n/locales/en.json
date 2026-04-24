@@ -32,7 +32,9 @@
     "prawns": "XP",
     "verify": "Check",
     "tip": "Tip",
-    "retry": "Try Again"
+    "retry": "Try Again",
+    "progress": "Progress",
+    "comingSoon": "Coming soon"
   },
   "nav": {
     "lessons": "Lessons",
@@ -120,7 +122,10 @@
     "deleteAccountDesc": "This action is irreversible. All your data will be erased.",
     "typeDeleteToConfirm": "Type DELETE to confirm:",
     "emailChangeHint": "Contact support to change your email address.",
-    "passwordChangeHint": "Use 'Forgot Password' on the login screen to reset your password."
+    "passwordChangeHint": "Use 'Forgot Password' on the login screen to reset your password.",
+    "notificationsComingSoon": "Push notifications will be available in a future update.",
+    "contactSupport": "Contact us at support@mulema.app",
+    "termsUrlNotSet": "Terms of Service URL not configured."
   },
   "home": {
     "title": "Home",
@@ -269,13 +274,16 @@
   "errors": {
     "networkError": "Network error. Please check your connection.",
     "serverError": "Server error. Please try again later.",
-    "invalidCredentials": "Invalid email or password.",
+    "invalidCredentials": "The email or password you entered is incorrect. Please check and try again.",
     "emailAlreadyExists": "Email already exists.",
     "passwordMismatch": "Passwords do not match.",
     "requiredField": "This field is required.",
     "invalidEmail": "Please enter a valid email address.",
     "uploadFailed": "Failed to upload. Please try again.",
     "somethingWentWrong": "Something went wrong. Please try again.",
+    "invalidPassword": "Incorrect password. Please try again.",
+    "accountNotFound": "No account found with this email.",
+    "passwordTooShort": "Your password is too short. It must have at least 6 characters.",
     "codeRequired": "Code required",
     "enterCode": "Please enter your verification code.",
     "audioError": "Audio Error",

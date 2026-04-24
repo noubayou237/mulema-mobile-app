@@ -18,6 +18,8 @@ import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { IMAGES_MAP } from "../../../src/utils/AssetsMap";
+import Logger from "../../../src/utils/logger";
+import { getFriendlyErrorMessage } from "../../../src/utils/errorUtils";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../../src/theme/tokens";
 import { useAuthStore } from "../../../src/stores/useAuthStore";
@@ -52,8 +54,8 @@ export default function EditProfileScreen() {
       setAvatarUri(key);
       Alert.alert(t("common.success"), t("profile.avatarUpdated", "Avatar was updated successfully."));
     } catch (err) {
-      console.warn("Avatar select error", err);
-      Alert.alert(t("common.error"), t("errors.uploadFailed", "Failed to upload avatar."));
+      Logger.warn("Avatar select error", err);
+      Alert.alert(t("common.error"), getFriendlyErrorMessage(err));
     } finally {
       setIsUploading(false);
     }
@@ -73,8 +75,8 @@ export default function EditProfileScreen() {
       
       router.replace("/(tabs)/profile");
     } catch (err) {
-      console.warn("Profile update error", err);
-      Alert.alert(t("common.error"), t("errors.updateFailed", "Failed to update profile."));
+      Logger.warn("Profile update error", err);
+      Alert.alert(t("common.error"), getFriendlyErrorMessage(err));
     } finally {
       setIsSaving(false);
     }
@@ -103,8 +105,8 @@ export default function EditProfileScreen() {
       setNewPassword("");
       setConfirmPassword("");
     } catch (err) {
-      console.warn("Change password error", err);
-      Alert.alert(t("common.error"), err.response?.data?.message || t("errors.updateFailed"));
+      Logger.warn("Change password error", err);
+      Alert.alert(t("common.error"), getFriendlyErrorMessage(err));
     } finally {
       setIsChangingPass(false);
     }
@@ -131,7 +133,7 @@ export default function EditProfileScreen() {
             <View style={s.avatarContainer}>
               <TouchableOpacity onPress={handlePickImage} activeOpacity={0.8}>
                 <View style={[s.avatarRing, Shadow.sm]}>
-                  {avatarUri ? (
+                  {avatarUri && typeof avatarUri === 'string' && avatarUri.trim() !== "" ? (
                      IMAGES_MAP[avatarUri] ? (
                        <Image source={IMAGES_MAP[avatarUri]} style={s.avatar} contentFit="cover" />
                      ) : (

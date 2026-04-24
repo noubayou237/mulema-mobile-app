@@ -32,10 +32,13 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const DAYS = t("common.daysShort", { defaultValue: "LUN,MAR,MER,JEU,VEN,SAM,DIM" }).split(",");
-  const { user } = useAuthStore();
+  const { user, fetchProfile } = useAuthStore();
   const { data: dash, fetchDashboard } = useDashboardStore();
 
-  useEffect(() => { fetchDashboard(); }, []);
+  useEffect(() => {
+    fetchDashboard();
+    fetchProfile();
+  }, []);
 
   // Animations
   const a1 = useRef(new Animated.Value(0)).current;
@@ -79,7 +82,7 @@ export default function ProfileScreen() {
         {/* ── Avatar + Name ── */}
         <Animated.View style={[s.avatarSection, fade(a1, 20)]}>
           <View style={s.avatarRing}>
-            {user?.avatar ? (
+            {user?.avatar && typeof user.avatar === 'string' && user.avatar.trim() !== "" ? (
               IMAGES_MAP[user.avatar] ? (
                 <Image source={IMAGES_MAP[user.avatar]} style={s.avatar} contentFit="cover" />
               ) : (
