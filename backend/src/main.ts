@@ -50,11 +50,10 @@ async function bootstrap() {
     SwaggerModule.setup('api', app, document);
   }
 
-  // Listen on port 5001, bind to all interfaces
-  const port = process.env.PORT ?? 5001;
-  const host = process.env.HOST ?? '0.0.0.0';
-  await app.listen(port, host);
+  // Listen on the port provided by Railway (or 5001 locally)
+  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 5001;
+  // Force 0.0.0.0 so the container receives connection routing from Railway's load balancer
+  await app.listen(port, '0.0.0.0');
 
-  console.log(`🚀 Backend running on http://${host}:${port}`);
 }
 bootstrap();
