@@ -1,14 +1,30 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Resend } from 'resend';
+import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private resend: Resend;
+  private transporter: nodemailer.Transporter;
 
   constructor() {
-    this.resend = new Resend(process.env.RESEND_API_KEY);
-    this.logger.log('Email service (Resend) initialized');
+    this.transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: Number(process.env.SMTP_PORT) || 587,
+      secure: false, // true for 465, false for other ports
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    // Verify connection configuration
+    this.transporter.verify((error) => {
+      if (error) {
+        this.logger.error('SMTP Connection setup failed:', error);
+      } else {
+        this.logger.log('Email service (Nodemailer) ready state: Active');
+      }
+    });
   }
 
   async sendOtp(
@@ -30,20 +46,16 @@ export class EmailService {
         : `<p>Your email verification code is:</p><h2>${otpCode}</h2><p>This code expires in 10 minutes.</p>`;
 
     try {
-      const { data, error } = await this.resend.emails.send({
-        from: process.env.RESEND_FROM || 'onboarding@resend.dev',
+      const info = await this.transporter.sendMail({
+        from: process.env.SMTP_FROM || '"Mulema App" <noreply@mulema.app>',
         to: email,
         subject: subject,
         text: text,
         html: html,
       });
 
-      if (error) {
-        throw error;
-      }
-
-      this.logger.log(`Email sent successfully to ${email}: ${data?.id}`);
-      return data;
+      this.logger.log(`Email sent successfully to ${email}: ${info.messageId}`);
+      return info;
     } catch (error) {
       this.logger.error(`Failed to send email to ${email}`, error);
       throw error;

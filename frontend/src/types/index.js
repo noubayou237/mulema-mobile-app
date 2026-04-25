@@ -20,11 +20,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // Change cette URL selon ton environnement
 // Local :    http://10.0.2.2:3000/api   (Android emulator)
 //            http://localhost:3000/api    (iOS simulator)
-// Production: https://api.mulema.app/api
+// Production: https://xg7m6ie6.up.railway.app/api
 
 const BASE_URL = __DEV__
   ? "http://10.0.2.2:3000/api"   // ← adapte selon ta machine
-  : "https://api.mulema.app/api";
+  : "https://xg7m6ie6.up.railway.app/api";
 
 const STORAGE_KEY = "userSession";
 const TIMEOUT = 15000;

@@ -20,7 +20,7 @@ import Constants from "expo-constants";
 
 // ── Config ──
 // Dev  : auto-detects host IP via expo-constants, or uses EXPO_PUBLIC_API_IP
-// Prod : https://api.mulema.app/api
+// Prod : https://xg7m6ie6.up.railway.app/api
 
 const getBaseUrl = () => {
   if (__DEV__) {
@@ -36,7 +36,7 @@ const getBaseUrl = () => {
     return `http://${localhost}:5001`;
   }
 
-  return "https://api.mulema.app/api";
+  return "https://xg7m6ie6.up.railway.app/api";
 };
 
 const BASE_URL = getBaseUrl();
