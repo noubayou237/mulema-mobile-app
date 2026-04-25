@@ -16,19 +16,13 @@
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 
 // ── Config ──
-// Change cette URL selon ton environnement
-// Local :    http://10.0.2.2:50001/api   (Android emulator)
-//            http://localhost:3000/api    (iOS simulator)
-// Production: https://api.mulema.app/api
+// Dev  : auto-detects host IP via expo-constants, or uses EXPO_PUBLIC_API_IP
+// Prod : https://api.mulema.app/api
 
-<<<<<<< HEAD
-const API_IP = process.env.EXPO_PUBLIC_API_IP || "172.20.10.04";
-const BASE_URL = __DEV__
-  ? `http://${API_IP}:5001`
-  : "https://api.mulema.app/api";
-=======
+const getBaseUrl = () => {
   if (__DEV__) {
     // 1. Prioritize explicit environment variable from .env
     const EXPO_PUBLIC_API_IP = process.env.EXPO_PUBLIC_API_IP;
@@ -46,7 +40,6 @@ const BASE_URL = __DEV__
 };
 
 const BASE_URL = getBaseUrl();
->>>>>>> 05d59aa94cded19d34e4805b2c7a1da2b701d38b
 
 const STORAGE_KEY = "userSession";
 const TIMEOUT = 10000;
