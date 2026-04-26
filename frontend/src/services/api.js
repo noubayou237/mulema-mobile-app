@@ -23,20 +23,26 @@ import Constants from "expo-constants";
 // Prod : https://xg7m6ie6.up.railway.app/api
 
 const getBaseUrl = () => {
+  // Explicit URL from env takes priority — works in both dev and prod
+  const EXPO_PUBLIC_API_URL = process.env.EXPO_PUBLIC_API_URL;
+  if (EXPO_PUBLIC_API_URL) {
+    return EXPO_PUBLIC_API_URL.replace(/\/$/, "");
+  }
+
   if (__DEV__) {
-    // 1. Prioritize explicit environment variable from .env
+    // Fallback: local IP override
     const EXPO_PUBLIC_API_IP = process.env.EXPO_PUBLIC_API_IP;
     if (EXPO_PUBLIC_API_IP) {
       return `http://${EXPO_PUBLIC_API_IP}:5001`;
     }
 
-    // 2. Fallback to auto-detection for physical devices
+    // Last resort: auto-detect host from Expo
     const debuggerHost = Constants.expoConfig?.hostUri;
     const localhost = debuggerHost ? debuggerHost.split(":")[0] : "localhost";
     return `http://${localhost}:5001`;
   }
 
-  return "https://xg7m6ie6.up.railway.app/api";
+  return "https://mulema-mobile-app-production.up.railway.app";
 };
 
 const BASE_URL = getBaseUrl();

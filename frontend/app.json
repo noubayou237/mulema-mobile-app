@@ -24,6 +24,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.mulema.app",
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSPhotoLibraryUsageDescription": "Allow Mulema to access your photos to update your profile picture.",
         "NSPhotoLibraryAddUsageDescription": "Allow Mulema to save photos to your library.",
         "CFBundleURLTypes": [
