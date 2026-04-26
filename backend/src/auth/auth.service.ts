@@ -223,7 +223,12 @@ export class AuthService {
       },
     });
 
-    await this.emailService.sendOtp(user.email, otpCode);
+    try {
+      await this.emailService.sendOtp(user.email, otpCode, 'reset');
+      this.logger.log(`Password reset OTP sent to ${user.email}`);
+    } catch (emailError) {
+      this.logger.error(`Failed to send password reset OTP to ${user.email}:`, emailError);
+    }
 
     return { success: true };
   }
@@ -304,7 +309,12 @@ export class AuthService {
       },
     });
 
-    await this.emailService.sendOtp(user.email, otpCode);
+    try {
+      await this.emailService.sendOtp(user.email, otpCode, 'verification');
+      this.logger.log(`Verification OTP sent to ${user.email}`);
+    } catch (emailError) {
+      this.logger.error(`Failed to send verification OTP to ${user.email}:`, emailError);
+    }
 
     return { success: true };
   }

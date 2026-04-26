@@ -1,45 +1,31 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private transporter: nodemailer.Transporter;
+  private resend: Resend;
+  private fromAddress: string;
 
   constructor() {
-    const smtpPort = Number(process.env.SMTP_PORT) || 465;
+    const apiKey = process.env.RESEND_API_KEY;
 
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: smtpPort,
-      // Port 465 = implicit TLS (secure: true)
-      // Port 587 = STARTTLS (secure: false)
-      secure: smtpPort === 465,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-      // Aggressive timeouts so requests fail fast instead of hanging
-      connectionTimeout: 8000, // 8s to establish TCP connection
-      greetingTimeout: 8000,   // 8s for SMTP greeting
-      socketTimeout: 10000,    // 10s for socket inactivity
-      // Required for some cloud environments
-      tls: {
-        rejectUnauthorized: true,
-      },
-    });
+    if (!apiKey) {
+      this.logger.warn(
+        'RESEND_API_KEY is not set — email sending will fail at runtime',
+      );
+    }
 
-    // Verify connection — log result but don't block startup
-    this.transporter.verify((error) => {
-      if (error) {
-        this.logger.error('SMTP connection verification failed:', error.message);
-        this.logger.warn(
-          'Emails may not work. Ensure SMTP_USER, SMTP_PASS, SMTP_HOST, and SMTP_PORT are set correctly.',
-        );
-      } else {
-        this.logger.log('Email service (Nodemailer/Gmail) ready ✓');
-      }
-    });
+    this.resend = new Resend(apiKey);
+
+    // onboarding@resend.dev works WITHOUT a custom domain
+    // It can send to ANY email address (not just your own)
+    this.fromAddress =
+      process.env.RESEND_FROM || 'Mulema App <onboarding@resend.dev>';
+
+    this.logger.log(
+      `Email service (Resend HTTP API) initialized — from: ${this.fromAddress}`,
+    );
   }
 
   async sendOtp(
@@ -52,8 +38,8 @@ export class EmailService {
 
     const text =
       purpose === 'reset'
-        ? `Your password reset code is: ${otpCode}`
-        : `Your email verification code is: ${otpCode}`;
+        ? `Your password reset code is: ${otpCode}. This code expires in 10 minutes.`
+        : `Your email verification code is: ${otpCode}. This code expires in 10 minutes.`;
 
     const html =
       purpose === 'reset'
@@ -61,25 +47,32 @@ export class EmailService {
         : `<p>Your email verification code is:</p><h2>${otpCode}</h2><p>This code expires in 10 minutes.</p>`;
 
     try {
-      const info = await this.transporter.sendMail({
-        from: process.env.SMTP_FROM || '"Mulema App" <noreply@mulema.app>',
-        to: email,
-        subject: subject,
-        text: text,
-        html: html,
+      const { data, error } = await this.resend.emails.send({
+        from: this.fromAddress,
+        to: [email],
+        subject,
+        text,
+        html,
       });
 
-      this.logger.log(`Email sent successfully to ${email}: ${info.messageId}`);
-      return info;
-    } catch (error) {
-      this.logger.error(
-        `Failed to send email to ${email}: ${error.message}`,
+      if (error) {
+        this.logger.error(
+          `Resend API error sending to ${email}: ${JSON.stringify(error)}`,
+        );
+        throw new Error(`Email delivery failed: ${error.message}`);
+      }
+
+      this.logger.log(
+        `Email sent successfully to ${email} — id: ${data?.id}`,
       );
+      return data;
+    } catch (error) {
+      this.logger.error(`Failed to send email to ${email}`, error);
       throw error;
     }
   }
 
   async sendTestEmail(email: string) {
-    return this.sendOtp(email, 'TEST', 'verification');
+    return this.sendOtp(email, 'TEST123', 'verification');
   }
 }
