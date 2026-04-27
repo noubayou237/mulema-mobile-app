@@ -46,7 +46,7 @@ export const IMAGES_MAP = {
   "camel": require("../../assets/Avatar-images -profile-picker/camel.png"),
   "colla": require("../../assets/Avatar-images -profile-picker/colla.png"),
   "favicon": require("../../assets/Avatar-images -profile-picker/favicon.png"),
-  "forgot": require("../../assets/Avatar-images -profile-picker/forgot.png"),
+  "forgot": require("../../assets/Avatar-images -profile-picker/forgot.webp"),
   "icon": require("../../assets/Avatar-images -profile-picker/icon.png"),
   "island": require("../../assets/Avatar-images -profile-picker/island.png"),
   "jungle_background": require("../../assets/Avatar-images -profile-picker/jungle_background.jpg"),
