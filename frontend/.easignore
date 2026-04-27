@@ -1,13 +1,7 @@
-# Unused lesson video folders — served from R2, not bundled
-assets/BassaVideos/
-assets/GhomalaVidoes/
-assets/DualaVideos/
-assets/BassaExercises/
-assets/Duala written conversion (2)/
-
-# Dev/test files
+# Dev/test files not needed for the build
 *.test.js
 *.spec.js
 __tests__/
 __mocks__/
 .expo/
+assets/Duala written conversion (2)/

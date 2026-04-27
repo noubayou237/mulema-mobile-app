@@ -63,7 +63,7 @@ model Statistics {
   exercisesCompleted Int
   totalPrawns        Int
   userId             String @unique
-  user               User   @relation(fields: [userId], references: [id])
+  user               User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model RootsStreak {
@@ -115,7 +115,7 @@ model UserLanguage {
   patrimonialLanguageId String?
   officialLanguage      OfficialLanguage?    @relation(fields: [officialLanguageId], references: [id])
   patrimonialLanguage   PatrimonialLanguage? @relation(fields: [patrimonialLanguageId], references: [id])
-  user                  User                 @relation(fields: [userId], references: [id])
+  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Community {
@@ -293,7 +293,7 @@ model Cowry {
   currentCowries Int
   rechargeTime   Int
   userId         String @unique
-  user           User   @relation(fields: [userId], references: [id])
+  user           User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model MulemTheme {

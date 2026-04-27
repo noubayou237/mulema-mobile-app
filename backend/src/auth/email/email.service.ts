@@ -1,31 +1,35 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Resend } from 'resend';
+import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
+import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  private resend: Resend;
+  private transporter: nodemailer.Transporter;
   private fromAddress: string;
 
   constructor() {
-    const apiKey = process.env.RESEND_API_KEY;
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const port = Number(process.env.SMTP_PORT) || 465;
 
-    if (!apiKey) {
-      this.logger.warn(
-        'RESEND_API_KEY is not set — email sending will fail at runtime',
-      );
+    if (!user || !pass) {
+      this.logger.error('SMTP_USER or SMTP_PASS is not set in environment variables. Emails will NOT be delivered.');
     }
 
-    this.resend = new Resend(apiKey);
+    this.transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465, // true for 465, false for other ports
+      auth: {
+        user,
+        pass,
+      },
+    });
 
-    // onboarding@resend.dev works WITHOUT a custom domain
-    // It can send to ANY email address (not just your own)
-    this.fromAddress =
-      process.env.RESEND_FROM || 'Mulema App <onboarding@resend.dev>';
+    this.fromAddress = process.env.SMTP_FROM || `"Mulema App" <${user}>`;
 
-    this.logger.log(
-      `Email service (Resend HTTP API) initialized — from: ${this.fromAddress}`,
-    );
+    this.logger.log(`Email service (Nodemailer) initialized — from: ${this.fromAddress}`);
   }
 
   async sendOtp(
@@ -47,28 +51,19 @@ export class EmailService {
         : `<p>Your email verification code is:</p><h2>${otpCode}</h2><p>This code expires in 10 minutes.</p>`;
 
     try {
-      const { data, error } = await this.resend.emails.send({
+      const info = await this.transporter.sendMail({
         from: this.fromAddress,
-        to: [email],
+        to: email,
         subject,
         text,
         html,
       });
 
-      if (error) {
-        this.logger.error(
-          `Resend API error sending to ${email}: ${JSON.stringify(error)}`,
-        );
-        throw new Error(`Email delivery failed: ${error.message}`);
-      }
-
-      this.logger.log(
-        `Email sent successfully to ${email} — id: ${data?.id}`,
-      );
-      return data;
-    } catch (error) {
-      this.logger.error(`Failed to send email to ${email}`, error);
-      throw error;
+      this.logger.log(`Email sent successfully to ${email} — messageId: ${info.messageId}`);
+      return info;
+    } catch (error: any) {
+      this.logger.error(`Failed to send email to ${email}: ${error.message}`, error);
+      throw new InternalServerErrorException(`Email delivery failed: ${error.message}`);
     }
   }
 

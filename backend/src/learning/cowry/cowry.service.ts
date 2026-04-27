@@ -34,16 +34,35 @@ export class CowryService {
   async rechargeCowries() {
     if (process.env.NODE_ENV === 'test') return;
 
-    const cowries = await this.prisma.cowry.findMany();
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        const cowries = await this.prisma.cowry.findMany();
 
-    for (const cowry of cowries) {
-      if (cowry.currentCowries < cowry.maxCowries) {
-        await this.prisma.cowry.update({
-          where: { id: cowry.id },
-          data: {
-            currentCowries: cowry.currentCowries + 1,
-          },
-        });
+        for (const cowry of cowries) {
+          if (cowry.currentCowries < cowry.maxCowries) {
+            await this.prisma.cowry.update({
+              where: { id: cowry.id },
+              data: {
+                currentCowries: cowry.currentCowries + 1,
+              },
+            });
+          }
+        }
+        
+        // Success! Break out of the retry loop
+        break;
+      } catch (error: any) {
+        retries--;
+        console.error(`[Scheduler] Database connection error in rechargeCowries. Retries left: ${retries}. Message: ${error.message}`);
+        
+        if (retries === 0) {
+          console.error('[Scheduler] Failed to recharge cowries after all retries.');
+          break;
+        }
+        
+        // Wait for 5 seconds before retrying to give the Neon DB instance time to wake up
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
     }
   }
