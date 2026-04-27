@@ -152,21 +152,21 @@ export const THEME_IMAGES = {
  */
 export const THEME_AUDIO = {
   famille: {
-    p1: require("../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Mon Frère en duala.wav"),
-    p2: require("../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/les grands parents en duala.wav"),
-    p3: require("../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Le bebe en duala.wav"),
-    p4: require("../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/l'oncle en douala.wav"),
-    p5: require("../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Mon Frère en duala.wav"),
-    p6: require("../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Le bebe en duala.wav")
+    p1: require("../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Mon Frère en duala.mp3"),
+    p2: require("../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/les grands parents en duala.mp3"),
+    p3: require("../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Le bebe en duala.mp3"),
+    p4: require("../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/l'oncle en douala.mp3"),
+    p5: require("../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Mon Frère en duala.mp3"),
+    p6: require("../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Le bebe en duala.mp3")
   },
   vetements: {
-    tie: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 2 du theme 5 en duala/exer N2 Rpsne N1.wav"),
-    jacket: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 3 du theme 5 en duala/exer 3 Rpsne N1 (La veste duala).wav"),
-    shoes: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 1 du theme 5/cette chaussure en langue duala.wav"),
-    babouches: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 3 du theme 5 en duala/exer 3 Rpsne N5 (la paire de babouche en duala).wav"),
-    tshirt: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 1 du theme 5/Cette habit en langue duala.wav"),
-    pants: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 3 du theme 5 en duala/exer 3 Rpsne N2 (Les pentalons en duala).wav"),
-    boubou: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 1 du theme 5/Ces boubou en lanue duala.wav")
+    tie: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 2 du theme 5 en duala/exer N2 Rpsne N1.mp3"),
+    jacket: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 3 du theme 5 en duala/exer 3 Rpsne N1 (La veste duala).mp3"),
+    shoes: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 1 du theme 5/cette chaussure en langue duala.mp3"),
+    babouches: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 3 du theme 5 en duala/exer 3 Rpsne N5 (la paire de babouche en duala).mp3"),
+    tshirt: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 1 du theme 5/Cette habit en langue duala.mp3"),
+    pants: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 3 du theme 5 en duala/exer 3 Rpsne N2 (Les pentalons en duala).mp3"),
+    boubou: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 1 du theme 5/Ces boubou en lanue duala.mp3")
   }
 };
 
