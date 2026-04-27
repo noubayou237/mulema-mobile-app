@@ -4,12 +4,19 @@ import i18n from "../i18n";
  * MULEMA — Error Utilities
  * Maps technical errors (Axios, etc.) to user-friendly, localized messages.
  */
+export const isNetworkError = (error) => {
+  if (!error) return false;
+  return error.message === "Network Error" || 
+         error.code === "ERR_NETWORK" || 
+         error.message?.toLowerCase().includes("network error");
+};
+
 export const getFriendlyErrorMessage = (error) => {
   const { t } = i18n;
   if (!error) return t("errors.somethingWentWrong");
 
   // 1. Handle Axios "Network Error" (often CORS or server down)
-  if (error.message === "Network Error" || error.code === "ERR_NETWORK" || error.message?.toLowerCase().includes("network error")) {
+  if (isNetworkError(error)) {
     return t("errors.networkError");
   }
 

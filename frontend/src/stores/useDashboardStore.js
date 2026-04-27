@@ -2,7 +2,7 @@ import Logger from "../utils/logger";
 import { create } from "zustand";
 import { dashboardService } from "../services/dashboard.service";
 import { isSessionActive } from "../services/api";
-import { getFriendlyErrorMessage } from "../utils/errorUtils";
+import { getFriendlyErrorMessage, isNetworkError } from "../utils/errorUtils";
 import i18n from "../i18n";
 
 export const useDashboardStore = create((set) => ({
@@ -32,9 +32,12 @@ export const useDashboardStore = create((set) => ({
       const msg = getFriendlyErrorMessage(error);
       set({ isLoading: false, error: msg });
       
+      const isNetErr = isNetworkError(error);
       // 401/NetworkError is expected during the logout race window — suppress it
-      if (error?.response?.status !== 401 && isSessionActive()) {
+      if (error?.response?.status !== 401 && !isNetErr && isSessionActive()) {
         Logger.error("[DashboardStore] fetchDashboard error:", msg);
+      } else if (isNetErr) {
+        Logger.warn("[DashboardStore] fetchDashboard network error:", msg);
       }
       return null;
     }

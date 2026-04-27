@@ -243,7 +243,7 @@ export default function ExerciseResults() {
           {showFinalAnim && success && (
             <TouchableOpacity
               onPress={() =>
-                router.replace(`/modal/onboarding-video?themeId=${themeId}&langCode=${langCode}`)
+                router.replace(`/modal/story-video?themeId=${themeId}&langCode=${langCode}`)
               }
               style={s.videoBtnWrap}
               activeOpacity={0.88}

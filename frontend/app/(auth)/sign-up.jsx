@@ -53,7 +53,7 @@ const StrengthBar = ({ password, t }) => {
     if (/[^A-Za-z0-9]/.test(p)) score++;
     if (score <= 1) return { score: 1, label: t("signUp.weak"), color: Colors.error };
     if (score <= 3) return { score: 3, label: t("signUp.medium"), color: Colors.secondaryContainer };
-    return { score: 5, label: t("signUp.strong"), color: Colors.primary };
+    return { score: 5, label: t("signUp.strong"), color: Colors.success };
   };
 
   const { score, label, color } = getStrength(password);
@@ -102,7 +102,7 @@ const MatchIndicator = ({ password, confirm, t }) => {
   if (!confirm || confirm.length === 0) return null;
 
   const isMatch = password === confirm;
-  const color = isMatch ? Colors.primary : Colors.error;
+  const color = isMatch ? Colors.success : Colors.error;
   const icon = isMatch ? "checkmark-circle" : "close-circle";
   const text = isMatch
     ? t("signUp.validation.passwordsMatch")

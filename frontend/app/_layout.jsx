@@ -129,7 +129,7 @@ export default function RootLayout() {
           options={{ presentation: "modal", animation: "slide_from_bottom" }}
         />
         <Stack.Screen
-          name="modal/onboarding-video"
+          name="modal/story-video"
           options={{ presentation: "fullScreenModal", animation: "fade", headerShown: false }}
         />
       </Stack>

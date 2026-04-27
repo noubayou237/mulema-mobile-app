@@ -73,10 +73,9 @@ export default function ChangeLanguageScreen() {
     if (language.id === activeLanguage?.id) return; // déjà active
     await setActiveLanguage(language);
     
-    // Au lieu de router.back(), on va vers la vidéo d'onboarding
     router.replace({
-      pathname: "/modal/onboarding-video",
-      params: { langCode: language.code }
+      pathname: "/(onboarding)/PageVideo",
+      params: { lang: language.code }
     });
   };
 

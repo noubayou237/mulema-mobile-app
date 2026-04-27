@@ -17,6 +17,7 @@ import Logger from "../utils/logger";
 
 import { create } from "zustand";
 import { exercisesService } from "../services/exercises.service";
+import { isNetworkError } from "../utils/errorUtils";
 
 export const useExerciseStore = create((set, get) => ({
   // ── State ──
@@ -70,7 +71,12 @@ export const useExerciseStore = create((set, get) => ({
       set({ exerciseData: data, isLoading: false });
       return data;
     } catch (error) {
-      Logger.error("[ExerciseStore] loadExercise error:", error);
+      const isNetErr = isNetworkError(error);
+      if (error?.response?.status !== 401 && !isNetErr) {
+        Logger.error("[ExerciseStore] loadExercise error:", error);
+      } else if (isNetErr) {
+        Logger.warn("[ExerciseStore] loadExercise network error:", error.message);
+      }
       set({ isLoading: false });
       throw error;
     }
@@ -127,7 +133,12 @@ export const useExerciseStore = create((set, get) => ({
       set({ result });
       return result;
     } catch (error) {
-      Logger.error("[ExerciseStore] finishExercise error:", error);
+      const isNetErr = isNetworkError(error);
+      if (error?.response?.status !== 401 && !isNetErr) {
+        Logger.error("[ExerciseStore] finishExercise error:", error);
+      } else if (isNetErr) {
+        Logger.warn("[ExerciseStore] finishExercise network error:", error.message);
+      }
       throw error;
     }
   },

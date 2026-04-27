@@ -243,6 +243,7 @@ export default function PageVideo() {
 
         {/* Video layer */}
         <Video
+          key={langResolved}
           ref={videoRef}
           source={videoUri}
           resizeMode="cover"

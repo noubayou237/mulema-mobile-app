@@ -227,7 +227,7 @@ export default function ExercisesScreen() {
         .replace(/[̀-ͯ]/g, "")
         .replace(/[^a-z]/g, "")
         .trim();
-      router.push(`/modal/onboarding-video?themeId=${theme.id}&langCode=${langCode}`);
+      router.push(`/modal/story-video?themeId=${theme.id}&langCode=${langCode}`);
     } else {
       router.push(`/(tabs)/lessons/${theme.id}/exercise/session`);
     }

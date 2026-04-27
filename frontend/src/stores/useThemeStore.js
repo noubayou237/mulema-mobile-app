@@ -2,7 +2,7 @@ import Logger from "../utils/logger";
 import { create } from "zustand";
 import { themesService } from "../services/themes.service";
 import api, { isSessionActive } from "../services/api";
-import { getFriendlyErrorMessage } from "../utils/errorUtils";
+import { getFriendlyErrorMessage, isNetworkError } from "../utils/errorUtils";
 
 export const useThemeStore = create((set, get) => ({
   // ── State ──
@@ -35,9 +35,12 @@ export const useThemeStore = create((set, get) => ({
     } catch (error) {
       const msg = getFriendlyErrorMessage(error);
       set({ isLoading: false, error: msg });
-      // Don't log if it's a 401 or Network Error after session is cleared
-      if (error?.response?.status !== 401 && isSessionActive()) {
+      
+      const isNetErr = isNetworkError(error);
+      if (error?.response?.status !== 401 && !isNetErr && isSessionActive()) {
         Logger.error("[ThemeStore] fetchThemes error:", msg);
+      } else if (isNetErr) {
+        Logger.warn("[ThemeStore] fetchThemes network error:", msg);
       }
       return [];
     }
@@ -57,8 +60,11 @@ export const useThemeStore = create((set, get) => ({
       return lessons;
     } catch (error) {
       set({ lessonsLoading: false });
-      if (error?.response?.status !== 401) {
+      const isNetErr = isNetworkError(error);
+      if (error?.response?.status !== 401 && !isNetErr) {
         Logger.error("[ThemeStore] fetchLessons error:", error);
+      } else if (isNetErr) {
+        Logger.warn("[ThemeStore] fetchLessons network error:", error.message);
       }
       return [];
     }
@@ -78,8 +84,11 @@ export const useThemeStore = create((set, get) => ({
       return words;
     } catch (error) {
       set({ wordsLoading: false });
-      if (error?.response?.status !== 401) {
+      const isNetErr = isNetworkError(error);
+      if (error?.response?.status !== 401 && !isNetErr) {
         Logger.error("[ThemeStore] fetchWords error:", error);
+      } else if (isNetErr) {
+        Logger.warn("[ThemeStore] fetchWords network error:", error.message);
       }
       return [];
     }
