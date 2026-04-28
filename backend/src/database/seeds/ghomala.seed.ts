@@ -140,9 +140,7 @@ export async function main() {
 
   if (!lang) {
     lang = await prisma.patrimonialLanguage.create({ data: { name: 'Ghomálá' } });
-    console.log(`✅ PatrimonialLanguage "Ghomálá" créée (${lang.id})\n`);
   } else {
-    console.log(`ℹ️  PatrimonialLanguage "Ghomálá" existante (${lang.id})\n`);
   }
 
   // 2. Nettoyer les anciens thèmes Ghomálá (cascade supprime mots + exercices)
@@ -150,7 +148,6 @@ export async function main() {
     where: { patrimonialLanguageId: lang.id },
   });
   if (deleted.count > 0) {
-    console.log(`🗑️  ${deleted.count} ancien(s) thème(s) supprimé(s)\n`);
   }
 
   // 3. Insérer les 4 thèmes
@@ -168,7 +165,6 @@ export async function main() {
         lock_hint: t.lock_hint,
       },
     });
-    console.log(`  📂 T${t.order} — ${t.name_fr}`);
 
     // 4. Insérer les mots
     for (const w of t.words) {

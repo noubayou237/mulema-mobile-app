@@ -27,15 +27,15 @@ import * as path from 'path';
 // ── Client R2 (compatible API S3) ────────────────────────────────────
 const r2 = new S3Client({
   region: 'auto',
-  endpoint: process.env.R2_ENDPOINT, // https://xxx.r2.cloudflarestorage.com
+  endpoint: process.env.R2_ENDPOINT, 
   credentials: {
     accessKeyId:     process.env.R2_ACCESS_KEY_ID!,
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
   },
 });
 
-const BUCKET    = process.env.R2_BUCKET_NAME!;       // "mulema"
-const PUBLIC_URL = process.env.R2_PUBLIC_URL!;        // https://pub-xxx.r2.dev
+const BUCKET    = process.env.R2_BUCKET_NAME!;
+const PUBLIC_URL = process.env.R2_PUBLIC_URL!;
 const AUDIO_DIR  = path.join(__dirname, '../../../assets/audio');
 
 const prisma = new PrismaClient();
@@ -124,7 +124,6 @@ async function uploadToR2(localPath: string, r2Key: string): Promise<string> {
   // Vérifier si le fichier existe déjà sur R2 (évite les uploads doubles)
   try {
     await r2.send(new HeadObjectCommand({ Bucket: BUCKET, Key: r2Key }));
-    console.log(`    ⏭️  Déjà uploadé : ${r2Key}`);
     return `${PUBLIC_URL}/${r2Key}`;
   } catch {
     // n'existe pas encore → on upload
@@ -164,7 +163,7 @@ async function main() {
     const folderPath = path.join(AUDIO_DIR, localFolder);
 
     if (!fs.existsSync(folderPath)) {
-      console.warn(`  ⚠️  Dossier introuvable : ${folderPath}`);
+      console.warn(`    Dossier introuvable : ${folderPath}`);
       console.warn(`       → Crée le dossier et extrais le zip correspondant\n`);
       continue;
     }
@@ -175,7 +174,7 @@ async function main() {
       const localPath = path.join(folderPath, localFile);
 
       if (!fs.existsSync(localPath)) {
-        console.warn(`    ⚠️  Fichier manquant : ${localFile}`);
+        console.warn(`      Fichier manquant : ${localFile}`);
         totalMissing++;
         continue;
       }
@@ -199,7 +198,7 @@ async function main() {
   }
 
   console.log('══════════════════════════════════════════════════');
-  console.log(`✅ Upload terminé !`);
+  console.log(` Upload terminé !`);
   console.log(`   Uploadés  : ${totalUploaded}`);
   console.log(`   Manquants : ${totalMissing}`);
   console.log(`\n   Les audio_url sont mis à jour dans la BDD Neon.`);

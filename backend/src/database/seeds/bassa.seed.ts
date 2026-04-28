@@ -110,28 +110,30 @@ const THEMES = [
     locked: true,
     lock_hint: 'Terminez La Cuisine pour débloquer',
     words: [
-      { order: 1,  word_fr: 'Cet habit',       word_local: 'i mbɔt ìnī',       hint: 'i', image_url: 'img_clothing_suit' },
-      { order: 2,  word_fr: 'Cette chemise',   word_local: 'i jɔmbɛ lini',     hint: 'i', image_url: 'img_clothing_tshirt' },
-      { order: 3,  word_fr: 'Ce pantalon',     word_local: 'i tɔlɔsîs nunu',   hint: 'i', image_url: 'img_clothing_trousers' },
-      { order: 4,  word_fr: 'Ces caleçons',    word_local: 'i ŋkāndā unu',     hint: 'i', image_url: null },
-      { order: 5,  word_fr: 'Ce manteau',      word_local: 'i kodi mbèŋ ìni',  hint: 'i', image_url: null },
-      { order: 6,  word_fr: 'Ces costumes',    word_local: 'bikōdī bini',       hint: 'b', image_url: 'img_clothing_suit' },
-      { order: 7,  word_fr: 'Cette culotte',   word_local: 'i hâp ìni',         hint: 'i', image_url: null },
-      { order: 8,  word_fr: 'Ces boubous',     word_local: 'ɓa ɓùba ɓana',     hint: 'ɓ', image_url: null },
-      { order: 9,  word_fr: 'Cette chaussure', word_local: 'i tāmb ini',        hint: 'i', image_url: 'img_clothing_shoes' },
-      { order: 10, word_fr: 'Ce chapeau',      word_local: 'i tàmba nunu',      hint: 'i', image_url: null },
-      { order: 11, word_fr: 'La cravate',      word_local: 'Lilàŋ lini',        hint: 'L', image_url: 'img_clothing_tie' },
-      { order: 12, word_fr: 'La veste',        word_local: 'Kodî',              hint: 'K', image_url: 'img_clothing_suit' },
-      { order: 13, word_fr: 'Une chemise',     word_local: 'Sɔdɛ̂',             hint: 'S', image_url: 'img_clothing_tshirt' },
-      { order: 14, word_fr: 'Un habit',        word_local: 'Mbɔt',              hint: 'M', image_url: 'img_clothing_suit' },
-      { order: 15, word_fr: 'Les pantalons',   word_local: 'BiLɔŋ̂',            hint: 'B', image_url: 'img_clothing_trousers' },
-      { order: 16, word_fr: 'La chaussure',    word_local: 'Támb',              hint: 'T', image_url: 'img_clothing_shoes' },
+      // E1 — association (10 paires)
+      { order: 1, word_fr: 'Cet habit', word_local: 'i mbɔt ìnī', hint: 'i' },
+      { order: 2, word_fr: 'Cette chemise', word_local: 'i jɔmbɛ lini', hint: 'i' },
+      { order: 3, word_fr: 'Ce pantalon', word_local: 'i tɔlɔsîs nunu', hint: 'i' },
+      { order: 4, word_fr: 'Ces caleçons', word_local: 'i ŋkāndā unu', hint: 'i' },
+      { order: 5, word_fr: 'Ce manteau', word_local: 'i kodi mbèŋ ìni', hint: 'i' },
+      { order: 6, word_fr: 'Ces costumes', word_local: 'bikōdī bini', hint: 'b' },
+      { order: 7, word_fr: 'Cette culotte', word_local: 'i hâp ìni', hint: 'i' },
+      { order: 8, word_fr: 'Ces boubous', word_local: 'ɓa ɓùba ɓana', hint: 'ɓ' },
+      { order: 9, word_fr: 'Cette chaussure', word_local: 'i tāmb ini', hint: 'i' },
+      { order: 10, word_fr: 'Ce chapeau', word_local: 'i tàmba nunu', hint: 'i' },
+      // E2 — écriture
+      { order: 11, word_fr: 'La cravate', word_local: 'Lilàŋ lini', hint: 'L' },
+      { order: 12, word_fr: 'La veste', word_local: 'Kodî', hint: 'K' },
+      { order: 13, word_fr: 'Une chemise', word_local: 'Sɔdɛ̂', hint: 'S' },
+      { order: 14, word_fr: 'Un habit', word_local: 'Mbɔt', hint: 'M' },
+      // E3 — sélection image
+      { order: 15, word_fr: 'Les pantalons', word_local: 'BiLɔŋ̂', hint: 'B' },
+      { order: 16, word_fr: 'La chaussure', word_local: 'Támb', hint: 'T' },
     ],
   },
 ];
 
 export async function main() {
-  console.log('🌱 Seed Bassa — 4 thèmes principaux\n');
 
   let lang = await prisma.patrimonialLanguage.findFirst({
     where: { name: 'Bassa' },
@@ -139,16 +141,13 @@ export async function main() {
 
   if (!lang) {
     lang = await prisma.patrimonialLanguage.create({ data: { name: 'Bassa' } });
-    console.log(`✅ PatrimonialLanguage "Bassa" créée (${lang.id})\n`);
   } else {
-    console.log(`ℹ️  PatrimonialLanguage "Bassa" existante (${lang.id})\n`);
   }
 
   const deleted = await prisma.mulemTheme.deleteMany({
     where: { patrimonialLanguageId: lang.id },
   });
   if (deleted.count > 0) {
-    console.log(`🗑️  ${deleted.count} ancien(s) thème(s) supprimé(s)\n`);
   }
 
   for (const t of THEMES) {
@@ -165,7 +164,6 @@ export async function main() {
         lock_hint: t.lock_hint,
       },
     });
-    console.log(`  📂 T${t.order} — ${t.name_fr}`);
 
     for (const w of t.words) {
       await prisma.mulemWord.create({
@@ -177,12 +175,11 @@ export async function main() {
           hint: w.hint,
           audio_key: null,
           audio_url: null,
-          image_key: w.image_url ?? null,
-          image_url: w.image_url ?? null,
+          image_key: null,
+          image_url: null,
         },
       });
     }
-    console.log(`     ✅ ${t.words.length} mots`);
 
     await prisma.mulemExercise.createMany({
       data: [

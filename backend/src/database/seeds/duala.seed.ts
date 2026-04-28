@@ -116,7 +116,6 @@ const THEMES = [
 
 // ─────────────────────────────────────────────────────────────────────
 export async function main() {
-  console.log('🌱 Seed Duala — 4 thèmes principaux\n');
 
   // 1. Récupérer ou créer la langue patrimoniale Duala
   let lang = await prisma.patrimonialLanguage.findFirst({
@@ -133,7 +132,6 @@ export async function main() {
     where: { patrimonialLanguageId: lang.id },
   });
   if (deleted.count > 0) {
-    console.log(`🗑️  ${deleted.count} ancien(s) thème(s) supprimé(s)\n`);
   }
 
   // 3. Insérer les 4 thèmes
