@@ -438,7 +438,7 @@ const s = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
-    opacity: 1,
+    opacity: 0,
     color: "transparent",
     backgroundColor: "transparent",
     zIndex: 10,

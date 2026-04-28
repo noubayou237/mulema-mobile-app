@@ -22,6 +22,7 @@ import { initializeLanguage } from "../src/i18n";
 // Stores
 import { useAuthStore } from "../src/stores/useAuthStore";
 import { useLanguageStore } from "../src/stores/useLanguageStore";
+import api from "../src/services/api";
 
 // Tokens
 import { Colors } from "../src/theme/tokens";
@@ -42,9 +43,16 @@ function AuthGate({ children }) {
   // ── Background music (starts once authenticated) ──
   useBackgroundMusic();
 
-  useEffect(() => { 
+  useEffect(() => {
     initializeLanguage().then(() => loadSession());
   }, []);
+
+  // Ping Railway every 4 minutes so it never cold-starts mid-session
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const id = setInterval(() => { api.get("/").catch(() => {}); }, 4 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!isSessionLoaded) return;

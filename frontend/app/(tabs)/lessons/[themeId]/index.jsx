@@ -394,7 +394,7 @@ export default function ThemeDetailScreen() {
         </LinearGradient>
 
         {/* ── Chemin de leçons ── */}
-        {lessonsLoading ? (
+        {lessonsLoading && lessons.length === 0 ? (
           <ActivityIndicator size="large" color={lt.accent} style={{ marginVertical: 60 }} />
         ) : lessons.length === 0 ? (
           <View style={s.empty}>

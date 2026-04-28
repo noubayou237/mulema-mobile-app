@@ -27,7 +27,8 @@ export const useThemeStore = create((set, get) => ({
 
   fetchThemes: async (languageId) => {
     if (!languageId || !isSessionActive()) return [];
-    set({ isLoading: true });
+    const hasCache = get().themes.length > 0;
+    set({ isLoading: !hasCache });
     try {
       const themes = await themesService.getByLanguage(languageId);
       set({ themes, isLoading: false, error: null });
@@ -53,7 +54,9 @@ export const useThemeStore = create((set, get) => ({
 
   fetchLessons: async (themeId) => {
     if (!themeId || !isSessionActive()) return [];
-    set({ currentThemeId: themeId, lessonsLoading: true });
+    const { currentThemeId, lessons: cached } = get();
+    const hasCache = currentThemeId === themeId && cached.length > 0;
+    set({ currentThemeId: themeId, lessonsLoading: !hasCache });
     try {
       const lessons = await themesService.getLessons(themeId);
       set({ lessons, lessonsLoading: false });
