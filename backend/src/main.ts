@@ -25,9 +25,12 @@ async function bootstrap() {
     origin: [
       'https://mulema.app',
       'https://api.mulema.app',
+      /^https?:\/\/.*\.up\.railway\.app$/,   // Railway deployments
+      /^https?:\/\/.*\.ngrok-free\.app$/,    // ngrok tunnels (dev)
+      /^https?:\/\/.*\.ngrok\.io$/,          // ngrok tunnels (legacy dev)
       /^https?:\/\/localhost(:\d+)?$/,
-      /^http:\/\/10\.0\.2\.2/, // Android emulator
-      /^http:\/\/192\.168\./,   // Local network
+      /^http:\/\/10\.0\.2\.2/,               // Android emulator
+      /^http:\/\/192\.168\./,                // Local network
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,

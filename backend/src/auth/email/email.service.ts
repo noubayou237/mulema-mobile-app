@@ -20,7 +20,8 @@ export class EmailService {
     this.transporter = nodemailer.createTransport({
       host,
       port,
-      secure: port === 465, // true for 465, false for other ports
+      secure: port === 465,
+      requireTLS: port === 587,
       auth: {
         user,
         pass,
@@ -51,6 +52,8 @@ export class EmailService {
         : `<p>Your email verification code is:</p><h2>${otpCode}</h2><p>This code expires in 10 minutes.</p>`;
 
     try {
+      this.logger.log(`🚨 OTP CODE FOR ${email}: ${otpCode} 🚨`);
+      
       const info = await this.transporter.sendMail({
         from: this.fromAddress,
         to: email,
