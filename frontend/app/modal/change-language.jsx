@@ -71,6 +71,11 @@ export default function ChangeLanguageScreen() {
 
   const handleSelectLanguage = async (language) => {
     if (language.id === activeLanguage?.id) return; // déjà active
+    
+    // Reset the hasSeenIntro flag so the layout guard allows access to PageVideo
+    const { setHasSeenIntro } = useLanguageStore.getState();
+    await setHasSeenIntro(false);
+    
     await setActiveLanguage(language);
     
     router.replace({
