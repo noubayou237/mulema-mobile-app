@@ -40,10 +40,10 @@ const HAS_SEEN_INTRO = "hasSeenIntro";
 const HAS_SELECTED_LANGUAGE = "selectedLanguage";
 
 const VIDEO_BY_LANG = {
-  bassa: require("../../assets/bassa-intro-vid.mp4"),
-  duala: require("../../assets/duala-intro-vid.mp4"),
-  ghomala: require("../../assets/ghomala-intro-vid.mp4"),
-  default: require("../../assets/duala-intro-vid.mp4"),
+  bassa: require("../../assets/bassa/bassa-intro-vid.mp4"),
+  duala: require("../../assets/duala/duala-intro-vid.mp4"),
+  ghomala: require("../../assets/ghomala/ghomala-intro-vid.mp4"),
+  default: require("../../assets/duala/duala-intro-vid.mp4"),
 };
 
 const { width, height } = Dimensions.get("window");
