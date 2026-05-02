@@ -24,6 +24,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         avatar: true,
         role: true,
         isVerified: true,
+        officialLanguageId: true,
+        languages: {
+          select: {
+            patrimonialLanguageId: true,
+          }
+        }
       },
     });
 
@@ -33,6 +39,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       userId: user.id,
       ...user,
       avatar: user.avatar?.imageUrl || null,
+      patrimonial_language_id: user.languages?.[0]?.patrimonialLanguageId || null,
+      official_language_id: user.officialLanguageId || null,
     };
   }
 }

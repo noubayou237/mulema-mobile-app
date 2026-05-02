@@ -35,10 +35,10 @@ export const languagesService = {
       : { officialLanguageId: languageId };
 
     try {
-      const { data } = await api.patch("/auth/me", payload);
+      const { data } = await api.post("/user-languages", payload);
       return data;
-    } catch {
-      // Fallback — certains backends utilisent /users/me
+    } catch (error) {
+      Logger.warn("[LanguagesService] setUserLanguage error:", error);
       return null;
     }
   },

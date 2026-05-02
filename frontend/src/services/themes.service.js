@@ -44,6 +44,7 @@ export const themesService = {
       audioUrl: w.audio_url,
       imageUrl: w.image_url,
       userProgress: w.userProgress || [],
+      hasSubWords: false, // In the new system, each word is a self-contained lesson
     }));
   },
 

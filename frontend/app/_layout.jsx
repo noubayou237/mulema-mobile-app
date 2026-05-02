@@ -37,7 +37,7 @@ function AuthGate({ children }) {
   const segments = useSegments();
 
   const { isAuthenticated, isSessionLoaded, loadSession } = useAuthStore();
-  const { activeLanguage, hasSeenIntro, fetchLanguages, loadActiveLanguage } = useLanguageStore();
+  const { activeLanguage, hasSeenIntro, fetchLanguages, loadActiveLanguage, syncWithUser } = useLanguageStore();
 
   const [isReady, setIsReady] = useState(false);
 
@@ -58,7 +58,9 @@ function AuthGate({ children }) {
   useEffect(() => {
     if (!isSessionLoaded) return;
     if (isAuthenticated) {
+      const { user } = useAuthStore.getState();
       fetchLanguages()
+        .then(() => syncWithUser(user))
         .then(() => loadActiveLanguage())
         .finally(() => setIsReady(true));
     } else {

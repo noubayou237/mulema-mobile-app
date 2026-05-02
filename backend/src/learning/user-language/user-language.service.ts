@@ -40,31 +40,29 @@ export class UserLanguageService {
     userId: string,
     data: { officialLanguageId?: string; patrimonialLanguageId?: string },
   ) {
-    // Check if already added
+    // 1. If official language, update the direct field on User model too
+    if (data.officialLanguageId) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { officialLanguageId: data.officialLanguageId },
+      });
+    }
+
+    // 2. Check if already added in UserLanguage join table
     if (data.officialLanguageId) {
       const existing = await this.prisma.userLanguage.findFirst({
-        where: {
-          userId,
-          officialLanguageId: data.officialLanguageId,
-        },
+        where: { userId, officialLanguageId: data.officialLanguageId },
+        include: { officialLanguage: true, patrimonialLanguage: true },
       });
-
-      if (existing) {
-        throw new BadRequestException('Language already added');
-      }
+      if (existing) return existing;
     }
 
     if (data.patrimonialLanguageId) {
       const existing = await this.prisma.userLanguage.findFirst({
-        where: {
-          userId,
-          patrimonialLanguageId: data.patrimonialLanguageId,
-        },
+        where: { userId, patrimonialLanguageId: data.patrimonialLanguageId },
+        include: { officialLanguage: true, patrimonialLanguage: true },
       });
-
-      if (existing) {
-        throw new BadRequestException('Language already added');
-      }
+      if (existing) return existing;
     }
 
     const userLanguage = await this.prisma.userLanguage.create({
@@ -79,11 +77,7 @@ export class UserLanguageService {
       },
     });
 
-    return {
-      id: userLanguage.id,
-      officialLanguage: userLanguage.officialLanguage,
-      patrimonialLanguage: userLanguage.patrimonialLanguage,
-    };
+    return userLanguage;
   }
 
   /**
