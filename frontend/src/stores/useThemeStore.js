@@ -80,7 +80,9 @@ export const useThemeStore = create((set, get) => ({
 
   fetchWords: async (lessonId) => {
     if (!lessonId || !isSessionActive()) return [];
-    set({ currentLessonId: lessonId, wordsLoading: true });
+    const { currentLessonId, words: cached } = get();
+    const hasCache = currentLessonId === lessonId && cached.length > 0;
+    set({ currentLessonId: lessonId, wordsLoading: !hasCache });
     try {
       const words = await themesService.getWords(lessonId);
       set({ words, wordsLoading: false });
@@ -251,6 +253,23 @@ export const useThemeStore = create((set, get) => ({
       wordsLoading: false,
     });
   },
+  // ═════════════════════════════════════════════════════════════
+  // clearAll — Full reset
+  // ═════════════════════════════════════════════════════════════
+  clearAll: () => {
+    set({
+      themes: [],
+      currentThemeId: null,
+      lessons: [],
+      currentLessonId: null,
+      words: [],
+      isLoading: false,
+      lessonsLoading: false,
+      wordsLoading: false,
+      error: null,
+    });
+  },
 }));
+
 
 export default useThemeStore;

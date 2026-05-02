@@ -1,3 +1,5 @@
+import { IMAGES_MAP, AUDIOS_MAP } from "../../src/utils/AssetsMap";
+
 /**
  * Shared Word Pool for Theme: Famille (Family)
  *
@@ -129,21 +131,21 @@ export const THEME_VETEMENTS_WORDS = [
  */
 export const THEME_IMAGES = {
   famille: {
-    p1: require("../../assets/Avatar-images -profile-picker/avatar-paul.png"),
-    p2: require("../../assets/Avatar-images -profile-picker/avatar-sophie.png"),
-    p3: require("../../assets/Avatar-images -profile-picker/avatar-ngon.png"),
-    p4: require("../../assets/Avatar-images -profile-picker/avatar-tjega.png"),
-    p5: require("../../assets/Avatar-images -profile-picker/avatar-paul.png"),
-    p6: require("../../assets/Avatar-images -profile-picker/avatar-sophie.png"),
+    p1: IMAGES_MAP.avatar_paul,
+    p2: IMAGES_MAP.avatar_sophie_1,
+    p3: IMAGES_MAP.avatar_ngon_1,
+    p4: IMAGES_MAP.avatar_tjega_1,
+    p5: IMAGES_MAP.avatar_paul,
+    p6: IMAGES_MAP.avatar_sophie_1,
   },
   vetements: {
-    tie: require("../../assets/Images du thème 3/tie.webp"),
-    jacket: require("../../assets/Images du thème 3/suit.webp"),
-    shoes: require("../../assets/Images du thème 3/shoes.webp"),
-    babouches: require("../../assets/Images du thème 3/ladder-shoes.webp"),
-    tshirt: require("../../assets/Images du thème 3/t-shirt.jpg"),
-    pants: require("../../assets/Images du thème 3/trouser.jpg"),
-    boubou: require("../../assets/Images du thème 3/t-shirt.jpg"), // Fallback for boubou
+    tie: IMAGES_MAP.tie,
+    jacket: IMAGES_MAP.suit,
+    shoes: IMAGES_MAP.shoes,
+    babouches: IMAGES_MAP.ladder_shoes,
+    tshirt: IMAGES_MAP.t_shirt,
+    pants: IMAGES_MAP.trouser,
+    boubou: IMAGES_MAP.t_shirt, // Fallback for boubou
   }
 };
 
@@ -152,21 +154,21 @@ export const THEME_IMAGES = {
  */
 export const THEME_AUDIO = {
   famille: {
-    p1: require("../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Mon Frère en duala.mp3"),
-    p2: require("../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/les grands parents en duala.mp3"),
-    p3: require("../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Le bebe en duala.mp3"),
-    p4: require("../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/l'oncle en douala.mp3"),
-    p5: require("../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Mon Frère en duala.mp3"),
-    p6: require("../../assets/audio/Theme 0 de la langue duala (Voices)/Exercise 1 du theme 0 en duala/Le bebe en duala.mp3")
+    p1: AUDIOS_MAP.mon_frere_en_duala,
+    p2: AUDIOS_MAP.les_grands_parents_en_duala,
+    p3: AUDIOS_MAP.le_bebe_en_duala,
+    p4: AUDIOS_MAP.l_oncle_en_douala,
+    p5: AUDIOS_MAP.mon_frere_en_duala,
+    p6: AUDIOS_MAP.le_bebe_en_duala
   },
   vetements: {
-    tie: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 2 du theme 5 en duala/exer N2 Rpsne N1.mp3"),
-    jacket: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 3 du theme 5 en duala/exer 3 Rpsne N1 (La veste duala).mp3"),
-    shoes: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 1 du theme 5/cette chaussure en langue duala.mp3"),
-    babouches: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 3 du theme 5 en duala/exer 3 Rpsne N5 (la paire de babouche en duala).mp3"),
-    tshirt: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 1 du theme 5/Cette habit en langue duala.mp3"),
-    pants: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 3 du theme 5 en duala/exer 3 Rpsne N2 (Les pentalons en duala).mp3"),
-    boubou: require("../../assets/audio/Theme 3 de la langue duala (voices)/Exercise 1 du theme 5/Ces boubou en lanue duala.mp3")
+    tie: AUDIOS_MAP.exer_n2_rpsne_n1,
+    jacket: AUDIOS_MAP.exer_3_rpsne_n1_la_veste_duala,
+    shoes: AUDIOS_MAP.cette_chaussure_en_langue_duala,
+    babouches: AUDIOS_MAP.exer_3_rpsne_n5_la_paire_de_babouche_en_duala,
+    tshirt: AUDIOS_MAP.cette_habit_en_langue_duala,
+    pants: AUDIOS_MAP.exer_3_rpsne_n2_les_pentalons_en_duala,
+    boubou: AUDIOS_MAP.ces_boubou_en_lanue_duala
   }
 };
 

@@ -15,6 +15,7 @@ import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useTranslation } from "react-i18next";
+import { IMAGES_MAP } from "../../../src/utils/AssetsMap";
 
 /* ── Palette (mirrors session.jsx) ──────────────────────────── */
 const C = {
@@ -200,7 +201,7 @@ const MatchScreen = ({ q, onCorrect, onWrong, onNext, langName, playAudio }) => 
         <Animated.View style={[mx.headerWrap, { opacity: headerOp }]}>
           <View style={mx.logoCircle}>
             <Image
-              source={require("../../../assets/Avatar-images -profile-picker/logo.png")}
+              source={IMAGES_MAP.logo}
               style={mx.logo}
               contentFit="contain"
             />

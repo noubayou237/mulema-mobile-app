@@ -59,13 +59,13 @@ export default function LessonScreen() {
   const { t } = useTranslation();
   const { themeId, lessonId } = useLocalSearchParams();
 
-  const { lessons, fetchLessons, themes, isLessonLocked } = useThemeStore();
+  const { lessons, fetchLessons, themes, isLessonLocked, currentThemeId } = useThemeStore();
   const { data: dash } = useDashboardStore();
   const { activeLanguage } = useLanguageStore();
 
   /* Charger les leçons si besoin */
   useEffect(() => {
-    if (themeId && lessons.length === 0) {
+    if (themeId && (lessons.length === 0 || currentThemeId !== themeId)) {
       fetchLessons(themeId);
     }
   }, [themeId]);

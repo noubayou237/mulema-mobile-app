@@ -115,7 +115,7 @@ const HomeHeader = ({ streak = 0, xp = 0, hearts = 5, nextRechargeIn = 0, onMenu
         <TouchableOpacity onPress={onMenuPress} activeOpacity={0.7} style={s.menuBtn}>
           <Ionicons name="menu" size={22} color={RED} />
         </TouchableOpacity>
-        <Image source={require("../../assets/Avatar-images -profile-picker/logo.png")} style={{ width: 72, height: 72, marginLeft: Space.sm }} contentFit="contain" />
+        <Image source={IMAGES_MAP.logo} style={{ width: 72, height: 72, marginLeft: Space.sm }} contentFit="contain" />
       </View>
 
       <View style={s.headerRight}>
@@ -320,6 +320,7 @@ const ExerciseRow = ({ exo, onPress }) => {
     </TouchableOpacity>
   );
 };
+import { IMAGES_MAP } from "../../src/utils/AssetsMap";
 
 /* ════════════════════════════════════════════════════════════════════
    MAIN SCREEN

@@ -60,6 +60,10 @@ export const useAuthStore = create((set, get) => ({
         isLoading: false,
         isSessionLoaded: true,
       });
+
+      // Sync other stores
+      useLanguageStore.getState().syncWithUser(user);
+      useDashboardStore.getState().fetchDashboard();
     } catch (error) {
       if (error?.response?.status === 401 || error?.response?.status === 403) {
         await clearSession();
@@ -110,6 +114,10 @@ export const useAuthStore = create((set, get) => ({
       isAuthenticated: true,
     });
 
+    // Sync other stores
+    if (user) useLanguageStore.getState().syncWithUser(user);
+    useDashboardStore.getState().fetchDashboard();
+
     return data;
   },
 
@@ -141,6 +149,11 @@ export const useAuthStore = create((set, get) => ({
       token: tokens.accessToken,
       isAuthenticated: true,
     });
+
+    // Sync other stores
+    if (user) useLanguageStore.getState().syncWithUser(user);
+    useDashboardStore.getState().fetchDashboard();
+
     return user;
   },
 

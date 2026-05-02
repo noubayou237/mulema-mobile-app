@@ -1,0 +1,76 @@
+import React, { useEffect, useRef } from "react";
+import { View, StyleSheet, Animated, Dimensions, Image, StatusBar, Easing } from "react-native";
+import { IMAGES_MAP } from "../../utils/AssetsMap";
+
+const { width } = Dimensions.get("window");
+
+export const SplashScreen = () => {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const scale = useRef(new Animated.Value(0.92)).current;
+
+  useEffect(() => {
+    // Slow fade-in reveal
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 1800,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 1800,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // After reveal, gentle breathing zoom
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(scale, {
+            toValue: 1.06,
+            duration: 1200,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(scale, {
+            toValue: 0.97,
+            duration: 1200,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    });
+  }, []);
+
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <Animated.View style={[styles.logoWrap, { opacity, transform: [{ scale }] }]}>
+        <Image source={IMAGES_MAP.logo} style={styles.logo} resizeMode="contain" />
+      </Animated.View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoWrap: {
+    width: width * 0.45,
+    height: width * 0.45,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logo: {
+    width: "100%",
+    height: "100%",
+  },
+});
+
+export default SplashScreen;

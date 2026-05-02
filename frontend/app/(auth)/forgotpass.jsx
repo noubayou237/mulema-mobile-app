@@ -26,7 +26,7 @@ import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import api from "../../src/services/api";
 
-// ── Design system ──
+import { IMAGES_MAP } from "../../src/utils/AssetsMap";
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 import { getFriendlyErrorMessage } from "../../src/utils/errorUtils";
 import {
@@ -211,7 +211,7 @@ const ForgotPasswordScreen = () => {
           <Animated.View style={[s.heroWrap, { opacity: heroAnim, transform: [{ scale: heroScale }] }]}>
             <View style={s.heroCard}>
               <Image
-                source={require("../../assets/Avatar-images -profile-picker/logo.png")}
+                source={IMAGES_MAP.logo}
                 style={s.heroImg}
                 contentFit="contain"
               />

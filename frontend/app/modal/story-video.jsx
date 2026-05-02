@@ -13,6 +13,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Space } from "../../src/theme/tokens";
 import { useThemeStore } from "../../src/stores/useThemeStore";
+import { VIDEOS_MAP } from "../../src/utils/AssetsMap";
 
 const { width: SW, height: SH } = Dimensions.get("window");
 
@@ -20,16 +21,16 @@ const { width: SW, height: SH } = Dimensions.get("window");
 // Keyed by "langCode_themeOrder". Missing keys (duala_1 = corrupted source,
 // duala_3 = no recording) auto-skip the video and still unlock the next theme.
 const THEME_VIDEOS = {
-  bassa_0:   require("../../assets/BassaVideos/bassa_t0.mp4"),
-  bassa_1:   require("../../assets/BassaVideos/bassa_t1.mp4"),
-  bassa_2:   require("../../assets/BassaVideos/bassa_t2.mp4"),
-  bassa_3:   require("../../assets/BassaVideos/bassa_t3.mp4"),
-  duala_0:   require("../../assets/DualaVideos/duala_t0.mp4"),
-  duala_2:   require("../../assets/DualaVideos/duala_t2.mp4"),
-  ghomala_0: require("../../assets/GhomalaVidoes/ghomala_t0.mp4"),
-  ghomala_1: require("../../assets/GhomalaVidoes/ghomala_t1.mp4"),
-  ghomala_2: require("../../assets/GhomalaVidoes/ghomala_t2.mp4"),
-  ghomala_3: require("../../assets/GhomalaVidoes/ghomala_t3.mp4"),
+  bassa_0:   VIDEOS_MAP.bassa_t0,
+  bassa_1:   VIDEOS_MAP.bassa_t1,
+  bassa_2:   VIDEOS_MAP.bassa_t2,
+  bassa_3:   VIDEOS_MAP.bassa_t3,
+  duala_0:   VIDEOS_MAP.duala_t0,
+  duala_2:   VIDEOS_MAP.duala_t2,
+  ghomala_0: VIDEOS_MAP.ghomala_t0,
+  ghomala_1: VIDEOS_MAP.ghomala_t1,
+  ghomala_2: VIDEOS_MAP.ghomala_t2,
+  ghomala_3: VIDEOS_MAP.ghomala_t3,
 };
 
 export default function OnboardingVideoScreen() {
