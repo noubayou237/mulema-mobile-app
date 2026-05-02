@@ -7,10 +7,6 @@
  * ║  - Timeout de 15s                                             ║
  * ║  - Gestion d'erreurs propre                                   ║
  * ╚══════════════════════════════════════════════════════════════╝
- *
- *  Usage :
- *    import api from "@/services/api";
- *    const { data } = await api.get("/languages");
  */
 
 import axios from "axios";
@@ -19,24 +15,19 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 
 // ── Config ──
-// Dev  : auto-detects host IP via expo-constants, or uses EXPO_PUBLIC_API_IP
-// Prod : https://xg7m6ie6.up.railway.app/api
 
 const getBaseUrl = () => {
-  // Explicit URL from env takes priority — works in both dev and prod
   const EXPO_PUBLIC_API_URL = process.env.EXPO_PUBLIC_API_URL;
   if (EXPO_PUBLIC_API_URL) {
     return EXPO_PUBLIC_API_URL.replace(/\/$/, "");
   }
 
   if (__DEV__) {
-    // Fallback: local IP override
     const EXPO_PUBLIC_API_IP = process.env.EXPO_PUBLIC_API_IP;
     if (EXPO_PUBLIC_API_IP) {
       return `http://${EXPO_PUBLIC_API_IP}:5001`;
     }
 
-    // Last resort: auto-detect host from Expo
     const debuggerHost = Constants.expoConfig?.hostUri;
     const localhost = debuggerHost ? debuggerHost.split(":")[0] : "localhost";
     return `http://${localhost}:5001`;
@@ -46,13 +37,15 @@ const getBaseUrl = () => {
 };
 
 const BASE_URL = getBaseUrl();
-
 const STORAGE_KEY = "userSession";
 const TIMEOUT = 10000;
 
 // Synchronous flag — set/cleared together with AsyncStorage so that store
 // fetch functions can guard against post-logout calls without async I/O.
 let _sessionActive = false;
+let _cachedAccessToken = null;
+let _cachedRefreshToken = null;
+
 export const isSessionActive = () => _sessionActive;
 
 // ── Instance Axios ──
@@ -71,14 +64,25 @@ const api = axios.create({
 
 api.interceptors.request.use(
   async (config) => {
+    const start = Date.now();
     try {
-      const raw = await SecureStore.getItemAsync(STORAGE_KEY);
-      if (raw) {
-        const session = JSON.parse(raw);
-        if (session?.accessToken) {
-          config.headers.Authorization = `Bearer ${session.accessToken}`;
+      // Logic: Use memory cache if available, otherwise read from SecureStore
+      if (!_cachedAccessToken) {
+        const raw = await SecureStore.getItemAsync(STORAGE_KEY);
+        if (raw) {
+          const session = JSON.parse(raw);
+          _cachedAccessToken = session?.accessToken;
+          _cachedRefreshToken = session?.refreshToken;
+          if (_cachedAccessToken) _sessionActive = true;
         }
       }
+
+      if (_cachedAccessToken) {
+        config.headers.Authorization = `Bearer ${_cachedAccessToken}`;
+      }
+      
+      // Performance tagging for debug
+      config.metadata = { startTime: start };
     } catch {
       // Silently fail — pas de token = requête sans auth
     }
@@ -106,22 +110,22 @@ const processQueue = (error, token = null) => {
 };
 
 api.interceptors.response.use(
-  // Succès — retourne directement
-  (response) => response,
+  (response) => {
+    const duration = Date.now() - (response.config.metadata?.startTime || Date.now());
+    if (duration > 1000) {
+      console.warn(`[API] Slow request: ${response.config.method?.toUpperCase()} ${response.config.url} took ${duration}ms`);
+    }
+    return response;
+  },
 
-  // Erreur
   async (error) => {
     const originalRequest = error.config;
-
-    // Ignorer les requêtes d'authentification pour éviter de déclencher l'interceptor sur login/register
     const isAuthRequest = originalRequest.url?.includes('auth/login') || originalRequest.url?.includes('auth/refresh') || originalRequest.url?.includes('auth/register');
 
-    // Si ce n'est pas un 401, si c'est déjà un retry, ou si c'est une route d'auth → rejeter
     if (error.response?.status !== 401 || originalRequest._retry || isAuthRequest) {
       return Promise.reject(error);
     }
 
-    // Si on est déjà en train de refresh → mettre en queue
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject });
@@ -133,44 +137,36 @@ api.interceptors.response.use(
         .catch((err) => Promise.reject(err));
     }
 
-    // Tenter le refresh
     originalRequest._retry = true;
     isRefreshing = true;
 
     try {
-      const raw = await SecureStore.getItemAsync(STORAGE_KEY);
+      const refreshToken = _cachedRefreshToken || (await getSession())?.refreshToken;
 
-      if (!raw || !JSON.parse(raw)?.refreshToken) {
+      if (!refreshToken) {
         return Promise.reject(error);
       }
 
-      const session = JSON.parse(raw);
-
-      // Appel refresh — utilise axios directement (pas l'instance api)
       const { data } = await axios.post(`${BASE_URL}/auth/refresh`, {
-        refreshToken: session.refreshToken,
+        refreshToken: refreshToken,
       });
 
-      // Sauvegarder les nouveaux tokens
+      _cachedAccessToken = data.accessToken;
+      _cachedRefreshToken = data.refreshToken || refreshToken;
+
       const newSession = {
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken || session.refreshToken,
+        accessToken: _cachedAccessToken,
+        refreshToken: _cachedRefreshToken,
       };
       await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(newSession));
 
-      // Débloquer la queue
       processQueue(null, data.accessToken);
 
-      // Retry la requête originale
       originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
       return api(originalRequest);
     } catch (refreshError) {
-      // Refresh échoué → déconnecter l'utilisateur
       processQueue(refreshError, null);
-      await SecureStore.deleteItemAsync(STORAGE_KEY);
-
-      // Note : le useAuthStore détectera l'absence de token au prochain check
-      // et redirigera vers sign-in
+      await clearSession();
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;
@@ -184,32 +180,41 @@ api.interceptors.response.use(
 
 export const saveSession = async (tokens) => {
   _sessionActive = true;
+  _cachedAccessToken = tokens.accessToken;
+  _cachedRefreshToken = tokens.refreshToken;
   await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(tokens));
 };
 
 export const clearSession = async () => {
   _sessionActive = false;
+  _cachedAccessToken = null;
+  _cachedRefreshToken = null;
   await SecureStore.deleteItemAsync(STORAGE_KEY);
 };
 
 export const getSession = async () => {
+  if (_cachedAccessToken) {
+    return { accessToken: _cachedAccessToken, refreshToken: _cachedRefreshToken };
+  }
+
   try {
-    // Primary: read from encrypted storage
     const raw = await SecureStore.getItemAsync(STORAGE_KEY);
     if (raw) {
       const session = JSON.parse(raw);
-      if (session?.accessToken) _sessionActive = true;
+      _cachedAccessToken = session?.accessToken;
+      _cachedRefreshToken = session?.refreshToken;
+      if (_cachedAccessToken) _sessionActive = true;
       return session;
     }
 
-    // Migration: silently move tokens saved by older app versions from
-    // AsyncStorage to SecureStore so existing users are not logged out.
     const legacyRaw = await AsyncStorage.getItem(STORAGE_KEY);
     if (legacyRaw) {
       await SecureStore.setItemAsync(STORAGE_KEY, legacyRaw);
       await AsyncStorage.removeItem(STORAGE_KEY);
       const session = JSON.parse(legacyRaw);
-      if (session?.accessToken) _sessionActive = true;
+      _cachedAccessToken = session?.accessToken;
+      _cachedRefreshToken = session?.refreshToken;
+      if (_cachedAccessToken) _sessionActive = true;
       return session;
     }
 

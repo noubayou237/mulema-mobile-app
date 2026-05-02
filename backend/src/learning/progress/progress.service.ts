@@ -15,21 +15,26 @@ export class ProgressService {
       orderBy: { order: 'asc' },
     });
 
-    for (let i = 0; i < words.length; i++) {
-      await this.prisma.userProgress.upsert({
-        where: {
-          userId_mulemWordId: { userId, mulemWordId: words[i].id },
-        },
-        update: {},
-        create: {
-          userId,
-          mulemWordId: words[i].id,
-          isUnlocked: i < 2, // Les 2 premières leçons sont débloquées par défaut
-          isCompleted: false,
-          stars: 0,
-        },
-      });
-    }
+    // Strategy: Batch check existing to only create missing ones, or use a transaction
+    // createMany is faster but doesn't support "on conflict skip" easily in all Prisma versions without specific args
+    // We'll use a transaction for safety and speed compared to a loose loop.
+    await this.prisma.$transaction(
+      words.map((word, i) =>
+        this.prisma.userProgress.upsert({
+          where: {
+            userId_mulemWordId: { userId, mulemWordId: word.id },
+          },
+          update: {},
+          create: {
+            userId,
+            mulemWordId: word.id,
+            isUnlocked: i < 2, 
+            isCompleted: false,
+            stars: 0,
+          },
+        })
+      )
+    );
   }
 
   async completeMulemWord(userId: string, wordId: string, stars: number) {
@@ -69,19 +74,19 @@ export class ProgressService {
   async unlockLessonsAfterExercise(userId: string, themeId: string) {
     const words = await this.prisma.mulemWord.findMany({
       where: { themeId },
-      orderBy: { order: 'asc' },
+      select: { id: true },
     });
 
-    // Pour l'instant, on débloque tout le thème si un exercice est réussi avec succès
-    // (A affiner selon si on veut un déblocage granulaire)
-    for (const word of words) {
-      await this.prisma.userProgress.update({
-        where: {
-          userId_mulemWordId: { userId, mulemWordId: word.id },
-        },
-        data: { isUnlocked: true },
-      });
-    }
+    const wordIds = words.map((w) => w.id);
+
+    // Optimized: Single updateMany call instead of a loop
+    await this.prisma.userProgress.updateMany({
+      where: {
+        userId,
+        mulemWordId: { in: wordIds },
+      },
+      data: { isUnlocked: true },
+    });
   }
 
   /**

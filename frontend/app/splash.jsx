@@ -7,16 +7,20 @@ import { useRouter } from "expo-router";
 import { STORAGE_KEYS } from "../src/constants/storageKeys";
 import Logger from "../src/utils/logger";
 
+import { useDashboardStore } from "../src/stores/useDashboardStore";
+import { useLanguageStore } from "../src/stores/useLanguageStore";
+import { useThemeStore } from "../src/stores/useThemeStore";
+
 const HAS_SELECTED_LANGUAGE = "selectedLanguage";
 const HAS_SEEN_INTRO = "hasSeenIntro";
-const SESSION_KEY = "userSession"; // Must match UserContext.jsx
-const SPLASH_DURATION_MS = 5000; // Reduced to 2 seconds for better UX
+const SESSION_KEY = "userSession"; 
+const SPLASH_DURATION_MS = 2500; // Snappy but allows for data warm-up
 
 // animation timing
-const BASE_DELAY_MS = 800;
-const STEP_DELAY_MS = 100;
-const ANIM_DURATION = 1000;
-const BEZIER = Easing.bezier(0.95, 0.05, 0.795, 0.035);
+const BASE_DELAY_MS = 600;
+const STEP_DELAY_MS = 80;
+const ANIM_DURATION = 800;
+const BEZIER = Easing.bezier(0.4, 0, 0.2, 1);
 
 // --- SVG PATHS (INCHANGÉS) ---
 const PATHS = [
@@ -60,44 +64,81 @@ export default function Splash() {
   const router = useRouter();
   const animValuesRef = useRef(PATHS.map(() => new Animated.Value(0)));
   const animValues = animValuesRef.current;
+  
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const { fetchDashboard } = useDashboardStore();
+  const { loadActiveLanguage } = useLanguageStore();
 
   useEffect(() => {
-    // create animations with delays
+    // 1. Logo paths fade-in sequence
     const animations = animValues.map((v, i) =>
       Animated.timing(v, {
         toValue: 1,
         duration: ANIM_DURATION,
         delay: BASE_DELAY_MS + STEP_DELAY_MS * i,
         easing: BEZIER,
-        useNativeDriver: false
+        useNativeDriver: true
       })
     );
 
-    Animated.parallel(animations).start();
+    // 2. Breathing scale animation
+    const breathing = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.1,
+          duration: 1200,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 1200,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    );
 
-    // Redirection après le splash
+    Animated.parallel([
+      Animated.parallel(animations),
+      breathing
+    ]).start();
+
+    // 3. Background Data Warming
+    const warmUpData = async () => {
+      try {
+        const session = await AsyncStorage.getItem(SESSION_KEY);
+        if (session) {
+          // Fire these in parallel while animation plays
+          fetchDashboard(); 
+          const lang = await loadActiveLanguage();
+          if (lang) {
+            useThemeStore.getState().fetchThemes(lang.id);
+          }
+        }
+      } catch (e) {
+        Logger.error("Splash warm-up error", e);
+      }
+    };
+    warmUpData();
+
+    // 4. Redirection after the splash
     const timer = setTimeout(async () => {
       try {
-        // Check for existing session
         const session = await AsyncStorage.getItem(SESSION_KEY);
         const hasLang = await AsyncStorage.getItem(HAS_SELECTED_LANGUAGE);
 
         if (session) {
-          // User is logged in - check language
           if (!hasLang) {
-            // First time user - go to language selection
             router.replace("/choice-language");
           } else {
-            // Returning user - go to home
             router.replace("/(tabs)/home");
           }
         } else {
-          // Not logged in - go to sign in
           router.replace("/(auth)/sign-in");
         }
       } catch (err) {
-        Logger.warn("Splash: erreur de redirection", err);
-        // On error, redirect to sign in for safety
+        Logger.warn("Splash redirect error", err);
         router.replace("/(auth)/sign-in");
       }
     }, SPLASH_DURATION_MS);
@@ -110,7 +151,14 @@ export default function Splash() {
 
   return (
     <View style={styles.outer}>
-      <View style={[styles.card, { width: svgSize, height: svgSize }]}>
+      <Animated.View style={[
+        styles.card, 
+        { 
+          width: svgSize, 
+          height: svgSize,
+          transform: [{ scale: scaleAnim }]
+        }
+      ]}>
         <Svg
           width={svgSize}
           height={svgSize}
@@ -134,7 +182,7 @@ export default function Splash() {
             ))}
           </G>
         </Svg>
-      </View>
+      </Animated.View>
     </View>
   );
 }

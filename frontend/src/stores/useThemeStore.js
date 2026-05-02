@@ -4,6 +4,11 @@ import { themesService } from "../services/themes.service";
 import api, { isSessionActive } from "../services/api";
 import { getFriendlyErrorMessage, isNetworkError } from "../utils/errorUtils";
 
+// Cache settings
+const STALE_TIME = 30000; // 30 seconds
+const inflightRequests = new Map();
+const lastFetchTime = new Map();
+
 export const useThemeStore = create((set, get) => ({
   // ── State ──
   themes: [],                // Theme[] — thèmes de la langue active
@@ -20,83 +25,165 @@ export const useThemeStore = create((set, get) => ({
   words: [],                 // Word[] — mots de la leçon sélectionnée
   wordsLoading: false,
 
+  // Cache pour les mots (pour éviter de re-fetcher en boucle)
+  wordsCache: {},            // { [lessonId]: Word[] }
+
   // ═════════════════════════════════════════════════════════════
   // fetchThemes — Charge les thèmes d'une langue
-  // Appelé quand activeLanguage change
   // ═════════════════════════════════════════════════════════════
 
   fetchThemes: async (languageId) => {
     if (!languageId || !isSessionActive()) return [];
+    
+    // 1. De-duplication: Return existing promise if already fetching this lang
+    const reqKey = `themes_${languageId}`;
+    if (inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
+
+    // 2. Cache Logic: If data is fresh, don't fetch
+    const now = Date.now();
+    const lastFetch = lastFetchTime.get(reqKey) || 0;
+    if (get().themes.length > 0 && (now - lastFetch < STALE_TIME)) {
+      return get().themes;
+    }
+
     const hasCache = get().themes.length > 0;
     set({ isLoading: !hasCache });
-    try {
-      const themes = await themesService.getByLanguage(languageId);
-      set({ themes, isLoading: false, error: null });
-      return themes;
-    } catch (error) {
-      const msg = getFriendlyErrorMessage(error);
-      set({ isLoading: false, error: msg });
-      
-      const isNetErr = isNetworkError(error);
-      if (error?.response?.status !== 401 && !isNetErr && isSessionActive()) {
-        Logger.error("[ThemeStore] fetchThemes error:", msg);
-      } else if (isNetErr) {
-        Logger.warn("[ThemeStore] fetchThemes network error:", msg);
+
+    const fetchPromise = (async () => {
+      try {
+        const themes = await themesService.getByLanguage(languageId);
+        set({ themes, isLoading: false, error: null });
+        lastFetchTime.set(reqKey, Date.now());
+        return themes;
+      } catch (error) {
+        const msg = getFriendlyErrorMessage(error);
+        set({ isLoading: false, error: msg });
+        
+        if (error?.response?.status !== 401 && !isNetworkError(error)) {
+          Logger.error("[ThemeStore] fetchThemes error:", msg);
+        }
+        return [];
+      } finally {
+        inflightRequests.delete(reqKey);
       }
-      return [];
-    }
+    })();
+
+    inflightRequests.set(reqKey, fetchPromise);
+    return fetchPromise;
   },
 
   // ═════════════════════════════════════════════════════════════
   // fetchLessons — Charge les leçons d'un thème
-  // Appelé quand l'utilisateur entre dans un thème
   // ═════════════════════════════════════════════════════════════
 
   fetchLessons: async (themeId) => {
     if (!themeId || !isSessionActive()) return [];
+
+    const reqKey = `lessons_${themeId}`;
+    if (inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
+
+    const now = Date.now();
+    const lastFetch = lastFetchTime.get(reqKey) || 0;
     const { currentThemeId, lessons: cached } = get();
+    
+    if (currentThemeId === themeId && cached.length > 0 && (now - lastFetch < STALE_TIME)) {
+      return cached;
+    }
+
     const hasCache = currentThemeId === themeId && cached.length > 0;
     set({ currentThemeId: themeId, lessonsLoading: !hasCache });
-    try {
-      const lessons = await themesService.getLessons(themeId);
-      set({ lessons, lessonsLoading: false });
-      return lessons;
-    } catch (error) {
-      set({ lessonsLoading: false });
-      const isNetErr = isNetworkError(error);
-      if (error?.response?.status !== 401 && !isNetErr) {
-        Logger.error("[ThemeStore] fetchLessons error:", error);
-      } else if (isNetErr) {
-        Logger.warn("[ThemeStore] fetchLessons network error:", error.message);
+
+    const fetchPromise = (async () => {
+      try {
+        const lessons = await themesService.getLessons(themeId);
+        set({ lessons, lessonsLoading: false });
+        lastFetchTime.set(reqKey, Date.now());
+
+        // Prefetch words for unlocked lessons to make entry instant
+        const unlockedIds = lessons
+          .filter(l => !get().isLessonLocked(l.id, l.order))
+          .map(l => l.id);
+        
+        if (unlockedIds.length > 0) {
+          // Fire and forget prefetch
+          get().prefetchWords(unlockedIds);
+        }
+
+        return lessons;
+      } catch (error) {
+        set({ lessonsLoading: false });
+        if (error?.response?.status !== 401) {
+          Logger.error("[ThemeStore] fetchLessons error:", error);
+        }
+        return [];
+      } finally {
+        inflightRequests.delete(reqKey);
       }
-      return [];
-    }
+    })();
+
+    inflightRequests.set(reqKey, fetchPromise);
+    return fetchPromise;
   },
 
   // ═════════════════════════════════════════════════════════════
   // fetchWords — Charge les mots d'une leçon
-  // Appelé quand l'utilisateur entre dans une leçon
   // ═════════════════════════════════════════════════════════════
 
-  fetchWords: async (lessonId) => {
+  fetchWords: async (lessonId, silent = false) => {
     if (!lessonId || !isSessionActive()) return [];
-    const { currentLessonId, words: cached } = get();
-    const hasCache = currentLessonId === lessonId && cached.length > 0;
-    set({ currentLessonId: lessonId, wordsLoading: !hasCache });
-    try {
-      const words = await themesService.getWords(lessonId);
-      set({ words, wordsLoading: false });
-      return words;
-    } catch (error) {
-      set({ wordsLoading: false });
-      const isNetErr = isNetworkError(error);
-      if (error?.response?.status !== 401 && !isNetErr) {
-        Logger.error("[ThemeStore] fetchWords error:", error);
-      } else if (isNetErr) {
-        Logger.warn("[ThemeStore] fetchWords network error:", error.message);
+
+    const reqKey = `words_${lessonId}`;
+    
+    // 1. Check cache first
+    const { wordsCache } = get();
+    const now = Date.now();
+    const lastFetch = lastFetchTime.get(reqKey) || 0;
+
+    if (wordsCache[lessonId] && (now - lastFetch < STALE_TIME)) {
+      if (!silent) {
+        set({ words: wordsCache[lessonId], currentLessonId: lessonId, wordsLoading: false });
       }
-      return [];
+      return wordsCache[lessonId];
     }
+
+    if (inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
+
+    if (!silent) {
+      set({ currentLessonId: lessonId, wordsLoading: true });
+    }
+
+    const fetchPromise = (async () => {
+      try {
+        const words = await themesService.getWords(lessonId);
+        set((state) => ({ 
+          wordsCache: { ...state.wordsCache, [lessonId]: words },
+          ...(silent ? {} : { words, wordsLoading: false })
+        }));
+        lastFetchTime.set(reqKey, Date.now());
+        return words;
+      } catch (error) {
+        if (!silent) set({ wordsLoading: false });
+        if (error?.response?.status !== 401) {
+          Logger.error("[ThemeStore] fetchWords error:", error);
+        }
+        return [];
+      } finally {
+        inflightRequests.delete(reqKey);
+      }
+    })();
+
+    inflightRequests.set(reqKey, fetchPromise);
+    return fetchPromise;
+  },
+
+  /**
+   * Prefetch words for one or more lessons silently.
+   */
+  prefetchWords: async (lessonIds) => {
+    if (!Array.isArray(lessonIds)) lessonIds = [lessonIds];
+    const { fetchWords } = get();
+    // Fetch in parallel
+    return Promise.all(lessonIds.map(id => fetchWords(id, true)));
   },
 
   // ═════════════════════════════════════════════════════════════
@@ -251,6 +338,7 @@ export const useThemeStore = create((set, get) => ({
       currentLessonId: null,
       words: [],
       wordsLoading: false,
+      wordsCache: {},
     });
   },
   // ═════════════════════════════════════════════════════════════
@@ -266,6 +354,7 @@ export const useThemeStore = create((set, get) => ({
       isLoading: false,
       lessonsLoading: false,
       wordsLoading: false,
+      wordsCache: {},
       error: null,
     });
   },

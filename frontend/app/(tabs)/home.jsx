@@ -349,18 +349,29 @@ export default function HomeScreen() {
   };
 
   useEffect(() => {
+    const start = Date.now();
     const init = async () => {
-      if (activeLanguage) {
-        const langId = getPatrimonialId(activeLanguage, languages);
-        if (langId) fetchThemes(langId);
-        fetchDashboard();
-        return;
+      try {
+        if (activeLanguage) {
+          const langId = getPatrimonialId(activeLanguage, languages);
+          const tasks = [fetchDashboard()];
+          if (langId) tasks.push(fetchThemes(langId));
+          await Promise.all(tasks);
+        } else {
+          const langs = await fetchLanguages().catch(() => []);
+          const lang = await loadActiveLanguage();
+          const langId2 = getPatrimonialId(lang, langs);
+          const tasks = [fetchDashboard()];
+          if (langId2) tasks.push(fetchThemes(langId2));
+          await Promise.all(tasks);
+        }
+        const total = Date.now() - start;
+        if (__DEV__ || total > 1000) {
+          console.log(`[PERF] Home initialization took ${total}ms`);
+        }
+      } catch (err) {
+        // Error handling handled by stores
       }
-      const langs = await fetchLanguages().catch(() => []);
-      const lang = await loadActiveLanguage();
-      const langId2 = getPatrimonialId(lang, langs);
-      if (langId2) fetchThemes(langId2);
-      fetchDashboard();
     };
     init();
   }, []);

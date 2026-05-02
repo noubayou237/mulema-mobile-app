@@ -8,21 +8,21 @@ datasource db {
 }
 
 model User {
-  id                 String            @id @default(uuid())
+  id                 String                   @id @default(uuid())
   name               String
-  email              String            @unique
-  username           String            @unique
-  totalPrawns        Int               @default(0)
-  createdAt          DateTime          @default(now())
-  role               Role              @default(USER)
+  email              String                   @unique
+  username           String                   @unique
+  totalPrawns        Int                      @default(0)
+  createdAt          DateTime                 @default(now())
+  role               Role                     @default(USER)
   officialLanguageId String?
-  isSocial           Boolean           @default(false)
-  isVerified         Boolean           @default(false)
-  language           String            @default("en")
+  isSocial           Boolean                  @default(false)
+  isVerified         Boolean                  @default(false)
+  language           String                   @default("en")
   passwordHash       String?
   provider           SocialProvider?
   providerId         String?
-  updatedAt          DateTime          @updatedAt
+  updatedAt          DateTime                 @updatedAt
   avatar             Avatar?
   cowry              Cowry?
   otps               Otp[]
@@ -30,11 +30,11 @@ model User {
   rootsStreak        RootsStreak?
   settings           Settings?
   statistics         Statistics?
-  officialLanguage   OfficialLanguage? @relation(fields: [officialLanguageId], references: [id])
+  officialLanguage   OfficialLanguage?        @relation(fields: [officialLanguageId], references: [id])
   languages          UserLanguage[]
-  progress           UserProgress[]
   mulemThemeProgress UserMulemThemeProgress[]
-  communities        Community[]       @relation("CommunityToUser")
+  progress           UserProgress[]
+  communities        Community[]              @relation("CommunityToUser")
 }
 
 model RefreshToken {
@@ -244,15 +244,15 @@ model UserProgress {
 }
 
 model UserMulemThemeProgress {
-  id            String     @id @default(uuid())
-  userId        String
-  themeId       String
-  isCompleted   Boolean    @default(false)
-  videoWatched  Boolean    @default(false)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  theme         MulemTheme @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  id           String     @id @default(uuid())
+  userId       String
+  themeId      String
+  isCompleted  Boolean    @default(false)
+  videoWatched Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  theme        MulemTheme @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, themeId])
 }
@@ -297,24 +297,25 @@ model Cowry {
 }
 
 model MulemTheme {
-  id                    String              @id @default(uuid())
-  patrimonialLanguageId String
-  code                  String
-  order                 Int                 @default(0)
-  name_fr               String
-  name_local            String
-  icon                  String?
-  color                 String?
-  locked                Boolean             @default(false)
-  lock_hint             String?
-  createdAt             DateTime            @default(now())
-  updatedAt             DateTime            @updatedAt
-  exercises             MulemExercise[]
-  patrimonialLanguage   PatrimonialLanguage @relation(fields: [patrimonialLanguageId], references: [id])
-  words                 MulemWord[]
+  id                     String                   @id @default(uuid())
+  patrimonialLanguageId  String
+  code                   String
+  order                  Int                      @default(0)
+  name_fr                String
+  name_local             String
+  icon                   String?
+  color                  String?
+  locked                 Boolean                  @default(false)
+  lock_hint              String?
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  exercises              MulemExercise[]
+  patrimonialLanguage    PatrimonialLanguage      @relation(fields: [patrimonialLanguageId], references: [id])
+  words                  MulemWord[]
   userMulemThemeProgress UserMulemThemeProgress[]
 
   @@unique([patrimonialLanguageId, code])
+  @@index([patrimonialLanguageId, order])
 }
 
 model MulemWord {
@@ -334,7 +335,7 @@ model MulemWord {
   theme        MulemTheme     @relation(fields: [themeId], references: [id], onDelete: Cascade)
   userProgress UserProgress[]
 
-  @@index([themeId])
+  @@index([themeId, order])
 }
 
 model MulemExercise {
@@ -348,7 +349,7 @@ model MulemExercise {
   updatedAt         DateTime   @updatedAt
   theme             MulemTheme @relation(fields: [themeId], references: [id], onDelete: Cascade)
 
-  @@index([themeId])
+  @@index([themeId, order])
 }
 
 enum QuestionType {

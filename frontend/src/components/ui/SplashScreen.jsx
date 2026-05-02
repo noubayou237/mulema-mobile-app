@@ -9,34 +9,35 @@ export const SplashScreen = () => {
   const scale = useRef(new Animated.Value(0.92)).current;
 
   useEffect(() => {
-    // Slow fade-in reveal
+    // Phase 1: Reveal the logo from invisible to visible
     Animated.parallel([
       Animated.timing(opacity, {
         toValue: 1,
-        duration: 1800,
-        easing: Easing.out(Easing.ease),
+        duration: 2200, // Slightly slower alpha reveal
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
         useNativeDriver: true,
       }),
       Animated.timing(scale, {
         toValue: 1,
-        duration: 1800,
-        easing: Easing.out(Easing.ease),
+        duration: 2200,
+        easing: Easing.out(Easing.back(1.2)),
         useNativeDriver: true,
       }),
     ]).start(() => {
-      // After reveal, gentle breathing zoom
+      // Phase 2: Steady "breathing" animation to indicate loading progress
+      // (Forward and backward subtle zoom)
       Animated.loop(
         Animated.sequence([
           Animated.timing(scale, {
-            toValue: 1.06,
-            duration: 1200,
-            easing: Easing.inOut(Easing.ease),
+            toValue: 1.06, 
+            duration: 1800,
+            easing: Easing.inOut(Easing.sin),
             useNativeDriver: true,
           }),
           Animated.timing(scale, {
-            toValue: 0.97,
-            duration: 1200,
-            easing: Easing.inOut(Easing.ease),
+            toValue: 0.94,
+            duration: 1800,
+            easing: Easing.inOut(Easing.sin),
             useNativeDriver: true,
           }),
         ])

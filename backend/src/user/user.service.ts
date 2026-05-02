@@ -54,7 +54,7 @@ export class UserService {
       Math.round((totalMinutes / dailyGoalMinutes) * 100),
     );
 
-    const updatedStreak = await this.updateStreak(userId);
+    const updatedStreak = await this.updateStreak(userId, streak);
     const cowrySynced = await this.syncCowries(userId, cowry);
 
     return {
@@ -73,25 +73,28 @@ export class UserService {
   // =====================
   // UPDATE STREAK (ROOTS)
   // =====================
-  private async updateStreak(userId: string) {
+  private async updateStreak(userId: string, existingStreak: any = null) {
     const now = new Date();
-    let streak;
-    try {
-      streak = await this.prisma.rootsStreak.upsert({
-        where: { userId },
-        update: {},
-        create: {
-          userId,
-          daysConnected: 0,
-          // @ts-ignore
-          lastConnectedAt: new Date(Date.now() - 48 * 60 * 60 * 1000), // simulate 2 days ago for new users
-        },
-      });
-    } catch (error) {
-      if (error.code === 'P2002') {
-        streak = await this.prisma.rootsStreak.findUnique({ where: { userId } });
-      } else {
-        throw error;
+    let streak = existingStreak;
+
+    if (!streak) {
+      try {
+        streak = await this.prisma.rootsStreak.upsert({
+          where: { userId },
+          update: {},
+          create: {
+            userId,
+            daysConnected: 0,
+            // @ts-ignore
+            lastConnectedAt: new Date(Date.now() - 48 * 60 * 60 * 1000), // simulate 2 days ago for new users
+          },
+        });
+      } catch (error) {
+        if (error.code === 'P2002') {
+          streak = await this.prisma.rootsStreak.findUnique({ where: { userId } });
+        } else {
+          throw error;
+        }
       }
     }
 
