@@ -167,7 +167,7 @@ const CorisModal = ({ visible, onClose, coris }) => {
           <View style={sm.sheetInner}>
             <View style={sm.handle} />
             <Animated.View style={{ transform: [{ scaleX: coinSpin.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0.15, 1] }) }] }}>
-              <Image source={require("../../assets/Avatar-images -profile-picker/colla.png")} style={sm.bigCoin} />
+              <Image source={IMAGES_MAP.colla} style={sm.bigCoin} />
             </Animated.View>
             <Text style={sm.streakCount}>{coris < 10 ? `0${coris}` : coris}</Text>
             <Text style={sm.streakTitle}>Tes Coris</Text>
@@ -426,7 +426,7 @@ const CorisChip = ({ coris, onPress }) => {
       <TouchableOpacity onPress={handlePress} activeOpacity={1}>
         <Animated.View style={[s.chip, { transform: [{ scale: press }] }]}>
           <Animated.View style={{ transform: [{ scale: bounce }] }}>
-            <Image source={require("../../assets/Avatar-images -profile-picker/colla.png")} style={s.coinImg} />
+            <Image source={IMAGES_MAP.colla} style={s.coinImg} />
           </Animated.View>
           <View>
             <Text style={s.corisNum}>{coris < 10 ? `0${coris}` : coris}</Text>
@@ -528,6 +528,8 @@ const getGreeting = () => {
 // ─────────────────────────────────────────────
 // MAIN HEADER
 // ─────────────────────────────────────────────
+import { IMAGES_MAP } from "../../src/utils/AssetsMap";
+
 export default function Header({
   pageName,
   username = "Apprenant",

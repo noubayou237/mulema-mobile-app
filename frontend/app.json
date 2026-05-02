@@ -5,7 +5,7 @@
     "owner": "leila237",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/Avatar-images -profile-picker/icon.png",
+    "icon": "./assets/avatars/icon.png",
     "scheme": "mulema",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -41,9 +41,9 @@
       "package": "com.mulema.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/Avatar-images -profile-picker/android-icon-foreground.png",
-        "backgroundImage": "./assets/Avatar-images -profile-picker/android-icon-background.png",
-        "monochromeImage": "./assets/Avatar-images -profile-picker/android-icon-monochrome.png"
+        "foregroundImage": "./assets/avatars/android_icon_foreground.png",
+        "backgroundImage": "./assets/avatars/android_icon_background.png",
+        "monochromeImage": "./assets/avatars/android_icon_monochrome.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -67,7 +67,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/Avatar-images -profile-picker/favicon.png"
+      "favicon": "./assets/avatars/favicon.png"
     },
     "plugins": [
       "expo-router",
@@ -81,7 +81,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/Avatar-images -profile-picker/splash-icon.png",
+          "image": "./assets/avatars/splash_icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",

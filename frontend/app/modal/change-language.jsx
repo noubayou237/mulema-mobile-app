@@ -70,13 +70,25 @@ export default function ChangeLanguageScreen() {
   }, []);
 
   const handleSelectLanguage = async (language) => {
-    if (language.id === activeLanguage?.id) return; // déjà active
+    if (language.id === activeLanguage?.id) return;
+    
+    // 1. Set the new language FIRST — before anything that triggers layout guards
     await setActiveLanguage(language);
     
+    // 2. Clear the theme store cache for the previous language
+    const { useThemeStore } = await import("../../src/stores/useThemeStore");
+    useThemeStore.getState().clearAll();
+    
+    // 3. Navigate explicitly BEFORE resetting hasSeenIntro.
+    //    If we reset hasSeenIntro first, the layout guard fires with the old language.
     router.replace({
       pathname: "/(onboarding)/PageVideo",
-      params: { lang: language.code }
+      params: { lang: language.name }
     });
+
+    // 4. Reset intro flag AFTER navigation — layout guard won't override our route
+    const { setHasSeenIntro } = useLanguageStore.getState();
+    await setHasSeenIntro(false);
   };
 
   const otherLanguages = React.useMemo(() => {

@@ -32,9 +32,22 @@ export class LevelService {
     return this.prisma.mulemWord.findMany({
       where: { themeId },
       orderBy: { order: 'asc' },
-      include: {
+      select: {
+        id: true,
+        word_fr: true,
+        word_local: true,
+        hint: true,
+        audio_url: true,
+        image_url: true,
+        order: true,
         userProgress: {
           where: { userId },
+          select: {
+            id: true,
+            isUnlocked: true,
+            isCompleted: true,
+            stars: true,
+          },
         },
       },
     });
@@ -52,9 +65,12 @@ export class LevelService {
         },
         words: {
           orderBy: { order: 'asc' },
-          include: {
+          select: {
+            id: true,
+            order: true,
             userProgress: {
               where: { userId, isCompleted: true },
+              select: { id: true },
             },
           },
         },

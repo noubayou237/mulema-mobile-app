@@ -30,6 +30,7 @@ import { useTranslation } from "react-i18next";
 import { getFriendlyErrorMessage } from "../../src/utils/errorUtils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../../src/services/api";
+import { IMAGES_MAP } from "../../src/utils/AssetsMap";
 
 // ── Design system ──
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
@@ -136,7 +137,7 @@ const SignInScreen = () => {
           <Animated.View style={[s.logoWrap, { opacity: logoAnim, transform: [{ scale: logoScale }] }]}>
             <View style={s.logoCircle}>
               <Image
-                source={require("../../assets/Avatar-images -profile-picker/logo.png")}
+                source={IMAGES_MAP.logo}
                 style={s.logoImg}
                 contentFit="contain"
               />

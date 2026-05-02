@@ -32,18 +32,46 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 
-// ── Design system ──
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 import { MButton } from "../../src/components/ui/MComponents";
+import { VIDEOS_MAP, IMAGES_MAP } from "../../src/utils/AssetsMap";
+import { pauseBackgroundMusic, resumeBackgroundMusic } from "../../src/hooks/useBackgroundMusic";
 
 const HAS_SEEN_INTRO = "hasSeenIntro";
 const HAS_SELECTED_LANGUAGE = "selectedLanguage";
 
 const VIDEO_BY_LANG = {
-  bassa: require("../../assets/bassa-intro-vid.mp4"),
-  duala: require("../../assets/duala-intro-vid.mp4"),
-  ghomala: require("../../assets/ghomala-intro-vid.mp4"),
-  default: require("../../assets/duala-intro-vid.mp4"),
+  bassa: VIDEOS_MAP.bassa_intro_vid,
+  duala: VIDEOS_MAP.duala_intro_vid,
+  ghomala: VIDEOS_MAP.ghomala_intro_vid,
+  default: VIDEOS_MAP.duala_intro_vid,
+};
+
+// Map every known form of a language identifier → canonical VIDEO_BY_LANG key.
+// Handles ISO-639 codes, backend names, full names, and diacritics.
+const LANG_ALIASES = {
+  // Bassa
+  bassa: "bassa", bas: "bassa", bassa_intro_vid: "bassa",
+  // Duala
+  duala: "duala", dua: "duala", duala_intro_vid: "duala",
+  // Ghomala
+  ghomala: "ghomala", gho: "ghomala", ghomala_intro_vid: "ghomala",
+  "ghomala'": "ghomala",
+};
+
+/**
+ * Normalize any language identifier to a canonical VIDEO_BY_LANG key.
+ * Accepts ISO codes (bas/dua/gho), full names, names with diacritics, etc.
+ */
+const normalizeLangKey = (raw) => {
+  if (!raw) return null;
+  const cleaned = String(raw)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // strip diacritics
+    .replace(/[^a-z0-9]/g, "")      // remove special chars
+    .trim();
+  return LANG_ALIASES[cleaned] ?? null;
 };
 
 const { width, height } = Dimensions.get("window");
@@ -105,40 +133,45 @@ export default function PageVideo() {
   const [videoLoading, setVideoLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // ── Resolve language — ORIGINAL LOGIC ──
+  // ── Pause background music while intro video plays ──
+  useEffect(() => {
+    pauseBackgroundMusic();
+    return () => { resumeBackgroundMusic(); };
+  }, []);
+
+  // ── Resolve language — uses normalizeLangKey to handle all code formats ──
   useEffect(() => {
     let mounted = true;
 
     (async () => {
       try {
-        let chosen = paramLang ?? null;
+        // 1. Try the navigation param first
+        let resolved = normalizeLangKey(paramLang);
 
-        if (!chosen) {
+        // 2. Try AsyncStorage
+        if (!resolved) {
           const stored = await AsyncStorage.getItem(HAS_SELECTED_LANGUAGE);
-          if (stored) chosen = stored;
+          resolved = normalizeLangKey(stored);
         }
 
-        if (!chosen) {
-          // If still no language, maybe check the store
+        // 3. Try the Zustand store (activeLanguage name then code)
+        if (!resolved) {
           const active = useLanguageStore.getState().activeLanguage;
-          if (active) chosen = active.code || active.name;
+          if (active) {
+            resolved = normalizeLangKey(active.name) ?? normalizeLangKey(active.code);
+          }
         }
 
-        if (!chosen) {
+        // 4. Nothing found → go back to language selection
+        if (!resolved) {
           router.replace("/ChoiceLanguage");
           return;
         }
 
-        // Normalize: lowercase, remove special chars if any
-        chosen = String(chosen)
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .replace(/[^a-z0-9]/g, "")
-          .trim();
+        Logger.info(`[PageVideo] Resolved language: "${paramLang}" → "${resolved}"`);
 
         if (mounted) {
-          setLangResolved(chosen);
+          setLangResolved(resolved);
           setResolving(false);
         }
       } catch (err) {
@@ -152,14 +185,13 @@ export default function PageVideo() {
 
   const videoUri = VIDEO_BY_LANG[langResolved] ?? VIDEO_BY_LANG.default;
 
-  // ── Persist & navigate — ORIGINAL LOGIC ──
-  // ✅ NOUVEAU — utilise le store pour que le root layout détecte la langue
+  // ── Persist & navigate ──
   const persistAndGoHome = async () => {
     const { languages, setActiveLanguage, setHasSeenIntro } = useLanguageStore.getState();
 
-    // 1. S'assurer que la langue est bien active dans le store
+    // Find the matching language in the store — use normalizeLangKey for robust matching
     const lang = languages.find(
-      (l) => l.code === langResolved || l.name.toLowerCase() === langResolved
+      (l) => normalizeLangKey(l.code) === langResolved || normalizeLangKey(l.name) === langResolved
     );
     if (lang) {
       await setActiveLanguage(lang);
@@ -177,14 +209,15 @@ export default function PageVideo() {
   // ── Play handler ──
   const handlePlay = async () => {
     try {
-      if (isPlaying) {
-        await videoRef.current?.pauseAsync?.();
-        setIsPlaying(false);
+      const status = await videoRef.current?.getStatusAsync();
+      if (status?.isPlaying) {
+        await videoRef.current?.pauseAsync();
       } else {
-        await videoRef.current?.replayAsync?.();
-        setIsPlaying(true);
+        await videoRef.current?.playAsync();
       }
-    } catch { }
+    } catch (e) {
+      Logger.warn("Video toggle error", e);
+    }
   };
 
   // ── Get description — ORIGINAL LOGIC ──
@@ -212,14 +245,7 @@ export default function PageVideo() {
   }
 
   // ── Fallback background ──
-  // If you have a placeholder image, uncomment ImageBackground below.
-  // Otherwise the gradient acts as the fallback.
-  let placeholderImage = null;
-  try {
-    placeholderImage = require("../../assets/Avatar-images -profile-picker/video_placeholder.jpg");
-  } catch {
-    placeholderImage = null;
-  }
+  const placeholderImage = IMAGES_MAP.jungle_background;
 
   return (
     <View style={s.root}>
@@ -247,7 +273,7 @@ export default function PageVideo() {
           ref={videoRef}
           source={videoUri}
           resizeMode="cover"
-          shouldPlay={false}
+          shouldPlay={true}
           isLooping={false}
           style={StyleSheet.absoluteFill}
           onPlaybackStatusUpdate={(status) => {

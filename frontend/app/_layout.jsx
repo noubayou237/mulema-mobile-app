@@ -23,6 +23,7 @@ import { initializeLanguage } from "../src/i18n";
 import { useAuthStore } from "../src/stores/useAuthStore";
 import { useLanguageStore } from "../src/stores/useLanguageStore";
 import api from "../src/services/api";
+import SplashScreen from "../src/components/ui/SplashScreen";
 
 // Tokens
 import { Colors } from "../src/theme/tokens";
@@ -81,7 +82,7 @@ function AuthGate({ children }) {
     } else if (!hasSeenIntro) {
       // Language chosen but intro not watched — must go through PageVideo
       if (!onPageVideo) {
-        router.replace(`/(onboarding)/PageVideo?lang=${encodeURIComponent(activeLanguage.code)}`);
+        router.replace(`/(onboarding)/PageVideo?lang=${encodeURIComponent(activeLanguage.name)}`);
       }
     } else {
       // Fully onboarded — send out of auth/onboarding zones
@@ -90,11 +91,7 @@ function AuthGate({ children }) {
   }, [isReady, isAuthenticated, activeLanguage, hasSeenIntro, segments]);
 
   if (!isReady) {
-    return (
-      <View style={s.loader}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
+    return <SplashScreen />;
   }
 
   return children;
@@ -106,19 +103,15 @@ export default function RootLayout() {
     Fredoka_500Medium,
     Fredoka_600SemiBold,
     Fredoka_700Bold,
-    "Nunito-Regular":  require("../assets/fonts/Nunito-Regular.ttf"),
-    "Nunito-Medium":   require("../assets/fonts/Nunito-Medium.ttf"),
-    "Nunito-SemiBold": require("../assets/fonts/Nunito-SemiBold.ttf"),
-    "Nunito-Bold":     require("../assets/fonts/Nunito-Bold.ttf"),
+    "Nunito-Regular":  require("../assets/fonts/nunito_regular.ttf"),
+    "Nunito-Medium":   require("../assets/fonts/nunito_medium.ttf"),
+    "Nunito-SemiBold": require("../assets/fonts/nunito_semibold.ttf"),
+    "Nunito-Bold":     require("../assets/fonts/nunito_bold.ttf"),
   });
 
   // Attendre que les polices soient chargées
   if (!fontsLoaded) {
-    return (
-      <View style={s.loader}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
+    return <SplashScreen />;
   }
 
   return (

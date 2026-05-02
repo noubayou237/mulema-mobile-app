@@ -5,6 +5,11 @@ import { isSessionActive } from "../services/api";
 import { getFriendlyErrorMessage, isNetworkError } from "../utils/errorUtils";
 import i18n from "../i18n";
 
+// Cache settings
+const STALE_TIME = 60000; // 60 seconds
+const inflightRequests = new Map();
+const lastFetchTime = new Map();
+
 export const useDashboardStore = create((set) => ({
   // ── State ──
   data: null,               // DashboardData | null
@@ -18,29 +23,45 @@ export const useDashboardStore = create((set) => ({
 
   // ═════════════════════════════════════════════════════════════
   // fetchDashboard — Charge les stats du dashboard
-  // Le backend retourne les stats de la langue active de l'utilisateur
   // ═════════════════════════════════════════════════════════════
 
   fetchDashboard: async () => {
     if (!isSessionActive()) return null;
-    set({ isLoading: true });
-    try {
-      const data = await dashboardService.get();
-      set({ data, isLoading: false, error: null });
-      return data;
-    } catch (error) {
-      const msg = getFriendlyErrorMessage(error);
-      set({ isLoading: false, error: msg });
-      
-      const isNetErr = isNetworkError(error);
-      // 401/NetworkError is expected during the logout race window — suppress it
-      if (error?.response?.status !== 401 && !isNetErr && isSessionActive()) {
-        Logger.error("[DashboardStore] fetchDashboard error:", msg);
-      } else if (isNetErr) {
-        Logger.warn("[DashboardStore] fetchDashboard network error:", msg);
-      }
-      return null;
+
+    const reqKey = "dashboard_main";
+    if (inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
+
+    const now = Date.now();
+    const lastFetch = lastFetchTime.get(reqKey) || 0;
+    const { data: cached } = useDashboardStore.getState();
+
+    if (cached && (now - lastFetch < STALE_TIME)) {
+      return cached;
     }
+
+    set({ isLoading: !cached });
+
+    const fetchPromise = (async () => {
+      try {
+        const data = await dashboardService.get();
+        set({ data, isLoading: false, error: null });
+        lastFetchTime.set(reqKey, Date.now());
+        return data;
+      } catch (error) {
+        const msg = getFriendlyErrorMessage(error);
+        set({ isLoading: false, error: msg });
+        
+        if (error?.response?.status !== 401 && !isNetworkError(error) && isSessionActive()) {
+          Logger.error("[DashboardStore] fetchDashboard error:", msg);
+        }
+        return null;
+      } finally {
+        inflightRequests.delete(reqKey);
+      }
+    })();
+
+    inflightRequests.set(reqKey, fetchPromise);
+    return fetchPromise;
   },
 
   deductHeart: async () => {

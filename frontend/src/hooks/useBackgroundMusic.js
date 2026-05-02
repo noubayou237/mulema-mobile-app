@@ -9,8 +9,9 @@ import { useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { Audio } from "expo-av";
 import { setAudioMode } from "../utils/audioUtils";
+import { AUDIOS_MAP } from "../utils/AssetsMap";
 
-const SONG = require("../../assets/appthemesong/GENERIK MAKOUNE short.mp3");
+const SONG = AUDIOS_MAP.generik_makoune_short;
 const VOLUME = 0.1; // gentle background level
 
 let globalSound = null; // singleton so only one instance plays

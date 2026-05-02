@@ -115,7 +115,7 @@ const HomeHeader = ({ streak = 0, xp = 0, hearts = 5, nextRechargeIn = 0, onMenu
         <TouchableOpacity onPress={onMenuPress} activeOpacity={0.7} style={s.menuBtn}>
           <Ionicons name="menu" size={22} color={RED} />
         </TouchableOpacity>
-        <Image source={require("../../assets/Avatar-images -profile-picker/logo.png")} style={{ width: 72, height: 72, marginLeft: Space.sm }} contentFit="contain" />
+        <Image source={IMAGES_MAP.logo} style={{ width: 72, height: 72, marginLeft: Space.sm }} contentFit="contain" />
       </View>
 
       <View style={s.headerRight}>
@@ -320,6 +320,7 @@ const ExerciseRow = ({ exo, onPress }) => {
     </TouchableOpacity>
   );
 };
+import { IMAGES_MAP } from "../../src/utils/AssetsMap";
 
 /* ════════════════════════════════════════════════════════════════════
    MAIN SCREEN
@@ -348,18 +349,29 @@ export default function HomeScreen() {
   };
 
   useEffect(() => {
+    const start = Date.now();
     const init = async () => {
-      if (activeLanguage) {
-        const langId = getPatrimonialId(activeLanguage, languages);
-        if (langId) fetchThemes(langId);
-        fetchDashboard();
-        return;
+      try {
+        if (activeLanguage) {
+          const langId = getPatrimonialId(activeLanguage, languages);
+          const tasks = [fetchDashboard()];
+          if (langId) tasks.push(fetchThemes(langId));
+          await Promise.all(tasks);
+        } else {
+          const langs = await fetchLanguages().catch(() => []);
+          const lang = await loadActiveLanguage();
+          const langId2 = getPatrimonialId(lang, langs);
+          const tasks = [fetchDashboard()];
+          if (langId2) tasks.push(fetchThemes(langId2));
+          await Promise.all(tasks);
+        }
+        const total = Date.now() - start;
+        if (__DEV__ || total > 1000) {
+          console.log(`[PERF] Home initialization took ${total}ms`);
+        }
+      } catch (err) {
+        // Error handling handled by stores
       }
-      const langs = await fetchLanguages().catch(() => []);
-      const lang = await loadActiveLanguage();
-      const langId2 = getPatrimonialId(lang, langs);
-      if (langId2) fetchThemes(langId2);
-      fetchDashboard();
     };
     init();
   }, []);

@@ -112,6 +112,21 @@ export const useLanguageStore = create((set, get) => ({
   hasLanguage: () => get().activeLanguage !== null,
 
   getSpecialCharacters: () => get().activeLanguage?.specialCharacters || [],
+  
+  syncWithUser: async (user) => {
+    if (!user) return;
+    const { languages, activeLanguage, setActiveLanguage } = get();
+    
+    // Si on a déjà une langue active, on ne l'écrase pas sauf si elle est différente
+    // de celle du backend (le backend est la source de vérité pour le compte)
+    const langId = user.patrimonial_language_id || user.official_language_id;
+    if (langId && (!activeLanguage || activeLanguage.id !== langId)) {
+      const found = languages.find(l => l.id === langId);
+      if (found) {
+        await setActiveLanguage(found);
+      }
+    }
+  },
 
   reset: async () => {
     try {

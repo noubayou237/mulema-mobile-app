@@ -27,6 +27,7 @@ import { Ionicons } from "@expo/vector-icons";
 import api from "../../src/services/api";
 import { getFriendlyErrorMessage } from "../../src/utils/errorUtils";
 import { useTranslation } from "react-i18next";
+import { IMAGES_MAP } from "../../src/utils/AssetsMap";
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 import {
   MInput,
@@ -232,7 +233,7 @@ const SignUpScreen = () => {
           <Animated.View style={[s.logoWrap, { opacity: logoAnim, transform: [{ scale: logoScale }] }]}>
             <View style={s.logoCircle}>
               <Image
-                source={require("../../assets/Avatar-images -profile-picker/logo.png")}
+                source={IMAGES_MAP.logo}
                 style={s.logoImg}
                 contentFit="contain"
               />

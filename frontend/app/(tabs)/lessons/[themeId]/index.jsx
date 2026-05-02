@@ -294,7 +294,6 @@ export default function ThemeDetailScreen() {
   useFocusEffect(
     useCallback(() => {
       if (themeId) fetchLessons(themeId);
-      return () => clearTheme();
     }, [themeId])
   );
 
