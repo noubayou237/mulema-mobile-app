@@ -124,6 +124,8 @@ export const useLanguageStore = create((set, get) => ({
       const found = languages.find(l => l.id === langId);
       if (found) {
         await setActiveLanguage(found);
+        set({ hasSeenIntro: true });
+        AsyncStorage.setItem("hasSeenIntro", "true").catch(() => {});
       }
     }
   },

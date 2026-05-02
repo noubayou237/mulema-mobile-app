@@ -134,8 +134,29 @@ export const useThemeStore = create((set, get) => ({
 
     const reqKey = `words_${lessonId}`;
     
-    // 1. Check cache first
-    const { wordsCache } = get();
+    // 1. Check if this is a "Virtual Lesson" (a MulemWord treated as a lesson)
+    // In the new system, we already have word data in the lessons list
+    const { lessons, wordsCache } = get();
+    const lessonData = lessons.find(l => l.id === lessonId);
+    
+    if (lessonData && !lessonData.hasSubWords) {
+      // It's a MulemWord. Treat it as a single-item word list.
+      const virtualWords = [{
+        id: lessonData.id,
+        sourceText: lessonData.title,
+        targetText: lessonData.subtitle,
+        audioUrl: lessonData.audioUrl,
+        imageUrl: lessonData.imageUrl,
+        hint: lessonData.hint,
+      }];
+
+      if (!silent) {
+        set({ words: virtualWords, currentLessonId: lessonId, wordsLoading: false });
+      }
+      return virtualWords;
+    }
+
+    // 2. Check cache for traditional lessons
     const now = Date.now();
     const lastFetch = lastFetchTime.get(reqKey) || 0;
 
@@ -162,8 +183,10 @@ export const useThemeStore = create((set, get) => ({
         lastFetchTime.set(reqKey, Date.now());
         return words;
       } catch (error) {
-        if (!silent) set({ wordsLoading: false });
-        if (error?.response?.status !== 401) {
+        if (!silent) set({ wordsLoading: false, error: "Content not available yet." });
+        
+        // Only log if it's not a 404 (we expect some virtual items to not have sub-words)
+        if (error?.response?.status !== 404 && error?.response?.status !== 401) {
           Logger.error("[ThemeStore] fetchWords error:", error);
         }
         return [];

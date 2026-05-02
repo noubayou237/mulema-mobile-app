@@ -221,6 +221,12 @@ export class UserService {
         isVerified: true,
         totalPrawns: true,
         language: true,
+        officialLanguageId: true,
+        languages: {
+          select: {
+            patrimonialLanguageId: true,
+          }
+        },
         avatar: {
           select: {
             id: true,
@@ -255,6 +261,8 @@ export class UserService {
     return {
       ...user,
       avatar: typeof avatarWithSignedUrl === 'string' ? avatarWithSignedUrl : avatarWithSignedUrl?.imageUrl || null,
+      patrimonial_language_id: user.languages?.[0]?.patrimonialLanguageId || null,
+      official_language_id: user.officialLanguageId || null,
     };
   }
 
