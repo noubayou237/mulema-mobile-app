@@ -203,7 +203,12 @@
     "noAudioAvailable": "No audio available",
     "finishLessons": "Finish lessons",
     "startWith": "💡 Start with:",
-    "finalChallenge": "⚡ FINAL CHALLENGE"
+    "finalChallenge": "⚡ FINAL CHALLENGE",
+    "exerciseCTATitle": "Ready for the exercise?",
+    "exerciseCTAUnlock": "Lesson {{num}} is locked",
+    "exerciseCTASub": "Complete the exercise to unlock it!",
+    "startExercise": "Start exercise",
+    "categoryLabel": "{{category}}"
   },
   "exercises": {
     "title": "Exercises",
@@ -269,7 +274,10 @@
     "keepGoingSub": "Review the lessons and try again, you can do better!",
     "retryMistakes": "Let's go back to your mistakes",
     "tipIn": "In {{langName}},",
-    "tipIsSaid": "is said"
+    "tipIsSaid": "is said",
+    "listenAndWrite": "Listen and write in {{lang}}",
+    "tapToListen": "Tap to listen",
+    "listenHint": "Listen to the audio and write the word"
   },
   "errors": {
     "networkError": "Network error. Please check your connection.",
