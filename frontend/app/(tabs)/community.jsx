@@ -282,7 +282,7 @@ const RankRow = ({ item, isCurrentUser = false }) => {
         <View style={rr.xpCol}>
           <Text style={[rr.xp, isCurrentUser && { color: "#FFF" }]}>{item.totalXP}</Text>
           <Text style={[rr.xpLabel, isCurrentUser && { color: "rgba(255,255,255,0.7)" }]}>
-            {isCurrentUser ? t("community.yourScore") : t("stats.xp")}
+            XP
           </Text>
         </View>
       </View>
@@ -445,7 +445,7 @@ export default function CommunityScreen() {
     fetchDashboard();
   }, []);
 
-  const userXP = dashData?.totalPoints ?? 0;
+  const userXP = dashData?.totalPoints ?? dashData?.xp ?? 0;
   const streak = dashData?.streakDays  ?? 0;
   const hearts = dashData?.hearts      ?? 5;
 
@@ -466,8 +466,10 @@ export default function CommunityScreen() {
     id:           user?.id ?? "me",
     rank:         myRankInList >= 0 ? myRankInList + 1 : "—",
     name:         user?.name || t("community.isYou"),
-    totalXP:      myRawEntry?.totalXP ?? userXP,
-    avatar:       myRawEntry?.avatar ?? user?.avatar ?? null,
+    // Normalise field names from the raw leaderboard entry (backend may use
+    // totalXP, totalPoints, or xp) before falling back to the dashboard value.
+    totalXP:      myRawEntry?.totalXP ?? myRawEntry?.totalPoints ?? myRawEntry?.xp ?? userXP,
+    avatar:       myRawEntry?.avatar ?? myRawEntry?.avatarUrl ?? user?.avatar ?? null,
     streakDays:   myRawEntry?.streakDays ?? streak,
     xpToNextRank: myRawEntry?.xpToNextRank ?? 50,
     tag:          null,
@@ -579,7 +581,7 @@ export default function CommunityScreen() {
           </View>
           <View style={cu.xpCol}>
             <Text style={cu.xp}>{currentUserRank.totalXP}</Text>
-            <Text style={cu.xpLabel}>{t("community.yourScore")}</Text>
+            <Text style={cu.xpLabel}>XP</Text>
           </View>
         </View>
       </View>

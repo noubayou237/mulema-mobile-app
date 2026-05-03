@@ -26,6 +26,7 @@ import Logger from "../../../../../src/utils/logger";
 import MatchScreen from "../../../../components/ui/MatchScreen";
 import PatrimonialKeyboard from "../../../../../src/components/ui/PatrimonialKeyboard";
 import { getWordDisplay } from "../../../../data/wordTranslations";
+import { buildBassaSession } from "../../../../data/bassaExerciseData";
 
 const { width: SW } = Dimensions.get("window");
 const CARD_W = (SW - 40 - 12) / 2;
@@ -837,12 +838,19 @@ export default function ExerciseSession() {
   const wordCount = wordCountStr ? parseInt(wordCountStr, 10) : null;
   const lessonIdxParam = lessonIdxStr != null ? parseInt(lessonIdxStr, 10) : null;
 
-  const { lessons, fetchLessons } = useThemeStore();
-  const { data: dash, fetchDashboard } = useDashboardStore();
+  const { lessons, fetchLessons, themes } = useThemeStore();
+  const { fetchDashboard } = useDashboardStore();
   const { activeLanguage } = useLanguageStore();
   const { t, i18n } = useTranslation();
   const langName = activeLanguage?.name ?? "Duala";
   const uiLang = i18n.language ?? "fr";
+
+  // Resolve whether the active language is Bassa and the theme's numeric order.
+  const isBassa = langName.toLowerCase().includes("bassa") || langName.toLowerCase().includes("basaa");
+  const themeOrder = useMemo(
+    () => themes.find((th) => th.id === themeId)?.order ?? null,
+    [themes, themeId]
+  );
 
 
   useEffect(() => {
@@ -852,7 +860,11 @@ export default function ExerciseSession() {
 
   useEffect(() => {
     if (themeId) fetchLessons(themeId);
-    fetchDashboard();
+    // Force bypass cache so a retry session always starts with current hearts,
+    // not the stale 0-hearts value left over from the previous failed attempt.
+    fetchDashboard(true).then((data) => {
+      if (data?.hearts != null) setHearts(data.hearts);
+    });
   }, [themeId]);
 
   // Slice lessons to cumulative word count (or all if no wordCount param)
@@ -861,21 +873,36 @@ export default function ExerciseSession() {
     () => (wordCount ? lessons.slice(0, wordCount) : lessons),
     [lessonsKey, wordCount]
   );
-  const questions = useMemo(() => buildSession(wordsForSession), [wordsForSession]);
+
+  // For Bassa, use the fixed docx-driven exercise questions so the content
+  // matches exactly what the docx files specify (match words from Ex 1, write
+  // phrases from Ex 2, image QCM from Ex 3). Other languages keep the dynamic
+  // builder that draws from the database lesson words.
+  const questions = useMemo(() => {
+    if (isBassa && themeOrder !== null) {
+      const bassaQ = buildBassaSession(themeOrder);
+      if (bassaQ && bassaQ.length > 0) return bassaQ;
+    }
+    return buildSession(wordsForSession);
+  }, [wordsForSession, isBassa, themeOrder]);
 
 
   const [idx, setIdx] = useState(0);
   const [retryQ, setRetryQ] = useState([]);
   const [isRetry, setIsRetry] = useState(false);
   const [retryIdx, setRetryIdx] = useState(0);
-  const [hearts, setHearts] = useState(5);
+  // Seed from the store's current value so TopBar shows real hearts immediately;
+  // the mount effect will update it via a force-refresh fetch.
+  const [hearts, setHearts] = useState(
+    () => useDashboardStore.getState().data?.hearts ?? 5
+  );
+  // Only allow the "hearts exhausted" auto-exit when the player has actually
+  // lost a heart in THIS session — prevents stale 0-hearts from closing the
+  // screen instantly when the user retries after a previous failure.
+  const heartsDrainedInSession = useRef(false);
   const [correct, setCorrect] = useState(0);
   const [answered, setAnswered] = useState(0);
   const fadeAnim = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    if (dash?.hearts != null) setHearts(dash.hearts);
-  }, [dash?.hearts]);
 
   const totalQ = questions.length || 1;
   const curQ = isRetry ? retryQ[retryIdx] : questions[idx];
@@ -889,6 +916,7 @@ export default function ExerciseSession() {
   }, []);
 
   const handleWrong = useCallback((toRetry) => {
+    heartsDrainedInSession.current = true;
     setHearts((h) => Math.max(0, h - 1));
     setAnswered((a) => a + 1);
     useDashboardStore.getState().deductHeart();
@@ -897,11 +925,12 @@ export default function ExerciseSession() {
 
   const goResults = useCallback(() => {
     const score = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+    const wcParam = wordCountStr ? `&wordCount=${wordCountStr}` : "";
     const extra = lessonIdxParam != null ? `&lessonIdx=${lessonIdxParam}` : "";
     router.replace(
-      `/(tabs)/lessons/${themeId}/exercise/results?score=${score}&correct=${correct}&total=${answered}${extra}`
+      `/(tabs)/lessons/${themeId}/exercise/results?score=${score}&correct=${correct}&total=${answered}${wcParam}${extra}`
     );
-  }, [correct, answered, themeId, lessonIdxParam]);
+  }, [correct, answered, themeId, lessonIdxParam, wordCountStr]);
 
 
   const crossFade = (cb) => {
@@ -928,7 +957,9 @@ export default function ExerciseSession() {
   }, [isRetry, retryIdx, retryQ.length, idx, questions.length, goResults]);
 
   useEffect(() => {
-    if (hearts <= 0) setTimeout(() => goResults(), 500);
+    if (heartsDrainedInSession.current && hearts <= 0) {
+      setTimeout(() => goResults(), 500);
+    }
   }, [hearts, goResults]);
 
   if (!curQ) {

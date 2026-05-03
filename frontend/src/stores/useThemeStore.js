@@ -249,21 +249,18 @@ export const useThemeStore = create((set, get) => ({
 
   getExerciseAccess: (themeId) => {
     const { lessons } = get();
+    if (lessons.length === 0) return { e1: false, e2: false, e3: false };
 
-    const lessonsCompletedCount = lessons.reduce((acc, l) => {
-      const prog = l.userProgress?.[0];
-      return acc + (prog?.isCompleted ? 1 : 0);
-    }, 0);
+    const lastLesson = lessons[lessons.length - 1];
+    const lastProg   = lastLesson?.userProgress?.[0];
 
-    // Exercise unlocks progressively: available once the auto-unlocked lessons (first 2) are done.
-    // Each pass of the exercise unlocks the next lesson until all are complete.
-    const enoughLessonsCompleted = lessons.length > 0 && lessonsCompletedCount >= 2;
+    // Final Challenge unlocks only when the last lesson itself is accessible —
+    // either it is auto-unlocked (order < 2) or explicitly unlocked in the DB
+    // after the user passes the exercise for the second-to-last lesson.
+    const finalChallengeUnlocked =
+      lastLesson?.order < 2 || !!lastProg?.isUnlocked;
 
-    return {
-      e1: enoughLessonsCompleted,
-      e2: enoughLessonsCompleted,
-      e3: enoughLessonsCompleted,
-    };
+    return { e1: finalChallengeUnlocked, e2: finalChallengeUnlocked, e3: finalChallengeUnlocked };
   },
 
   // ═════════════════════════════════════════════════════════════

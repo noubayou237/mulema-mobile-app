@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors, Space } from "../../src/theme/tokens";
 import { useThemeStore } from "../../src/stores/useThemeStore";
 import { VIDEOS_MAP } from "../../src/utils/AssetsMap";
+import { pauseBackgroundMusic, resumeBackgroundMusic } from "../../src/hooks/useBackgroundMusic";
 
 const { width: SW, height: SH } = Dimensions.get("window");
 
@@ -54,6 +55,11 @@ export default function OnboardingVideoScreen() {
       router.replace("/(tabs)/home");
     }
   };
+
+  useEffect(() => {
+    pauseBackgroundMusic();
+    return () => { resumeBackgroundMusic(); };
+  }, []);
 
   // No video available for this theme — mark watched and move on immediately.
   useEffect(() => {

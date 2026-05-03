@@ -114,6 +114,7 @@ export default function ExerciseResults() {
     correct: correctStr,
     total: totalStr,
     lessonIdx: lessonIdxStr,
+    wordCount: wordCountStr,
   } = useLocalSearchParams();
   const { completeTheme, lessons } = useThemeStore();
   const { activeLanguage } = useLanguageStore();
@@ -170,7 +171,11 @@ export default function ExerciseResults() {
   }, []);
 
   const handleRetry = () => {
-    router.replace(`/(tabs)/lessons/${themeId}/exercise/session`);
+    const params = [];
+    if (wordCountStr) params.push(`wordCount=${wordCountStr}`);
+    if (lessonIdxStr != null) params.push(`lessonIdx=${lessonIdxStr}`);
+    const query = params.length > 0 ? `?${params.join("&")}` : "";
+    router.replace(`/(tabs)/lessons/${themeId}/exercise/session${query}`);
   };
 
   // Succès → retour au détail du thème pour voir la leçon débloquée

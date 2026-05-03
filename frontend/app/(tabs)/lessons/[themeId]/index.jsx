@@ -302,7 +302,17 @@ export default function ThemeDetailScreen() {
   const themeCode = (theme?.code ?? "").toLowerCase();
   const emoji     = getEmoji(themeCode);
 
-  const completed = lessons.filter((l) => l.userProgress?.[0]?.isCompleted).length;
+  const explicitCompleted = lessons.filter((l) => l.userProgress?.[0]?.isCompleted).length;
+  // The first lesson (index 0) is auto-unlocked and has no exercise gate after
+  // it, so the backend never sets its isCompleted flag.  Credit it for display
+  // purposes once the user has made any progress, so the bar reaches 100 % when
+  // the Final Challenge is passed.
+  const lesson0Credited =
+    explicitCompleted > 0 &&
+    lessons.length > 0 &&
+    !lessons[0]?.userProgress?.[0]?.isCompleted
+      ? 1 : 0;
+  const completed = explicitCompleted + lesson0Credited;
   const totalL    = lessons.length || 0;
   const pct       = totalL > 0 ? Math.round((completed / totalL) * 100) : 0;
 
@@ -420,22 +430,14 @@ export default function ThemeDetailScreen() {
               lt={lt}
               isLocked={!getExerciseAccess(themeId).e1}
               onPress={() => {
-                const access = getExerciseAccess(themeId);
-                if (!access.e1) return;
-
-                // Find the last lesson that is accessible: indices 0-1 are
-                // auto-unlocked; indices 2+ need an explicit isUnlocked from DB.
-                // This is the "frontier" — the lesson whose exercise should fire
-                // next to advance the curriculum by one step.
-                let lastAccessibleIdx = Math.min(1, lessons.length - 1);
-                for (let i = 2; i < lessons.length; i++) {
-                  if (lessons[i]?.userProgress?.[0]?.isUnlocked) lastAccessibleIdx = i;
-                  else break;
-                }
-                const lessonIdx = lastAccessibleIdx;
-                const wordCount = lessonIdx + 1;
-
-                router.push(`/(tabs)/lessons/${themeId}/exercise/session?lessonIdx=${lessonIdx}&wordCount=${wordCount}`);
+                if (!getExerciseAccess(themeId).e1) return;
+                // Always run the Final Challenge: all words, last lesson index.
+                // No wordCount param → session uses the full lessons list.
+                // lessonIdx = last index → results.jsx identifies this as the
+                // final challenge and triggers video unlock on success.
+                router.push(
+                  `/(tabs)/lessons/${themeId}/exercise/session?lessonIdx=${lessons.length - 1}`
+                );
               }}
             />
           </View>

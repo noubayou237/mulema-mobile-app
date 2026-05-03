@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
+import { useThemeStore } from "../../src/stores/useThemeStore";
 
 /* ── 3 heritage languages are available ── */
 const ALLOWED_LANGUAGES = ["bassa", "duala", "ghomala"];
@@ -63,32 +64,28 @@ export default function ChangeLanguageScreen() {
   const router = useRouter();
   const { t } = useTranslation();
   const { user } = useAuthStore();
-  const { activeLanguage, languages, isLoading, fetchLanguages, setActiveLanguage } = useLanguageStore();
+  const { activeLanguage, languages, isLoading, fetchLanguages, setActiveLanguage, setHasSeenIntro } = useLanguageStore();
 
   useEffect(() => {
     if (languages.length === 0) fetchLanguages();
   }, []);
 
-  const handleSelectLanguage = async (language) => {
+  const handleSelectLanguage = (language) => {
     if (language.id === activeLanguage?.id) return;
-    
-    // 1. Set the new language FIRST — before anything that triggers layout guards
-    await setActiveLanguage(language);
-    
-    // 2. Clear the theme store cache for the previous language
-    const { useThemeStore } = await import("../../src/stores/useThemeStore");
+
+    // Both setActiveLanguage and setHasSeenIntro do set() synchronously as their
+    // first step, then handle AsyncStorage/API asynchronously. Calling without
+    // await means in-memory state is updated instantly — navigation guards see
+    // the new language and hasSeenIntro:false immediately so the router goes to
+    // PageVideo in under a frame. The async persistence continues in background.
+    setHasSeenIntro(false);
+    setActiveLanguage(language);
     useThemeStore.getState().clearAll();
-    
-    // 3. Navigate explicitly BEFORE resetting hasSeenIntro.
-    //    If we reset hasSeenIntro first, the layout guard fires with the old language.
+
     router.replace({
       pathname: "/(onboarding)/PageVideo",
-      params: { lang: language.name }
+      params: { lang: language.name },
     });
-
-    // 4. Reset intro flag AFTER navigation — layout guard won't override our route
-    const { setHasSeenIntro } = useLanguageStore.getState();
-    await setHasSeenIntro(false);
   };
 
   const otherLanguages = React.useMemo(() => {

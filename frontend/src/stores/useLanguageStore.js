@@ -131,12 +131,10 @@ export const useLanguageStore = create((set, get) => ({
   },
 
   reset: async () => {
-    try {
-      await AsyncStorage.removeItem(STORAGE_KEY);
-      await AsyncStorage.removeItem("selectedLanguageName");
-      await AsyncStorage.removeItem(STORAGE_KEY_TYPE);
-      await AsyncStorage.removeItem("hasSeenIntro");
-    } catch {}
+    // Intentionally keep the language preference and hasSeenIntro flag in
+    // AsyncStorage so the next login session restores the same language
+    // automatically. loadActiveLanguage() in _layout.jsx runs after
+    // syncWithUser() and will pick the stored values back up.
     set({ activeLanguage: null, hasSeenIntro: false, languages: [], isLoaded: false });
   },
 }));

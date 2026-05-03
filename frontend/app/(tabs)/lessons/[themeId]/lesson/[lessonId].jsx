@@ -158,10 +158,10 @@ export default function LessonScreen() {
   /* Navigation */
   const goNext = () => {
     if (isLast) {
-      // Last lesson → final exercise with all words
-      router.replace(
-        `/(tabs)/lessons/${themeId}/exercise/session?lessonIdx=${lessonIdx}`
-      );
+      // Last lesson studied — return to the theme overview so the user can
+      // see the Final Challenge button (which is now unlocked) and tap it
+      // deliberately, rather than being taken straight into the exercise.
+      router.replace(`/(tabs)/lessons/${themeId}`);
       return;
     }
 
