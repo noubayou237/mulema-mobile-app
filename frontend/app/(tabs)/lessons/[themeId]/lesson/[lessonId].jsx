@@ -6,7 +6,7 @@
  * ╚══════════════════════════════════════════════════════════════╝
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -30,14 +30,16 @@ import { useLanguageStore } from "../../../../../src/stores/useLanguageStore";
 import { pauseBackgroundMusic, resumeBackgroundMusic } from "../../../../../src/hooks/useBackgroundMusic";
 import { playAudioUrl } from "../../../../../src/utils/audioUtils";
 import Logger from "../../../../../src/utils/logger";
+import { getBassaEnrichment } from "../../../../data/bassaLessonsData";
+import { getWordDisplay } from "../../../../data/wordTranslations";
 
-const playAudio = async (url) => {
-  if (!url) {
+const playAudio = async (audioKey) => {
+  if (!audioKey) {
     try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); } catch {}
     return;
   }
   try {
-    await playAudioUrl(url);
+    await playAudioUrl(audioKey);
   } catch (e) {
     Logger.warn("Audio play error", e);
   }
@@ -51,12 +53,38 @@ const THEME_ICONS = {
   vetements: "shirt",
 };
 
+/* ═══════════════════════════════════════════════════════════════
+   EXERCISE CTA — slides up after lessons 2+
+   ═══════════════════════════════════════════════════════════════ */
+const ExerciseCTA = ({ slideAnim, nextLessonNum, onStart }) => {
+  const { t } = useTranslation();
+  return (
+    <Animated.View style={[cta.wrap, { transform: [{ translateY: slideAnim }] }]}>
+      <View style={cta.header}>
+        <View style={cta.iconCircle}>
+          <Text style={cta.iconEmoji}>🎯</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={cta.title}>{t("lessons.exerciseCTATitle")}</Text>
+          <Text style={cta.unlock}>{t("lessons.exerciseCTAUnlock", { num: nextLessonNum })}</Text>
+        </View>
+      </View>
+      <Text style={cta.sub}>{t("lessons.exerciseCTASub")}</Text>
+      <TouchableOpacity onPress={onStart} activeOpacity={0.88} style={cta.btn}>
+        <Text style={cta.btnTxt}>{t("lessons.startExercise")}</Text>
+        <Ionicons name="arrow-forward" size={20} color="#FFF" style={{ marginLeft: 8 }} />
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
 /* ══════════════════════════════════════════════════════════════
    COMPOSANT PRINCIPAL
    ══════════════════════════════════════════════════════════════ */
 export default function LessonScreen() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const uiLang = i18n.language ?? "fr";
   const { themeId, lessonId } = useLocalSearchParams();
 
   const { lessons, fetchLessons, themes, isLessonLocked, currentThemeId } = useThemeStore();
@@ -83,6 +111,14 @@ export default function LessonScreen() {
 
   const langName = activeLanguage?.name ?? "Duala";
 
+  /* Bassa enrichment — local audio + authoritative text */
+  const isBassa = (activeLanguage?.name ?? "").toLowerCase().includes("bassa");
+  const enrichment = isBassa ? getBassaEnrichment(lesson?.title ?? "") : null;
+  // audioKey takes enrichment first, then fall back to whatever backend provided
+  const effectiveAudioKey = enrichment?.audioKey ?? lesson?.audioUrl ?? null;
+  // Displayed Bassa text: use enrichment if available, else the backend subtitle
+  const bassaDisplay = enrichment?.bassaText || lesson?.subtitle || "";
+
   /* Animations */
   const cardAnim  = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
@@ -101,10 +137,28 @@ export default function LessonScreen() {
     };
   }, []);
 
+  /* Exercise CTA state (appears after lesson 2+) */
+  const [showExerciseCTA, setShowExerciseCTA] = useState(false);
+  const ctaSlideAnim = useRef(new Animated.Value(260)).current;
+
+  useEffect(() => {
+    if (showExerciseCTA) {
+      Animated.spring(ctaSlideAnim, {
+        toValue: 0, tension: 85, friction: 11, useNativeDriver: true,
+      }).start();
+    }
+  }, [showExerciseCTA]);
+
+  /* Reset CTA when lesson changes */
+  useEffect(() => {
+    setShowExerciseCTA(false);
+    ctaSlideAnim.setValue(260);
+  }, [lessonId]);
+
   /* Navigation */
   const goNext = () => {
     if (isLast) {
-      // Last lesson → exercise with ALL words (no wordCount limit)
+      // Last lesson → final exercise with all words
       router.replace(
         `/(tabs)/lessons/${themeId}/exercise/session?lessonIdx=${lessonIdx}`
       );
@@ -113,7 +167,7 @@ export default function LessonScreen() {
 
     const nextLesson = lessons[lessonIdx + 1];
 
-    // First lesson (index 0) → go directly to lesson 2 (no exercise yet)
+    // First lesson (index 0) → go directly to lesson 2 (no exercise gate yet)
     if (lessonIdx === 0) {
       cardAnim.setValue(0);
       slideAnim.setValue(30);
@@ -121,7 +175,11 @@ export default function LessonScreen() {
       return;
     }
 
-    // Lesson 2+ → exercise with cumulative words (lessons 1 through lessonIdx+1)
+    // Lesson 2+ → show exercise CTA to unlock the next lesson
+    setShowExerciseCTA(true);
+  };
+
+  const goToExercise = () => {
     router.replace(
       `/(tabs)/lessons/${themeId}/exercise/session?wordCount=${lessonIdx + 1}&lessonIdx=${lessonIdx}`
     );
@@ -198,10 +256,18 @@ export default function LessonScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* ── Label leçon ── */}
         <Animated.View
           style={{ opacity: cardAnim, transform: [{ translateY: slideAnim }] }}
         >
+          {/* ── Category context pill (Bassa only) ── */}
+          {enrichment?.category ? (
+            <View style={s.categoryPill}>
+              <Ionicons name="book-outline" size={13} color={Colors.primary} style={{ marginRight: 5 }} />
+              <Text style={s.categoryText}>{enrichment.category}</Text>
+            </View>
+          ) : null}
+
+          {/* ── Label leçon ── */}
           <Text style={s.lessonLabel}>
             {t("lessons.lessonNum", { num: lessonIdx + 1 })} / {total}
           </Text>
@@ -211,43 +277,45 @@ export default function LessonScreen() {
             {t("lessons.whatDoesThisMean")}
           </Text>
 
-          {/* ── Carte mot français ── */}
+          {/* ── Carte mot source (FR ou EN selon langue UI) ── */}
           <View style={[s.wordCard, Shadow.md]}>
             <View style={s.wordCardIcon}>
               <Ionicons name={themeIcon} size={28} color={Colors.primary} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={s.wordFrLabel}>{t("lessons.frenchLabel")}</Text>
-              <Text style={s.wordFr}>{lesson.title}</Text>
+              <Text style={s.wordFrLabel}>
+                {uiLang?.startsWith("en") ? "ENGLISH" : t("lessons.frenchLabel")}
+              </Text>
+              <Text style={s.wordFr}>{getWordDisplay(lesson.title, uiLang)}</Text>
             </View>
             <TouchableOpacity
               style={s.audioBtn}
               activeOpacity={0.7}
               onPress={() => {
                 try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
-                playAudio(lesson.audioUrl, t);
+                playAudio(effectiveAudioKey);
               }}
             >
               <Ionicons name="volume-high" size={22} color={Colors.primary} />
             </TouchableOpacity>
           </View>
 
-          {/* ── Traduction Duala ── */}
+          {/* ── Traduction Bassa / langue cible ── */}
           <View style={[s.translationCard, Shadow.sm]}>
             <View style={s.transHeader}>
               <View style={{ flex: 1 }}>
                 <Text style={s.transLabel}>
                   {t("lessons.translationIn", { lang: langName.toUpperCase() })}
                 </Text>
-                <Text style={s.transWord}>{lesson.subtitle}</Text>
+                <Text style={s.transWord}>{bassaDisplay}</Text>
               </View>
-              {/* Bouton audio Duala */}
+              {/* Bouton audio langue cible */}
               <TouchableOpacity
                 style={s.audioBtn}
                 activeOpacity={0.7}
                 onPress={() => {
                   try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
-                  playAudio(lesson.audioUrl, t);
+                  playAudio(effectiveAudioKey);
                 }}
               >
                 <Ionicons name="volume-medium" size={22} color={Colors.primary} />
@@ -262,38 +330,49 @@ export default function LessonScreen() {
             ) : null}
           </View>
 
-          {/* ── Bouton audio prononciation ── */}
+          {/* ── Bouton écouter la prononciation ── */}
           <TouchableOpacity
             style={s.listenBtn}
             activeOpacity={0.8}
             onPress={() => {
               try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
-              playAudio(lesson.audioUrl, t);
+              playAudio(effectiveAudioKey);
             }}
           >
             <Ionicons name="volume-medium-outline" size={18} color={Colors.primary} />
             <Text style={s.listenText}>
-              {lesson.audioUrl ? t("lessons.listenPronunciation") : t("lessons.noAudioAvailable")}
+              {effectiveAudioKey ? t("lessons.listenPronunciation") : t("lessons.noAudioAvailable")}
             </Text>
           </TouchableOpacity>
 
-          <View style={{ height: 110 }} />
+          <View style={{ height: 160 }} />
         </Animated.View>
       </ScrollView>
 
+      {/* ── EXERCISE CTA (slides up after lesson 2+) ── */}
+      {showExerciseCTA && (
+        <ExerciseCTA
+          slideAnim={ctaSlideAnim}
+          nextLessonNum={lessonIdx + 2}
+          onStart={goToExercise}
+        />
+      )}
+
       {/* ── BOUTON BAS ── */}
-      <View style={s.footer}>
-        <TouchableOpacity
-          onPress={goNext}
-          activeOpacity={0.88}
-          style={s.continueBtn}
-        >
-          <Text style={s.continueTxt}>
-            {isLast ? t("lessons.finishLessons") : t("common.continue")}
-          </Text>
-          <Ionicons name="arrow-forward" size={20} color={Colors.onPrimary} style={{ marginLeft: 8 }} />
-        </TouchableOpacity>
-      </View>
+      {!showExerciseCTA && (
+        <View style={s.footer}>
+          <TouchableOpacity
+            onPress={goNext}
+            activeOpacity={0.88}
+            style={s.continueBtn}
+          >
+            <Text style={s.continueTxt}>
+              {isLast ? t("lessons.finishLessons") : t("common.continue")}
+            </Text>
+            <Ionicons name="arrow-forward" size={20} color={Colors.onPrimary} style={{ marginLeft: 8 }} />
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -337,6 +416,21 @@ const s = StyleSheet.create({
     ...Shadow.sm,
   },
   heartNum: { fontSize: 14, fontWeight: "700", color: Colors.onSurface },
+
+  /* Category pill */
+  categoryPill: {
+    flexDirection: "row", alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: Colors.primary + "12",
+    borderRadius: Radius.full,
+    paddingHorizontal: Space.md, paddingVertical: 6,
+    marginBottom: Space.md,
+    marginTop: Space.sm,
+  },
+  categoryText: {
+    fontSize: 12, fontWeight: "700",
+    color: Colors.primary, letterSpacing: 0.5,
+  },
 
   /* Contenu */
   lessonLabel: {
@@ -442,4 +536,49 @@ const s = StyleSheet.create({
   continueTxt: {
     fontSize: 17, fontWeight: "800", color: "#FFFFFF",
   },
+});
+
+/* Exercise CTA styles */
+const cta = StyleSheet.create({
+  wrap: {
+    position: "absolute", bottom: 0, left: 0, right: 0,
+    backgroundColor: "#FFF",
+    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    padding: 24,
+    paddingBottom: Platform.OS === "ios" ? 44 : 28,
+    shadowColor: "#B71C1C",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  header: {
+    flexDirection: "row", alignItems: "center",
+    gap: 14, marginBottom: 10,
+  },
+  iconCircle: {
+    width: 52, height: 52, borderRadius: 26,
+    backgroundColor: "#FFEBEE",
+    alignItems: "center", justifyContent: "center",
+  },
+  iconEmoji: { fontSize: 26 },
+  title: {
+    fontSize: 18, fontWeight: "800",
+    color: "#1A1A2E", marginBottom: 2,
+  },
+  unlock: {
+    fontSize: 13, fontWeight: "600",
+    color: "#B71C1C",
+  },
+  sub: {
+    fontSize: 14, color: "#6B7280",
+    marginBottom: 18, lineHeight: 20,
+  },
+  btn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center",
+    backgroundColor: "#B71C1C",
+    borderRadius: 50, paddingVertical: 16,
+    gap: 4,
+  },
+  btnTxt: { fontSize: 16, fontWeight: "800", color: "#FFF" },
 });

@@ -24,6 +24,8 @@ import { pauseBackgroundMusic, resumeBackgroundMusic } from "../../../../../src/
 import { setAudioMode, playAudioUrl } from "../../../../../src/utils/audioUtils";
 import Logger from "../../../../../src/utils/logger";
 import MatchScreen from "../../../../components/ui/MatchScreen";
+import PatrimonialKeyboard from "../../../../../src/components/ui/PatrimonialKeyboard";
+import { getWordDisplay } from "../../../../data/wordTranslations";
 
 const { width: SW } = Dimensions.get("window");
 const CARD_W = (SW - 40 - 12) / 2;
@@ -101,53 +103,72 @@ const triggerFeedback = (correct) => {
 const hasValidImage = (w) =>
   w.imageUrl && typeof w.imageUrl === "string" && w.imageUrl.trim() !== "";
 
+/**
+ * Build a varied exercise session.
+ *
+ * Rule: the same word must not appear more than twice WITHIN any single
+ * exercise type.  With only 2 questions per type (QCM, match, write) the cap
+ * is automatically respected as long as the 2 questions in each type use
+ * different target words — enforced below by selecting words at different
+ * offsets of the shuffled array.
+ *
+ * Session shape (up to 7 questions):
+ *   QCM ×2  |  Match ×1-2  |  Write ×2  |  Listen & Write ×1
+ */
 const buildSession = (words) => {
   if (!words || words.length < 1) return [];
   const sw = shuffle(words);
-  const PER = 4; // 4 questions per type
+  const n  = sw.length;
 
-  const wordsWithImg = sw.filter(hasValidImage);
+  const wordsWithImg  = sw.filter(hasValidImage);
   const canDoImageQCM = wordsWithImg.length >= 2;
-  const maxOpts = Math.min(4, sw.length);
 
-  const qcm = Array.from({ length: PER }, (_, i) => {
-    const target = sw[i % sw.length];
+  const makeQCM = (target) => {
     if (canDoImageQCM && hasValidImage(target)) {
-      // Build image_qcm using only words that have images as options
-      const imgPool = wordsWithImg.filter((w) => w.id !== target.id);
-      const optsCount = Math.min(maxOpts - 1, imgPool.length);
-      const opts = shuffle([target, ...shuffle(imgPool).slice(0, optsCount)]);
+      const imgPool = wordsWithImg.filter(w => w.id !== target.id);
+      const opts = shuffle([target, ...shuffle(imgPool).slice(0, Math.min(3, imgPool.length))]);
       return { type: "image_qcm", target, options: opts };
     }
-    const others = sw.filter((w) => w.id !== target.id);
-    const opts = shuffle([target, ...shuffle(others).slice(0, maxOpts - 1)]);
+    const others = sw.filter(w => w.id !== target.id);
+    const opts = shuffle([target, ...shuffle(others).slice(0, Math.min(3, others.length))]);
     return { type: "text_qcm", target, options: opts };
-  });
+  };
 
-  // Match — requires at least 2 words; use however many pairs are available (up to 3)
-  const matchPairCount = Math.min(3, sw.length);
-  const match = sw.length >= 2
-    ? Array.from({ length: PER }, (_, i) => {
-      const pairs = Array.from({ length: matchPairCount }, (_, k) =>
-        sw[(i * matchPairCount + k) % sw.length]
-      );
-      return { type: "match", pairs, right: shuffle([...pairs]) };
-    })
-    : [];
+  const questions = [];
+  const pairCount = Math.min(3, n);
 
-  const write = Array.from({ length: PER }, (_, i) => ({
-    type: "write",
-    target: sw[i % sw.length],
-  }));
+  // ── QCM — word[0] and word[1] (two different words → each appears once in QCM)
+  questions.push(makeQCM(sw[0]));
+  if (n >= 2) questions.push(makeQCM(sw[1 % n]));
 
-  const complete = Array.from({ length: PER }, (_, i) => ({
-    type: "write",
-    target: sw[(i + Math.floor(sw.length / 2)) % sw.length],
-    isComplete: true,
-  }));
+  // ── Match — pairs drawn from offset slices so no word exceeds 2× in match
+  if (n >= 2) {
+    const p1 = sw.slice(0, pairCount);
+    questions.push({ type: "match", pairs: p1, right: shuffle([...p1]) });
 
+    // Second match only when there are enough words to form a meaningfully
+    // different set (n ≥ 4); words still wrap with %, so the cap holds.
+    if (n >= 4) {
+      const p2 = Array.from({ length: pairCount }, (_, k) => sw[(pairCount + k) % n]);
+      questions.push({ type: "match", pairs: p2, right: shuffle([...p2]) });
+    }
+  }
 
-  return shuffle([...qcm, ...match, ...write, ...complete]);
+  // ── Write — word[2] and word[3] (two different words → each appears once in write)
+  const wt1 = sw[2 % n];
+  const wt2 = sw[3 % n];
+  questions.push({ type: "write", target: wt1 });
+  // Only push second write if it targets a genuinely different word
+  if (wt2.id !== wt1.id) questions.push({ type: "write", target: wt2 });
+
+  // ── Listen & Write — the "unknown/surprise" question ──────────────────
+  // Prefer a word not yet used in QCM or Write, keeping this question fresh
+  // and the session unpredictable. Falls back to the last shuffled word.
+  const soloIds = new Set([sw[0].id, sw[1 % n].id, wt1.id, wt2.id]);
+  const listenTarget = sw.find(w => !soloIds.has(w.id)) ?? sw[n - 1];
+  questions.push({ type: "listen_write", target: listenTarget });
+
+  return shuffle(questions);
 };
 
 /* ════════════════════════════════════════════════════════════════
@@ -411,7 +432,7 @@ const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
 /* ════════════════════════════════════════════════════════════════
    TYPE 2 — TEXT QCM
    ════════════════════════════════════════════════════════════════ */
-const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
+const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr" }) => {
   const { t } = useTranslation();
   const [sel, setSel] = useState(null);
   const [feedback, setFeedback] = useState(null);
@@ -464,10 +485,10 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
 
         <Text style={qx.title}>{t("exercises.howToSayIn", { lang: langName })}</Text>
 
-        {/* Mot FR + audio */}
+        {/* Source word in user's UI language + audio */}
         <View style={qx.wordRow}>
           <View style={qx.wordPill}>
-            <Text style={qx.keyword}>"{q.target.title}"</Text>
+            <Text style={qx.keyword}>"{getWordDisplay(q.target.title, uiLang)}"</Text>
           </View>
           <AudioBtn url={q.target.audioUrl} size={22} />
         </View>
@@ -543,7 +564,7 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
    TYPE 4 — ÉCRITURE
    Clavier natif + barre de caractères spéciaux Duala
    ════════════════════════════════════════════════════════════════ */
-const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
+const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr" }) => {
   const { t } = useTranslation();
   const [typed, setTyped] = useState("");
   const [feedback, setFeedback] = useState(null);
@@ -558,13 +579,6 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
       Animated.timing(shakeX, { toValue: 4, duration: 55, useNativeDriver: true }),
       Animated.timing(shakeX, { toValue: 0, duration: 55, useNativeDriver: true }),
     ]).start();
-
-  // Insérer un caractère spécial à la fin
-  const insertChar = (ch) => {
-    if (feedback) return;
-    setTyped((t) => t + ch);
-    inputRef.current?.focus();
-  };
 
   const verify = () => {
     if (!typed.trim()) return;
@@ -582,12 +596,11 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
     if (q.target.audioUrl) playWordAudio(q.target.audioUrl);
   }, [q.target.id]);
 
+  // Display the source word in EN or FR based on UI language
+  const displayTitle = getWordDisplay(q.target.title, uiLang);
+
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={80}
-    >
+    <View style={{ flex: 1 }}>
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={wx.scroll}
@@ -604,13 +617,13 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={wx.hintLabel}>{t("exercises.howToSay")}</Text>
-            <Text style={wx.hintWord}>"{q.target.title}"</Text>
+            <Text style={wx.hintWord}>"{displayTitle}"</Text>
           </View>
           <AudioBtn url={q.target.audioUrl} size={22} />
           <View style={wx.blob} />
         </View>
 
-        {/* Zone de saisie */}
+        {/* Zone de saisie — showSoftInputOnFocus=false: patrimonial keyboard replaces system kb */}
         <Animated.View
           style={[
             wx.inputBox,
@@ -622,16 +635,15 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
           <TextInput
             ref={inputRef}
             value={typed}
-            onChangeText={(t) => !feedback && setTyped(t)}
+            onChangeText={(v) => !feedback && setTyped(v)}
             style={[wx.input, typed.length > 0 && { color: C.primary }]}
             autoCapitalize="none"
             autoCorrect={false}
             spellCheck={false}
+            showSoftInputOnFocus={false}
             placeholder={t("exercises.typeTranslation")}
             placeholderTextColor={C.textFaint}
             editable={!feedback}
-            returnKeyType="done"
-            onSubmitEditing={verify}
           />
           {typed.length > 0 && !feedback && (
             <TouchableOpacity
@@ -643,56 +655,18 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
           )}
         </Animated.View>
 
-        {/* Astuce */}
-        <View style={tipS.card}>
-          <View style={tipS.row}>
-            <Ionicons name="information-circle" size={16} color={C.orange} />
-            <Text style={tipS.title}>{t("common.tip")}</Text>
-          </View>
-          <Text style={tipS.body}>
-            {t("exercises.keyboardInstruction", { lang: langName, chars: "ɓ, ɛ, ŋ" })}
-          </Text>
-        </View>
-
-        <View style={{ height: 220 }} />
+        <View style={{ height: 20 }} />
       </ScrollView>
 
-      {/* ── Barre de caractères spéciaux Duala ── */}
-      {!feedback && (
-        <View style={wx.specialBar}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyboardShouldPersistTaps="always"
-            contentContainerStyle={wx.specialRowContent}
-          >
-            {SPECIAL_CHARS.map((ch) => (
-              <TouchableOpacity
-                key={ch}
-                onPress={() => insertChar(ch)}
-                style={wx.specialKey}
-                activeOpacity={0.65}
-              >
-                <Text style={wx.specialKeyTxt}>{ch}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-
-      {/* Footer VÉRIFIER ou Feedback */}
+      {/* Patrimonial keyboard (no system keyboard) or feedback banner */}
       {!feedback ? (
-        <View style={footer.wrap}>
-          <TouchableOpacity
-            onPress={verify}
-            style={[footer.verifyBtn, !typed.trim() && { opacity: 0.35 }]}
-            disabled={!typed.trim()}
-            activeOpacity={0.85}
-          >
-            <Text style={footer.verifyTxt}>{t("common.verify")}</Text>
-            <Ionicons name="arrow-forward" size={18} color="#FFF" />
-          </TouchableOpacity>
-        </View>
+        <PatrimonialKeyboard
+          value={typed}
+          onChangeText={(v) => setTyped(v)}
+          onSubmit={verify}
+          langName={langName}
+          disabled={false}
+        />
       ) : (
         <FeedbackBanner
           correct={feedback === "ok"}
@@ -700,10 +674,154 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName }) => {
           onNext={() => { setTyped(""); setFeedback(null); onNext(); }}
         />
       )}
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
+
+/* ════════════════════════════════════════════════════════════════
+   TYPE 5 — ÉCOUTER ET ÉCRIRE (listen_write)
+   Audio auto-plays, user writes the target-language word.
+   No French hint shown — tests listening recall.
+   ════════════════════════════════════════════════════════════════ */
+const ListenWriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr" }) => {
+  const { t } = useTranslation();
+  const [typed, setTyped] = useState("");
+  const [feedback, setFeedback] = useState(null);
+  const [played, setPlayed] = useState(false);
+  const inputRef = useRef(null);
+  const scrollRef = useRef(null);
+  const shakeX = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const fadeIn = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeIn, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+    if (q.target.audioUrl) {
+      playWordAudio(q.target.audioUrl);
+      setPlayed(true);
+    }
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.14, duration: 650, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1,    duration: 650, useNativeDriver: true }),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [q.target.id]);
+
+  const shake = () =>
+    Animated.sequence([
+      Animated.timing(shakeX, { toValue: 8,  duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue: -8, duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue: 4,  duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue: 0,  duration: 55, useNativeDriver: true }),
+    ]).start();
+
+  const verify = () => {
+    if (!typed.trim()) return;
+    const ok =
+      normalize(typed) === normalize(q.target.subtitle) ||
+      typed.trim().toLowerCase() === q.target.subtitle?.toLowerCase();
+    triggerFeedback(ok);
+    setFeedback(ok ? "ok" : "ko");
+    if (ok) onCorrect(); else { shake(); onWrong(); }
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <Animated.ScrollView
+        ref={scrollRef}
+        contentContainerStyle={wx.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        style={{ opacity: fadeIn }}
+      >
+        <Text style={wx.title}>{t("exercises.listenAndWrite", { lang: langName })}</Text>
+
+        {/* Big pulsing speaker button */}
+        <View style={lw.audioCenter}>
+          <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+            <TouchableOpacity
+              onPress={() => { playWordAudio(q.target.audioUrl); setPlayed(true); }}
+              activeOpacity={0.82}
+              style={lw.bigSpeaker}
+            >
+              <Ionicons name={played ? "volume-high" : "volume-medium"} size={46} color="#FFF" />
+            </TouchableOpacity>
+          </Animated.View>
+          <Text style={lw.tapHint}>{t("exercises.tapToListen")}</Text>
+        </View>
+
+        {/* After feedback: reveal the word in the user's UI language */}
+        {feedback && (
+          <View style={[wx.hintCard, SHADOW, { marginBottom: 16 }]}>
+            <View style={wx.hintIcon}>
+              <Ionicons name="language" size={22} color={C.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={wx.hintLabel}>{uiLang?.startsWith("en") ? "FRENCH" : "FRANÇAIS"}</Text>
+              <Text style={wx.hintWord}>"{getWordDisplay(q.target.title, uiLang)}"</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Input field — showSoftInputOnFocus=false, patrimonial keyboard handles all input */}
+        <Animated.View
+          style={[
+            wx.inputBox,
+            feedback === "ok" && wx.inputOk,
+            feedback === "ko" && wx.inputKo,
+            { transform: [{ translateX: shakeX }] },
+          ]}
+        >
+          <TextInput
+            ref={inputRef}
+            value={typed}
+            onChangeText={(v) => !feedback && setTyped(v)}
+            style={[wx.input, typed.length > 0 && { color: C.primary }]}
+            autoCapitalize="none"
+            autoCorrect={false}
+            spellCheck={false}
+            showSoftInputOnFocus={false}
+            placeholder={t("exercises.typeTranslation")}
+            placeholderTextColor={C.textFaint}
+            editable={!feedback}
+          />
+          {typed.length > 0 && !feedback && (
+            <TouchableOpacity
+              onPress={() => setTyped("")}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="close-circle" size={20} color={C.textFaint} />
+            </TouchableOpacity>
+          )}
+        </Animated.View>
+
+        <View style={{ height: 16 }} />
+      </Animated.ScrollView>
+
+      {/* Patrimonial keyboard or feedback */}
+      {!feedback ? (
+        <PatrimonialKeyboard
+          value={typed}
+          onChangeText={(v) => setTyped(v)}
+          onSubmit={verify}
+          langName={langName}
+          disabled={false}
+        />
+      ) : (
+        <FeedbackBanner
+          correct={feedback === "ok"}
+          correctAnswer={feedback === "ko" ? q.target.subtitle : null}
+          onNext={() => { setTyped(""); setFeedback(null); onNext(); }}
+        />
+      )}
+    </View>
+  );
+};
 
 /* ════════════════════════════════════════════════════════════════
    ÉCRAN PRINCIPAL — Session
@@ -722,8 +840,9 @@ export default function ExerciseSession() {
   const { lessons, fetchLessons } = useThemeStore();
   const { data: dash, fetchDashboard } = useDashboardStore();
   const { activeLanguage } = useLanguageStore();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const langName = activeLanguage?.name ?? "Duala";
+  const uiLang = i18n.language ?? "fr";
 
 
   useEffect(() => {
@@ -865,6 +984,7 @@ export default function ExerciseSession() {
             key={`tqcm-${dispIdx}`}
             q={curQ}
             langName={langName}
+            uiLang={uiLang}
             onCorrect={handleCorrect}
             onWrong={() => handleWrong(curQ)}
             onNext={advance}
@@ -875,6 +995,7 @@ export default function ExerciseSession() {
             key={`match-${dispIdx}`}
             q={curQ}
             langName={langName}
+            uiLang={uiLang}
             onCorrect={handleCorrect}
             onWrong={() => handleWrong(null)}
             onNext={advance}
@@ -886,6 +1007,18 @@ export default function ExerciseSession() {
             key={`write-${dispIdx}`}
             q={curQ}
             langName={langName}
+            uiLang={uiLang}
+            onCorrect={handleCorrect}
+            onWrong={() => handleWrong(curQ)}
+            onNext={advance}
+          />
+        )}
+        {curQ.type === "listen_write" && (
+          <ListenWriteScreen
+            key={`lw-${dispIdx}`}
+            q={curQ}
+            langName={langName}
+            uiLang={uiLang}
             onCorrect={handleCorrect}
             onWrong={() => handleWrong(curQ)}
             onNext={advance}
@@ -1091,6 +1224,31 @@ const qx = StyleSheet.create({
 });
 
 /* Paires → styles moved to app/components/ui/MatchScreen.jsx */
+
+/* Listen & Write */
+const lw = StyleSheet.create({
+  audioCenter: {
+    alignItems: "center",
+    marginVertical: 28,
+  },
+  bigSpeaker: {
+    width: 104, height: 104, borderRadius: 52,
+    backgroundColor: C.primary,
+    alignItems: "center", justifyContent: "center",
+    shadowColor: C.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.30,
+    shadowRadius: 14,
+    elevation: 8,
+    borderWidth: 3,
+    borderColor: C.primaryLight,
+  },
+  tapHint: {
+    marginTop: 14,
+    fontSize: 13, fontWeight: "600",
+    color: C.textSub, letterSpacing: 0.3,
+  },
+});
 
 /* Écriture */
 const wx = StyleSheet.create({
