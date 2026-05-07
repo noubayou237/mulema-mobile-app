@@ -283,7 +283,7 @@ const FeedbackBanner = ({ correct, correctAnswer, onNext }) => {
       <TouchableOpacity
         onPress={onNext}
         style={[fb.continueBtn, correct ? fb.continueBtnGreen : fb.continueBtnRed]}
-        activeOpacity={0.88}
+        activeOpacity={0.65}
       >
         <Text style={fb.continueTxt}>{t("common.continue")}</Text>
         <Ionicons name="arrow-forward" size={18} color="#FFF" />
@@ -413,7 +413,7 @@ const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
             onPress={verify}
             style={[footer.verifyBtn, !sel && { opacity: 0.35 }]}
             disabled={!sel}
-            activeOpacity={0.85}
+            activeOpacity={0.65}
           >
             <Text style={footer.verifyTxt}>{t("common.verify")}</Text>
             <Ionicons name="arrow-forward" size={18} color="#FFF" />
@@ -500,7 +500,7 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr" 
             <TouchableOpacity
               key={opt.id}
               onPress={() => !feedback && setSel(opt.id)}
-              activeOpacity={0.8}
+              activeOpacity={0.6}
               style={cardStyle(opt)}
             >
               {opt.imageUrl && typeof opt.imageUrl === 'string' && opt.imageUrl.trim() !== "" ? (
@@ -541,7 +541,7 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr" 
             onPress={verify}
             style={[footer.verifyBtn, !sel && { opacity: 0.35 }]}
             disabled={!sel}
-            activeOpacity={0.85}
+            activeOpacity={0.65}
           >
             <Text style={footer.verifyTxt}>{t("common.verify")}</Text>
             <Ionicons name="arrow-forward" size={18} color="#FFF" />
@@ -747,7 +747,7 @@ const ListenWriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
             <TouchableOpacity
               onPress={() => { playWordAudio(q.target.audioUrl); setPlayed(true); }}
-              activeOpacity={0.82}
+              activeOpacity={0.62}
               style={lw.bigSpeaker}
             >
               <Ionicons name={played ? "volume-high" : "volume-medium"} size={46} color="#FFF" />

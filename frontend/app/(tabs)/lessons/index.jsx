@@ -220,6 +220,88 @@ export default function ThemesScreen() {
     setRefreshing(false);
   };
 
+  /* Bassa Custom Lessons Logic */
+  const isBassa = activeLanguage?.name?.toLowerCase() === "bassa";
+  const isDuala = activeLanguage?.name?.toLowerCase() === "duala";
+  const isGhomala = activeLanguage?.name?.toLowerCase() === "ghomala";
+  const getBassaLessons = () => {
+    if (!themes || themes.length === 0) return [];
+    const joursTheme = themes.find((t) => t.code === "jours");
+    const verbesTheme = themes.find((t) => t.code === "verbes");
+    
+    const res = [];
+    if (joursTheme) {
+      res.push({
+        id: "jours_semaine",
+        name: "Les jours de la semaine",
+        nameLocal: "Ŋgwà bí mbɛ́",
+        code: "jours",
+        locked: joursTheme.locked,
+        lockHint: joursTheme.lockHint,
+        themeId: joursTheme.id,
+        lessonsCount: joursTheme.lessonsCount,
+        lessonsCompleted: joursTheme.lessonsCompleted,
+      });
+    }
+    
+    if (verbesTheme) {
+      const verbs = [
+        { id: "verbe_etre", name: "Verbe ÊTRE", nameLocal: "Bìhíkìí" },
+        { id: "verbe_avoir", name: "Verbe AVOIR", nameLocal: "Bìhíkìí" },
+        { id: "verbe_manger", name: "Verbe MANGER", nameLocal: "Bìhíkìí" },
+        { id: "verbe_marcher", name: "Verbe MARCHER", nameLocal: "Bìhíkìí" },
+        { id: "verbe_prendre", name: "Verbe PRENDRE", nameLocal: "Bìhíkìí" },
+        { id: "verbe_acheter", name: "Verbe ACHETER", nameLocal: "Bìhíkìí" },
+      ];
+      
+      verbs.forEach((v) => {
+        res.push({
+          ...v,
+          code: "verbes",
+          locked: verbesTheme.locked,
+          lockHint: verbesTheme.lockHint,
+          themeId: verbesTheme.id,
+          // We fake 100% completion if the theme is completed since we don't have separate sub-progress yet
+          lessonsCount: verbesTheme.lessonsCount,
+          lessonsCompleted: verbesTheme.lessonsCompleted, 
+        });
+      });
+    }
+    return res;
+  };
+
+  /* Duala Custom Lessons Logic */
+  const getDualaLessons = () => {
+    // Fetch lock state from active themes if any applicable, else default unlocked
+    const isLocked = themes?.length > 0 ? themes[0].locked : false; 
+    
+    return [
+      { id: "duala_jour", name: "Les sept jour de la semaine", nameLocal: "Minya mi mbu", code: "jours", locked: isLocked, lessonsCount: 7, lessonsCompleted: 7 },
+      { id: "duala_pronoms", name: "Les pronoms personnel", nameLocal: "Bipapa", code: "pronoms", locked: isLocked, lessonsCount: 6, lessonsCompleted: 6 },
+      { id: "duala_etre", name: "Le verbe etre", nameLocal: "Bìhíkìí", code: "verbes", locked: isLocked, lessonsCount: 6, lessonsCompleted: 6 },
+      { id: "duala_avoir", name: "Le verbe avoir", nameLocal: "Bìhíkìí", code: "verbes", locked: isLocked, lessonsCount: 6, lessonsCompleted: 6 },
+      { id: "duala_chiffres", name: "Les chiffres 1-9 en duala", nameLocal: "Langa", code: "chiffres", locked: isLocked, lessonsCount: 10, lessonsCompleted: 10 },
+      { id: "duala_couleurs", name: "Les couleur", nameLocal: "Langi", code: "couleurs", locked: isLocked, lessonsCount: 7, lessonsCompleted: 7 },
+    ];
+  };
+
+  /* Ghomala Custom Lessons Logic */
+  const getGhomalaLessons = () => {
+    const isLocked = themes?.length > 0 ? themes[0].locked : false; 
+    
+    return [
+      { id: "ghomala_chiffres", name: "Les chiffres 0-9 en ghomala", code: "chiffres", locked: isLocked, lessonsCount: 10, lessonsCompleted: 10 },
+      { id: "ghomala_jour", name: "Les jours de la semaine en ghomala", code: "jours", locked: isLocked, lessonsCount: 7, lessonsCompleted: 7 },
+      { id: "ghomala_etre", name: "Le verbe etre en ghomala", code: "verbes", locked: isLocked, lessonsCount: 6, lessonsCompleted: 6 },
+      { id: "ghomala_avoir", name: "Le verbe avoir en ghomala", code: "verbes", locked: isLocked, lessonsCount: 6, lessonsCompleted: 6 },
+      { id: "ghomala_manger", name: "Le verbe manger en ghomala", code: "verbes", locked: isLocked, lessonsCount: 6, lessonsCompleted: 6 },
+      { id: "ghomala_marcher", name: "Le verbe marcher en ghomala", code: "verbes", locked: isLocked, lessonsCount: 6, lessonsCompleted: 6 },
+      { id: "ghomala_acheter", name: "Le verbe acheter en ghomala", code: "verbes", locked: isLocked, lessonsCount: 6, lessonsCompleted: 6 },
+    ];
+  };
+
+  const displayItems = isBassa ? getBassaLessons() : isDuala ? getDualaLessons() : isGhomala ? getGhomalaLessons() : [];
+
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
       <StatusBar barStyle="dark-content" backgroundColor={BG} />
@@ -274,9 +356,9 @@ export default function ThemesScreen() {
         </View>
 
         {/* ── CONTENT ── */}
-        {isLoading && themes.length === 0 ? (
+        {isLoading && displayItems.length === 0 ? (
           <ActivityIndicator size="large" color={RED} style={{ marginVertical: 48 }} />
-        ) : !isLoading && themes.length === 0 ? (
+        ) : !isLoading && displayItems.length === 0 ? (
           <View style={s.empty}>
             <Ionicons name="book-outline" size={44} color={FAINT} />
             <Text style={s.emptyTxt}>
@@ -304,12 +386,22 @@ export default function ThemesScreen() {
               <Text style={s.sectionTitle}>{t("lessons.available")}</Text>
             </View>
             <View style={s.grid}>
-              {themes.map((theme, idx) => (
+              {displayItems.map((item, idx) => (
                 <ThemeCard
-                  key={theme.id}
-                  theme={theme}
+                  key={item.id}
+                  theme={item}
                   index={idx}
-                  onPress={(t) => router.push(`/(tabs)/lessons/${t.id}`)}
+                  onPress={(t) => {
+                    if (isBassa || isDuala || isGhomala) {
+                      // Direct to swiper with lesson filter
+                      router.push({
+                        pathname: `/(tabs)/lessons/${t.themeId || t.id}/swiper`,
+                        params: { category: t.name }
+                      });
+                    } else {
+                      router.push(`/(tabs)/lessons/${t.id}`);
+                    }
+                  }}
                 />
               ))}
             </View>
@@ -318,27 +410,27 @@ export default function ThemesScreen() {
 
         <View style={{ height: 24 }} />
       </ScrollView>
-      {/* ══ DRAWER OVERLAY ══ */}
-      {drawerOpen && (
-        <Animated.View
-          style={[StyleSheet.absoluteFillObject, { backgroundColor: "rgba(0,0,0,0.38)", zIndex: 90, opacity: overlayAnim }]}
-          pointerEvents="box-none"
-        >
-          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={closeDrawer} />
-        </Animated.View>
-      )}
+  {/* ══ DRAWER OVERLAY ══ */}
+  {drawerOpen && (
+    <Animated.View
+      style={[StyleSheet.absoluteFillObject, { backgroundColor: "rgba(0,0,0,0.38)", zIndex: 90, opacity: overlayAnim }]}
+      pointerEvents="box-none"
+    >
+      <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={closeDrawer} />
+    </Animated.View>
+  )}
 
-      {/* ══ DRAWER PANEL ══ */}
-      <Animated.View style={[s.drawer, { transform: [{ translateX: drawerAnim }] }]}>
-        <DrawerContent
-          user={user}
-          dashboard={dash}
-          onClose={closeDrawer}
-          onNav={handleDrawerNav}
-          onLogout={handleLogout}
-        />
-      </Animated.View>
-    </SafeAreaView>
+  {/* ══ DRAWER PANEL ══ */}
+  <Animated.View style={[s.drawer, { transform: [{ translateX: drawerAnim }] }]}>
+    <DrawerContent
+      user={user}
+      dashboard={dash}
+      onClose={closeDrawer}
+      onNav={handleDrawerNav}
+      onLogout={handleLogout}
+    />
+  </Animated.View>
+</SafeAreaView>
   );
 }
 

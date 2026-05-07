@@ -19,15 +19,20 @@ import { pauseBackgroundMusic, resumeBackgroundMusic } from "../../src/hooks/use
 const { width: SW, height: SH } = Dimensions.get("window");
 
 // Story videos shown after a user completes a theme.
-// Keyed by "langCode_themeOrder". Missing keys (duala_1 = corrupted source,
-// duala_3 = no recording) auto-skip the video and still unlock the next theme.
+// Keyed by "langCode_themeOrder". Missing keys auto-skip the video and
+// still unlock the next theme.
+//
+// Duala has 2 reward videos:
+//   • duala_t0.mp4 → plays after the FIRST  theme (order 0 — La Famille)
+//   • duala_t2.mp4 → plays after the LAST   theme (order 3 — Les Vêtements)
+// Themes 1 and 2 have no video; the flow auto-skips and still unlocks.
 const THEME_VIDEOS = {
   bassa_0:   VIDEOS_MAP.bassa_t0,
   bassa_1:   VIDEOS_MAP.bassa_t1,
   bassa_2:   VIDEOS_MAP.bassa_t2,
   bassa_3:   VIDEOS_MAP.bassa_t3,
-  duala_0:   VIDEOS_MAP.duala_t0,
-  duala_2:   VIDEOS_MAP.duala_t2,
+  duala_0:   VIDEOS_MAP.duala_t0,   // first theme reward
+  duala_3:   VIDEOS_MAP.duala_t2,   // last theme reward (asset name ≠ theme order)
   ghomala_0: VIDEOS_MAP.ghomala_t0,
   ghomala_1: VIDEOS_MAP.ghomala_t1,
   ghomala_2: VIDEOS_MAP.ghomala_t2,

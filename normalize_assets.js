@@ -57,13 +57,11 @@ function renameRecursive(dir) {
   }
 }
 
-console.log("Normalizing assets...");
 renameRecursive(ASSETS_DIR);
 
 // Save mapping for reference
 fs.writeFileSync('path_mapping.json', JSON.stringify(pathMapping, null, 2));
 
-console.log("Updating references in codebase...");
 
 function updateRefs(dir) {
     const items = fs.readdirSync(dir);
@@ -94,7 +92,6 @@ function updateRefs(dir) {
             }
             
             if (modified) {
-                console.log(`Updated: ${fullPath}`);
                 fs.writeFileSync(fullPath, content, 'utf8');
             }
         }
@@ -102,4 +99,3 @@ function updateRefs(dir) {
 }
 
 updateRefs(FRONTEND_DIR);
-console.log("Done!");

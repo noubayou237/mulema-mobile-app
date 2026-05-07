@@ -6,7 +6,7 @@
  * ╚══════════════════════════════════════════════════════════════╝
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -31,6 +31,8 @@ import { pauseBackgroundMusic, resumeBackgroundMusic } from "../../../../../src/
 import { playAudioUrl } from "../../../../../src/utils/audioUtils";
 import Logger from "../../../../../src/utils/logger";
 import { getBassaEnrichment } from "../../../../data/bassaLessonsData";
+import { getDualaEnrichment } from "../../../../data/dualaLessonsData";
+import { getGhomalaEnrichment } from "../../../../data/ghomalaLessonsData";
 import { getWordDisplay } from "../../../../data/wordTranslations";
 
 const playAudio = async (audioKey) => {
@@ -53,30 +55,7 @@ const THEME_ICONS = {
   vetements: "shirt",
 };
 
-/* ═══════════════════════════════════════════════════════════════
-   EXERCISE CTA — slides up after lessons 2+
-   ═══════════════════════════════════════════════════════════════ */
-const ExerciseCTA = ({ slideAnim, nextLessonNum, onStart }) => {
-  const { t } = useTranslation();
-  return (
-    <Animated.View style={[cta.wrap, { transform: [{ translateY: slideAnim }] }]}>
-      <View style={cta.header}>
-        <View style={cta.iconCircle}>
-          <Text style={cta.iconEmoji}>🎯</Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={cta.title}>{t("lessons.exerciseCTATitle")}</Text>
-          <Text style={cta.unlock}>{t("lessons.exerciseCTAUnlock", { num: nextLessonNum })}</Text>
-        </View>
-      </View>
-      <Text style={cta.sub}>{t("lessons.exerciseCTASub")}</Text>
-      <TouchableOpacity onPress={onStart} activeOpacity={0.88} style={cta.btn}>
-        <Text style={cta.btnTxt}>{t("lessons.startExercise")}</Text>
-        <Ionicons name="arrow-forward" size={20} color="#FFF" style={{ marginLeft: 8 }} />
-      </TouchableOpacity>
-    </Animated.View>
-  );
-};
+
 
 /* ══════════════════════════════════════════════════════════════
    COMPOSANT PRINCIPAL
@@ -85,7 +64,7 @@ export default function LessonScreen() {
   const router = useRouter();
   const { t, i18n } = useTranslation();
   const uiLang = i18n.language ?? "fr";
-  const { themeId, lessonId } = useLocalSearchParams();
+  const { themeId, lessonId, category } = useLocalSearchParams();
 
   const { lessons, fetchLessons, themes, isLessonLocked, currentThemeId } = useThemeStore();
   const { data: dash } = useDashboardStore();
@@ -98,10 +77,26 @@ export default function LessonScreen() {
     }
   }, [themeId]);
 
+  /* Filter lessons if category is provided */
+  const displayLessons = useMemo(() => {
+    if (!category) return lessons;
+    return lessons.filter((l) => {
+      let enrichment = null;
+      if (activeLanguage?.name?.toLowerCase() === "bassa") {
+        enrichment = getBassaEnrichment(l.title);
+      } else if (activeLanguage?.name?.toLowerCase() === "duala") {
+        enrichment = getDualaEnrichment(l.title);
+      } else if (activeLanguage?.name?.toLowerCase() === "ghomala") {
+        enrichment = getGhomalaEnrichment(l.title);
+      }
+      return enrichment?.category === category;
+    });
+  }, [lessons, category, activeLanguage]);
+
   /* Trouver la leçon courante */
-  const lessonIdx = lessons.findIndex((l) => l.id === lessonId);
-  const lesson    = lessons[lessonIdx] ?? null;
-  const total     = lessons.length || 10;
+  const lessonIdx = displayLessons.findIndex((l) => l.id === lessonId);
+  const lesson    = displayLessons[lessonIdx] ?? null;
+  const total     = displayLessons.length || 10;
   const isFirst   = lessonIdx >= 0 && lessonIdx === 0;
   const isLast    = lessonIdx >= 0 && lessonIdx === total - 1;
 
@@ -111,13 +106,20 @@ export default function LessonScreen() {
 
   const langName = activeLanguage?.name ?? "Duala";
 
-  /* Bassa enrichment — local audio + authoritative text */
+  /* Language enrichment — local audio + authoritative text */
   const isBassa = (activeLanguage?.name ?? "").toLowerCase().includes("bassa");
-  const enrichment = isBassa ? getBassaEnrichment(lesson?.title ?? "") : null;
+  const isDuala = (activeLanguage?.name ?? "").toLowerCase().includes("duala");
+  const isGhomala = (activeLanguage?.name ?? "").toLowerCase().includes("ghomala");
+  
+  let enrichment = null;
+  if (isBassa) enrichment = getBassaEnrichment(lesson?.title ?? "");
+  if (isDuala) enrichment = getDualaEnrichment(lesson?.title ?? "");
+  if (isGhomala) enrichment = getGhomalaEnrichment(lesson?.title ?? "");
+
   // audioKey takes enrichment first, then fall back to whatever backend provided
   const effectiveAudioKey = enrichment?.audioKey ?? lesson?.audioUrl ?? null;
-  // Displayed Bassa text: use enrichment if available, else the backend subtitle
-  const bassaDisplay = enrichment?.bassaText || lesson?.subtitle || "";
+  // Displayed text: use enrichment if available, else the backend subtitle
+  const translatedDisplay = enrichment?.targetText || enrichment?.bassaText || enrichment?.dualaText || enrichment?.ghomalaText || lesson?.subtitle || "";
 
   /* Animations */
   const cardAnim  = useRef(new Animated.Value(0)).current;
@@ -137,52 +139,22 @@ export default function LessonScreen() {
     };
   }, []);
 
-  /* Exercise CTA state (appears after lesson 2+) */
-  const [showExerciseCTA, setShowExerciseCTA] = useState(false);
-  const ctaSlideAnim = useRef(new Animated.Value(260)).current;
-
-  useEffect(() => {
-    if (showExerciseCTA) {
-      Animated.spring(ctaSlideAnim, {
-        toValue: 0, tension: 85, friction: 11, useNativeDriver: true,
-      }).start();
-    }
-  }, [showExerciseCTA]);
-
-  /* Reset CTA when lesson changes */
-  useEffect(() => {
-    setShowExerciseCTA(false);
-    ctaSlideAnim.setValue(260);
-  }, [lessonId]);
-
   /* Navigation */
   const goNext = () => {
     if (isLast) {
-      // Last lesson studied — return to the theme overview so the user can
-      // see the Final Challenge button (which is now unlocked) and tap it
-      // deliberately, rather than being taken straight into the exercise.
-      router.replace(`/(tabs)/lessons/${themeId}`);
+      // Last lesson studied — return to the lessons overview tab
+      router.replace(`/(tabs)/lessons`);
       return;
     }
 
-    const nextLesson = lessons[lessonIdx + 1];
+    const nextLesson = displayLessons[lessonIdx + 1];
 
-    // First lesson (index 0) → go directly to lesson 2 (no exercise gate yet)
-    if (lessonIdx === 0) {
-      cardAnim.setValue(0);
-      slideAnim.setValue(30);
-      router.replace(`/(tabs)/lessons/${themeId}/lesson/${nextLesson.id}`);
-      return;
-    }
-
-    // Lesson 2+ → show exercise CTA to unlock the next lesson
-    setShowExerciseCTA(true);
-  };
-
-  const goToExercise = () => {
-    router.replace(
-      `/(tabs)/lessons/${themeId}/exercise/session?wordCount=${lessonIdx + 1}&lessonIdx=${lessonIdx}`
-    );
+    cardAnim.setValue(0);
+    slideAnim.setValue(30);
+    router.replace({
+      pathname: `/(tabs)/lessons/${themeId}/lesson/${nextLesson.id}`,
+      params: { category }
+    });
   };
 
   const goPrev = () => {
@@ -192,7 +164,10 @@ export default function LessonScreen() {
     }
     cardAnim.setValue(0);
     slideAnim.setValue(-30);
-    router.replace(`/(tabs)/lessons/${themeId}/lesson/${lessons[lessonIdx - 1].id}`);
+    router.replace({
+      pathname: `/(tabs)/lessons/${themeId}/lesson/${displayLessons[lessonIdx - 1].id}`,
+      params: { category }
+    });
   };
 
   /* Pourcentage de progression */
@@ -225,7 +200,7 @@ export default function LessonScreen() {
 
       {/* ── TOP BAR ── */}
       <View style={s.topBar}>
-        <TouchableOpacity onPress={goPrev} activeOpacity={0.7} style={s.closeBtn}>
+        <TouchableOpacity onPress={goPrev} activeOpacity={0.6} delayPressIn={0} style={s.closeBtn}>
           <Ionicons name={isFirst ? "close" : "arrow-back"} size={22} color={Colors.onSurface} />
         </TouchableOpacity>
 
@@ -290,7 +265,8 @@ export default function LessonScreen() {
             </View>
             <TouchableOpacity
               style={s.audioBtn}
-              activeOpacity={0.7}
+              activeOpacity={0.55}
+              delayPressIn={0}
               onPress={() => {
                 try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
                 playAudio(effectiveAudioKey);
@@ -307,12 +283,13 @@ export default function LessonScreen() {
                 <Text style={s.transLabel}>
                   {t("lessons.translationIn", { lang: langName.toUpperCase() })}
                 </Text>
-                <Text style={s.transWord}>{bassaDisplay}</Text>
+                <Text style={s.transWord}>{translatedDisplay}</Text>
               </View>
               {/* Bouton audio langue cible */}
               <TouchableOpacity
                 style={s.audioBtn}
-                activeOpacity={0.7}
+                activeOpacity={0.55}
+                delayPressIn={0}
                 onPress={() => {
                   try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
                   playAudio(effectiveAudioKey);
@@ -333,7 +310,8 @@ export default function LessonScreen() {
           {/* ── Bouton écouter la prononciation ── */}
           <TouchableOpacity
             style={s.listenBtn}
-            activeOpacity={0.8}
+            activeOpacity={0.55}
+            delayPressIn={0}
             onPress={() => {
               try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
               playAudio(effectiveAudioKey);
@@ -349,30 +327,20 @@ export default function LessonScreen() {
         </Animated.View>
       </ScrollView>
 
-      {/* ── EXERCISE CTA (slides up after lesson 2+) ── */}
-      {showExerciseCTA && (
-        <ExerciseCTA
-          slideAnim={ctaSlideAnim}
-          nextLessonNum={lessonIdx + 2}
-          onStart={goToExercise}
-        />
-      )}
-
       {/* ── BOUTON BAS ── */}
-      {!showExerciseCTA && (
-        <View style={s.footer}>
-          <TouchableOpacity
-            onPress={goNext}
-            activeOpacity={0.88}
-            style={s.continueBtn}
-          >
-            <Text style={s.continueTxt}>
-              {isLast ? t("lessons.finishLessons") : t("common.continue")}
-            </Text>
-            <Ionicons name="arrow-forward" size={20} color={Colors.onPrimary} style={{ marginLeft: 8 }} />
-          </TouchableOpacity>
-        </View>
-      )}
+      <View style={s.footer}>
+        <TouchableOpacity
+          onPress={goNext}
+          activeOpacity={0.65}
+          delayPressIn={0}
+          style={s.continueBtn}
+        >
+          <Text style={s.continueTxt}>
+            {isLast ? t("lessons.finishLessons") : t("common.continue")}
+          </Text>
+          <Ionicons name="arrow-forward" size={20} color={Colors.onPrimary} style={{ marginLeft: 8 }} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -542,43 +510,43 @@ const s = StyleSheet.create({
 const cta = StyleSheet.create({
   wrap: {
     position: "absolute", bottom: 0, left: 0, right: 0,
-    backgroundColor: "#FFF",
-    borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    padding: 24,
-    paddingBottom: Platform.OS === "ios" ? 44 : 28,
-    shadowColor: "#B71C1C",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 12,
+    backgroundColor: "#FAFAFA",
+    borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    elevation: 10,
   },
-  header: {
-    flexDirection: "row", alignItems: "center",
-    gap: 14, marginBottom: 10,
+  accentBar: {
+    height: 3,
+    backgroundColor: "#B71C1C",
   },
-  iconCircle: {
-    width: 52, height: 52, borderRadius: 26,
-    backgroundColor: "#FFEBEE",
-    alignItems: "center", justifyContent: "center",
+  body: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 16,
   },
-  iconEmoji: { fontSize: 26 },
-  title: {
-    fontSize: 18, fontWeight: "800",
-    color: "#1A1A2E", marginBottom: 2,
+  eyebrow: {
+    fontSize: 11, fontWeight: "700",
+    color: "#B71C1C", letterSpacing: 1.4,
+    textTransform: "uppercase", marginBottom: 6,
   },
-  unlock: {
-    fontSize: 13, fontWeight: "600",
-    color: "#B71C1C",
+  heading: {
+    fontSize: 19, fontWeight: "800",
+    color: "#111827", lineHeight: 26, marginBottom: 6,
   },
   sub: {
-    fontSize: 14, color: "#6B7280",
-    marginBottom: 18, lineHeight: 20,
+    fontSize: 14, color: "#6B7280", lineHeight: 20,
   },
   btn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",
     backgroundColor: "#B71C1C",
-    borderRadius: 50, paddingVertical: 16,
-    gap: 4,
+    marginHorizontal: 24,
+    marginBottom: Platform.OS === "ios" ? 40 : 20,
+    borderRadius: 12, paddingVertical: 15,
+    gap: 8,
   },
-  btnTxt: { fontSize: 16, fontWeight: "800", color: "#FFF" },
+  btnTxt: { fontSize: 16, fontWeight: "700", color: "#FFF", letterSpacing: 0.2 },
 });

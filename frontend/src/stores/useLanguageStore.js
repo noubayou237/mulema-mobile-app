@@ -115,19 +115,28 @@ export const useLanguageStore = create((set, get) => ({
   
   syncWithUser: async (user) => {
     if (!user) return;
-    const { languages, activeLanguage, setActiveLanguage } = get();
-    
-    // Si on a déjà une langue active, on ne l'écrase pas sauf si elle est différente
-    // de celle du backend (le backend est la source de vérité pour le compte)
+    const { languages } = get();
+
     const langId = user.patrimonial_language_id || user.official_language_id;
-    if (langId && (!activeLanguage || activeLanguage.id !== langId)) {
-      const found = languages.find(l => l.id === langId);
-      if (found) {
-        await setActiveLanguage(found);
-        set({ hasSeenIntro: true });
-        AsyncStorage.setItem("hasSeenIntro", "true").catch(() => {});
-      }
-    }
+    if (!langId || !languages.length) return;
+
+    // If the user has a locally stored language preference, always respect it.
+    // loadActiveLanguage() will restore it from AsyncStorage after this call.
+    // Only fall through to the backend language when there is NO stored preference
+    // (i.e. a brand-new user who has never selected a language on this device).
+    try {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      if (stored) return;
+    } catch {}
+
+    // No local preference — set the backend default so the user isn't stuck
+    // on the language-selection screen.
+    const found = languages.find((l) => l.id === langId);
+    if (!found) return;
+
+    await get().setActiveLanguage(found);
+    set({ hasSeenIntro: true });
+    AsyncStorage.setItem("hasSeenIntro", "true").catch(() => {});
   },
 
   reset: async () => {

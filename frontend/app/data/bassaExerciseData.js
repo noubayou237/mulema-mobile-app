@@ -35,12 +35,14 @@ const t0_write = [
   { id: 'b0w4', title: 'Merci',                  subtitle: 'Mɛ̀ ǹyegà',   audioUrl: 'merci_bassa',              imageUrl: null },
 ];
 
-// Exercise 3: select the correct image — 4 words with images available
+// Exercise 3: select the correct image — family words with images from the app
 const t0_imageQcm = [
-  { id: 'b0i1', title: "L'oncle",   subtitle: 'Nyàndom',  audioUrl: 'l_oncle',   imageUrl: 'uncle'  },
-  { id: 'b0i2', title: 'Un bébé',   subtitle: 'Ǹsɛt man', audioUrl: 'le_bebe',  imageUrl: 'baby'   },
-  { id: 'b0i3', title: 'Un homme',  subtitle: 'Mùnlom',  audioUrl: 'un_homme',  imageUrl: 'couple' },
-  { id: 'b0i4', title: 'Une femme', subtitle: 'Mùdǎ',    audioUrl: 'une_femme', imageUrl: 'aunty'  },
+  { id: 'b0i1', title: "L'oncle",           subtitle: 'Nyàndom',  audioUrl: 'l_oncle',          imageUrl: 'uncle'        },
+  { id: 'b0i2', title: 'Un bébé',           subtitle: 'Ǹsɛt man', audioUrl: 'le_bebe',          imageUrl: 'baby'         },
+  { id: 'b0i3', title: 'Un homme',          subtitle: 'Mùnlom',  audioUrl: 'un_homme',          imageUrl: 'couple'       },
+  { id: 'b0i4', title: 'Une femme',         subtitle: 'Mùdǎ',    audioUrl: 'une_femme',         imageUrl: 'aunty'        },
+  { id: 'b0i5', title: 'Les grands-parents', subtitle: 'Màjò',   audioUrl: 'les_grands_parents', imageUrl: 'grandparents' },
+  { id: 'b0i6', title: 'Les enfants',       subtitle: 'Ɓɔ̀ŋgɛ',  audioUrl: 'les_enfants',       imageUrl: 'children'     },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

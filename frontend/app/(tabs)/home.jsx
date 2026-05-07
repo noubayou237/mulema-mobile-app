@@ -77,7 +77,7 @@ const getThemeExos = (themes) => {
       id: first.id,
       label: first.name,
       icon: getIcon(first.name),
-      route: `/(tabs)/lessons/${first.id}`,
+      route: `/(tabs)/lessons/${first.id}/exercise/session?wordCount=10`,
       done: false,
     }];
   }
@@ -87,7 +87,7 @@ const getThemeExos = (themes) => {
     id: theme.id,
     label: theme.name,
     icon: getIcon(theme.name),
-    route: `/(tabs)/lessons/${theme.id}`,
+    route: `/(tabs)/lessons/${theme.id}/exercise/session?wordCount=10`,
     done: theme.lessonsCompleted >= theme.lessonsCount,
   }));
 };
@@ -367,7 +367,6 @@ export default function HomeScreen() {
         }
         const total = Date.now() - start;
         if (__DEV__ || total > 1000) {
-          console.log(`[PERF] Home initialization took ${total}ms`);
         }
       } catch (err) {
         // Error handling handled by stores
@@ -437,14 +436,14 @@ export default function HomeScreen() {
 
   /* ── Bottom Sheet ── */
   const openSheet = (theme) => {
-    router.push(`/(tabs)/lessons/${theme.id}`);
+    // Navigates to the exercises tab since themes are now strictly mapping to exercises
+    router.push(`/(tabs)/exercises`);
   };
 
   /* ── Continuer ── */
   const handleContinue = () => {
-    if (dash?.continueTheme) router.push(`/(tabs)/lessons/${dash.continueTheme.id}`);
-    else if (themes?.length > 0) router.push(`/(tabs)/lessons/${themes[0].id}`);
-    else router.push("/(tabs)/lessons");
+    // Navigate to the lessons tab to browse lesson cards natively
+    router.push("/(tabs)/lessons");
   };
 
   /* ── Animations d'entrée en cascade ── */
