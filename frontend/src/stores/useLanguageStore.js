@@ -13,6 +13,11 @@ import { isSessionActive } from "../services/api";
 const STORAGE_KEY = "selectedLanguage";
 const STORAGE_KEY_TYPE = "selectedLanguageType";
 
+// Languages almost never change — cache for 30 minutes
+const LANGUAGE_STALE_TIME = 30 * 60 * 1000;
+let _languagesFetchPromise = null;
+let _languagesLastFetch = 0;
+
 export const useLanguageStore = create((set, get) => ({
   activeLanguage: null,
   hasSeenIntro: false,
@@ -20,20 +25,36 @@ export const useLanguageStore = create((set, get) => ({
   isLoading: false,
   isLoaded: false,
 
-  fetchLanguages: async () => {
+  fetchLanguages: async (force = false) => {
     if (!isSessionActive()) return [];
-    set({ isLoading: true });
-    try {
-      const languages = await languagesService.getAll();
-      set({ languages, isLoading: false, isLoaded: true });
-      return languages;
-    } catch (error) {
-      set({ isLoading: false, isLoaded: true });
-      if (error?.response?.status !== 401) {
-        Logger.warn("[LanguageStore] fetchLanguages error:", error);
-      }
-      return [];
+
+    // Return in-flight promise — prevents duplicate concurrent requests
+    if (_languagesFetchPromise) return _languagesFetchPromise;
+
+    // Return cached data if still fresh
+    const cached = get().languages;
+    if (!force && cached.length > 0 && Date.now() - _languagesLastFetch < LANGUAGE_STALE_TIME) {
+      return cached;
     }
+
+    set({ isLoading: !cached.length });
+    _languagesFetchPromise = (async () => {
+      try {
+        const languages = await languagesService.getAll();
+        set({ languages, isLoading: false, isLoaded: true });
+        _languagesLastFetch = Date.now();
+        return languages;
+      } catch (error) {
+        set({ isLoading: false, isLoaded: true });
+        if (error?.response?.status !== 401) {
+          Logger.warn("[LanguageStore] fetchLanguages error:", error);
+        }
+        return get().languages; // return stale cache on error
+      } finally {
+        _languagesFetchPromise = null;
+      }
+    })();
+    return _languagesFetchPromise;
   },
 
   loadActiveLanguage: async () => {
@@ -144,6 +165,8 @@ export const useLanguageStore = create((set, get) => ({
     // AsyncStorage so the next login session restores the same language
     // automatically. loadActiveLanguage() in _layout.jsx runs after
     // syncWithUser() and will pick the stored values back up.
+    _languagesFetchPromise = null;
+    _languagesLastFetch = 0;
     set({ activeLanguage: null, hasSeenIntro: false, languages: [], isLoaded: false });
   },
 }));

@@ -17,6 +17,7 @@ import {
   Animated,
   Easing,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -72,7 +73,8 @@ export default function LessonScreen() {
 
   /* Charger les leçons si besoin */
   useEffect(() => {
-    if (themeId && (lessons.length === 0 || currentThemeId !== themeId)) {
+    const state = useThemeStore.getState();
+    if (themeId && (state.currentThemeId !== themeId || state.lessons.length === 0)) {
       fetchLessons(themeId);
     }
   }, [themeId]);
@@ -182,11 +184,21 @@ export default function LessonScreen() {
   }, [progressPct]);
 
   if (!lesson) {
+    // Skeleton — keeps the layout stable while data arrives
     return (
       <View style={s.root}>
         <StatusBar barStyle="dark-content" />
+        <View style={s.topBar}>
+          <View style={[s.closeBtn, { backgroundColor: Colors.surfaceVariant }]} />
+          <View style={s.progressTrack}>
+            <View style={[s.progressFill, { width: "0%" }]} />
+          </View>
+          <View style={[s.heartBadge, { opacity: 0.3 }]}>
+            <Text style={s.heartNum}>5</Text>
+          </View>
+        </View>
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <Text style={Typo.bodyMd}>{t("common.loading")}</Text>
+          <ActivityIndicator size="large" color={Colors.primary} />
         </View>
       </View>
     );

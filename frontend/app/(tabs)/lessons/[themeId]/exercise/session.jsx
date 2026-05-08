@@ -838,7 +838,7 @@ export default function ExerciseSession() {
   const wordCount = wordCountStr ? parseInt(wordCountStr, 10) : null;
   const lessonIdxParam = lessonIdxStr != null ? parseInt(lessonIdxStr, 10) : null;
 
-  const { lessons, fetchLessons, themes } = useThemeStore();
+  const { lessons, fetchLessons, themes, error } = useThemeStore();
   const { fetchDashboard } = useDashboardStore();
   const { activeLanguage } = useLanguageStore();
   const { t, i18n } = useTranslation();
@@ -859,7 +859,11 @@ export default function ExerciseSession() {
   }, []);
 
   useEffect(() => {
-    if (themeId) fetchLessons(themeId);
+    // Only fetch if we don't already have lessons for this specific theme
+    const state = useThemeStore.getState();
+    if (themeId && (state.currentThemeId !== themeId || state.lessons.length === 0)) {
+      fetchLessons(themeId);
+    }
     // Force bypass cache so a retry session always starts with current hearts,
     // not the stale 0-hearts value left over from the previous failed attempt.
     fetchDashboard(true).then((data) => {
@@ -963,6 +967,26 @@ export default function ExerciseSession() {
   }, [hearts, goResults]);
 
   if (!curQ) {
+    if (error && questions.length === 0) {
+      return (
+        <View style={s.root}>
+          <StatusBar barStyle="dark-content" />
+          <View style={s.center}>
+            <Ionicons name="alert-circle-outline" size={48} color={C.primary} style={{ marginBottom: 16 }} />
+            <Text style={{ textAlign: "center", color: C.text, fontSize: 16, marginBottom: 24, paddingHorizontal: 30 }}>
+              {error}
+            </Text>
+            <TouchableOpacity 
+              onPress={() => fetchLessons(themeId)}
+              style={{ backgroundColor: C.primary, paddingVertical: 12, paddingHorizontal: 32, borderRadius: 12 }}
+            >
+              <Text style={{ color: "white", fontWeight: "700" }}>{t("common.retry") || "Retry"}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+
     return (
       <View style={s.root}>
         <StatusBar barStyle="dark-content" />

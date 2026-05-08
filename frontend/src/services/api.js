@@ -38,13 +38,16 @@ const getBaseUrl = () => {
 
 const BASE_URL = getBaseUrl();
 const STORAGE_KEY = "userSession";
-const TIMEOUT = 10000;
+const TIMEOUT = 6000;
 
 // Synchronous flag — set/cleared together with AsyncStorage so that store
 // fetch functions can guard against post-logout calls without async I/O.
 let _sessionActive = false;
 let _cachedAccessToken = null;
 let _cachedRefreshToken = null;
+
+// Deduplicates concurrent /auth/me calls — only one request in flight at a time.
+let _authMePromise = null;
 
 export const isSessionActive = () => _sessionActive;
 
@@ -177,6 +180,13 @@ api.interceptors.response.use(
 // ═══════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════
+
+// Deduplicated /auth/me — callers share the same in-flight promise.
+export const getAuthMe = () => {
+  if (_authMePromise) return _authMePromise;
+  _authMePromise = api.get("/auth/me").finally(() => { _authMePromise = null; });
+  return _authMePromise;
+};
 
 export const saveSession = async (tokens) => {
   _sessionActive = true;

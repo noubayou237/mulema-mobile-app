@@ -6,7 +6,7 @@ const assetsDir = path.join(projectRoot, 'assets');
 const outputFilePath = path.join(projectRoot, 'src', 'utils', 'AssetsMap.js');
 
 const imageExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.avif', '.bmp'];
-const audioExtensions = ['.mp3', '.wav', '.m4a', '.aac', '.ogg'];
+const audioExtensions = ['.mp3', '.mp3', '.m4a', '.aac', '.ogg'];
 const videoExtensions = ['.mp4', '.mov', '.wmv', '.avi', '.mkv'];
 
 function toSnakeCase(str) {

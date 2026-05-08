@@ -217,3 +217,5 @@ export function buildBassaSession(themeOrder) {
 
   return questions;
 }
+
+export default {};

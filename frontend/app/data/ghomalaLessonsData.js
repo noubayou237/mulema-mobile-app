@@ -4,65 +4,65 @@
 
 export const GHOMALA_ENRICHMENT_MAP = {
   // ── Les Chiffres 0-9 ──────────────────────────────────────────────────
-  "zero":               { audioKey: "le_chiffre_0_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
-  "un":                 { audioKey: "le_chiffre_1_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
-  "deux":               { audioKey: "le_chiffre_2_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
-  "trois":              { audioKey: "le_chiffre_3_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
-  "quatre":             { audioKey: "le_chiffre_4_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
-  "cinq":               { audioKey: "le_chiffre_5_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
-  "six":                { audioKey: "le_chiffre_6_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
-  "sept":               { audioKey: "le_chiffre_7_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
-  "huit":               { audioKey: "le_chiffre_8_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
-  "neuf":               { audioKey: "le_chiffre_9_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
+  "zero":               { targetText: "ywə̂ně", audioKey: "le_chiffre_0_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
+  "un":                 { targetText: "yaə̂mu'", audioKey: "le_chiffre_1_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
+  "deux":               { targetText: "yaə́pʉə́ə́", audioKey: "le_chiffre_2_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
+  "trois":              { targetText: "yaə́tá", audioKey: "le_chiffre_3_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
+  "quatre":             { targetText: "yápfʉə̀", audioKey: "le_chiffre_4_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
+  "cinq":               { targetText: "yaə́tɔ̂", audioKey: "le_chiffre_5_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
+  "six":                { targetText: "ntɔkɔ́", audioKey: "le_chiffre_6_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
+  "sept":               { targetText: "sɔmbuə́ə́", audioKey: "le_chiffre_7_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
+  "huit":               { targetText: "hɔ̌m", audioKey: "le_chiffre_8_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
+  "neuf":               { targetText: "vʉ'ʉ́", audioKey: "le_chiffre_9_en_ngohmala", category: "Les chiffres 0-9 en ghomala" },
 
   // ── Les Jours de la Semaine ───────────────────────────────────────────
-  "lundi":              { audioKey: "monday_in_bami", category: "Les jours de la semaine en ghomala" },
-  "mardi":              { audioKey: "tuesday", category: "Les jours de la semaine en ghomala" },
-  "mercredi":           { audioKey: "wednesday", category: "Les jours de la semaine en ghomala" },
-  "jeudi":              { audioKey: "thursday", category: "Les jours de la semaine en ghomala" },
-  "vendredi":           { audioKey: "friday", category: "Les jours de la semaine en ghomala" },
-  "samedi":             { audioKey: "saturday", category: "Les jours de la semaine en ghomala" },
-  "dimanche":           { audioKey: "sunday", category: "Les jours de la semaine en ghomala" },
+  "lundi":              { targetText: "Mɔ̂ga", audioKey: "monday_in_bami", category: "Les jours de la semaine en ghomala" },
+  "mardi":              { targetText: "Shwenè", audioKey: "tuesday", category: "Les jours de la semaine en ghomala" },
+  "mercredi":           { targetText: "Səthu", audioKey: "wednesday", category: "Les jours de la semaine en ghomala" },
+  "jeudi":              { targetText: "Lɔm", audioKey: "thursday", category: "Les jours de la semaine en ghomala" },
+  "vendredi":           { targetText: "Zeine", audioKey: "friday", category: "Les jours de la semaine en ghomala" },
+  "samedi":             { targetText: "Səgha", audioKey: "saturday", category: "Les jours de la semaine en ghomala" },
+  "dimanche":           { targetText: "Su'ntshia", audioKey: "sunday", category: "Les jours de la semaine en ghomala" },
   
   // ── Le Verbe Être ────────────────────────────────────────────────────────
-  "je suis":            { audioKey: "ga_b_je_suis", category: "Le verbe etre en ghomala" },
-  "tu es":              { audioKey: "o_b_tu_es", category: "Le verbe etre en ghomala" },
-  "il ou elle est":     { audioKey: "e_b_il_ou_elle_est", category: "Le verbe etre en ghomala" },
-  "nous sommes":        { audioKey: "py_b_nus_sommes", category: "Le verbe etre en ghomala" },
-  "vous etes":          { audioKey: "po_b_vous_etes", category: "Le verbe etre en ghomala" },
-  "ils ou elles sont":  { audioKey: "wap_b_ils_ou_elles_sont", category: "Le verbe etre en ghomala" },
+  "je suis":            { targetText: "Gaə̂ bə́", audioKey: "ga_b_je_suis", category: "Le verbe etre en ghomala" },
+  "tu es":              { targetText: "ô bə́", audioKey: "o_b_tu_es", category: "Le verbe etre en ghomala" },
+  "il ou elle est":     { targetText: "ě bə́", audioKey: "e_b_il_ou_elle_est", category: "Le verbe etre en ghomala" },
+  "nous sommes":        { targetText: "pyə̂ bə́", audioKey: "py_b_nus_sommes", category: "Le verbe etre en ghomala" },
+  "vous etes":          { targetText: "pô bə́", audioKey: "po_b_vous_etes", category: "Le verbe etre en ghomala" },
+  "ils ou elles sont":  { targetText: "wâp bə́", audioKey: "wap_b_ils_ou_elles_sont", category: "Le verbe etre en ghomala" },
 
   // ── Le Verbe Avoir ──────────────────────────────────────────────────────
-  "j ai":               { audioKey: "ga_g_j_ai", category: "Le verbe avoir en ghomala" },
-  "tu as":              { audioKey: "o_g_tu_as", category: "Le verbe avoir en ghomala" },
-  "il ou elle a":       { audioKey: "e_g_il_ou_elle_as", category: "Le verbe avoir en ghomala" },
-  "nous avons":         { audioKey: "py_g_nous_avons", category: "Le verbe avoir en ghomala" },
-  "vous avez":          { audioKey: "po_g_vous_avez", category: "Le verbe avoir en ghomala" },
-  "ils ou elles ont":   { audioKey: "wap_g", category: "Le verbe avoir en ghomala" },
+  "j ai":               { targetText: "Gaə̂ gə", audioKey: "ga_g_j_ai", category: "Le verbe avoir en ghomala" },
+  "tu as":              { targetText: "ô gə", audioKey: "o_g_tu_as", category: "Le verbe avoir en ghomala" },
+  "il ou elle a":       { targetText: "ě gə", audioKey: "e_g_il_ou_elle_as", category: "Le verbe avoir en ghomala" },
+  "nous avons":         { targetText: "pyə̂ gə", audioKey: "py_g_nous_avons", category: "Le verbe avoir en ghomala" },
+  "vous avez":          { targetText: "pô gə", audioKey: "po_g_vous_avez", category: "Le verbe avoir en ghomala" },
+  "ils ou elles ont":   { targetText: "wâp gə", audioKey: "wap_g", category: "Le verbe avoir en ghomala" },
 
   // ── Le Verbe Manger ──────────────────────────────────────────────────────
-  "je mange":           { audioKey: "ga_mpfa_je_mange", category: "Le verbe manger en ghomala" },
-  "tu manges":          { audioKey: "o_mpfa_tu_mange", category: "Le verbe manger en ghomala" },
-  "il ou elle mange":   { audioKey: "e_mpfa_il_ou_elle_mange", category: "Le verbe manger en ghomala" },
-  "nous mangeons":      { audioKey: "py_mpfa_nous_mangeons", category: "Le verbe manger en ghomala" },
-  "vous mangez":        { audioKey: "po_mpfa_vous_mangez", category: "Le verbe manger en ghomala" },
-  "ils ou elles mangent": { audioKey: "wap_mpfa_ils_ou_elles_magent", category: "Le verbe manger en ghomala" },
+  "je mange":           { targetText: "Gaə̂ mpfaə", audioKey: "ga_mpfa_je_mange", category: "Le verbe manger en ghomala" },
+  "tu manges":          { targetText: "ô mpfaə", audioKey: "o_mpfa_tu_mange", category: "Le verbe manger en ghomala" },
+  "il ou elle mange":   { targetText: "ě mpfaə", audioKey: "e_mpfa_il_ou_elle_mange", category: "Le verbe manger en ghomala" },
+  "nous mangeons":      { targetText: "pyə̂ mpfaə", audioKey: "py_mpfa_nous_mangeons", category: "Le verbe manger en ghomala" },
+  "vous mangez":        { targetText: "pô mpfaə", audioKey: "po_mpfa_vous_mangez", category: "Le verbe manger en ghomala" },
+  "ils ou elles mangent": { targetText: "wâp mpfaə", audioKey: "wap_mpfa_ils_ou_elles_magent", category: "Le verbe manger en ghomala" },
 
   // ── Le Verbe Marcher ──────────────────────────────────────────────────────
-  "je marche":           { audioKey: "ga_gi_je_marche", category: "Le verbe marcher en ghomala" },
-  "tu marches":          { audioKey: "o_gi_tu_marche", category: "Le verbe marcher en ghomala" },
-  "il ou elle marche":   { audioKey: "e_gi_il_ou_elle_marche", category: "Le verbe marcher en ghomala" },
-  "nous marchons":       { audioKey: "py_gi_nous_marchons", category: "Le verbe marcher en ghomala" },
-  "vous marchez":        { audioKey: "po_gi_vous_marchez", category: "Le verbe marcher en ghomala" },
-  "ils ou elles marchent": { audioKey: "wap_gi_ils_ou_elles_marchent", category: "Le verbe marcher en ghomala" },
+  "je marche":           { targetText: "Gaə̂ giŋ", audioKey: "ga_gi_je_marche", category: "Le verbe marcher en ghomala" },
+  "tu marches":          { targetText: "ô giŋ", audioKey: "o_gi_tu_marche", category: "Le verbe marcher en ghomala" },
+  "il ou elle marche":   { targetText: "ě giŋ", audioKey: "e_gi_il_ou_elle_marche", category: "Le verbe marcher en ghomala" },
+  "nous marchons":       { targetText: "pyə̂ giŋ", audioKey: "py_gi_nous_marchons", category: "Le verbe marcher en ghomala" },
+  "vous marchez":        { targetText: "pô giŋ", audioKey: "po_gi_vous_marchez", category: "Le verbe marcher en ghomala" },
+  "ils ou elles marchent": { targetText: "wâp giŋ", audioKey: "wap_gi_ils_ou_elles_marchent", category: "Le verbe marcher en ghomala" },
 
   // ── Le Verbe Acheter ──────────────────────────────────────────────────────
-  "j achete":           { audioKey: "ga_jo_j_achete", category: "Le verbe acheter en ghomala" },
-  "tu achetes":         { audioKey: "o_jo_tu_achete", category: "Le verbe acheter en ghomala" },
-  "il ou elle achete":  { audioKey: "e_jo_il_ou_elle_achete", category: "Le verbe acheter en ghomala" },
-  "nous achetons":      { audioKey: "py_jo_nous_achetons", category: "Le verbe acheter en ghomala" },
-  "vous achetez":       { audioKey: "po_jo_vous_achetez", category: "Le verbe acheter en ghomala" },
-  "ils ou elles achetent": { audioKey: "wap_jo_ils_ou_elles_achetent", category: "Le verbe acheter en ghomala" },
+  "j achete":           { targetText: "Gaə̂ jó", audioKey: "ga_jo_j_achete", category: "Le verbe acheter en ghomala" },
+  "tu achetes":         { targetText: "ô jó", audioKey: "o_jo_tu_achete", category: "Le verbe acheter en ghomala" },
+  "il ou elle achete":  { targetText: "ě jó", audioKey: "e_jo_il_ou_elle_achete", category: "Le verbe acheter en ghomala" },
+  "nous achetons":      { targetText: "pyə̂ jó", audioKey: "py_jo_nous_achetons", category: "Le verbe acheter en ghomala" },
+  "vous achetez":       { targetText: "pô jó", audioKey: "po_jo_vous_achetez", category: "Le verbe acheter en ghomala" },
+  "ils ou elles achetent": { targetText: "wâp jó", audioKey: "wap_jo_ils_ou_elles_achetent", category: "Le verbe acheter en ghomala" },
 };
 
 /**
@@ -93,3 +93,110 @@ export function getGhomalaEnrichment(title, categoryFallback) {
 
   return null;
 }
+
+/**
+ * Returns virtual lessons and words for a given virtual themeId
+ */
+export function getGhomalaVirtualData(themeId) {
+  const themeMap = {
+    "ghomala_chiffres": {
+      title: "Les chiffres 0-9 en ghomala",
+      items: [
+        { sourceText: "Zéro", targetText: "ywə̂ně", audioKey: "le_chiffre_0_en_ngohmala" },
+        { sourceText: "Un", targetText: "yaə̂mu'", audioKey: "le_chiffre_1_en_ngohmala" },
+        { sourceText: "Deux", targetText: "yaə́pʉə́ə́", audioKey: "le_chiffre_2_en_ngohmala" },
+        { sourceText: "Trois", targetText: "yaə́tá", audioKey: "le_chiffre_3_en_ngohmala" },
+        { sourceText: "Quatre", targetText: "yápfʉə̀", audioKey: "le_chiffre_4_en_ngohmala" },
+        { sourceText: "Cinq", targetText: "yaə́tɔ̂", audioKey: "le_chiffre_5_en_ngohmala" },
+        { sourceText: "Six", targetText: "ntɔkɔ́", audioKey: "le_chiffre_6_en_ngohmala" },
+        { sourceText: "Sept", targetText: "sɔmbuə́ə́", audioKey: "le_chiffre_7_en_ngohmala" },
+        { sourceText: "Huit", targetText: "hɔ̌m", audioKey: "le_chiffre_8_en_ngohmala" },
+        { sourceText: "Neuf", targetText: "vʉ'ʉ́", audioKey: "le_chiffre_9_en_ngohmala" },
+      ]
+    },
+    "ghomala_etre": {
+      title: "Le verbe ÊTRE en ghomala",
+      items: [
+        { sourceText: "Je suis", targetText: "Gaə̂ bə́", audioKey: "ga_b_je_suis" },
+        { sourceText: "Tu es", targetText: "ô bə́", audioKey: "o_b_tu_es" },
+        { sourceText: "Il ou Elle est", targetText: "ě bə́", audioKey: "e_b_il_ou_elle_est" },
+        { sourceText: "Nous sommes", targetText: "pyə̂ bə́", audioKey: "py_b_nus_sommes" },
+        { sourceText: "Vous êtes", targetText: "pô bə́", audioKey: "po_b_vous_etes" },
+        { sourceText: "Ils ou Elles sont", targetText: "wâp bə́", audioKey: "wap_b_ils_ou_elles_sont" },
+      ]
+    },
+    "ghomala_avoir": {
+        title: "Le verbe AVOIR en ghomala",
+        items: [
+          { sourceText: "J'ai", targetText: "Gaə̂ gə", audioKey: "ga_g_j_ai" },
+          { sourceText: "Tu as", targetText: "ô gə", audioKey: "o_g_tu_as" },
+          { sourceText: "Il ou Elle a", targetText: "ě gə", audioKey: "e_g_il_ou_elle_as" },
+          { sourceText: "Nous avons", targetText: "pyə̂ gə", audioKey: "py_g_nous_avons" },
+          { sourceText: "Vous avez", targetText: "pô gə", audioKey: "po_g_vous_avez" },
+          { sourceText: "Ils ou Elles ont", targetText: "wâp gə", audioKey: "wap_g" },
+        ]
+    },
+    "ghomala_manger": {
+      title: "Le verbe MANGER en ghomala",
+      items: [
+        { sourceText: "Je mange", targetText: "Gaə̂ mpfaə", audioKey: "ga_mpfa_je_mange" },
+        { sourceText: "Tu manges", targetText: "ô mpfaə", audioKey: "o_mpfa_tu_mange" },
+        { sourceText: "Il ou Elle mange", targetText: "ě mpfaə", audioKey: "e_mpfa_il_ou_elle_mange" },
+        { sourceText: "Nous mangeons", targetText: "pyə̂ mpfaə", audioKey: "py_mpfa_nous_mangeons" },
+        { sourceText: "Vous mangez", targetText: "pô mpfaə", audioKey: "po_mpfa_vous_mangez" },
+        { sourceText: "Ils ou Elles mangent", targetText: "wâp mpfaə", audioKey: "wap_mpfa_ils_ou_elles_magent" },
+      ]
+    },
+    "ghomala_marcher": {
+      title: "Le verbe MARCHER en ghomala",
+      items: [
+        { sourceText: "Je marche", targetText: "Gaə̂ giŋ", audioKey: "ga_gi_je_marche" },
+        { sourceText: "Tu marches", targetText: "ô giŋ", audioKey: "o_gi_tu_marche" },
+        { sourceText: "Il ou Elle marche", targetText: "ě giŋ", audioKey: "e_gi_il_ou_elle_marche" },
+        { sourceText: "Nous marchons", targetText: "pyə̂ giŋ", audioKey: "py_gi_nous_marchons" },
+        { sourceText: "Vous marchez", targetText: "pô giŋ", audioKey: "po_gi_vous_marchez" },
+        { sourceText: "Ils ou Elles marchent", targetText: "wâp giŋ", audioKey: "wap_gi_ils_ou_elles_marchent" },
+      ]
+    },
+    "ghomala_acheter": {
+      title: "Le verbe ACHETER en ghomala",
+      items: [
+        { sourceText: "J'achete", targetText: "Gaə̂ jó", audioKey: "ga_jo_j_achete" },
+        { sourceText: "Tu achetes", targetText: "ô jó", audioKey: "o_jo_tu_achete" },
+        { sourceText: "Il ou Elle achete", targetText: "ě jó", audioKey: "e_jo_il_ou_elle_achete" },
+        { sourceText: "Nous achetons", targetText: "pyə̂ jó", audioKey: "py_jo_nous_achetons" },
+        { sourceText: "Vous achetez", targetText: "pô jó", audioKey: "po_jo_vous_achetez" },
+        { sourceText: "Ils ou Elles achetent", targetText: "wâp jó", audioKey: "wap_jo_ils_ou_elles_achetent" },
+      ]
+    },
+    "ghomala_jour": {
+      title: "Les jours de la semaine en ghomala",
+      items: [
+        { sourceText: "Lundi", targetText: "Mɔ̂ga", audioKey: "monday_in_bami" },
+        { sourceText: "Mardi", targetText: "Shwenè", audioKey: "tuesday" },
+        { sourceText: "Mercredi", targetText: "Səthu", audioKey: "wednesday" },
+        { sourceText: "Jeudi", targetText: "Lɔm", audioKey: "thursday" },
+        { sourceText: "Vendredi", targetText: "Zeine", audioKey: "friday" },
+        { sourceText: "Samedi", targetText: "Səgha", audioKey: "saturday" },
+        { sourceText: "Dimanche", targetText: "Su'ntshia", audioKey: "sunday" },
+      ]
+    }
+  };
+
+  const data = themeMap[themeId];
+  if (!data) return null;
+
+  // Create individual lessons per word — the lesson screen navigates one
+  // lesson per swipe card, and enrichment lookup uses lesson.title.
+  return {
+    lessons: data.items.map((item, idx) => ({
+      id: `virt_${themeId}_${idx}`,
+      title: item.sourceText,
+      subtitle: item.targetText,
+      audioUrl: item.audioKey,
+      order: idx,
+    })),
+  };
+}
+
+export default {};

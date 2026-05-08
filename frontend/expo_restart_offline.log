@@ -1,0 +1,9 @@
+env: load .env
+env: export EXPO_PUBLIC_API_URL EXPO_PUBLIC_PRIVACY_POLICY_URL EXPO_PUBLIC_TERMS_URL
+Starting project at /home/leila/Desktop/mulema-mobile-app/frontend
+React Compiler enabled
+Starting Metro Bundler
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+Skipping dependency validation in offline mode
+Waiting on http://localhost:8081
+Logs for your project will appear below.

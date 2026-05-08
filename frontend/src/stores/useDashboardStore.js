@@ -6,7 +6,7 @@ import { getFriendlyErrorMessage, isNetworkError } from "../utils/errorUtils";
 import i18n from "../i18n";
 
 // Cache settings
-const STALE_TIME = 60000; // 60 seconds
+const STALE_TIME = 300000; // 5 minutes
 const inflightRequests = new Map();
 const lastFetchTime = new Map();
 

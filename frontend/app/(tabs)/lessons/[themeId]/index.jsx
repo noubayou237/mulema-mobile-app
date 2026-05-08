@@ -21,6 +21,7 @@ import { useThemeStore }    from "../../../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../../../src/stores/useDashboardStore";
 import { useLanguageStore }  from "../../../../src/stores/useLanguageStore";
 import { useTranslation } from "react-i18next";
+import { getBassaEnrichment } from "../../../data/bassaLessonsData";
 
 const { width: SW } = Dimensions.get("window");
 
@@ -280,14 +281,15 @@ const ExerciseNode = ({ onPress, lt, isLocked }) => {
    ═══════════════════════════════════════════════════════════════ */
 export default function ThemeDetailScreen() {
   const router      = useRouter();
-  const { themeId } = useLocalSearchParams();
+  const { themeId, category, title: titleParam } = useLocalSearchParams();
   const { t }       = useTranslation();
 
-  const { fetchLessons, getThemeById, lessons, lessonsLoading, clearTheme, isLessonLocked, getExerciseAccess } = useThemeStore();
+  const { fetchLessons, getThemeById, lessons, lessonsLoading, clearTheme, isLessonLocked, getExerciseAccess, error } = useThemeStore();
   const { data: dash } = useDashboardStore();
   const { activeLanguage } = useLanguageStore();
 
   const lt = getLangTheme(activeLanguage?.name ?? "");
+  const isBassa = (activeLanguage?.name ?? "").toLowerCase().includes("bassa");
 
   // Refetch every time this screen gains focus so that newly-unlocked lessons
   // appear after returning from an exercise without needing a full remount.
@@ -297,23 +299,30 @@ export default function ThemeDetailScreen() {
     }, [themeId])
   );
 
+  // For Bassa verbs the API theme contains all conjugations — show only the
+  // ones matching the selected category (e.g. "Verbe ÊTRE" → 6 lessons).
+  const displayLessons = (isBassa && category)
+    ? lessons.filter((l) => getBassaEnrichment(l.title)?.category === category)
+    : lessons;
+
   const theme     = getThemeById(themeId);
-  const themeName = theme?.name_fr ?? theme?.name ?? t("common.theme");
+  // titleParam lets virtual Ghomala/Duala themes show a proper header title.
+  const themeName = theme?.name_fr ?? theme?.name ?? titleParam ?? category ?? t("common.theme");
   const themeCode = (theme?.code ?? "").toLowerCase();
   const emoji     = getEmoji(themeCode);
 
-  const explicitCompleted = lessons.filter((l) => l.userProgress?.[0]?.isCompleted).length;
+  const explicitCompleted = displayLessons.filter((l) => l.userProgress?.[0]?.isCompleted).length;
   // The first lesson (index 0) is auto-unlocked and has no exercise gate after
   // it, so the backend never sets its isCompleted flag.  Credit it for display
   // purposes once the user has made any progress, so the bar reaches 100 % when
   // the Final Challenge is passed.
   const lesson0Credited =
     explicitCompleted > 0 &&
-    lessons.length > 0 &&
-    !lessons[0]?.userProgress?.[0]?.isCompleted
+    displayLessons.length > 0 &&
+    !displayLessons[0]?.userProgress?.[0]?.isCompleted
       ? 1 : 0;
   const completed = explicitCompleted + lesson0Credited;
-  const totalL    = lessons.length || 0;
+  const totalL    = displayLessons.length || 0;
   const pct       = totalL > 0 ? Math.round((completed / totalL) * 100) : 0;
 
   return (
@@ -403,16 +412,33 @@ export default function ThemeDetailScreen() {
         </LinearGradient>
 
         {/* ── Chemin de leçons ── */}
-        {lessonsLoading && lessons.length === 0 ? (
+        {lessonsLoading && displayLessons.length === 0 ? (
           <ActivityIndicator size="large" color={lt.accent} style={{ marginVertical: 60 }} />
-        ) : lessons.length === 0 ? (
+        ) : displayLessons.length === 0 ? (
           <View style={s.empty}>
-            <Text style={{ fontSize: 48 }}>📭</Text>
-            <Text style={[s.emptyTxt, { color: lt.accent + "80" }]}>{t("lessons.noLessons")}</Text>
+            {error ? (
+              <>
+                <Ionicons name="cloud-offline-outline" size={48} color={lt.accent} style={{ marginBottom: 16 }} />
+                <Text style={[s.emptyTxt, { color: "#FFF", marginBottom: 24, paddingHorizontal: 40 }]}>
+                  {error}
+                </Text>
+                <TouchableOpacity 
+                  onPress={() => fetchLessons(themeId)}
+                  style={{ backgroundColor: lt.accent, paddingVertical: 12, paddingHorizontal: 32, borderRadius: 12 }}
+                >
+                  <Text style={{ color: "white", fontWeight: "700" }}>{t("common.retry") || "Retry"}</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <Text style={{ fontSize: 48 }}>📭</Text>
+                <Text style={[s.emptyTxt, { color: lt.accent + "80" }]}>{t("lessons.noLessons")}</Text>
+              </>
+            )}
           </View>
         ) : (
           <View style={s.path}>
-            {lessons.map((lesson, idx) => (
+            {displayLessons.map((lesson, idx) => (
               <LessonNode
                 key={lesson.id}
                 lesson={lesson}
@@ -435,9 +461,9 @@ export default function ThemeDetailScreen() {
                 // No wordCount param → session uses the full lessons list.
                 // lessonIdx = last index → results.jsx identifies this as the
                 // final challenge and triggers video unlock on success.
-                router.push(
-                  `/(tabs)/lessons/${themeId}/exercise/session?lessonIdx=${lessons.length - 1}`
-                );
+                const params = new URLSearchParams({ lessonIdx: String(displayLessons.length - 1) });
+                if (category) params.set("category", category);
+                router.push(`/(tabs)/lessons/${themeId}/exercise/session?${params.toString()}`);
               }}
             />
           </View>

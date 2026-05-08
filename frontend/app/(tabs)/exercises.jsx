@@ -13,6 +13,8 @@ import { useLanguageStore } from "../../src/stores/useLanguageStore";
 import { useDashboardStore } from "../../src/stores/useDashboardStore";
 import { useAuthStore } from "../../src/stores/useAuthStore";
 import { DrawerContent } from "../../src/components/layout/DrawerContent";
+import { getDualaVirtualData } from "../data/dualaLessonsData";
+import { getGhomalaVirtualData } from "../data/ghomalaLessonsData";
 
 import { useTranslation } from "react-i18next";
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
@@ -48,7 +50,7 @@ const icon = (code) => ICONS[(code ?? "").toLowerCase()] ?? "book-outline";
 /* ════════════════════════════════════════════════════════════════
    EXERCISE CARD (Exercices tab)
    ════════════════════════════════════════════════════════════════ */
-const ExerciseThemeCard = ({ theme, index, onPress, isCompleted, hasReward }) => {
+const ExerciseThemeCard = ({ theme, index, isCompleted, hasReward, onPress, onPressIn }) => {
   const { t, i18n } = useTranslation();
   const fade = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(20)).current;
@@ -69,7 +71,8 @@ const ExerciseThemeCard = ({ theme, index, onPress, isCompleted, hasReward }) =>
   return (
     <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }] }}>
       <TouchableOpacity
-        onPress={() => !locked && onPress(theme)}
+        onPress={() => !locked && onPress && onPress(theme)}
+        onPressIn={() => !locked && onPressIn && onPressIn(theme)}
         activeOpacity={locked ? 1 : 0.75}
         style={[s.exCard, locked && s.cardLocked, allDone && s.exCardDone]}
       >
@@ -127,7 +130,7 @@ export default function ExercisesScreen() {
   const { t } = useTranslation();
   const { user, logout } = useAuthStore();
   const { activeLanguage, languages, fetchLanguages, loadActiveLanguage } = useLanguageStore();
-  const { themes, isLoading, fetchThemes } = useThemeStore();
+  const { themes, isLoading, fetchThemes, setVirtualData } = useThemeStore();
   const { data: dash, fetchDashboard } = useDashboardStore();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -219,8 +222,19 @@ export default function ExercisesScreen() {
 
   const handleExerciseThemePress = useCallback((theme) => {
     const allDone = (theme.exercisesCompleted ?? 0) >= (theme.exercisesCount ?? 3) && (theme.exercisesCount ?? 3) > 0;
+
+    // For virtual themes (Duala/Ghomala), inject local data before entering session
+    // so session.jsx never tries to call the API with a synthetic ID.
+    const themeId = String(theme.id);
+    if (themeId.startsWith("duala_")) {
+      const vd = getDualaVirtualData(themeId);
+      if (vd) setVirtualData(themeId, vd);
+    } else if (themeId.startsWith("ghomala_")) {
+      const vd = getGhomalaVirtualData(themeId);
+      if (vd) setVirtualData(themeId, vd);
+    }
+
     if (allDone) {
-      // Theme complete — show story video (which marks videoWatched and unlocks the next theme)
       const langCode = (activeLanguage?.name ?? activeLanguage?.code ?? "duala")
         .toLowerCase()
         .normalize("NFD")
@@ -232,6 +246,11 @@ export default function ExercisesScreen() {
       router.push(`/(tabs)/lessons/${theme.id}/exercise/session`);
     }
   }, [router, activeLanguage]);
+
+  // Lesson-type themes (jours, verbes) belong on the lessons tab, not exercises.
+  // Filter them out so only true exercise themes appear here.
+  const LESSON_CODES = ["jours", "verbes", "pronoms", "chiffres", "couleurs"];
+  const exerciseThemes = themes.filter((t) => !LESSON_CODES.includes((t.code ?? "").toLowerCase()));
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
@@ -284,9 +303,9 @@ export default function ExercisesScreen() {
           </View>
         </View>
 
-        {isLoading && themes.length === 0 ? (
+        {isLoading && exerciseThemes.length === 0 ? (
           <ActivityIndicator size="large" color={RED} style={{ marginVertical: 48 }} />
-        ) : !isLoading && themes.length === 0 ? (
+        ) : !isLoading && exerciseThemes.length === 0 ? (
           <View style={s.empty}>
             <Ionicons name="barbell-outline" size={44} color={FAINT} />
             <Text style={s.emptyTxt}>
@@ -302,7 +321,7 @@ export default function ExercisesScreen() {
             <Text style={s.sectionSubtitle}>
               {t("exercises.rewardHint")}
             </Text>
-            {themes.map((theme, idx) => {
+            {exerciseThemes.map((theme, idx) => {
               const allDone = (theme.exercisesCompleted ?? 0) >= (theme.exercisesCount ?? 3) && (theme.exercisesCount ?? 3) > 0;
               const hasReward = allDone;
               return (

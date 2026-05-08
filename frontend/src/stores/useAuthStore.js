@@ -6,7 +6,7 @@ import Logger from "../utils/logger";
 
 import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
-import api, { saveSession, clearSession, getSession } from "../services/api";
+import api, { saveSession, clearSession, getSession, getAuthMe } from "../services/api";
 import { useLanguageStore } from "./useLanguageStore";
 import { useThemeStore } from "./useThemeStore";
 import { useDashboardStore } from "./useDashboardStore";
@@ -50,7 +50,7 @@ export const useAuthStore = create((set, get) => ({
         return;
       }
 
-      const { data: user } = await api.get("/auth/me");
+      const { data: user } = await getAuthMe();
       await cacheUser(user);
 
       set({
@@ -101,7 +101,7 @@ export const useAuthStore = create((set, get) => ({
 
     let user = null;
     try {
-      const meResponse = await api.get("/auth/me");
+      const meResponse = await getAuthMe();
       user = meResponse.data;
       await cacheUser(user);
     } catch (e) {
@@ -135,7 +135,7 @@ export const useAuthStore = create((set, get) => ({
     await saveSession(tokens);
     let user = null;
     try {
-      const { data } = await api.get("/auth/me");
+      const { data } = await getAuthMe();
       user = data;
       await cacheUser(user);
     } catch (err) {

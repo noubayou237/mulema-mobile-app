@@ -5,7 +5,7 @@ import api, { isSessionActive } from "../services/api";
 import { getFriendlyErrorMessage, isNetworkError } from "../utils/errorUtils";
 
 // Cache settings
-const STALE_TIME = 30000; // 30 seconds
+const STALE_TIME = 300_000; // 5 minutes — keeps data fresh for an entire session
 const inflightRequests = new Map();
 const lastFetchTime = new Map();
 
@@ -32,17 +32,17 @@ export const useThemeStore = create((set, get) => ({
   // fetchThemes — Charge les thèmes d'une langue
   // ═════════════════════════════════════════════════════════════
 
-  fetchThemes: async (languageId) => {
+  fetchThemes: async (languageId, force = false) => {
     if (!languageId || !isSessionActive()) return [];
-    
+
     // 1. De-duplication: Return existing promise if already fetching this lang
     const reqKey = `themes_${languageId}`;
-    if (inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
+    if (!force && inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
 
     // 2. Cache Logic: If data is fresh, don't fetch
     const now = Date.now();
     const lastFetch = lastFetchTime.get(reqKey) || 0;
-    if (get().themes.length > 0 && (now - lastFetch < STALE_TIME)) {
+    if (!force && get().themes.length > 0 && (now - lastFetch < STALE_TIME)) {
       return get().themes;
     }
 
@@ -86,6 +86,16 @@ export const useThemeStore = create((set, get) => ({
     const lastFetch = lastFetchTime.get(reqKey) || 0;
     const { currentThemeId, lessons: cached } = get();
     
+    // Skip network for virtual themes (already injected in store)
+    if (themeId?.toString().startsWith("virtual_")) {
+      if (currentThemeId === themeId && cached.length > 0) {
+        return cached;
+      }
+      // If we somehow lost the virtual data, we can't fetch it from API
+      set({ lessonsLoading: false });
+      return cached; 
+    }
+
     if (currentThemeId === themeId && cached.length > 0 && (now - lastFetch < STALE_TIME)) {
       return cached;
     }
@@ -111,9 +121,10 @@ export const useThemeStore = create((set, get) => ({
 
         return lessons;
       } catch (error) {
-        set({ lessonsLoading: false });
-        if (error?.response?.status !== 401) {
-          Logger.error("[ThemeStore] fetchLessons error:", error);
+        const msg = getFriendlyErrorMessage(error);
+        set({ lessonsLoading: false, error: msg });
+        if (error?.response?.status !== 401 && !isNetworkError(error)) {
+          Logger.error("[ThemeStore] fetchLessons error:", msg);
         }
         return [];
       } finally {
@@ -183,11 +194,12 @@ export const useThemeStore = create((set, get) => ({
         lastFetchTime.set(reqKey, Date.now());
         return words;
       } catch (error) {
-        if (!silent) set({ wordsLoading: false, error: "Content not available yet." });
+        const msg = getFriendlyErrorMessage(error);
+        if (!silent) set({ wordsLoading: false, error: msg });
         
         // Only log if it's not a 404 (we expect some virtual items to not have sub-words)
-        if (error?.response?.status !== 404 && error?.response?.status !== 401) {
-          Logger.error("[ThemeStore] fetchWords error:", error);
+        if (error?.response?.status !== 404 && error?.response?.status !== 401 && !isNetworkError(error)) {
+          Logger.error("[ThemeStore] fetchWords error:", msg);
         }
         return [];
       } finally {
@@ -251,16 +263,11 @@ export const useThemeStore = create((set, get) => ({
     const { lessons } = get();
     if (lessons.length === 0) return { e1: false, e2: false, e3: false };
 
-    const lastLesson = lessons[lessons.length - 1];
-    const lastProg   = lastLesson?.userProgress?.[0];
-
-    // Final Challenge unlocks only when the last lesson itself is accessible —
-    // either it is auto-unlocked (order < 2) or explicitly unlocked in the DB
-    // after the user passes the exercise for the second-to-last lesson.
-    const finalChallengeUnlocked =
-      lastLesson?.order < 2 || !!lastProg?.isUnlocked;
-
-    return { e1: finalChallengeUnlocked, e2: finalChallengeUnlocked, e3: finalChallengeUnlocked };
+    // The final challenge is accessible whenever lessons are loaded.
+    // The first two lesson nodes are always auto-unlocked, giving the user
+    // enough content to attempt the exercise. The backend enforces actual
+    // completion gates via /progress/unlock-final.
+    return { e1: true, e2: true, e3: true };
   },
 
   // ═════════════════════════════════════════════════════════════
@@ -333,15 +340,34 @@ export const useThemeStore = create((set, get) => ({
       Logger.warn("[ThemeStore] watchVideo error:", err?.message);
     }
     const { themes } = get();
-    const idx = themes.findIndex((t) => t.id === themeId);
-    if (idx === -1) return;
+    const theme = themes.find((t) => t.id === themeId);
+    if (!theme) return;
 
-    const updated = [...themes];
-    updated[idx] = { ...updated[idx], videoWatched: true };
-    if (idx + 1 < updated.length) {
-      updated[idx + 1] = { ...updated[idx + 1], locked: false };
-    }
+    // Unlock the theme whose order immediately follows this one.
+    // Using order+1 (not array index+1) so the correct theme is unlocked
+    // regardless of the order themes were returned by the API.
+    const nextOrder = (theme.order ?? -1) + 1;
+    const updated = themes.map((t) => {
+      if (t.id === themeId) return { ...t, videoWatched: true };
+      if (t.order === nextOrder) return { ...t, locked: false };
+      return t;
+    });
     set({ themes: updated });
+  },
+
+  // ═════════════════════════════════════════════════════════════
+  // setVirtualData — Injects virtual lessons/words for specific themes
+  // ═════════════════════════════════════════════════════════════
+  setVirtualData: (themeId, data) => {
+    if (!data) return;
+    // Stamp the cache so fetchLessons treats this as fresh and won't hit the API.
+    lastFetchTime.set(`lessons_${themeId}`, Date.now());
+    set(() => ({
+      currentThemeId: themeId,
+      lessons: data.lessons || [],
+      lessonsLoading: false,
+      wordsLoading: false,
+    }));
   },
 
   // ═════════════════════════════════════════════════════════════

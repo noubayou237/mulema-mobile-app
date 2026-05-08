@@ -34,6 +34,8 @@ import { useLanguageStore } from "../../src/stores/useLanguageStore";
 import { useThemeStore } from "../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../src/stores/useDashboardStore";
 import { DrawerContent } from "../../src/components/layout/DrawerContent";
+import { getDualaVirtualData } from "../data/dualaLessonsData";
+import { getGhomalaVirtualData } from "../data/ghomalaLessonsData";
 
 import { useTranslation } from "react-i18next";
 import { changeLanguage, getCurrentLanguage } from "../../src/i18n";
@@ -330,7 +332,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { activeLanguage, languages, fetchLanguages, loadActiveLanguage } = useLanguageStore();
-  const { themes, isLoading: tLoading, fetchThemes } = useThemeStore();
+  const { themes, isLoading: tLoading, fetchThemes, setVirtualData } = useThemeStore();
   const { data: dash, isLoading: dLoading, error: dashError, fetchDashboard } = useDashboardStore();
 
   const { t, i18n } = useTranslation();
@@ -434,17 +436,107 @@ export default function HomeScreen() {
     }, 300);
   };
 
-  /* ── Bottom Sheet ── */
-  const openSheet = (theme) => {
-    // Navigates to the exercises tab since themes are now strictly mapping to exercises
-    router.push(`/(tabs)/exercises`);
-  };
-
   /* ── Continuer ── */
   const handleContinue = () => {
-    // Navigate to the lessons tab to browse lesson cards natively
     router.push("/(tabs)/lessons");
   };
+
+  /* ── Language detection ── */
+  const isBassa = (activeLanguage?.name ?? "").toLowerCase().includes("bassa");
+  const isDuala = (activeLanguage?.name ?? "").toLowerCase().includes("duala") ||
+                  (activeLanguage?.name ?? "").toLowerCase().includes("douala");
+  const isGhomala = (activeLanguage?.name ?? "").toLowerCase().includes("ghomala") ||
+                    (activeLanguage?.name ?? "").toLowerCase().includes("ghomal");
+
+  /* ── Lesson display items for the home page "Thèmes à explorer" section ── */
+  const lessonDisplayItems = (() => {
+    if (isBassa) {
+      const joursTheme = themes.find((t) => t.code === "jours");
+      const verbesTheme = themes.find((t) => t.code === "verbes");
+      const items = [];
+      if (joursTheme) {
+        items.push({
+          id: "jours_semaine", name: "Les jours de la semaine",
+          code: "jours", themeId: joursTheme.id,
+          lessonsCount: joursTheme.lessonsCount || 7,
+          lessonsCompleted: joursTheme.lessonsCompleted || 0,
+          locked: false, // first card always unlocked
+        });
+      }
+      const verbList = [
+        { id: "verbe_etre",    name: "Verbe ÊTRE" },
+        { id: "verbe_avoir",   name: "Verbe AVOIR" },
+        { id: "verbe_manger",  name: "Verbe MANGER" },
+        { id: "verbe_marcher", name: "Verbe MARCHER" },
+        { id: "verbe_prendre", name: "Verbe PRENDRE" },
+        { id: "verbe_acheter", name: "Verbe ACHETER" },
+      ];
+      if (verbesTheme) {
+        const verbesLocked = verbesTheme.locked ?? true;
+        verbList.forEach((v) => items.push({
+          ...v, code: "verbes", themeId: verbesTheme.id,
+          lessonsCount: 6, lessonsCompleted: 0, locked: verbesLocked,
+        }));
+      }
+      return items;
+    }
+
+    if (isDuala) {
+      const items = [
+        { id: "duala_jour",     name: "Les jours de la semaine", code: "jours",    lessonsCount: 7 },
+        { id: "duala_pronoms",  name: "Les pronoms personnels",  code: "pronoms",  lessonsCount: 6 },
+        { id: "duala_etre",     name: "Le verbe être",           code: "verbes",   lessonsCount: 6 },
+        { id: "duala_avoir",    name: "Le verbe avoir",          code: "verbes",   lessonsCount: 6 },
+        { id: "duala_chiffres", name: "Les chiffres 1-9",        code: "chiffres", lessonsCount: 9 },
+        { id: "duala_couleurs", name: "Les couleurs",            code: "couleurs", lessonsCount: 7 },
+      ];
+      return items.map((item, idx) => ({ ...item, themeId: item.id, lessonsCompleted: 0, locked: idx >= 1 }));
+    }
+
+    if (isGhomala) {
+      const items = [
+        { id: "ghomala_chiffres", name: "Les chiffres 0-9",         code: "chiffres", lessonsCount: 10 },
+        { id: "ghomala_jour",     name: "Les jours de la semaine",   code: "jours",    lessonsCount: 7 },
+        { id: "ghomala_etre",     name: "Le verbe être",             code: "verbes",   lessonsCount: 6 },
+        { id: "ghomala_avoir",    name: "Le verbe avoir",            code: "verbes",   lessonsCount: 6 },
+        { id: "ghomala_manger",   name: "Le verbe manger",           code: "verbes",   lessonsCount: 6 },
+        { id: "ghomala_marcher",  name: "Le verbe marcher",          code: "verbes",   lessonsCount: 6 },
+        { id: "ghomala_acheter",  name: "Le verbe acheter",          code: "verbes",   lessonsCount: 6 },
+      ];
+      return items.map((item, idx) => ({ ...item, themeId: item.id, lessonsCompleted: 0, locked: idx >= 1 }));
+    }
+
+    return [];
+  })();
+
+  /* ── Navigate to a lesson card → adventure tree ── */
+  const handleLessonCardPress = (lesson) => {
+    if (isGhomala) {
+      const virtualData = getGhomalaVirtualData(lesson.id);
+      if (virtualData) {
+        setVirtualData(lesson.id, virtualData);
+        router.push({ pathname: `/(tabs)/lessons/${lesson.id}`, params: { title: lesson.name, category: lesson.name } });
+      }
+      return;
+    }
+    if (isDuala) {
+      const virtualData = getDualaVirtualData(lesson.id);
+      if (virtualData) {
+        setVirtualData(lesson.id, virtualData);
+        router.push({ pathname: `/(tabs)/lessons/${lesson.id}`, params: { title: lesson.name, category: lesson.name } });
+      }
+      return;
+    }
+    // Bassa and generic — go straight to adventure tree (it fetches lessons on focus)
+    router.push({
+      pathname: `/(tabs)/lessons/${lesson.themeId || lesson.id}`,
+      params: { title: lesson.name, category: lesson.name },
+    });
+  };
+
+  /* ── Exercise themes only (excludes lesson-type themes) ── */
+  const LESSON_CODES = ["jours", "verbes", "pronoms", "chiffres", "couleurs"];
+  const exerciseThemes = themes.filter((t) => !LESSON_CODES.includes((t.code ?? "").toLowerCase()));
 
   /* ── Animations d'entrée en cascade ── */
   const anims = useRef([0, 1, 2, 3, 4].map(() => new Animated.Value(0))).current;
@@ -537,7 +629,7 @@ export default function HomeScreen() {
                 color={RED}
                 style={{ marginVertical: Space["3xl"] }}
               />
-            ) : themes.length === 0 ? (
+            ) : lessonDisplayItems.length === 0 ? (
               <View style={s.empty}>
                 <Ionicons name="book-outline" size={38} color={Colors.textTertiary} />
                 <Text style={[Typo.bodyMd, { textAlign: "center", marginTop: Space.md }]}>
@@ -546,8 +638,8 @@ export default function HomeScreen() {
               </View>
             ) : (
               <View style={s.grid}>
-                {themes.slice(0, 4).map((theme) => (
-                  <ThemeCard key={theme.id} theme={theme} onPress={openSheet} />
+                {lessonDisplayItems.slice(0, 4).map((lesson) => (
+                  <ThemeCard key={lesson.id} theme={lesson} onPress={handleLessonCardPress} />
                 ))}
               </View>
             )}
@@ -559,13 +651,13 @@ export default function HomeScreen() {
               <Text style={[Typo.headlineMd, { color: Colors.onSurface }]}>{t("home.exercises")}</Text>
               <View style={s.exoBadgeCount}>
                 <Text style={[Typo.labelMd, { color: RED }]}>
-                  {getThemeExos(themes).filter((e) => e.done).length}/{getThemeExos(themes).length}
+                  {getThemeExos(exerciseThemes).filter((e) => e.done).length}/{getThemeExos(exerciseThemes).length}
                 </Text>
               </View>
             </View>
 
             <View style={s.exoList}>
-              {getThemeExos(themes).map((exo) => (
+              {getThemeExos(exerciseThemes).map((exo) => (
                 <ExerciseRow
                   key={exo.id}
                   exo={exo}

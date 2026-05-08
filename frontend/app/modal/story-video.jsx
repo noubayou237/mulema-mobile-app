@@ -13,6 +13,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors, Space } from "../../src/theme/tokens";
 import { useThemeStore } from "../../src/stores/useThemeStore";
+import { useLanguageStore } from "../../src/stores/useLanguageStore";
 import { VIDEOS_MAP } from "../../src/utils/AssetsMap";
 import { pauseBackgroundMusic, resumeBackgroundMusic } from "../../src/hooks/useBackgroundMusic";
 
@@ -45,7 +46,21 @@ export default function OnboardingVideoScreen() {
   const videoRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const watchVideo = useThemeStore((s) => s.watchVideo);
+  const fetchThemes = useThemeStore((s) => s.fetchThemes);
   const getThemeById = useThemeStore((s) => s.getThemeById);
+  const { activeLanguage, languages } = useLanguageStore();
+
+  const getPatrimonialId = (lang, allLangs) => {
+    if (!lang) return null;
+    if (lang.type === "patrimonial") return lang.id;
+    const n = (lang.name ?? "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const match = (allLangs || []).find((l) => {
+      if (l.type !== "patrimonial") return false;
+      const ln = l.name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+      return ln.includes(n) || n.includes(ln);
+    });
+    return match?.id ?? null;
+  };
 
   const theme = themeId ? getThemeById(themeId) : null;
   const themeOrder = theme?.order ?? null;
@@ -55,7 +70,12 @@ export default function OnboardingVideoScreen() {
   const handleFinished = async () => {
     if (themeId) {
       await watchVideo(themeId);
-      router.replace(`/(tabs)/lessons/${themeId}`);
+      // Force-refresh themes so the newly-unlocked lesson card appears
+      // immediately when the lesson list comes into view.
+      const langId = getPatrimonialId(activeLanguage, languages);
+      if (langId) await fetchThemes(langId, true);
+      // Go to the lesson list so the user sees the next card unlocked.
+      router.replace("/(tabs)/lessons");
     } else {
       router.replace("/(tabs)/home");
     }

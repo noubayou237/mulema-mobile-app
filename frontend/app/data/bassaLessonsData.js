@@ -103,3 +103,5 @@ export function getBassaEnrichment(title = "") {
   }
   return null;
 }
+
+export default {};
