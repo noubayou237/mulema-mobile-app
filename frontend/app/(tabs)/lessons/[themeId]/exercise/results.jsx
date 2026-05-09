@@ -115,6 +115,7 @@ export default function ExerciseResults() {
     total: totalStr,
     lessonIdx: lessonIdxStr,
     wordCount: wordCountStr,
+    isFinal,
   } = useLocalSearchParams();
   const { completeTheme, lessons } = useThemeStore();
   const { activeLanguage } = useLanguageStore();
@@ -137,24 +138,20 @@ export default function ExerciseResults() {
     .replace(/[^a-z]/g, "")
     .trim();
 
-  /* Persist progress to DB and update local state */
   useEffect(() => {
-    if (!themeId || !success || lessonIdxParam == null) return;
+    if (!themeId || !success) return;
 
-    if (isFinalLesson) {
-      // All lessons done + exercise passed → mark theme complete and unlock next theme
+    if (isFinal === "true") {
+      // Final Challenge successfully passed
       completeTheme(themeId, score);
       setShowFinalAnim(true);
-      api.post(`/progress/unlock-final/${themeId}`, {
+      api.post(`/progress/unlock-final/${themeId}`)
+        .catch(err => Logger.warn("[Unlock] Final challenge:", err?.message));
+    } else if (lessonIdxParam != null) {
+      // Regular category node passed
+      api.post(`/progress/unlock-next-lesson/${themeId}`, {
         completedLessonOrder: lessonIdxParam,
-      }).catch(err => Logger.warn("[Unlock] Final challenge:", err?.message));
-    } else {
-      // Progressive exercise → unlock the next lesson in the sequence
-      api
-        .post(`/progress/unlock-next-lesson/${themeId}`, {
-          completedLessonOrder: lessonIdxParam,
-        })
-        .catch((err) => Logger.warn("[Unlock] Could not unlock next lesson:", err?.message));
+      }).catch((err) => Logger.warn("[Unlock] Could not unlock next lesson:", err?.message));
     }
   }, []);
 

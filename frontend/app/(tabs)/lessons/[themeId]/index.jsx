@@ -21,7 +21,6 @@ import { useThemeStore }    from "../../../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../../../src/stores/useDashboardStore";
 import { useLanguageStore }  from "../../../../src/stores/useLanguageStore";
 import { useTranslation } from "react-i18next";
-import { getBassaEnrichment } from "../../../data/bassaLessonsData";
 
 const { width: SW } = Dimensions.get("window");
 
@@ -120,10 +119,9 @@ const LessonNode = ({ lesson, index, onPress, lt, isLocked }) => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim  = useRef(new Animated.Value(0)).current;
 
-  const prog      = lesson.userProgress?.[0];
-  const completed = prog?.isCompleted ?? false;
-  const stars     = prog?.stars ?? 0;
-  const isCurrent = !completed && !isLocked && (prog?.isUnlocked || index < 2);
+  const completed = lesson.isCompleted ?? false;
+  const stars     = lesson.stars ?? 0;
+  const isCurrent = !completed && !isLocked && (lesson.isUnlocked || index === 0);
 
   // Zigzag positions
   const POSITIONS = [SW * 0.5, SW * 0.65, SW * 0.75, SW * 0.65, SW * 0.5, SW * 0.35, SW * 0.25, SW * 0.35];
@@ -299,29 +297,14 @@ export default function ThemeDetailScreen() {
     }, [themeId])
   );
 
-  // For Bassa verbs the API theme contains all conjugations — show only the
-  // ones matching the selected category (e.g. "Verbe ÊTRE" → 6 lessons).
-  const displayLessons = (isBassa && category)
-    ? lessons.filter((l) => getBassaEnrichment(l.title)?.category === category)
-    : lessons;
+  const displayLessons = lessons;
 
   const theme     = getThemeById(themeId);
-  // titleParam lets virtual Ghomala/Duala themes show a proper header title.
   const themeName = theme?.name_fr ?? theme?.name ?? titleParam ?? category ?? t("common.theme");
   const themeCode = (theme?.code ?? "").toLowerCase();
   const emoji     = getEmoji(themeCode);
 
-  const explicitCompleted = displayLessons.filter((l) => l.userProgress?.[0]?.isCompleted).length;
-  // The first lesson (index 0) is auto-unlocked and has no exercise gate after
-  // it, so the backend never sets its isCompleted flag.  Credit it for display
-  // purposes once the user has made any progress, so the bar reaches 100 % when
-  // the Final Challenge is passed.
-  const lesson0Credited =
-    explicitCompleted > 0 &&
-    displayLessons.length > 0 &&
-    !displayLessons[0]?.userProgress?.[0]?.isCompleted
-      ? 1 : 0;
-  const completed = explicitCompleted + lesson0Credited;
+  const completed = displayLessons.filter((l) => l.isCompleted).length;
   const totalL    = displayLessons.length || 0;
   const pct       = totalL > 0 ? Math.round((completed / totalL) * 100) : 0;
 

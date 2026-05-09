@@ -145,21 +145,21 @@ export const useThemeStore = create((set, get) => ({
 
     const reqKey = `words_${lessonId}`;
     
-    // 1. Check if this is a "Virtual Lesson" (a MulemWord treated as a lesson)
-    // In the new system, we already have word data in the lessons list
-    const { lessons, wordsCache } = get();
+    // 1. Check if this is a "Virtual Lesson" (a group of MulemWords)
     const lessonData = lessons.find(l => l.id === lessonId);
     
-    if (lessonData && !lessonData.hasSubWords) {
-      // It's a MulemWord. Treat it as a single-item word list.
-      const virtualWords = [{
-        id: lessonData.id,
-        sourceText: lessonData.title,
-        targetText: lessonData.subtitle,
-        audioUrl: lessonData.audioUrl,
-        imageUrl: lessonData.imageUrl,
-        hint: lessonData.hint,
-      }];
+    if (lessonData && lessonData.words) {
+      // It's a grouped virtual lesson. Return its words.
+      const virtualWords = lessonData.words.map(w => ({
+        id: w.id,
+        sourceText: w.word_fr,
+        targetText: w.word_local,
+        audioUrl: w.audio_url,
+        imageUrl: w.image_url,
+        hint: w.hint,
+        // Carry any other properties needed for exercises
+        category: w.category,
+      }));
 
       if (!silent) {
         set({ words: virtualWords, currentLessonId: lessonId, wordsLoading: false });
@@ -263,11 +263,10 @@ export const useThemeStore = create((set, get) => ({
     const { lessons } = get();
     if (lessons.length === 0) return { e1: false, e2: false, e3: false };
 
-    // The final challenge is accessible whenever lessons are loaded.
-    // The first two lesson nodes are always auto-unlocked, giving the user
-    // enough content to attempt the exercise. The backend enforces actual
-    // completion gates via /progress/unlock-final.
-    return { e1: true, e2: true, e3: true };
+    // The final challenge (e1) is unlocked only when all regular category 
+    // nodes in the tree are completed.
+    const allCompleted = lessons.every(l => l.isCompleted);
+    return { e1: allCompleted, e2: allCompleted, e3: allCompleted };
   },
 
   // ═════════════════════════════════════════════════════════════
@@ -276,17 +275,18 @@ export const useThemeStore = create((set, get) => ({
   // ═════════════════════════════════════════════════════════════
 
   isLessonLocked: (lessonId, order) => {
-    // Les 2 premières leçons (order 0 et 1) sont toujours débloquées
-    if (order < 2) return false;
+    // First lesson category (order 0) is always unlocked
+    if (order === 0) return false;
 
     const { lessons } = get();
     const lesson = lessons.find((l) => l.id === lessonId);
     
-    // Progrès depuis la DB : l'include Prisma renvoie un tableau
-    const prog = lesson?.userProgress?.[0];
+    // Use the isUnlocked property calculated by the service/backend
+    if (lesson?.isUnlocked) return false;
 
-    // Si débloqué explicitement dans la DB
-    if (prog?.isUnlocked) return false;
+    // Fallback logic: check previous lesson completion if not explicitly unlocked
+    const prevLesson = lessons.find((l) => l.order === order - 1);
+    if (prevLesson && prevLesson.isCompleted) return false;
 
     return true;
   },

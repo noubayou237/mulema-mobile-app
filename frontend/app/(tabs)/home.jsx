@@ -332,7 +332,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { activeLanguage, languages, fetchLanguages, loadActiveLanguage } = useLanguageStore();
-  const { themes, isLoading: tLoading, fetchThemes, setVirtualData } = useThemeStore();
+  const { themes, lessons, isLoading: tLoading, fetchThemes, fetchLessons } = useThemeStore();
   const { data: dash, isLoading: dLoading, error: dashError, fetchDashboard } = useDashboardStore();
 
   const { t, i18n } = useTranslation();
@@ -375,7 +375,13 @@ export default function HomeScreen() {
       }
     };
     init();
-  }, []);
+  }, [activeLanguage]);
+
+  useEffect(() => {
+    if (themes.length > 0 && !tLoading) {
+      fetchLessons(themes[0].id);
+    }
+  }, [themes, tLoading]);
 
   /* ── Drawer ── */
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -450,87 +456,29 @@ export default function HomeScreen() {
 
   /* ── Lesson display items for the home page "Thèmes à explorer" section ── */
   const lessonDisplayItems = (() => {
-    if (isBassa) {
-      const joursTheme = themes.find((t) => t.code === "jours");
-      const verbesTheme = themes.find((t) => t.code === "verbes");
-      const items = [];
-      if (joursTheme) {
-        items.push({
-          id: "jours_semaine", name: "Les jours de la semaine",
-          code: "jours", themeId: joursTheme.id,
-          lessonsCount: joursTheme.lessonsCount || 7,
-          lessonsCompleted: joursTheme.lessonsCompleted || 0,
-          locked: false, // first card always unlocked
-        });
-      }
-      const verbList = [
-        { id: "verbe_etre",    name: "Verbe ÊTRE" },
-        { id: "verbe_avoir",   name: "Verbe AVOIR" },
-        { id: "verbe_manger",  name: "Verbe MANGER" },
-        { id: "verbe_marcher", name: "Verbe MARCHER" },
-        { id: "verbe_prendre", name: "Verbe PRENDRE" },
-        { id: "verbe_acheter", name: "Verbe ACHETER" },
-      ];
-      if (verbesTheme) {
-        const verbesLocked = verbesTheme.locked ?? true;
-        verbList.forEach((v) => items.push({
-          ...v, code: "verbes", themeId: verbesTheme.id,
-          lessonsCount: 6, lessonsCompleted: 0, locked: verbesLocked,
-        }));
-      }
-      return items;
+    if (lessons.length > 0) {
+      const firstThemeId = themes[0]?.id;
+      return lessons.map((l) => ({
+        id: l.id,
+        name: l.title,
+        themeId: firstThemeId,
+        lessonsCount: l.wordIdsByGroup?.length || 0,
+        lessonsCompleted: l.isCompleted ? (l.wordIdsByGroup?.length || 0) : 0,
+        locked: !l.isUnlocked, // Use the service-calculated status
+      }));
     }
-
-    if (isDuala) {
-      const items = [
-        { id: "duala_jour",     name: "Les jours de la semaine", code: "jours",    lessonsCount: 7 },
-        { id: "duala_pronoms",  name: "Les pronoms personnels",  code: "pronoms",  lessonsCount: 6 },
-        { id: "duala_etre",     name: "Le verbe être",           code: "verbes",   lessonsCount: 6 },
-        { id: "duala_avoir",    name: "Le verbe avoir",          code: "verbes",   lessonsCount: 6 },
-        { id: "duala_chiffres", name: "Les chiffres 1-9",        code: "chiffres", lessonsCount: 9 },
-        { id: "duala_couleurs", name: "Les couleurs",            code: "couleurs", lessonsCount: 7 },
-      ];
-      return items.map((item, idx) => ({ ...item, themeId: item.id, lessonsCompleted: 0, locked: idx >= 1 }));
-    }
-
-    if (isGhomala) {
-      const items = [
-        { id: "ghomala_chiffres", name: "Les chiffres 0-9",         code: "chiffres", lessonsCount: 10 },
-        { id: "ghomala_jour",     name: "Les jours de la semaine",   code: "jours",    lessonsCount: 7 },
-        { id: "ghomala_etre",     name: "Le verbe être",             code: "verbes",   lessonsCount: 6 },
-        { id: "ghomala_avoir",    name: "Le verbe avoir",            code: "verbes",   lessonsCount: 6 },
-        { id: "ghomala_manger",   name: "Le verbe manger",           code: "verbes",   lessonsCount: 6 },
-        { id: "ghomala_marcher",  name: "Le verbe marcher",          code: "verbes",   lessonsCount: 6 },
-        { id: "ghomala_acheter",  name: "Le verbe acheter",          code: "verbes",   lessonsCount: 6 },
-      ];
-      return items.map((item, idx) => ({ ...item, themeId: item.id, lessonsCompleted: 0, locked: idx >= 1 }));
-    }
-
     return [];
   })();
 
   /* ── Navigate to a lesson card → adventure tree ── */
   const handleLessonCardPress = (lesson) => {
-    if (isGhomala) {
-      const virtualData = getGhomalaVirtualData(lesson.id);
-      if (virtualData) {
-        setVirtualData(lesson.id, virtualData);
-        router.push({ pathname: `/(tabs)/lessons/${lesson.id}`, params: { title: lesson.name, category: lesson.name } });
-      }
-      return;
-    }
-    if (isDuala) {
-      const virtualData = getDualaVirtualData(lesson.id);
-      if (virtualData) {
-        setVirtualData(lesson.id, virtualData);
-        router.push({ pathname: `/(tabs)/lessons/${lesson.id}`, params: { title: lesson.name, category: lesson.name } });
-      }
-      return;
-    }
-    // Bassa and generic — go straight to adventure tree (it fetches lessons on focus)
+    // Navigate straight to the adventure tree
     router.push({
-      pathname: `/(tabs)/lessons/${lesson.themeId || lesson.id}`,
-      params: { title: lesson.name, category: lesson.name },
+      pathname: `/(tabs)/lessons/${lesson.themeId}`,
+      params: { 
+        title: themes[0]?.name || "Leçons", 
+        scrollToId: lesson.id 
+      },
     });
   };
 

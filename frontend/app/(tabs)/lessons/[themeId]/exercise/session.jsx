@@ -831,7 +831,7 @@ const ListenWriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "
 
 export default function ExerciseSession() {
   const router = useRouter();
-  const { themeId, wordCount: wordCountStr, lessonIdx: lessonIdxStr } = useLocalSearchParams();
+  const { themeId, wordCount: wordCountStr, lessonIdx: lessonIdxStr, isFinal } = useLocalSearchParams();
 
   // wordCount: how many words to include (cumulative lessons so far)
   // lessonIdx: 0-based index of the lesson just completed (for unlock)
@@ -931,8 +931,9 @@ export default function ExerciseSession() {
     const score = answered > 0 ? Math.round((correct / answered) * 100) : 0;
     const wcParam = wordCountStr ? `&wordCount=${wordCountStr}` : "";
     const extra = lessonIdxParam != null ? `&lessonIdx=${lessonIdxParam}` : "";
+    const final = (isFinal === "true") ? "&isFinal=true" : "";
     router.replace(
-      `/(tabs)/lessons/${themeId}/exercise/results?score=${score}&correct=${correct}&total=${answered}${wcParam}${extra}`
+      `/(tabs)/lessons/${themeId}/exercise/results?score=${score}&correct=${correct}&total=${answered}${wcParam}${extra}${final}`
     );
   }, [correct, answered, themeId, lessonIdxParam, wordCountStr]);
 
