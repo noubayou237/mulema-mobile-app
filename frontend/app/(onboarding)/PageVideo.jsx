@@ -23,7 +23,7 @@ import {
   ActivityIndicator,
   StyleSheet,
   StatusBar,
-  ImageBackground,
+  ImageBackground
 } from "react-native";
 import { Video } from "expo-av";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -35,7 +35,10 @@ import { useTranslation } from "react-i18next";
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 import { MButton } from "../../src/components/ui/MComponents";
 import { VIDEOS_MAP, IMAGES_MAP } from "../../src/utils/AssetsMap";
-import { pauseBackgroundMusic, resumeBackgroundMusic } from "../../src/hooks/useBackgroundMusic";
+import {
+  pauseBackgroundMusic,
+  resumeBackgroundMusic
+} from "../../src/hooks/useBackgroundMusic";
 
 const HAS_SEEN_INTRO = "hasSeenIntro";
 const HAS_SELECTED_LANGUAGE = "selectedLanguage";
@@ -44,19 +47,25 @@ const VIDEO_BY_LANG = {
   bassa: VIDEOS_MAP.bassa_intro_vid,
   duala: VIDEOS_MAP.duala_intro_vid,
   ghomala: VIDEOS_MAP.ghomala_intro_vid,
-  default: VIDEOS_MAP.duala_intro_vid,
+  default: VIDEOS_MAP.duala_intro_vid
 };
 
 // Map every known form of a language identifier → canonical VIDEO_BY_LANG key.
 // Handles ISO-639 codes, backend names, full names, and diacritics.
 const LANG_ALIASES = {
   // Bassa
-  bassa: "bassa", bas: "bassa", bassa_intro_vid: "bassa",
+  bassa: "bassa",
+  bas: "bassa",
+  bassa_intro_vid: "bassa",
   // Duala
-  duala: "duala", dua: "duala", duala_intro_vid: "duala",
+  duala: "duala",
+  dua: "duala",
+  duala_intro_vid: "duala",
   // Ghomala
-  ghomala: "ghomala", gho: "ghomala", ghomala_intro_vid: "ghomala",
-  "ghomala'": "ghomala",
+  ghomala: "ghomala",
+  gho: "ghomala",
+  ghomala_intro_vid: "ghomala",
+  "ghomala'": "ghomala"
 };
 
 /**
@@ -69,7 +78,7 @@ const normalizeLangKey = (raw) => {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "") // strip diacritics
-    .replace(/[^a-z0-9]/g, "")      // remove special chars
+    .replace(/[^a-z0-9]/g, "") // remove special chars
     .trim();
   return LANG_ALIASES[cleaned] ?? null;
 };
@@ -84,13 +93,17 @@ const PlayButton = ({ onPress, loading }) => {
   if (loading) {
     return (
       <View style={s.playCircle}>
-        <ActivityIndicator size="large" color={Colors.onPrimary} />
+        <ActivityIndicator size='large' color={Colors.onPrimary} />
       </View>
     );
   }
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={s.playCircle}>
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.8}
+      style={s.playCircle}
+    >
       <View style={s.playTriangle} />
     </TouchableOpacity>
   );
@@ -102,17 +115,19 @@ const PlayButton = ({ onPress, loading }) => {
 
 const ProgressDots = ({ active = 0, total = 3 }) => (
   <View style={s.dotsRow}>
-    {Array(total).fill(0).map((_, i) => (
-      <View
-        key={i}
-        style={[
-          s.dot,
-          i === active
-            ? { backgroundColor: Colors.primaryContainer, width: 32 }
-            : { backgroundColor: Colors.onPrimary + "40", width: 12 },
-        ]}
-      />
-    ))}
+    {Array(total)
+      .fill(0)
+      .map((_, i) => (
+        <View
+          key={i}
+          style={[
+            s.dot,
+            i === active
+              ? { backgroundColor: Colors.primaryContainer, width: 32 }
+              : { backgroundColor: Colors.onPrimary + "40", width: 12 }
+          ]}
+        />
+      ))}
   </View>
 );
 
@@ -136,7 +151,9 @@ export default function PageVideo() {
   // ── Pause background music while intro video plays ──
   useEffect(() => {
     pauseBackgroundMusic();
-    return () => { resumeBackgroundMusic(); };
+    return () => {
+      resumeBackgroundMusic();
+    };
   }, []);
 
   // ── Resolve language — uses normalizeLangKey to handle all code formats ──
@@ -158,7 +175,8 @@ export default function PageVideo() {
         if (!resolved) {
           const active = useLanguageStore.getState().activeLanguage;
           if (active) {
-            resolved = normalizeLangKey(active.name) ?? normalizeLangKey(active.code);
+            resolved =
+              normalizeLangKey(active.name) ?? normalizeLangKey(active.code);
           }
         }
 
@@ -168,7 +186,9 @@ export default function PageVideo() {
           return;
         }
 
-        Logger.info(`[PageVideo] Resolved language: "${paramLang}" → "${resolved}"`);
+        Logger.info(
+          `[PageVideo] Resolved language: "${paramLang}" → "${resolved}"`
+        );
 
         if (mounted) {
           setLangResolved(resolved);
@@ -180,18 +200,23 @@ export default function PageVideo() {
       }
     })();
 
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [paramLang]);
 
   const videoUri = VIDEO_BY_LANG[langResolved] ?? VIDEO_BY_LANG.default;
 
   // ── Persist & navigate ──
   const persistAndGoHome = async () => {
-    const { languages, setActiveLanguage, setHasSeenIntro } = useLanguageStore.getState();
+    const { languages, setActiveLanguage, setHasSeenIntro } =
+      useLanguageStore.getState();
 
     // Find the matching language in the store — use normalizeLangKey for robust matching
     const lang = languages.find(
-      (l) => normalizeLangKey(l.code) === langResolved || normalizeLangKey(l.name) === langResolved
+      (l) =>
+        normalizeLangKey(l.code) === langResolved ||
+        normalizeLangKey(l.name) === langResolved
     );
     if (lang) {
       await setActiveLanguage(lang);
@@ -224,20 +249,31 @@ export default function PageVideo() {
   const getDescription = (lang) => {
     const l = (lang || "").toLowerCase();
     switch (l) {
-      case "bassa": return t("onboarding.videoDesc", { lang: "Bassa" });
-      case "duala": return t("onboarding.videoDesc", { lang: "Duala" });
-      case "ghomala": return t("onboarding.videoDesc", { lang: "Ghomala" });
-      default: return t("onboarding.videoDescDefault", "Découvrez Mulema en action");
+      case "bassa":
+        return t("onboarding.videoDesc", { lang: "Bassa" });
+      case "duala":
+        return t("onboarding.videoDesc", { lang: "Duala" });
+      case "ghomala":
+        return t("onboarding.videoDesc", { lang: "Ghomala" });
+      default:
+        return t("onboarding.videoDescDefault", "Découvrez Mulema en action");
     }
   };
 
   // ── Loading state ──
   if (resolving) {
     return (
-      <View style={[s.root, { alignItems: "center", justifyContent: "center" }]}>
-        <StatusBar barStyle="light-content" />
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={[Typo.bodyMd, { color: Colors.textSecondary, marginTop: Space.md }]}>
+      <View
+        style={[s.root, { alignItems: "center", justifyContent: "center" }]}
+      >
+        <StatusBar barStyle='light-content' />
+        <ActivityIndicator size='large' color={Colors.primary} />
+        <Text
+          style={[
+            Typo.bodyMd,
+            { color: Colors.textSecondary, marginTop: Space.md }
+          ]}
+        >
           Chargement...
         </Text>
       </View>
@@ -249,7 +285,11 @@ export default function PageVideo() {
 
   return (
     <View style={s.root}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar
+        barStyle='light-content'
+        translucent
+        backgroundColor='transparent'
+      />
 
       {/* ── Fullscreen Video ── */}
       <View style={s.videoFill}>
@@ -258,7 +298,7 @@ export default function PageVideo() {
           <ImageBackground
             source={placeholderImage}
             style={StyleSheet.absoluteFill}
-            resizeMode="cover"
+            resizeMode='cover'
           />
         ) : (
           <LinearGradient
@@ -272,7 +312,7 @@ export default function PageVideo() {
           key={langResolved}
           ref={videoRef}
           source={videoUri}
-          resizeMode="cover"
+          resizeMode='cover'
           shouldPlay={true}
           isLooping={false}
           style={StyleSheet.absoluteFill}
@@ -289,11 +329,11 @@ export default function PageVideo() {
             "rgba(0,0,0,0.05)",
             "rgba(0,0,0,0.1)",
             "rgba(0,0,0,0.5)",
-            "rgba(0,0,0,0.85)",
+            "rgba(0,0,0,0.85)"
           ]}
           locations={[0, 0.3, 0.7, 1]}
           style={StyleSheet.absoluteFill}
-          pointerEvents="none"
+          pointerEvents='none'
         />
 
         {/* ── Skip button (top right) ── */}
@@ -318,9 +358,7 @@ export default function PageVideo() {
           <ProgressDots active={0} total={3} />
 
           {/* Description */}
-          <Text style={s.description}>
-            {getDescription(langResolved)}
-          </Text>
+          <Text style={s.description}>{getDescription(langResolved)}</Text>
 
           {/* Continue button */}
           <MButton
@@ -342,7 +380,7 @@ export default function PageVideo() {
 const s = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: Colors.black,
+    backgroundColor: Colors.black
   },
 
   // Fullscreen video container
@@ -350,7 +388,7 @@ const s = StyleSheet.create({
     flex: 1,
     width: "100%",
     height: "100%",
-    position: "relative",
+    position: "relative"
   },
 
   // Skip
@@ -362,11 +400,11 @@ const s = StyleSheet.create({
     paddingVertical: Space.sm,
     borderRadius: Radius.full,
     backgroundColor: "rgba(255,255,255,0.12)",
-    zIndex: 10,
+    zIndex: 10
   },
   skipText: {
     color: Colors.onPrimary,
-    ...Typo.titleSm,
+    ...Typo.titleSm
   },
 
   // Play button center
@@ -378,7 +416,7 @@ const s = StyleSheet.create({
     bottom: 100,
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 5,
+    zIndex: 5
   },
   playCircle: {
     width: 72,
@@ -388,7 +426,7 @@ const s = StyleSheet.create({
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.3)",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "center"
   },
   playTriangle: {
     width: 0,
@@ -399,7 +437,7 @@ const s = StyleSheet.create({
     borderTopWidth: 13,
     borderTopColor: "transparent",
     borderBottomWidth: 13,
-    borderBottomColor: "transparent",
+    borderBottomColor: "transparent"
   },
 
   // Progress dots
@@ -408,11 +446,11 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: Space.sm,
-    marginBottom: Space.xl,
+    marginBottom: Space.xl
   },
   dot: {
     height: 4,
-    borderRadius: 2,
+    borderRadius: 2
   },
 
   // Bottom overlay
@@ -424,7 +462,7 @@ const s = StyleSheet.create({
     paddingHorizontal: Space["2xl"],
     paddingBottom: Platform.OS === "ios" ? 48 : 32,
     paddingTop: Space["2xl"],
-    zIndex: 10,
+    zIndex: 10
   },
 
   // Description
@@ -432,6 +470,6 @@ const s = StyleSheet.create({
     ...Typo.titleLg,
     color: Colors.onPrimary,
     textAlign: "center",
-    marginBottom: Space["2xl"],
-  },
+    marginBottom: Space["2xl"]
+  }
 });
