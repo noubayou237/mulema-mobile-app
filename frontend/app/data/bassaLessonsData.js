@@ -87,9 +87,10 @@ export const BASSA_ENRICHMENT_MAP = {
 export function getBassaEnrichment(title = "") {
   const strip = (s) =>
     s.toLowerCase().trim()
+     .replace(/\s*\/\s*/g, " ou ")   // "Il / Elle" → "il ou elle"
      .replace(/[éèêë]/g, "e").replace(/[àâä]/g, "a")
      .replace(/[îï]/g, "i").replace(/[ôö]/g, "o")
-     .replace(/[ùûü]/g, "u").replace(/['']/g, " ")
+     .replace(/[ùûü]/g, "u").replace(/[''ʼ']/g, " ")
      .replace(/\s+/g, " ").trim();
 
   const query = strip(title);
@@ -102,3 +103,5 @@ export function getBassaEnrichment(title = "") {
   }
   return null;
 }
+
+export default {};

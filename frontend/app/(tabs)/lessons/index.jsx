@@ -7,12 +7,13 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, Dimensions, StatusBar,
-  ActivityIndicator, RefreshControl, Animated, Easing,
+  ActivityIndicator, RefreshControl, Animated, Easing, Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle } from "react-native-svg";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 
 import { useThemeStore } from "../../../src/stores/useThemeStore";
 import { useLanguageStore } from "../../../src/stores/useLanguageStore";
@@ -22,6 +23,8 @@ import { useTranslation } from "react-i18next";
 import { Colors, Space, Shadow } from "../../../src/theme/tokens";
 import { DrawerContent } from "../../../src/components/layout/DrawerContent";
 import { useAuthStore } from "../../../src/stores/useAuthStore";
+import { getDualaVirtualData } from "../../data/dualaLessonsData";
+import { getGhomalaVirtualData } from "../../data/ghomalaLessonsData";
 
 // ID Duala connu — fallback 
 
@@ -58,7 +61,7 @@ const icon = (code) => ICONS[(code ?? "").toLowerCase()] ?? "book-outline";
 /* ════════════════════════════════════════════════════════════════
    THEME CARD (Leçons tab)
    ════════════════════════════════════════════════════════════════ */
-const ThemeCard = ({ theme, index, onPress }) => {
+const ThemeCard = ({ theme, index, onPress, onPressIn }) => {
   const { t, i18n } = useTranslation();
   const fade = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(20)).current;
@@ -80,7 +83,8 @@ const ThemeCard = ({ theme, index, onPress }) => {
   return (
     <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }] }}>
       <TouchableOpacity
-        onPress={() => !locked && onPress(theme)}
+        onPress={() => !locked && onPress && onPress(theme)}
+        onPressIn={() => !locked && onPressIn && onPressIn(theme)}
         activeOpacity={locked ? 1 : 0.75}
         style={[s.card, locked && s.cardLocked]}
       >
@@ -131,7 +135,7 @@ export default function ThemesScreen() {
   const { t } = useTranslation();
   const { user, logout } = useAuthStore();
   const { activeLanguage, languages, fetchLanguages, loadActiveLanguage } = useLanguageStore();
-  const { themes, isLoading, error: themeError, fetchThemes } = useThemeStore();
+  const { themes, isLoading, error: themeError, fetchThemes, setVirtualData } = useThemeStore();
   const { data: dash, fetchDashboard } = useDashboardStore();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -216,9 +220,97 @@ export default function ThemesScreen() {
   const onRefresh = async () => {
     setRefreshing(true);
     const langId = getPatrimonialId(activeLanguage, languages);
-    await Promise.all([langId ? fetchThemes(langId) : Promise.resolve(), fetchDashboard()]);
+    await Promise.all([langId ? fetchThemes(langId, true) : Promise.resolve(), fetchDashboard()]);
     setRefreshing(false);
   };
+
+  // Force-refresh themes every time this screen comes into focus so that
+  // progress and lock states reflect any lessons/exercises just completed.
+  useFocusEffect(
+    useCallback(() => {
+      const langId = getPatrimonialId(activeLanguage, languages);
+      if (langId) fetchThemes(langId, true);
+    }, [activeLanguage?.id])
+  );
+
+  /* Bassa Custom Lessons Logic */
+  const isBassa = activeLanguage?.name?.toLowerCase() === "bassa";
+  const isDuala = activeLanguage?.name?.toLowerCase() === "duala";
+  const isGhomala = activeLanguage?.name?.toLowerCase() === "ghomala";
+  const getBassaLessons = () => {
+    if (!themes || themes.length === 0) return [];
+    const joursTheme = themes.find((t) => t.code === "jours");
+    const verbesTheme = themes.find((t) => t.code === "verbes");
+
+    const res = [];
+    if (joursTheme) {
+      res.push({
+        id: "jours_semaine",
+        name: "Les jours de la semaine",
+        nameLocal: "Ŋgwà bí mbɛ́",
+        code: "jours",
+        themeId: joursTheme.id,
+        lessonsCount: joursTheme.lessonsCount || 7,
+        lessonsCompleted: joursTheme.lessonsCompleted || 0,
+        locked: false, // first card always unlocked
+      });
+    }
+
+    if (verbesTheme) {
+      const verbs = [
+        { id: "verbe_etre",    name: "Verbe ÊTRE",    nameLocal: "Bìhíkìí" },
+        { id: "verbe_avoir",   name: "Verbe AVOIR",   nameLocal: "Bìhíkìí" },
+        { id: "verbe_manger",  name: "Verbe MANGER",  nameLocal: "Bìhíkìí" },
+        { id: "verbe_marcher", name: "Verbe MARCHER", nameLocal: "Bìhíkìí" },
+        { id: "verbe_prendre", name: "Verbe PRENDRE", nameLocal: "Bìhíkìí" },
+        { id: "verbe_acheter", name: "Verbe ACHETER", nameLocal: "Bìhíkìí" },
+      ];
+      // verbesTheme.locked is set to false by watchVideo() after the user
+      // completes the jours theme exercise and watches the story video.
+      const verbesLocked = verbesTheme.locked ?? true;
+      verbs.forEach((v) => {
+        res.push({
+          ...v,
+          code: "verbes",
+          themeId: verbesTheme.id,
+          lessonsCount: 6,
+          lessonsCompleted: 0,
+          locked: verbesLocked,
+        });
+      });
+    }
+
+    return res;
+  };
+
+  /* Duala Custom Lessons Logic */
+  const getDualaLessons = () => {
+    const items = [
+      { id: "duala_jour",     name: "Les sept jours de la semaine", nameLocal: "Minya mi mbu", code: "jours",    lessonsCount: 7 },
+      { id: "duala_pronoms",  name: "Les pronoms personnels",       nameLocal: "Bipapa",       code: "pronoms",  lessonsCount: 6 },
+      { id: "duala_etre",     name: "Le verbe être",                nameLocal: "Bìhíkìí",      code: "verbes",   lessonsCount: 6 },
+      { id: "duala_avoir",    name: "Le verbe avoir",               nameLocal: "Bìhíkìí",      code: "verbes",   lessonsCount: 6 },
+      { id: "duala_chiffres", name: "Les chiffres 1-9 en duala",    nameLocal: "Langa",        code: "chiffres", lessonsCount: 9 },
+      { id: "duala_couleurs", name: "Les couleurs",                 nameLocal: "Langi",        code: "couleurs", lessonsCount: 7 },
+    ];
+    return items.map((item, idx) => ({ ...item, themeId: item.id, lessonsCompleted: 0, locked: idx >= 1 }));
+  };
+
+  /* Ghomala Custom Lessons Logic */
+  const getGhomalaLessons = () => {
+    const items = [
+      { id: "ghomala_chiffres", name: "Les chiffres 0-9 en ghomala",         code: "chiffres", lessonsCount: 10 },
+      { id: "ghomala_jour",     name: "Les jours de la semaine en ghomala",   code: "jours",    lessonsCount: 7  },
+      { id: "ghomala_etre",     name: "Le verbe être en ghomala",             code: "verbes",   lessonsCount: 6  },
+      { id: "ghomala_avoir",    name: "Le verbe avoir en ghomala",            code: "verbes",   lessonsCount: 6  },
+      { id: "ghomala_manger",   name: "Le verbe manger en ghomala",           code: "verbes",   lessonsCount: 6  },
+      { id: "ghomala_marcher",  name: "Le verbe marcher en ghomala",          code: "verbes",   lessonsCount: 6  },
+      { id: "ghomala_acheter",  name: "Le verbe acheter en ghomala",          code: "verbes",   lessonsCount: 6  },
+    ];
+    return items.map((item, idx) => ({ ...item, themeId: item.id, lessonsCompleted: 0, locked: idx >= 1 }));
+  };
+
+  const displayItems = isBassa ? getBassaLessons() : isDuala ? getDualaLessons() : isGhomala ? getGhomalaLessons() : [];
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
@@ -274,9 +366,9 @@ export default function ThemesScreen() {
         </View>
 
         {/* ── CONTENT ── */}
-        {isLoading && themes.length === 0 ? (
+        {isLoading && displayItems.length === 0 ? (
           <ActivityIndicator size="large" color={RED} style={{ marginVertical: 48 }} />
-        ) : !isLoading && themes.length === 0 ? (
+        ) : !isLoading && displayItems.length === 0 ? (
           <View style={s.empty}>
             <Ionicons name="book-outline" size={44} color={FAINT} />
             <Text style={s.emptyTxt}>
@@ -304,12 +396,43 @@ export default function ThemesScreen() {
               <Text style={s.sectionTitle}>{t("lessons.available")}</Text>
             </View>
             <View style={s.grid}>
-              {themes.map((theme, idx) => (
+              {displayItems.map((item, idx) => (
                 <ThemeCard
-                  key={theme.id}
-                  theme={theme}
+                  key={item.id}
+                  theme={item}
                   index={idx}
-                  onPress={(t) => router.push(`/(tabs)/lessons/${t.id}`)}
+      onPress={(item) => {
+                    if (isGhomala) {
+                      const virtualData = getGhomalaVirtualData(item.id);
+                      if (virtualData) {
+                        setVirtualData(item.id, virtualData);
+                        router.push({
+                          pathname: `/(tabs)/lessons/${item.id}`,
+                          params: { title: item.name, category: item.name },
+                        });
+                      }
+                      return;
+                    }
+                    if (isDuala) {
+                      const virtualData = getDualaVirtualData(item.id);
+                      if (virtualData) {
+                        setVirtualData(item.id, virtualData);
+                        router.push({
+                          pathname: `/(tabs)/lessons/${item.id}`,
+                          params: { title: item.name, category: item.name },
+                        });
+                      }
+                      return;
+                    }
+                    if (isBassa) {
+                      router.push({
+                        pathname: `/(tabs)/lessons/${item.themeId || item.id}`,
+                        params: { title: item.name, category: item.name },
+                      });
+                      return;
+                    }
+                    router.push(`/(tabs)/lessons/${item.id}`);
+                  }}
                 />
               ))}
             </View>
@@ -318,27 +441,27 @@ export default function ThemesScreen() {
 
         <View style={{ height: 24 }} />
       </ScrollView>
-      {/* ══ DRAWER OVERLAY ══ */}
-      {drawerOpen && (
-        <Animated.View
-          style={[StyleSheet.absoluteFillObject, { backgroundColor: "rgba(0,0,0,0.38)", zIndex: 90, opacity: overlayAnim }]}
-          pointerEvents="box-none"
-        >
-          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={closeDrawer} />
-        </Animated.View>
-      )}
+  {/* ══ DRAWER OVERLAY ══ */}
+  {drawerOpen && (
+    <Animated.View
+      style={[StyleSheet.absoluteFillObject, { backgroundColor: "rgba(0,0,0,0.38)", zIndex: 90, opacity: overlayAnim }]}
+      pointerEvents="box-none"
+    >
+      <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={closeDrawer} />
+    </Animated.View>
+  )}
 
-      {/* ══ DRAWER PANEL ══ */}
-      <Animated.View style={[s.drawer, { transform: [{ translateX: drawerAnim }] }]}>
-        <DrawerContent
-          user={user}
-          dashboard={dash}
-          onClose={closeDrawer}
-          onNav={handleDrawerNav}
-          onLogout={handleLogout}
-        />
-      </Animated.View>
-    </SafeAreaView>
+  {/* ══ DRAWER PANEL ══ */}
+  <Animated.View style={[s.drawer, { transform: [{ translateX: drawerAnim }] }]}>
+    <DrawerContent
+      user={user}
+      dashboard={dash}
+      onClose={closeDrawer}
+      onNav={handleDrawerNav}
+      onLogout={handleLogout}
+    />
+  </Animated.View>
+</SafeAreaView>
   );
 }
 

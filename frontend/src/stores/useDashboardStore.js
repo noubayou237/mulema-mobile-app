@@ -6,7 +6,7 @@ import { getFriendlyErrorMessage, isNetworkError } from "../utils/errorUtils";
 import i18n from "../i18n";
 
 // Cache settings
-const STALE_TIME = 60000; // 60 seconds
+const STALE_TIME = 300000; // 5 minutes
 const inflightRequests = new Map();
 const lastFetchTime = new Map();
 
@@ -25,18 +25,21 @@ export const useDashboardStore = create((set) => ({
   // fetchDashboard — Charge les stats du dashboard
   // ═════════════════════════════════════════════════════════════
 
-  fetchDashboard: async () => {
+  fetchDashboard: async (force = false) => {
     if (!isSessionActive()) return null;
 
     const reqKey = "dashboard_main";
-    if (inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
-
-    const now = Date.now();
-    const lastFetch = lastFetchTime.get(reqKey) || 0;
     const { data: cached } = useDashboardStore.getState();
 
-    if (cached && (now - lastFetch < STALE_TIME)) {
-      return cached;
+    if (!force) {
+      if (inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
+
+      const now = Date.now();
+      const lastFetch = lastFetchTime.get(reqKey) || 0;
+
+      if (cached && (now - lastFetch < STALE_TIME)) {
+        return cached;
+      }
     }
 
     set({ isLoading: !cached });

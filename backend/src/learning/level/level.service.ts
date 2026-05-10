@@ -29,7 +29,7 @@ export class LevelService {
   }
 
   async getThemeWords(themeId: string, userId: string) {
-    return this.prisma.mulemWord.findMany({
+    const words = await this.prisma.mulemWord.findMany({
       where: { themeId },
       orderBy: { order: 'asc' },
       select: {
@@ -38,8 +38,11 @@ export class LevelService {
         word_local: true,
         hint: true,
         audio_url: true,
+        audio_key: true,
         image_url: true,
+        image_key: true,
         order: true,
+        category: true,
         userProgress: {
           where: { userId },
           select: {
@@ -51,6 +54,48 @@ export class LevelService {
         },
       },
     });
+
+    // Group words by category
+    const categories: string[] = [];
+    const grouped: Record<string, any[]> = {};
+
+    words.forEach((word) => {
+      const cat = word.category || 'Basics';
+      if (!grouped[cat]) {
+        grouped[cat] = [];
+        categories.push(cat);
+      }
+      grouped[cat].push({
+        ...word,
+        // Ensure image_url and audio_url fallback to keys for mapping in frontend AssetsMap
+        image_url: word.image_url || word.image_key,
+        audio_url: word.audio_url || word.audio_key,
+      });
+    });
+
+    return categories.map((cat, idx) => {
+      const catWords = grouped[cat];
+      const isCompleted = catWords.every((w) => w.userProgress[0]?.isCompleted);
+      const isUnlocked = catWords.some((w) => w.userProgress[0]?.isUnlocked);
+
+      // Average stars for the category
+      const totalStars = catWords.reduce(
+        (acc, w) => acc + (w.userProgress[0]?.stars || 0),
+        0,
+      );
+      const stars = Math.round(totalStars / catWords.length);
+
+      return {
+        id: `virtual_${cat.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+        title: cat,
+        order: idx,
+        isUnlocked,
+        isCompleted,
+        stars,
+        words: catWords,
+        wordIdsByGroup: catWords.map((w) => w.id),
+      };
+    });
   }
 
   async findThemesByLanguage(languageId: string, userId: string) {
@@ -58,7 +103,6 @@ export class LevelService {
       where: { patrimonialLanguageId: languageId },
       orderBy: { order: 'asc' },
       include: {
-        _count: { select: { words: true } },
         exercises: { select: { id: true } },
         userMulemThemeProgress: {
           where: { userId },
@@ -68,46 +112,50 @@ export class LevelService {
           select: {
             id: true,
             order: true,
+            category: true,
             userProgress: {
-              where: { userId, isCompleted: true },
-              select: { id: true },
+              where: { userId },
+              select: { isCompleted: true, isUnlocked: true },
             },
           },
         },
       },
     });
 
-    // We store all themes to check previous ones for locking logic
-    return themes.map((t, idx) => {
+    return themes.map((t) => {
       const userThemeProg = t.userMulemThemeProgress[0];
-      const isCompleted = userThemeProg?.isCompleted || false;
+      const e3Completed = userThemeProg?.isCompleted || false;
       const videoWatched = userThemeProg?.videoWatched || false;
 
+      // Group words into categories to count virtual lessons
+      const categoryNames = Array.from(
+        new Set(t.words.map((w) => w.category || 'Basics')),
+      );
+      const lessonsCount = categoryNames.length;
+
+      // Count completed categories
+      const lessonsCompletedCount = categoryNames.filter((catName) => {
+        const catWords = t.words.filter(
+          (w) => (w.category || 'Basics') === catName,
+        );
+        return catWords.every((w) => w.userProgress[0]?.isCompleted);
+      }).length;
+
       // A theme unlocks only after the previous theme's final challenge is completed
-      // AND its story video has been watched. The video is the required gateway.
-      let isThemeLocked = t.locked; // Fallback to DB-wide lock
+      // AND its story video has been watched.
+      let isThemeLocked = t.locked;
       if (t.order > 0) {
         const prevTheme = themes.find((prev) => prev.order === t.order - 1);
         const prevProg = prevTheme?.userMulemThemeProgress[0];
         isThemeLocked = !prevProg?.isCompleted || !prevProg?.videoWatched;
-      } else {
-        // First theme is always unlocked unless explicitly locked in DB
-        isThemeLocked = t.locked;
       }
-      const lessonsCompleted = t.words.reduce(
-        (acc, word) => acc + (word.userProgress.length > 0 ? 1 : 0),
-        0,
-      );
 
-      // exercisesCount: how many discrete exercises exist for this theme
+      // exercisesCount: how many discrete exercises exist for this theme (Story mode)
       const exercisesCount = t.exercises.length || 3;
-
-      // exercisesCompleted: words at order >= 2 that are completed map 1-to-1
-      // to exercise sessions the user has passed (each session unlocks the next word).
-      // Cap at exercisesCount so we never exceed the total.
+      // For progress bar: map completed lessons to exercises for UI consistency
       const exercisesCompleted = Math.min(
         exercisesCount,
-        t.words.filter((w) => w.order >= 2 && w.userProgress.length > 0).length,
+        lessonsCompletedCount,
       );
 
       return {
@@ -120,10 +168,12 @@ export class LevelService {
         color: t.color,
         locked: isThemeLocked,
         lockHint: t.lock_hint,
-        lessonsCount: t._count.words,
-        lessonsCompleted,
+        lessonsCount,
+        lessonsCompleted: lessonsCompletedCount,
         exercisesCount,
         exercisesCompleted,
+        e3Completed,
+        videoWatched,
       };
     });
   }

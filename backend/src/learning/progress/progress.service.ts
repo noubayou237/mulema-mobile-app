@@ -15,11 +15,13 @@ export class ProgressService {
       orderBy: { order: 'asc' },
     });
 
-    // Strategy: Batch check existing to only create missing ones, or use a transaction
-    // createMany is faster but doesn't support "on conflict skip" easily in all Prisma versions without specific args
-    // We'll use a transaction for safety and speed compared to a loose loop.
+    if (words.length === 0) return;
+
+    // Identify the first category
+    const firstCategory = words[0].category;
+
     await this.prisma.$transaction(
-      words.map((word, i) =>
+      words.map((word) =>
         this.prisma.userProgress.upsert({
           where: {
             userId_mulemWordId: { userId, mulemWordId: word.id },
@@ -28,7 +30,8 @@ export class ProgressService {
           create: {
             userId,
             mulemWordId: word.id,
-            isUnlocked: i < 2, 
+            // Unlock first category by default
+            isUnlocked: word.category === firstCategory,
             isCompleted: false,
             stars: 0,
           },
@@ -99,54 +102,58 @@ export class ProgressService {
     themeId: string,
     completedLessonOrder: number,
   ) {
-    // Mark the CURRENT lesson as completed
-    const currentWord = await this.prisma.mulemWord.findFirst({
-      where: { themeId, order: completedLessonOrder + 1 },
+    const allWords = await this.prisma.mulemWord.findMany({
+      where: { themeId },
       orderBy: { order: 'asc' },
     });
 
-    if (currentWord) {
-      await this.prisma.userProgress.upsert({
-        where: { userId_mulemWordId: { userId, mulemWordId: currentWord.id } },
-        update: { isCompleted: true, stars: 3 }, // Give full stars if exercise was passed
-        create: {
+    // Group words by category, keeping the order they first appear
+    const categories: string[] = [];
+    const groupedWords: Record<string, string[]> = {};
+
+    allWords.forEach((word) => {
+      const cat = word.category || 'Uncategorized';
+      if (!groupedWords[cat]) {
+        groupedWords[cat] = [];
+        categories.push(cat);
+      }
+      groupedWords[cat].push(word.id);
+    });
+
+    // 1) Mark CURRENT category as completed
+    const completedCategoryName = categories[completedLessonOrder];
+    if (completedCategoryName && groupedWords[completedCategoryName]) {
+      await this.prisma.userProgress.updateMany({
+        where: {
           userId,
-          mulemWordId: currentWord.id,
-          isUnlocked: true,
-          isCompleted: true,
-          stars: 3,
+          mulemWordId: { in: groupedWords[completedCategoryName] },
         },
+        data: { isCompleted: true, stars: 3 },
       });
     }
 
-    // 2) Unlock the NEXT lesson
-    const nextWord = await this.prisma.mulemWord.findFirst({
-      where: { themeId, order: completedLessonOrder + 2 },
-      orderBy: { order: 'asc' },
-    });
-
-    if (!nextWord) {
-      return { message: 'Theme complete — no next lesson to unlock', unlockedWordId: null };
+    // 2) Unlock the NEXT category
+    const nextCategoryName = categories[completedLessonOrder + 1];
+    if (!nextCategoryName) {
+      return { message: 'Theme complete — no next category to unlock' };
     }
 
-    await this.prisma.userProgress.upsert({
-      where: { userId_mulemWordId: { userId, mulemWordId: nextWord.id } },
-      update: { isUnlocked: true },
-      create: {
+    const nextWordIds = groupedWords[nextCategoryName];
+    await this.prisma.userProgress.updateMany({
+      where: {
         userId,
-        mulemWordId: nextWord.id,
-        isUnlocked: true,
-        isCompleted: false,
-        stars: 0,
+        mulemWordId: { in: nextWordIds },
       },
+      data: { isUnlocked: true },
     });
 
+    // Also update statistics
     await this.prisma.statistics.upsert({
       where: { userId },
       update: {
         totalLearningTime: { increment: 300 },
         exercisesCompleted: { increment: 1 },
-        totalPrawns: { increment: 30 }, // Award 30 XP for exercise
+        totalPrawns: { increment: 30 },
       },
       create: {
         userId,
@@ -157,26 +164,39 @@ export class ProgressService {
       },
     });
 
-    return { unlockedWordId: nextWord.id, order: nextWord.order };
+    return { 
+      message: `Unlocked category: ${nextCategoryName}`,
+      unlockedWordIds: nextWordIds 
+    };
   }
 
   async markThemeCompleted(userId: string, themeId: string, completedLessonOrder?: number) {
-    // Mark the last lesson word as completed so progress reaches 100%
+    // Mark the last category as completed if provided
     if (completedLessonOrder != null) {
-      const lastWord = await this.prisma.mulemWord.findFirst({
-        where: { themeId, order: completedLessonOrder + 1 },
+      const allWords = await this.prisma.mulemWord.findMany({
+        where: { themeId },
+        orderBy: { order: 'asc' },
       });
-      if (lastWord) {
-        await this.prisma.userProgress.upsert({
-          where: { userId_mulemWordId: { userId, mulemWordId: lastWord.id } },
-          update: { isCompleted: true, stars: 3 },
-          create: {
+
+      const categories: string[] = [];
+      const groupedWords: Record<string, string[]> = {};
+      allWords.forEach((word) => {
+        const cat = word.category || 'Uncategorized';
+        if (!groupedWords[cat]) {
+          groupedWords[cat] = [];
+          categories.push(cat);
+        }
+        groupedWords[cat].push(word.id);
+      });
+
+      const lastCategoryName = categories[completedLessonOrder];
+      if (lastCategoryName && groupedWords[lastCategoryName]) {
+        await this.prisma.userProgress.updateMany({
+          where: {
             userId,
-            mulemWordId: lastWord.id,
-            isUnlocked: true,
-            isCompleted: true,
-            stars: 3,
+            mulemWordId: { in: groupedWords[lastCategoryName] },
           },
+          data: { isCompleted: true, stars: 3 },
         });
       }
     }

@@ -5,7 +5,7 @@ import api, { isSessionActive } from "../services/api";
 import { getFriendlyErrorMessage, isNetworkError } from "../utils/errorUtils";
 
 // Cache settings
-const STALE_TIME = 30000; // 30 seconds
+const STALE_TIME = 300_000; // 5 minutes — keeps data fresh for an entire session
 const inflightRequests = new Map();
 const lastFetchTime = new Map();
 
@@ -32,17 +32,17 @@ export const useThemeStore = create((set, get) => ({
   // fetchThemes — Charge les thèmes d'une langue
   // ═════════════════════════════════════════════════════════════
 
-  fetchThemes: async (languageId) => {
+  fetchThemes: async (languageId, force = false) => {
     if (!languageId || !isSessionActive()) return [];
-    
+
     // 1. De-duplication: Return existing promise if already fetching this lang
     const reqKey = `themes_${languageId}`;
-    if (inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
+    if (!force && inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
 
     // 2. Cache Logic: If data is fresh, don't fetch
     const now = Date.now();
     const lastFetch = lastFetchTime.get(reqKey) || 0;
-    if (get().themes.length > 0 && (now - lastFetch < STALE_TIME)) {
+    if (!force && get().themes.length > 0 && (now - lastFetch < STALE_TIME)) {
       return get().themes;
     }
 
@@ -86,6 +86,16 @@ export const useThemeStore = create((set, get) => ({
     const lastFetch = lastFetchTime.get(reqKey) || 0;
     const { currentThemeId, lessons: cached } = get();
     
+    // Skip network for virtual themes (already injected in store)
+    if (themeId?.toString().startsWith("virtual_")) {
+      if (currentThemeId === themeId && cached.length > 0) {
+        return cached;
+      }
+      // If we somehow lost the virtual data, we can't fetch it from API
+      set({ lessonsLoading: false });
+      return cached; 
+    }
+
     if (currentThemeId === themeId && cached.length > 0 && (now - lastFetch < STALE_TIME)) {
       return cached;
     }
@@ -111,9 +121,10 @@ export const useThemeStore = create((set, get) => ({
 
         return lessons;
       } catch (error) {
-        set({ lessonsLoading: false });
-        if (error?.response?.status !== 401) {
-          Logger.error("[ThemeStore] fetchLessons error:", error);
+        const msg = getFriendlyErrorMessage(error);
+        set({ lessonsLoading: false, error: msg });
+        if (error?.response?.status !== 401 && !isNetworkError(error)) {
+          Logger.error("[ThemeStore] fetchLessons error:", msg);
         }
         return [];
       } finally {
@@ -134,21 +145,21 @@ export const useThemeStore = create((set, get) => ({
 
     const reqKey = `words_${lessonId}`;
     
-    // 1. Check if this is a "Virtual Lesson" (a MulemWord treated as a lesson)
-    // In the new system, we already have word data in the lessons list
-    const { lessons, wordsCache } = get();
+    // 1. Check if this is a "Virtual Lesson" (a group of MulemWords)
     const lessonData = lessons.find(l => l.id === lessonId);
     
-    if (lessonData && !lessonData.hasSubWords) {
-      // It's a MulemWord. Treat it as a single-item word list.
-      const virtualWords = [{
-        id: lessonData.id,
-        sourceText: lessonData.title,
-        targetText: lessonData.subtitle,
-        audioUrl: lessonData.audioUrl,
-        imageUrl: lessonData.imageUrl,
-        hint: lessonData.hint,
-      }];
+    if (lessonData && lessonData.words) {
+      // It's a grouped virtual lesson. Return its words.
+      const virtualWords = lessonData.words.map(w => ({
+        id: w.id,
+        sourceText: w.word_fr,
+        targetText: w.word_local,
+        audioUrl: w.audio_url,
+        imageUrl: w.image_url,
+        hint: w.hint,
+        // Carry any other properties needed for exercises
+        category: w.category,
+      }));
 
       if (!silent) {
         set({ words: virtualWords, currentLessonId: lessonId, wordsLoading: false });
@@ -183,11 +194,12 @@ export const useThemeStore = create((set, get) => ({
         lastFetchTime.set(reqKey, Date.now());
         return words;
       } catch (error) {
-        if (!silent) set({ wordsLoading: false, error: "Content not available yet." });
+        const msg = getFriendlyErrorMessage(error);
+        if (!silent) set({ wordsLoading: false, error: msg });
         
         // Only log if it's not a 404 (we expect some virtual items to not have sub-words)
-        if (error?.response?.status !== 404 && error?.response?.status !== 401) {
-          Logger.error("[ThemeStore] fetchWords error:", error);
+        if (error?.response?.status !== 404 && error?.response?.status !== 401 && !isNetworkError(error)) {
+          Logger.error("[ThemeStore] fetchWords error:", msg);
         }
         return [];
       } finally {
@@ -249,21 +261,12 @@ export const useThemeStore = create((set, get) => ({
 
   getExerciseAccess: (themeId) => {
     const { lessons } = get();
+    if (lessons.length === 0) return { e1: false, e2: false, e3: false };
 
-    const lessonsCompletedCount = lessons.reduce((acc, l) => {
-      const prog = l.userProgress?.[0];
-      return acc + (prog?.isCompleted ? 1 : 0);
-    }, 0);
-
-    // Exercise unlocks progressively: available once the auto-unlocked lessons (first 2) are done.
-    // Each pass of the exercise unlocks the next lesson until all are complete.
-    const enoughLessonsCompleted = lessons.length > 0 && lessonsCompletedCount >= 2;
-
-    return {
-      e1: enoughLessonsCompleted,
-      e2: enoughLessonsCompleted,
-      e3: enoughLessonsCompleted,
-    };
+    // The final challenge (e1) is unlocked only when all regular category 
+    // nodes in the tree are completed.
+    const allCompleted = lessons.every(l => l.isCompleted);
+    return { e1: allCompleted, e2: allCompleted, e3: allCompleted };
   },
 
   // ═════════════════════════════════════════════════════════════
@@ -272,17 +275,18 @@ export const useThemeStore = create((set, get) => ({
   // ═════════════════════════════════════════════════════════════
 
   isLessonLocked: (lessonId, order) => {
-    // Les 2 premières leçons (order 0 et 1) sont toujours débloquées
-    if (order < 2) return false;
+    // First lesson category (order 0) is always unlocked
+    if (order === 0) return false;
 
     const { lessons } = get();
     const lesson = lessons.find((l) => l.id === lessonId);
     
-    // Progrès depuis la DB : l'include Prisma renvoie un tableau
-    const prog = lesson?.userProgress?.[0];
+    // Use the isUnlocked property calculated by the service/backend
+    if (lesson?.isUnlocked) return false;
 
-    // Si débloqué explicitement dans la DB
-    if (prog?.isUnlocked) return false;
+    // Fallback logic: check previous lesson completion if not explicitly unlocked
+    const prevLesson = lessons.find((l) => l.order === order - 1);
+    if (prevLesson && prevLesson.isCompleted) return false;
 
     return true;
   },
@@ -336,15 +340,34 @@ export const useThemeStore = create((set, get) => ({
       Logger.warn("[ThemeStore] watchVideo error:", err?.message);
     }
     const { themes } = get();
-    const idx = themes.findIndex((t) => t.id === themeId);
-    if (idx === -1) return;
+    const theme = themes.find((t) => t.id === themeId);
+    if (!theme) return;
 
-    const updated = [...themes];
-    updated[idx] = { ...updated[idx], videoWatched: true };
-    if (idx + 1 < updated.length) {
-      updated[idx + 1] = { ...updated[idx + 1], locked: false };
-    }
+    // Unlock the theme whose order immediately follows this one.
+    // Using order+1 (not array index+1) so the correct theme is unlocked
+    // regardless of the order themes were returned by the API.
+    const nextOrder = (theme.order ?? -1) + 1;
+    const updated = themes.map((t) => {
+      if (t.id === themeId) return { ...t, videoWatched: true };
+      if (t.order === nextOrder) return { ...t, locked: false };
+      return t;
+    });
     set({ themes: updated });
+  },
+
+  // ═════════════════════════════════════════════════════════════
+  // setVirtualData — Injects virtual lessons/words for specific themes
+  // ═════════════════════════════════════════════════════════════
+  setVirtualData: (themeId, data) => {
+    if (!data) return;
+    // Stamp the cache so fetchLessons treats this as fresh and won't hit the API.
+    lastFetchTime.set(`lessons_${themeId}`, Date.now());
+    set(() => ({
+      currentThemeId: themeId,
+      lessons: data.lessons || [],
+      lessonsLoading: false,
+      wordsLoading: false,
+    }));
   },
 
   // ═════════════════════════════════════════════════════════════

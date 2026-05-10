@@ -17,33 +17,71 @@ const prisma = new PrismaClient();
 
 // ─────────────────────────────────────────────────────────────────────
 const THEMES = [
-  // ── 01 — LA FAMILLE ────────────────────────────────────────────────
+  // ── 00 — NIVEAU 1 : FONDATIONS (Jours & Verbes) ─────────────────
   {
     order: 0,
+    code: 'fondations',
+    name_fr: 'Niveau 1 : Fondations',
+    name_local: 'Madóti má Boso',
+    icon: 'school-outline',
+    color: '#3F51B5',
+    locked: false,
+    lock_hint: null,
+    words: [
+      // --- Leçon 1 : Les 7 jours de la semaine ---
+      { order: 1, category: 'Les 7 jours de la semaine', word_fr: 'Lundi',    word_local: 'Môsú',    hint: 'M', audio_key: 'lundi' },
+      { order: 2, category: 'Les 7 jours de la semaine', word_fr: 'Mardi',    word_local: 'Kwasú',   hint: 'K', audio_key: 'mardi' },
+      { order: 3, category: 'Les 7 jours de la semaine', word_fr: 'Mercredi', word_local: 'Mukôsú',  hint: 'M', audio_key: 'mercredi' },
+      { order: 4, category: 'Les 7 jours de la semaine', word_fr: 'Jeudi',    word_local: 'Ngisú',   hint: 'N', audio_key: 'jeudi' },
+      { order: 5, category: 'Les 7 jours de la semaine', word_fr: 'Vendredi', word_local: 'Ndôsú',   hint: 'N', audio_key: 'vendredi' },
+      { order: 6, category: 'Les 7 jours de la semaine', word_fr: 'Samedi',   word_local: 'Esabasú', hint: 'E', audio_key: 'samedi' },
+      { order: 7, category: 'Les 7 jours de la semaine', word_fr: 'Dimanche', word_local: 'Etíñá',   hint: 'E', audio_key: 'dimanche' },
+
+      // --- Leçon 2 : Verbe AVOIR ---
+      { order: 8,  category: 'Verbe AVOIR', word_fr: "J'ai",           word_local: 'Na ben', hint: 'N', audio_key: 'j_ai' },
+      { order: 9,  category: 'Verbe AVOIR', word_fr: 'Tu as',          word_local: 'O ben',  hint: 'O', audio_key: 'tu_as' },
+      { order: 10, category: 'Verbe AVOIR', word_fr: 'Il/Elle a',      word_local: 'A ben',  hint: 'A', audio_key: 'il_elle_on_a' },
+      { order: 11, category: 'Verbe AVOIR', word_fr: 'Nous avons',      word_local: 'Di ben', hint: 'D', audio_key: 'nous_avons' },
+      { order: 12, category: 'Verbe AVOIR', word_fr: 'Vous avez',       word_local: 'Lo ben', hint: 'L', audio_key: 'vous_avez' },
+      { order: 13, category: 'Verbe AVOIR', word_fr: 'Ils/Elles ont',   word_local: 'Ba ben', hint: 'B', audio_key: 'ils_elles_ont' },
+
+      // --- Leçon 3 : Verbe ÊTRE ---
+      { order: 14, category: 'Verbe ÊTRE', word_fr: 'Je suis',        word_local: "N'e",   hint: 'N', audio_key: 'je_suis' },
+      { order: 15, category: 'Verbe ÊTRE', word_fr: 'Tu es',           word_local: 'We',    hint: 'W', audio_key: 'tu_es' },
+      { order: 16, category: 'Verbe ÊTRE', word_fr: 'Il/Elle est',     word_local: 'E',     hint: 'E', audio_key: 'il_elle_est' },
+      { order: 17, category: 'Verbe ÊTRE', word_fr: 'Nous sommes',     word_local: 'Jé',    hint: 'J', audio_key: 'nous_sommes' },
+      { order: 18, category: 'Verbe ÊTRE', word_fr: 'Vous êtes',       word_local: "L'e",   hint: 'L', audio_key: 'vous_etes' },
+      { order: 19, category: 'Verbe ÊTRE', word_fr: 'Ils/Elles sont',  word_local: "B'e",   hint: 'B', audio_key: 'ils_elles_sont' },
+    ],
+  },
+
+  // ── 01 — LA FAMILLE ────────────────────────────────────────────────
+  {
+    order: 1,
     code: 'famille',
     name_fr: 'La Famille',
     name_local: 'Mbia',
     icon: 'people-outline',
     color: '#4CAF50',
-    locked: false,
-    lock_hint: null,
+    locked: true,
+    lock_hint: 'Terminez les verbes pour débloquer',
     words: [
-      { order: 1,  word_fr: 'Le papa',             word_local: 'Papá',              hint: 'P', image_url: null },
-      { order: 2,  word_fr: 'La maman',             word_local: 'Mamá',              hint: 'M', image_url: null },
-      { order: 3,  word_fr: 'La tante paternelle',  word_local: 'Árí á tetɛ́',       hint: 'Á', image_url: 'img_family_aunty' },
-      { order: 4,  word_fr: 'La tante maternelle',  word_local: 'Árí á yeyɛ',        hint: 'Á', image_url: 'img_family_aunty' },
-      { order: 5,  word_fr: "L'oncle paternel",     word_local: 'Ndómɛ á tetɛ́',     hint: 'N', image_url: 'img_family_uncle' },
-      { order: 6,  word_fr: "L'oncle maternel",     word_local: 'Ndómɛ á yeyɛ',      hint: 'N', image_url: 'img_family_uncle' },
-      { order: 7,  word_fr: 'Les grands-parents',   word_local: 'Ɓambámbɛ́',         hint: 'Ɓ', image_url: 'img_family_grandparents' },
-      { order: 8,  word_fr: 'Les amis',             word_local: 'Makɔ́m',            hint: 'M', image_url: 'img_family_couple' },
-      { order: 9,  word_fr: 'Les enfants',          word_local: 'Ɓána',              hint: 'Ɓ', image_url: 'img_family_children' },
-      { order: 10, word_fr: 'Le bébé',              word_local: 'Múna á mwɛ̌ŋgɛ́',   hint: 'M', image_url: 'img_family_baby' },
+      { order: 1,  category: 'Les membres de la famille', word_fr: 'Le papa',             word_local: 'Papá',              hint: 'P', image_url: null },
+      { order: 2,  category: 'Les membres de la famille', word_fr: 'La maman',            word_local: 'Mamá',              hint: 'M', image_url: null },
+      { order: 3,  category: 'Les membres de la famille', word_fr: 'La tante paternelle',  word_local: 'Árí á tetɛ́',       hint: 'Á', image_url: 'aunty' },
+      { order: 4,  category: 'Les membres de la famille', word_fr: 'La tante maternelle',  word_local: 'Árí á yeyɛ',        hint: 'Á', image_url: 'aunty' },
+      { order: 5,  category: 'Les membres de la famille', word_fr: "L'oncle paternel",     word_local: 'Ndómɛ á tetɛ́',     hint: 'N', image_url: 'uncle' },
+      { order: 6,  category: 'Les membres de la famille', word_fr: "L'oncle maternel",     word_local: 'Ndómɛ á yeyɛ',      hint: 'N', image_url: 'uncle' },
+      { order: 7,  category: 'Les membres de la famille', word_fr: 'Les grands-parents',   word_local: 'Ɓambámbɛ́',         hint: 'Ɓ', image_url: 'grandparents' },
+      { order: 8,  category: 'Relations et enfants', word_fr: 'Les amis',             word_local: 'Makɔ́m',            hint: 'M', image_url: 'couple' },
+      { order: 9,  category: 'Relations et enfants', word_fr: 'Les enfants',          word_local: 'Ɓána',              hint: 'Ɓ', image_url: 'children' },
+      { order: 10, category: 'Relations et enfants', word_fr: 'Le bébé',              word_local: 'Múna á mwɛ̌ŋgɛ́',   hint: 'M', image_url: 'baby' },
     ],
   },
 
   // ── 02 — LES ANIMAUX ───────────────────────────────────────────────
   {
-    order: 1,
+    order: 2,
     code: 'animaux',
     name_fr: 'Les Animaux',
     name_local: 'Ɓiɓwanjé',
@@ -52,22 +90,22 @@ const THEMES = [
     locked: true,
     lock_hint: 'Terminez La Famille pour débloquer',
     words: [
-      { order: 1,  word_fr: 'Le lion',        word_local: 'Ŋgila',    hint: 'Ŋ', image_url: 'img_animal_lion' },
-      { order: 2,  word_fr: 'La girafe',      word_local: 'Ŋgilóɓa',  hint: 'Ŋ', image_url: null },
-      { order: 3,  word_fr: 'Le poisson',     word_local: 'Súe',      hint: 'S', image_url: 'img_animal_fish' },
-      { order: 4,  word_fr: 'Le bœuf',        word_local: 'Nyaka',    hint: 'N', image_url: null },
-      { order: 5,  word_fr: 'Le poulet',      word_local: 'Wúɓa',     hint: 'W', image_url: null },
-      { order: 6,  word_fr: "L'éléphant",     word_local: 'Njɔu',     hint: 'N', image_url: 'img_animal_elephant' },
-      { order: 7,  word_fr: 'Les singes',     word_local: 'Kéma',     hint: 'K', image_url: 'img_animal_monkeys' },
-      { order: 8,  word_fr: 'La sauterelle',  word_local: 'Dikélé',   hint: 'D', image_url: null },
-      { order: 9,  word_fr: "L'épervier",     word_local: 'Wómbé',    hint: 'W', image_url: 'img_animal_bird' },
-      { order: 10, word_fr: 'Les abeilles',   word_local: 'Ndɔ́mbí',  hint: 'N', image_url: null },
+      { order: 1,  category: 'Les animaux sauvages', word_fr: 'Le lion',        word_local: 'Ŋgila',    hint: 'Ŋ', image_url: 'lion' },
+      { order: 2,  category: 'Les animaux sauvages', word_fr: 'La girafe',      word_local: 'Ŋgilóɓa',  hint: 'Ŋ', image_url: null },
+      { order: 3,  category: 'Les animaux sauvages', word_fr: "L'éléphant",     word_local: 'Njɔu',     hint: 'N', image_url: 'elephant' },
+      { order: 4,  category: 'Les animaux sauvages', word_fr: 'Les singes',     word_local: 'Kéma',     hint: 'K', image_url: 'monkeys' },
+      { order: 5,  category: 'Les animaux sauvages', word_fr: "L'épervier",     word_local: 'Wómbé',    hint: 'W', image_url: 'bird' },
+      { order: 6,  category: 'Les animaux domestiques et insectes', word_fr: 'Le poisson',     word_local: 'Súe',      hint: 'S', image_url: 'fish' },
+      { order: 7,  category: 'Les animaux domestiques et insectes', word_fr: 'Le bœuf',        word_local: 'Nyaka',    hint: 'N', image_url: null },
+      { order: 8,  category: 'Les animaux domestiques et insectes', word_fr: 'Le poulet',      word_local: 'Wúɓa',     hint: 'W', image_url: null },
+      { order: 9,  category: 'Les animaux domestiques et insectes', word_fr: 'La sauterelle',  word_local: 'Dikélé',   hint: 'D', image_url: null },
+      { order: 10, category: 'Les animaux domestiques et insectes', word_fr: 'Les abeilles',   word_local: 'Ndɔ́mbí',  hint: 'N', image_url: null },
     ],
   },
 
   // ── 03 — LA CUISINE ────────────────────────────────────────────────
   {
-    order: 2,
+    order: 3,
     code: 'cuisine',
     name_fr: 'La Cuisine',
     name_local: 'Mandɛ́ á liyɛ',
@@ -76,22 +114,22 @@ const THEMES = [
     locked: true,
     lock_hint: 'Terminez Les Animaux pour débloquer',
     words: [
-      { order: 1,  word_fr: "L'eau",                   word_local: 'Madíɓá',         hint: 'M', image_url: null },
-      { order: 2,  word_fr: 'Le feu',                  word_local: 'Wéá',            hint: 'W', image_url: 'img_cooking_fire' },
-      { order: 3,  word_fr: 'Le sel',                  word_local: 'Wáŋga',          hint: 'W', image_url: null },
-      { order: 4,  word_fr: "L'huile",                 word_local: 'Mǔla',           hint: 'M', image_url: 'img_cooking_oil' },
-      { order: 5,  word_fr: 'Le sucre',                word_local: 'Ɓɔmbɔ́',         hint: 'Ɓ', image_url: null },
-      { order: 6,  word_fr: 'Le poisson',              word_local: 'Súe',            hint: 'S', image_url: 'img_animal_fish' },
-      { order: 7,  word_fr: 'Le gibier',               word_local: 'Nyama',          hint: 'N', image_url: null },
-      { order: 8,  word_fr: 'La farine',               word_local: 'Fláwa',          hint: 'F', image_url: 'img_cooking_flour' },
-      { order: 9,  word_fr: 'La fourchette',           word_local: 'Mwasó',          hint: 'M', image_url: 'img_cooking_fork' },
-      { order: 10, word_fr: 'Le pilon et le mortier',  word_local: 'Mbɔlɔki na eɓokí', hint: 'M', image_url: 'img_cooking_mortar' },
+      { order: 1,  category: 'Le feu et l’eau', word_fr: "L'eau",                   word_local: 'Madíɓá',         hint: 'M', image_url: null },
+      { order: 2,  category: 'Le feu et l’eau', word_fr: 'Le feu',                  word_local: 'Wéá',            hint: 'W', image_url: 'fire' },
+      { order: 3,  category: 'Ingrédients et saveurs', word_fr: 'Le sel',                  word_local: 'Wáŋga',          hint: 'W', image_url: null },
+      { order: 4,  category: 'Ingrédients et saveurs', word_fr: "L'huile",                 word_local: 'Mǔla',           hint: 'M', image_url: 'olive_oil' },
+      { order: 5,  category: 'Ingrédients et saveurs', word_fr: 'Le sucre',                word_local: 'Ɓɔmbɔ́',         hint: 'Ɓ', image_url: null },
+      { order: 6,  category: 'Ingrédients et saveurs', word_fr: 'Le poisson',              word_local: 'Súe',            hint: 'S', image_url: 'fish' },
+      { order: 7,  category: 'Ingrédients et saveurs', word_fr: 'Le gibier',               word_local: 'Nyama',          hint: 'N', image_url: null },
+      { order: 8,  category: 'Ingrédients et saveurs', word_fr: 'La farine',               word_local: 'Fláwa',          hint: 'F', image_url: 'flour' },
+      { order: 9,  category: 'Ustensiles', word_fr: 'La fourchette',           word_local: 'Mwasó',          hint: 'M', image_url: 'fork' },
+      { order: 10, category: 'Ustensiles', word_fr: 'Le pilon et le mortier',  word_local: 'Mbɔlɔki na eɓokí', hint: 'M', image_url: 'multer_pistol' },
     ],
   },
 
   // ── 04 — LES VÊTEMENTS ─────────────────────────────────────────────
   {
-    order: 3,
+    order: 4,
     code: 'vetements',
     name_fr: 'Les Vêtements',
     name_local: 'Ɓimbɔti',
@@ -100,16 +138,16 @@ const THEMES = [
     locked: true,
     lock_hint: 'Terminez La Cuisine pour débloquer',
     words: [
-      { order: 1,  word_fr: 'Cet habit',       word_local: 'Ní mbɔ́tí',    hint: 'N', image_url: 'img_clothing_suit' },
-      { order: 2,  word_fr: 'Cette chemise',   word_local: 'Ní sɔ́ti',     hint: 'N', image_url: 'img_clothing_tshirt' },
-      { order: 3,  word_fr: 'Ce pantalon',     word_local: 'Ní tolosísi',  hint: 'N', image_url: 'img_clothing_trousers' },
-      { order: 4,  word_fr: 'Ces caleçons',    word_local: 'Ɓé ɓekúɓɛ',   hint: 'Ɓ', image_url: null },
-      { order: 5,  word_fr: 'Ces costumes',    word_local: 'Yí kóti',      hint: 'Y', image_url: 'img_clothing_suit' },
-      { order: 6,  word_fr: 'Cette culotte',   word_local: 'Yé ekúɓɛ',     hint: 'Y', image_url: null },
-      { order: 7,  word_fr: 'Ces boubous',     word_local: 'Ɓé ɓebuɓá',   hint: 'Ɓ', image_url: null },
-      { order: 8,  word_fr: 'Cette chaussure', word_local: 'Yé etámbí',    hint: 'Y', image_url: 'img_clothing_shoes' },
-      { order: 9,  word_fr: 'Ce chapeau',      word_local: 'Yé ekótó',     hint: 'Y', image_url: null },
-      { order: 10, word_fr: 'La cravate',      word_local: 'Kɔ́la',        hint: 'K', image_url: 'img_clothing_tie' },
+      { order: 1,  category: 'Vêtements et sous-vêtements', word_fr: 'Cet habit',       word_local: 'Ní mbɔ́tí',    hint: 'N', image_url: 'suit' },
+      { order: 2,  category: 'Vêtements et sous-vêtements', word_fr: 'Cette chemise',   word_local: 'Ní sɔ́ti',     hint: 'N', image_url: 't_shirt' },
+      { order: 3,  category: 'Vêtements et sous-vêtements', word_fr: 'Ce pantalon',     word_local: 'Ní tolosísi',  hint: 'N', image_url: 'trouser' },
+      { order: 4,  category: 'Vêtements et sous-vêtements', word_fr: 'Ces caleçons',    word_local: 'Ɓé ɓekúɓɛ',   hint: 'Ɓ', image_url: null },
+      { order: 5,  category: 'Vêtements et sous-vêtements', word_fr: 'Ces costumes',    word_local: 'Yí kóti',      hint: 'Y', image_url: 'suit' },
+      { order: 6,  category: 'Vêtements et sous-vêtements', word_fr: 'Cette culotte',   word_local: 'Yé ekúɓɛ',     hint: 'Y', image_url: null },
+      { order: 7,  category: 'Accessoires et chaussures', word_fr: 'Ces boubous',     word_local: 'Ɓé ɓebuɓá',   hint: 'Ɓ', image_url: null },
+      { order: 8,  category: 'Accessoires et chaussures', word_fr: 'Cette chaussure', word_local: 'Yé etámbí',    hint: 'Y', image_url: 'shoes' },
+      { order: 9,  category: 'Accessoires et chaussures', word_fr: 'Ce chapeau',      word_local: 'Yé ekótó',     hint: 'Y', image_url: null },
+      { order: 10, category: 'Accessoires et chaussures', word_fr: 'La cravate',      word_local: 'Kɔ́la',        hint: 'K', image_url: 'tie' },
     ],
   },
 ];
@@ -151,18 +189,19 @@ export async function main() {
     });
 
     // 4. Insérer les mots
-    for (const w of t.words) {
+    for (const w of (t as any).words) {
       await prisma.mulemWord.create({
         data: {
           themeId: theme.id,
           order: w.order,
+          category: (w as any).category || null,
           word_fr: w.word_fr,
           word_local: w.word_local,
           hint: w.hint,
-          audio_key: null,
+          audio_key: (w as any).audio_key || null,
           audio_url: null,
-          image_key: w.image_url ?? null,
-          image_url: w.image_url ?? null,
+          image_key: w.image_url || null,
+          image_url: w.image_url || null,
         },
       });
     }

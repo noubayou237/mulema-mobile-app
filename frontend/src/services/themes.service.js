@@ -33,18 +33,12 @@ export const themesService = {
    * @returns Lesson[]
    */
   getLessons: async (themeId) => {
-    const { data } = await api.get(`/levels/${themeId}/words`);
-    // Map words to lesson format expected by [themeId]/index.jsx
-    return data.map((w, idx) => ({
-      id: w.id,
-      order: w.order,
-      title: w.word_fr,
-      subtitle: w.word_local,
-      hint: w.hint,
-      audioUrl: w.audio_url,
-      imageUrl: w.image_url,
-      userProgress: w.userProgress || [],
-      hasSubWords: false, // In the new system, each word is a self-contained lesson
+    const { data: lessons } = await api.get(`/levels/${themeId}/words`);
+    
+    // The backend now returns virtual lessons (categories) directly.
+    return lessons.map((lesson) => ({
+      ...lesson,
+      subtitle: `${lesson.words?.length || 0} mots`,
     }));
   },
 

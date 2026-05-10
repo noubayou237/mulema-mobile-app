@@ -119,10 +119,9 @@ const LessonNode = ({ lesson, index, onPress, lt, isLocked }) => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim  = useRef(new Animated.Value(0)).current;
 
-  const prog      = lesson.userProgress?.[0];
-  const completed = prog?.isCompleted ?? false;
-  const stars     = prog?.stars ?? 0;
-  const isCurrent = !completed && !isLocked && (prog?.isUnlocked || index < 2);
+  const completed = lesson.isCompleted ?? false;
+  const stars     = lesson.stars ?? 0;
+  const isCurrent = !completed && !isLocked && (lesson.isUnlocked || index === 0);
 
   // Zigzag positions
   const POSITIONS = [SW * 0.5, SW * 0.65, SW * 0.75, SW * 0.65, SW * 0.5, SW * 0.35, SW * 0.25, SW * 0.35];
@@ -280,14 +279,15 @@ const ExerciseNode = ({ onPress, lt, isLocked }) => {
    ═══════════════════════════════════════════════════════════════ */
 export default function ThemeDetailScreen() {
   const router      = useRouter();
-  const { themeId } = useLocalSearchParams();
+  const { themeId, category, title: titleParam } = useLocalSearchParams();
   const { t }       = useTranslation();
 
-  const { fetchLessons, getThemeById, lessons, lessonsLoading, clearTheme, isLessonLocked, getExerciseAccess } = useThemeStore();
+  const { fetchLessons, getThemeById, lessons, lessonsLoading, clearTheme, isLessonLocked, getExerciseAccess, error } = useThemeStore();
   const { data: dash } = useDashboardStore();
   const { activeLanguage } = useLanguageStore();
 
   const lt = getLangTheme(activeLanguage?.name ?? "");
+  const isBassa = (activeLanguage?.name ?? "").toLowerCase().includes("bassa");
 
   // Refetch every time this screen gains focus so that newly-unlocked lessons
   // appear after returning from an exercise without needing a full remount.
@@ -297,13 +297,15 @@ export default function ThemeDetailScreen() {
     }, [themeId])
   );
 
+  const displayLessons = lessons;
+
   const theme     = getThemeById(themeId);
-  const themeName = theme?.name_fr ?? theme?.name ?? t("common.theme");
+  const themeName = theme?.name_fr ?? theme?.name ?? titleParam ?? category ?? t("common.theme");
   const themeCode = (theme?.code ?? "").toLowerCase();
   const emoji     = getEmoji(themeCode);
 
-  const completed = lessons.filter((l) => l.userProgress?.[0]?.isCompleted).length;
-  const totalL    = lessons.length || 0;
+  const completed = displayLessons.filter((l) => l.isCompleted).length;
+  const totalL    = displayLessons.length || 0;
   const pct       = totalL > 0 ? Math.round((completed / totalL) * 100) : 0;
 
   return (
@@ -393,16 +395,33 @@ export default function ThemeDetailScreen() {
         </LinearGradient>
 
         {/* ── Chemin de leçons ── */}
-        {lessonsLoading && lessons.length === 0 ? (
+        {lessonsLoading && displayLessons.length === 0 ? (
           <ActivityIndicator size="large" color={lt.accent} style={{ marginVertical: 60 }} />
-        ) : lessons.length === 0 ? (
+        ) : displayLessons.length === 0 ? (
           <View style={s.empty}>
-            <Text style={{ fontSize: 48 }}>📭</Text>
-            <Text style={[s.emptyTxt, { color: lt.accent + "80" }]}>{t("lessons.noLessons")}</Text>
+            {error ? (
+              <>
+                <Ionicons name="cloud-offline-outline" size={48} color={lt.accent} style={{ marginBottom: 16 }} />
+                <Text style={[s.emptyTxt, { color: "#FFF", marginBottom: 24, paddingHorizontal: 40 }]}>
+                  {error}
+                </Text>
+                <TouchableOpacity 
+                  onPress={() => fetchLessons(themeId)}
+                  style={{ backgroundColor: lt.accent, paddingVertical: 12, paddingHorizontal: 32, borderRadius: 12 }}
+                >
+                  <Text style={{ color: "white", fontWeight: "700" }}>{t("common.retry") || "Retry"}</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <Text style={{ fontSize: 48 }}>📭</Text>
+                <Text style={[s.emptyTxt, { color: lt.accent + "80" }]}>{t("lessons.noLessons")}</Text>
+              </>
+            )}
           </View>
         ) : (
           <View style={s.path}>
-            {lessons.map((lesson, idx) => (
+            {displayLessons.map((lesson, idx) => (
               <LessonNode
                 key={lesson.id}
                 lesson={lesson}
@@ -420,22 +439,14 @@ export default function ThemeDetailScreen() {
               lt={lt}
               isLocked={!getExerciseAccess(themeId).e1}
               onPress={() => {
-                const access = getExerciseAccess(themeId);
-                if (!access.e1) return;
-
-                // Find the last lesson that is accessible: indices 0-1 are
-                // auto-unlocked; indices 2+ need an explicit isUnlocked from DB.
-                // This is the "frontier" — the lesson whose exercise should fire
-                // next to advance the curriculum by one step.
-                let lastAccessibleIdx = Math.min(1, lessons.length - 1);
-                for (let i = 2; i < lessons.length; i++) {
-                  if (lessons[i]?.userProgress?.[0]?.isUnlocked) lastAccessibleIdx = i;
-                  else break;
-                }
-                const lessonIdx = lastAccessibleIdx;
-                const wordCount = lessonIdx + 1;
-
-                router.push(`/(tabs)/lessons/${themeId}/exercise/session?lessonIdx=${lessonIdx}&wordCount=${wordCount}`);
+                if (!getExerciseAccess(themeId).e1) return;
+                // Always run the Final Challenge: all words, last lesson index.
+                // No wordCount param → session uses the full lessons list.
+                // lessonIdx = last index → results.jsx identifies this as the
+                // final challenge and triggers video unlock on success.
+                const params = new URLSearchParams({ lessonIdx: String(displayLessons.length - 1) });
+                if (category) params.set("category", category);
+                router.push(`/(tabs)/lessons/${themeId}/exercise/session?${params.toString()}`);
               }}
             />
           </View>

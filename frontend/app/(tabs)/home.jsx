@@ -34,6 +34,8 @@ import { useLanguageStore } from "../../src/stores/useLanguageStore";
 import { useThemeStore } from "../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../src/stores/useDashboardStore";
 import { DrawerContent } from "../../src/components/layout/DrawerContent";
+import { getDualaVirtualData } from "../data/dualaLessonsData";
+import { getGhomalaVirtualData } from "../data/ghomalaLessonsData";
 
 import { useTranslation } from "react-i18next";
 import { changeLanguage, getCurrentLanguage } from "../../src/i18n";
@@ -77,7 +79,7 @@ const getThemeExos = (themes) => {
       id: first.id,
       label: first.name,
       icon: getIcon(first.name),
-      route: `/(tabs)/lessons/${first.id}`,
+      route: `/(tabs)/lessons/${first.id}/exercise/session?wordCount=10`,
       done: false,
     }];
   }
@@ -87,7 +89,7 @@ const getThemeExos = (themes) => {
     id: theme.id,
     label: theme.name,
     icon: getIcon(theme.name),
-    route: `/(tabs)/lessons/${theme.id}`,
+    route: `/(tabs)/lessons/${theme.id}/exercise/session?wordCount=10`,
     done: theme.lessonsCompleted >= theme.lessonsCount,
   }));
 };
@@ -330,7 +332,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { activeLanguage, languages, fetchLanguages, loadActiveLanguage } = useLanguageStore();
-  const { themes, isLoading: tLoading, fetchThemes } = useThemeStore();
+  const { themes, lessons, isLoading: tLoading, fetchThemes, fetchLessons } = useThemeStore();
   const { data: dash, isLoading: dLoading, error: dashError, fetchDashboard } = useDashboardStore();
 
   const { t, i18n } = useTranslation();
@@ -367,14 +369,19 @@ export default function HomeScreen() {
         }
         const total = Date.now() - start;
         if (__DEV__ || total > 1000) {
-          console.log(`[PERF] Home initialization took ${total}ms`);
         }
       } catch (err) {
         // Error handling handled by stores
       }
     };
     init();
-  }, []);
+  }, [activeLanguage]);
+
+  useEffect(() => {
+    if (themes.length > 0 && !tLoading) {
+      fetchLessons(themes[0].id);
+    }
+  }, [themes, tLoading]);
 
   /* ── Drawer ── */
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -435,17 +442,49 @@ export default function HomeScreen() {
     }, 300);
   };
 
-  /* ── Bottom Sheet ── */
-  const openSheet = (theme) => {
-    router.push(`/(tabs)/lessons/${theme.id}`);
-  };
-
   /* ── Continuer ── */
   const handleContinue = () => {
-    if (dash?.continueTheme) router.push(`/(tabs)/lessons/${dash.continueTheme.id}`);
-    else if (themes?.length > 0) router.push(`/(tabs)/lessons/${themes[0].id}`);
-    else router.push("/(tabs)/lessons");
+    router.push("/(tabs)/lessons");
   };
+
+  /* ── Language detection ── */
+  const isBassa = (activeLanguage?.name ?? "").toLowerCase().includes("bassa");
+  const isDuala = (activeLanguage?.name ?? "").toLowerCase().includes("duala") ||
+                  (activeLanguage?.name ?? "").toLowerCase().includes("douala");
+  const isGhomala = (activeLanguage?.name ?? "").toLowerCase().includes("ghomala") ||
+                    (activeLanguage?.name ?? "").toLowerCase().includes("ghomal");
+
+  /* ── Lesson display items for the home page "Thèmes à explorer" section ── */
+  const lessonDisplayItems = (() => {
+    if (lessons.length > 0) {
+      const firstThemeId = themes[0]?.id;
+      return lessons.map((l) => ({
+        id: l.id,
+        name: l.title,
+        themeId: firstThemeId,
+        lessonsCount: l.wordIdsByGroup?.length || 0,
+        lessonsCompleted: l.isCompleted ? (l.wordIdsByGroup?.length || 0) : 0,
+        locked: !l.isUnlocked, // Use the service-calculated status
+      }));
+    }
+    return [];
+  })();
+
+  /* ── Navigate to a lesson card → adventure tree ── */
+  const handleLessonCardPress = (lesson) => {
+    // Navigate straight to the adventure tree
+    router.push({
+      pathname: `/(tabs)/lessons/${lesson.themeId}`,
+      params: { 
+        title: themes[0]?.name || "Leçons", 
+        scrollToId: lesson.id 
+      },
+    });
+  };
+
+  /* ── Exercise themes only (excludes lesson-type themes) ── */
+  const LESSON_CODES = ["jours", "verbes", "pronoms", "chiffres", "couleurs"];
+  const exerciseThemes = themes.filter((t) => !LESSON_CODES.includes((t.code ?? "").toLowerCase()));
 
   /* ── Animations d'entrée en cascade ── */
   const anims = useRef([0, 1, 2, 3, 4].map(() => new Animated.Value(0))).current;
@@ -538,7 +577,7 @@ export default function HomeScreen() {
                 color={RED}
                 style={{ marginVertical: Space["3xl"] }}
               />
-            ) : themes.length === 0 ? (
+            ) : lessonDisplayItems.length === 0 ? (
               <View style={s.empty}>
                 <Ionicons name="book-outline" size={38} color={Colors.textTertiary} />
                 <Text style={[Typo.bodyMd, { textAlign: "center", marginTop: Space.md }]}>
@@ -547,8 +586,8 @@ export default function HomeScreen() {
               </View>
             ) : (
               <View style={s.grid}>
-                {themes.slice(0, 4).map((theme) => (
-                  <ThemeCard key={theme.id} theme={theme} onPress={openSheet} />
+                {lessonDisplayItems.slice(0, 4).map((lesson) => (
+                  <ThemeCard key={lesson.id} theme={lesson} onPress={handleLessonCardPress} />
                 ))}
               </View>
             )}
@@ -560,13 +599,13 @@ export default function HomeScreen() {
               <Text style={[Typo.headlineMd, { color: Colors.onSurface }]}>{t("home.exercises")}</Text>
               <View style={s.exoBadgeCount}>
                 <Text style={[Typo.labelMd, { color: RED }]}>
-                  {getThemeExos(themes).filter((e) => e.done).length}/{getThemeExos(themes).length}
+                  {getThemeExos(exerciseThemes).filter((e) => e.done).length}/{getThemeExos(exerciseThemes).length}
                 </Text>
               </View>
             </View>
 
             <View style={s.exoList}>
-              {getThemeExos(themes).map((exo) => (
+              {getThemeExos(exerciseThemes).map((exo) => (
                 <ExerciseRow
                   key={exo.id}
                   exo={exo}

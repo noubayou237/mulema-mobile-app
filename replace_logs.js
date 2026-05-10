@@ -11,18 +11,18 @@ function walkDir(dir, callback) {
   });
 }
 
-walkDir(srcDir, function(filePath) {
+walkDir(srcDir, function (filePath) {
   if (filePath.endsWith('.js') || filePath.endsWith('.ts') || filePath.endsWith('.jsx') || filePath.endsWith('.tsx')) {
     if (filePath.includes('logger.js')) return;
 
     let content = fs.readFileSync(filePath, 'utf8');
     let hasChanges = false;
-    
+
     if (content.includes('console.error(') || content.includes('console.warn(') || content.includes('console.log(')) {
       content = content.replace(/console\.log/g, 'Logger.info');
       content = content.replace(/console\.error/g, 'Logger.error');
       content = content.replace(/console\.warn/g, 'Logger.warn');
-      
+
       if (!content.includes('import Logger from ')) {
         const importLevel = filePath.split(srcDir)[1].split('/').length - 2;
         const prefix = importLevel === 0 ? './' : '../'.repeat(importLevel);
@@ -30,10 +30,9 @@ walkDir(srcDir, function(filePath) {
       }
       hasChanges = true;
     }
-    
+
     if (hasChanges) {
       fs.writeFileSync(filePath, content, 'utf8');
-      console.log(`Updated ${filePath}`);
     }
   }
 });

@@ -1,464 +1,312 @@
-/**
- * PatrimonialKeyboard
- *
- * Full custom keyboard for Cameroonian patrimonial languages (Bassa, Duala, Ghomala).
- * Replaces the system keyboard — set showSoftInputOnFocus={false} on the TextInput.
- *
- * Two layers:
- *  • "patrimonial" (default) — special consonants + accented vowels in a grid
- *  • "qwerty"                — standard Latin QWERTY + numerals
- *
- * Props:
- *  value        {string}   current text value
- *  onChangeText {Function} called with new string on every keypress
- *  onSubmit     {Function} called when the submit (↵) key is pressed
- *  langName     {string}   active patrimonial language name
- *  disabled     {boolean}  prevents input when true (e.g. during feedback)
- */
-
-import { useState } from "react";
-import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions, Platform,
-} from "react-native";
+import { useState, useCallback } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-const { width: SW } = Dimensions.get("window");
+const BRAND   = "#B71C1C";
+const BG      = "#1A1A1A";
+const KEY_BG  = "#2C2C2E";
+const UTIL_BG = "#3D3D3F";
 
-// ── Character sets per language ───────────────────────────────────────────────
-const LANG_CHARS = {
-  bassa: {
-    consonants: [
-      "ŋ", "Ŋ", "ɓ", "Ɓ", "ɛ", "Ɛ", "ɔ", "Ɔ", "ɲ", "Ɲ", "ǹ", "Ǹ",
-    ],
-    vowels: [
-      { base: "a", variants: ["à", "á", "â", "ǎ"] },
-      { base: "e", variants: ["è", "é", "ê", "ě"] },
-      { base: "i", variants: ["ì", "í", "î", "ǐ"] },
-      { base: "o", variants: ["ò", "ó", "ô", "ǒ"] },
-      { base: "u", variants: ["ù", "ú", "û", "ǔ"] },
-    ],
-    other: ["ʼ", "-", ".", ",", "!"],
-  },
-  duala: {
-    consonants: [
-      "ɓ", "Ɓ", "ɛ", "Ɛ", "ɔ", "Ɔ", "ŋ", "Ŋ", "ɲ", "Ɲ",
-    ],
-    vowels: [
-      { base: "a", variants: ["á", "â", "ā"] },
-      { base: "e", variants: ["é", "ê", "ē"] },
-      { base: "i", variants: ["í", "î", "ī"] },
-      { base: "o", variants: ["ó", "ô", "ō"] },
-      { base: "u", variants: ["ú", "û", "ū"] },
-    ],
-    other: ["ʼ", "ʻ", "-", ".", ","],
-  },
-  ghomala: {
-    consonants: [
-      "ŋ", "Ŋ", "ɛ", "Ɛ", "ɔ", "Ɔ", "ə", "Ə",
-    ],
-    vowels: [
-      { base: "a", variants: ["á", "â", "ǎ"] },
-      { base: "e", variants: ["é", "ê", "ě"] },
-      { base: "i", variants: ["í", "î", "ǐ"] },
-      { base: "o", variants: ["ó", "ô", "ǒ"] },
-      { base: "u", variants: ["ú", "û", "ǔ"] },
-    ],
-    other: ["ʼ", "ʻ", "-", ".", ","],
-  },
+// Long-press variants (Latin and special layer)
+const VARIANTS = {
+  a: ["á", "à", "â", "ǎ", "ā"],
+  e: ["é", "è", "ê", "ě", "ē"],
+  i: ["í", "ì", "î", "ǐ", "ī", "ɨ"],
+  o: ["ó", "ò", "ô", "ǒ", "ō"],
+  u: ["ú", "ù", "û", "ǔ", "ū", "ʉ"],
+  n: ["ŋ", "ɲ", "ǹ"],
+  b: ["ɓ"],
+  d: ["ɗ"],
+  y: ["ƴ"],
+  w: ["ɥ"],
+  ɛ: ["ɛ́", "ɛ̀", "ɛ̂", "ɛ̌", "ɛ̄"],
+  ɔ: ["ɔ́", "ɔ̀", "ɔ̂", "ɔ̌", "ɔ̄"],
+  ə: ["ə́", "ə̀", "ə̂", "ə̌", "ə̄"],
+  ʉ: ["ʉ́", "ʉ̀", "ʉ̂", "ʉ̌", "ʉ̄"],
+  ɨ: ["ɨ́", "ɨ̀", "ɨ̂", "ɨ̌", "ɨ̄"],
 };
 
-const QWERTY_ROWS = [
+const QWERTY = [
   ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
   ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
   ["z", "x", "c", "v", "b", "n", "m"],
 ];
-const NUMS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
 
-function resolveLangKey(langName = "") {
-  const n = langName.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+// Special layer: language-specific GACL chars in a 3-row grid
+const SPECIAL = {
+  bassa: [
+    ["ŋ", "ɓ", "ɲ", "ǹ", "ʼ", "ɛ", "ɔ", "ɛ́", "ɔ́", "–"],
+    ["ɛ̀", "ɔ̀", "ɛ̂", "ɔ̂", "á", "à", "â", "é", "è"],
+    ["ê", "ě", "í", "ì", "î", "ó", "ò", "ô"],
+  ],
+  duala: [
+    ["ɓ", "ŋ", "ɲ", "ʼ", "ɛ", "ɔ", "ɛ́", "ɛ̂", "ɛ̄", "ɔ́"],
+    ["ɔ̂", "ɔ̄", "á", "â", "ā", "é", "ê", "ē", "í"],
+    ["î", "ī", "ó", "ô", "ō", "ú", "û", "ū"],
+  ],
+  ghomala: [
+    ["ŋ", "ʼ", "ɥ", "ɛ", "ɔ", "ə", "ʉ", "ɛ́", "ɛ̀", "ɔ́"],
+    ["ɔ̀", "ə́", "ə̀", "ʉ́", "ʉ̀", "á", "à", "â", "ǎ"],
+    ["ā", "é", "è", "ê", "ě", "ē", "ó", "ò"],
+  ],
+  universal: [
+    ["ɓ", "ɗ", "ŋ", "ɲ", "ƴ", "ʼ", "ɥ", "ǹ", "ɨ", "ʉ"],
+    ["ɛ", "ɔ", "ə", "á", "à", "â", "é", "è", "ê"],
+    ["ó", "ò", "ô", "ú", "ù", "û", "í", "ì"],
+  ],
+};
+
+function resolveLang(name = "") {
+  const n = name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
   if (n.includes("bassa") || n.includes("basaa")) return "bassa";
   if (n.includes("duala") || n.includes("douala")) return "duala";
   if (n.includes("ghomala") || n.includes("bamilek")) return "ghomala";
-  return "bassa";
+  return "universal";
 }
 
-// ── Individual key button ─────────────────────────────────────────────────────
-function Key({ char, label, onPress, style, textStyle, disabled }) {
-  return (
-    <TouchableOpacity
-      onPress={disabled ? undefined : onPress}
-      activeOpacity={disabled ? 1 : 0.55}
-      style={[kb.key, style, disabled && kb.keyDisabled]}
-    >
-      <Text style={[kb.keyTxt, textStyle]} numberOfLines={1} adjustsFontSizeToFit>
-        {label ?? char}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
-// ── Main component ────────────────────────────────────────────────────────────
 export default function PatrimonialKeyboard({
   value = "",
   onChangeText,
   onSubmit,
-  langName = "Bassa",
+  langName = "",
   disabled = false,
 }) {
-  const [layer, setLayer] = useState("patrimonial"); // "patrimonial" | "qwerty"
-  const [caps, setCaps] = useState(false);
+  const [layer, setLayer]   = useState("latin");
+  const [caps, setCaps]     = useState(false);
+  const [popup, setPopup]   = useState(null); // string[] | null
 
-  const langKey = resolveLangKey(langName);
-  const { consonants, vowels, other } = LANG_CHARS[langKey];
+  const lang = resolveLang(langName);
+  const isSpecial = layer === "special";
 
-  const insert = (char) => {
+  const put = useCallback((char) => {
     if (disabled) return;
-    onChangeText(value + char);
-  };
-  const backspace = () => {
+    setPopup(null);
+    const ch = (!isSpecial && caps) ? char.toUpperCase() : char;
+    onChangeText(value + ch);
+  }, [disabled, value, caps, isSpecial, onChangeText]);
+
+  const del = useCallback(() => {
     if (disabled) return;
-    onChangeText(value.slice(0, -1));
-  };
-  const space = () => insert(" ");
+    setPopup(null);
+    onChangeText([...value].slice(0, -1).join(""));
+  }, [disabled, value, onChangeText]);
 
-  // ── QWERTY layer ──────────────────────────────────────────────
-  if (layer === "qwerty") {
-    return (
-      <View style={kb.wrap}>
-        {/* Header */}
-        <View style={kb.header}>
-          <TouchableOpacity onPress={() => setLayer("patrimonial")} style={kb.headerBtn}>
-            <Text style={kb.headerBtnTxt}>🌐 {langName}</Text>
-          </TouchableOpacity>
-          <Text style={kb.headerTitle}>LATIN</Text>
-          <TouchableOpacity onPress={backspace} style={kb.headerBtn}>
-            <Ionicons name="backspace-outline" size={18} color="#374151" />
-          </TouchableOpacity>
-        </View>
+  const openVariants = useCallback((char) => {
+    const v = VARIANTS[char.toLowerCase()] ?? VARIANTS[char];
+    if (v?.length) setPopup(v);
+  }, []);
 
-        {/* Numbers */}
-        <View style={kb.row}>
-          {NUMS.map((k) => (
-            <Key key={k} char={k} onPress={() => insert(k)} style={kb.numKey} disabled={disabled} />
-          ))}
-        </View>
+  const rows = isSpecial ? (SPECIAL[lang] ?? SPECIAL.universal) : QWERTY;
 
-        {/* QWERTY rows */}
-        {QWERTY_ROWS.map((row, ri) => (
-          <View key={ri} style={kb.row}>
-            {ri === 2 && (
-              <TouchableOpacity
-                onPress={() => setCaps((c) => !c)}
-                style={[kb.key, kb.specialKey, caps && kb.capsActive]}
-                activeOpacity={0.65}
-              >
-                <Ionicons
-                  name={caps ? "arrow-up-circle" : "arrow-up-outline"}
-                  size={18}
-                  color={caps ? "#FFFFFF" : "#374151"}
-                />
-              </TouchableOpacity>
-            )}
-            {row.map((k) => {
-              const ch = caps ? k.toUpperCase() : k;
-              return (
-                <Key key={k} char={ch} onPress={() => insert(ch)} style={kb.letterKey} disabled={disabled} />
-              );
-            })}
-            {ri === 2 && (
-              <TouchableOpacity onPress={backspace} style={[kb.key, kb.specialKey]} activeOpacity={0.65}>
-                <Ionicons name="backspace-outline" size={18} color="#374151" />
-              </TouchableOpacity>
-            )}
-          </View>
-        ))}
-
-        {/* Bottom row */}
-        <View style={kb.row}>
-          <Key char="." onPress={() => insert(".")} style={kb.punctKey} disabled={disabled} />
-          <Key char=" " label="ESPACE" onPress={space} style={kb.spaceKey} textStyle={kb.spaceTxt} disabled={disabled} />
-          <TouchableOpacity
-            onPress={disabled ? undefined : onSubmit}
-            style={[kb.key, kb.submitKey, disabled && kb.keyDisabled]}
-            activeOpacity={0.75}
-          >
-            <Ionicons name="arrow-forward" size={20} color="#FFF" />
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
-  // ── Patrimonial layer ─────────────────────────────────────────
   return (
-    <View style={kb.wrap}>
-      {/* Header */}
-      <View style={kb.header}>
-        <TouchableOpacity onPress={() => setLayer("qwerty")} style={kb.headerBtn}>
-          <Text style={kb.headerBtnTxt}>ABC Latin</Text>
-        </TouchableOpacity>
-        <Text style={kb.headerTitle}>{langName.toUpperCase()}</Text>
-        <TouchableOpacity onPress={backspace} style={kb.headerBtn}>
-          <Ionicons name="backspace-outline" size={18} color="#374151" />
-        </TouchableOpacity>
-      </View>
+    <View style={s.wrap}>
 
-      {/* Special consonants — horizontal scroll */}
-      <View style={kb.sectionWrap}>
-        <Text style={kb.sectionLabel}>Consonnes</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={kb.consonantRow}
-          keyboardShouldPersistTaps="always"
-        >
-          {consonants.map((ch) => (
-            <Key
-              key={ch}
-              char={ch}
-              onPress={() => insert(ch)}
-              style={kb.consonantKey}
-              textStyle={kb.consonantTxt}
-              disabled={disabled}
-            />
+      {/* Variant popup — appears on long-press */}
+      {popup && (
+        <View style={s.popup}>
+          {popup.map((v) => (
+            <TouchableOpacity key={v} onPress={() => put(v)} activeOpacity={0.55} style={s.popKey}>
+              <Text style={s.popTxt}>{v}</Text>
+            </TouchableOpacity>
           ))}
-        </ScrollView>
-      </View>
+          <TouchableOpacity onPress={() => setPopup(null)} style={s.popClose}>
+            <Ionicons name="close" size={14} color="#888" />
+          </TouchableOpacity>
+        </View>
+      )}
 
-      <View style={kb.divider} />
+      {/* Rows 0–2 */}
+      {rows.map((row, ri) => (
+        <View key={ri} style={[s.row, ri === 1 && s.rowInset]}>
+          {/* Row 2 left action */}
+          {ri === 2 && (
+            isSpecial
+              ? <TouchableOpacity onPress={() => { setLayer("latin"); setPopup(null); }} style={[s.key, s.util]}>
+                  <Text style={s.utilTxt}>ABC</Text>
+                </TouchableOpacity>
+              : <TouchableOpacity onPress={() => setCaps(c => !c)} style={[s.key, s.util, caps && s.capActive]}>
+                  <Ionicons name="arrow-up" size={17} color={caps ? BRAND : "#CCC"} />
+                </TouchableOpacity>
+          )}
 
-      {/* Vowel grid — base letter + 4 tonal variants in each row */}
-      <View style={kb.sectionWrap}>
-        <Text style={kb.sectionLabel}>Voyelles accentuées</Text>
-        {vowels.map(({ base, variants }) => (
-          <View key={base} style={kb.vowelRow}>
-            <View style={kb.vowelBaseWrap}>
-              <Text style={kb.vowelBase}>{base}</Text>
-            </View>
-            {variants.map((v) => (
-              <Key
-                key={v}
-                char={v}
-                onPress={() => insert(v)}
-                style={kb.vowelKey}
-                textStyle={kb.vowelTxt}
-                disabled={disabled}
-              />
-            ))}
-            <View style={kb.vowelSpacer} />
-          </View>
-        ))}
-      </View>
+          {/* Letter keys */}
+          {row.map((k) => {
+            const display = (!isSpecial && caps) ? k.toUpperCase() : k;
+            const hasV = !!(VARIANTS[k.toLowerCase()] ?? VARIANTS[k]);
+            return (
+              <TouchableOpacity
+                key={k}
+                onPress={() => put(k)}
+                onLongPress={hasV ? () => openVariants(k) : undefined}
+                delayLongPress={280}
+                activeOpacity={0.55}
+                style={[s.key, s.letter]}
+              >
+                <Text style={s.kTxt} numberOfLines={1} adjustsFontSizeToFit>
+                  {display}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
 
-      <View style={kb.divider} />
+          {/* Row 2 right action */}
+          {ri === 2 && (
+            <TouchableOpacity onPress={del} style={[s.key, s.util]}>
+              <Ionicons name="backspace-outline" size={19} color="#CCC" />
+            </TouchableOpacity>
+          )}
+        </View>
+      ))}
 
-      {/* Other chars + controls */}
-      <View style={kb.row}>
-        {other.map((ch) => (
-          <Key
-            key={ch}
-            char={ch}
-            onPress={() => insert(ch)}
-            style={kb.otherKey}
-            disabled={disabled}
-          />
-        ))}
-        <View style={{ flex: 1 }} />
-        <Key char=" " label="ESPACE" onPress={space} style={kb.spaceKey} textStyle={kb.spaceTxt} disabled={disabled} />
+      {/* Bottom row */}
+      <View style={s.row}>
+        {/* Globe / ABC toggle */}
+        <TouchableOpacity
+          onPress={() => { setLayer(l => l === "latin" ? "special" : "latin"); setPopup(null); }}
+          style={[s.key, s.util]}
+        >
+          {isSpecial
+            ? <Text style={s.utilTxt}>ABC</Text>
+            : <Text style={s.globeEmoji}>🌐</Text>
+          }
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => put(",")} activeOpacity={0.55} style={[s.key, s.sm]}>
+          <Text style={s.kTxt}>,</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => put(" ")} activeOpacity={0.55} style={[s.key, s.space]}>
+          <Text style={s.spaceTxt}>space</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => put(".")} activeOpacity={0.55} style={[s.key, s.sm]}>
+          <Text style={s.kTxt}>.</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity
           onPress={disabled ? undefined : onSubmit}
-          style={[kb.key, kb.submitKey, disabled && kb.keyDisabled]}
-          activeOpacity={0.75}
+          activeOpacity={0.55}
+          style={[s.key, s.submit]}
         >
-          <Ionicons name="arrow-forward" size={20} color="#FFF" />
+          <Ionicons name="return-down-back" size={20} color="#FFF" />
         </TouchableOpacity>
       </View>
+
     </View>
   );
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
-const KEY_H  = 40;
-const RADIUS = 6;
-const KEY_SHADOW = Platform.select({
-  ios: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.18,
-    shadowRadius: 1.5,
-  },
+const shadow = Platform.select({
+  ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.38, shadowRadius: 0 },
   android: { elevation: 2 },
 });
 
-const kb = StyleSheet.create({
+const s = StyleSheet.create({
   wrap: {
-    backgroundColor: "#CDD4DE",
-    paddingHorizontal: 6,
-    paddingTop: 4,
-    paddingBottom: Platform.OS === "ios" ? 18 : 8,
-    borderTopWidth: 0.5,
-    borderTopColor: "#A9B4C2",
+    backgroundColor: BG,
+    paddingTop: 8,
+    paddingHorizontal: 3,
+    paddingBottom: Platform.OS === "ios" ? 34 : 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#3A3A3A",
   },
 
-  // Header
-  header: {
+  // Variant popup strip
+  popup: {
     flexDirection: "row",
+    flexWrap: "wrap",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 6,
-    paddingHorizontal: 2,
-  },
-  headerBtn: {
-    paddingHorizontal: 10,
+    backgroundColor: "#313131",
+    borderRadius: 10,
+    marginHorizontal: 4,
+    marginBottom: 8,
     paddingVertical: 5,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    ...KEY_SHADOW,
+    paddingHorizontal: 6,
+    gap: 4,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "#505050",
   },
-  headerBtnTxt: { fontSize: 12, fontWeight: "600", color: "#374151" },
-  headerTitle: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#6B7280",
-    letterSpacing: 1,
+  popKey: {
+    paddingHorizontal: 9,
+    paddingVertical: 7,
+    borderRadius: 5,
+    backgroundColor: "#484848",
+    minWidth: 36,
+    alignItems: "center",
   },
-
-  // Section labels
-  sectionWrap: { marginBottom: 4 },
-  sectionLabel: {
-    fontSize: 10,
-    fontWeight: "600",
-    color: "#6B7280",
-    letterSpacing: 0.8,
-    marginBottom: 4,
-    paddingHorizontal: 2,
+  popTxt: {
+    color: "#FFF",
+    fontSize: 20,
+    fontWeight: "400",
   },
-
-  divider: {
-    height: 1,
-    backgroundColor: "#B8C1CC",
-    marginVertical: 5,
+  popClose: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    marginLeft: 2,
   },
 
   // Rows
   row: {
     flexDirection: "row",
     justifyContent: "center",
-    alignItems: "center",
-    gap: 4,
-    marginBottom: 4,
+    gap: 6,
+    marginBottom: 10,
+    paddingHorizontal: 3,
+  },
+  rowInset: {
+    paddingHorizontal: 24,
   },
 
-  consonantRow: {
-    flexDirection: "row",
-    gap: 5,
-    paddingHorizontal: 2,
-    alignItems: "center",
-  },
-  vowelRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginBottom: 3,
-  },
-  vowelBaseWrap: {
-    width: 22,
-    alignItems: "center",
-  },
-  vowelBase: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#4B5563",
-  },
-  vowelSpacer: { flex: 1 },
-
-  // Key base style
+  // Keys
   key: {
-    height: KEY_H,
-    borderRadius: RADIUS,
-    backgroundColor: "#FFFFFF",
+    height: 43,
+    backgroundColor: KEY_BG,
+    borderRadius: 6,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 4,
-    ...KEY_SHADOW,
+    ...shadow,
   },
-  keyDisabled: { opacity: 0.45 },
-  keyTxt: {
+  letter: {
+    flex: 1,
+  },
+  kTxt: {
+    color: "#FFF",
     fontSize: 17,
+    fontWeight: "400",
+  },
+
+  // Utility keys (shift, backspace, ABC/globe)
+  util: {
+    backgroundColor: UTIL_BG,
+    width: 44,
+    flex: 0,
+  },
+  utilTxt: {
+    color: "#DDD",
+    fontSize: 13,
     fontWeight: "500",
-    color: "#111827",
-    includeFontPadding: false,
+    letterSpacing: 0.3,
+  },
+  capActive: {
+    backgroundColor: "#505050",
   },
 
-  // Specific key variants
-  consonantKey: {
-    width: 44,
-    backgroundColor: "#F0F4FF",
-    borderWidth: 1,
-    borderColor: "#C7D2FE",
+  // Bottom row special keys
+  globeEmoji: {
+    fontSize: 17,
   },
-  consonantTxt: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1E3A8A",
-  },
-
-  vowelKey: {
+  sm: {
     width: 42,
-    backgroundColor: "#F0FDF4",
-    borderWidth: 1,
-    borderColor: "#BBF7D0",
   },
-  vowelTxt: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#14532D",
-  },
-
-  otherKey: {
-    width: 42,
-    backgroundColor: "#FAFAFA",
-  },
-
-  letterKey: {
-    flex: 1,
-    maxWidth: 42,
-    minWidth: 28,
-  },
-  numKey: {
-    flex: 1,
-    maxWidth: 38,
-    minWidth: 28,
-  },
-  punctKey: {
-    width: 38,
-    backgroundColor: "#E5E7EB",
-  },
-
-  specialKey: {
-    width: 44,
-    backgroundColor: "#9CA3AF",
-  },
-  capsActive: {
-    backgroundColor: "#B71C1C",
-  },
-
-  spaceKey: {
-    flex: 1,
-    maxWidth: 160,
-    backgroundColor: "#FFFFFF",
+  space: {
+    flex: 4,
   },
   spaceTxt: {
-    fontSize: 12,
-    color: "#6B7280",
-    fontWeight: "600",
-    letterSpacing: 1,
+    color: "#888",
+    fontSize: 14,
   },
-
-  submitKey: {
-    width: 60,
-    backgroundColor: "#B71C1C",
-    borderRadius: RADIUS,
-    ...KEY_SHADOW,
+  submit: {
+    width: 86,
+    backgroundColor: BRAND,
   },
 });
