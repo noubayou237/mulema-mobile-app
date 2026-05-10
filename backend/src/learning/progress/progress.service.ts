@@ -17,8 +17,9 @@ export class ProgressService {
 
     if (words.length === 0) return;
 
-    // Identify the first category
-    const firstCategory = words[0].category;
+    // Identify the first two categories
+    const categories = Array.from(new Set(words.map(w => w.category || 'Uncategorized')));
+    const unlockedCategories = [categories[0], categories[1]].filter(Boolean);
 
     await this.prisma.$transaction(
       words.map((word) =>
@@ -26,12 +27,14 @@ export class ProgressService {
           where: {
             userId_mulemWordId: { userId, mulemWordId: word.id },
           },
-          update: {},
+          update: {
+            ...(unlockedCategories.includes(word.category || 'Uncategorized') ? { isUnlocked: true } : {})
+          },
           create: {
             userId,
             mulemWordId: word.id,
-            // Unlock first category by default
-            isUnlocked: word.category === firstCategory,
+            // Unlock first two categories by default
+            isUnlocked: unlockedCategories.includes(word.category || 'Uncategorized'),
             isCompleted: false,
             stars: 0,
           },

@@ -146,6 +146,7 @@ export const useThemeStore = create((set, get) => ({
     const reqKey = `words_${lessonId}`;
     
     // 1. Check if this is a "Virtual Lesson" (a group of MulemWords)
+    const { lessons } = get();
     const lessonData = lessons.find(l => l.id === lessonId);
     
     if (lessonData && lessonData.words) {
@@ -275,8 +276,8 @@ export const useThemeStore = create((set, get) => ({
   // ═════════════════════════════════════════════════════════════
 
   isLessonLocked: (lessonId, order) => {
-    // First lesson category (order 0) is always unlocked
-    if (order === 0) return false;
+    // First two lesson categories (order 0 and 1) are always unlocked
+    if (order === 0 || order === 1) return false;
 
     const { lessons } = get();
     const lesson = lessons.find((l) => l.id === lessonId);
