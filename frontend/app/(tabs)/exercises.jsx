@@ -247,10 +247,31 @@ export default function ExercisesScreen() {
     }
   }, [router, activeLanguage]);
 
+  const isBassa = (activeLanguage?.name ?? "").toLowerCase().includes("bassa");
+
   // Lesson-type themes (jours, verbes) belong on the lessons tab, not exercises.
   // Filter them out so only true exercise themes appear here.
   const LESSON_CODES = ["jours", "verbes", "pronoms", "chiffres", "couleurs"];
-  const exerciseThemes = themes.filter((t) => !LESSON_CODES.includes((t.code ?? "").toLowerCase()));
+  const exerciseThemes = themes.filter((t) => {
+    const code = (t.code ?? "").toLowerCase();
+    if (LESSON_CODES.includes(code)) return false;
+    
+    // Explicitly hide these backend themes from the UI for Bassa
+    if (isBassa) {
+      const nm = (t.name || "").toLowerCase();
+      if (
+        nm.includes("niveau 1") || 
+        nm.includes("vie de famille") || 
+        nm.includes("savan") || 
+        nm.includes("cuisine") ||
+        nm.includes("fondation") ||
+        nm.includes("foundation")
+      ) {
+        return false;
+      }
+    }
+    return true;
+  });
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>

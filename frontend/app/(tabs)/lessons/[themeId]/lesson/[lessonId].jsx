@@ -56,6 +56,27 @@ const THEME_ICONS = {
   vetements: "shirt",
 };
 
+/* ── Données Spéciales Bassa ───────────────────────────────────── */
+const BASSA_SPECIAL_DATA = {
+  days: [
+    { fr: "Lundi",    en: "Monday",    bassa: "ŋgwà njaŋgumba", audio: "lundi_1" },
+    { fr: "Mardi",    en: "Tuesday",   bassa: "ŋgwà ûm",        audio: "mardi_1" },
+    { fr: "Mercredi", en: "Wednesday", bassa: "ŋgwà ŋgê",       audio: "mercredi_1" },
+    { fr: "Jeudi",    en: "Thursday",  bassa: "ŋgwà mbɔk",      audio: "jeudi_1" },
+    { fr: "Vendredi", en: "Friday",    bassa: "ŋgwà kɔɔ",       audio: "vendredi_1" },
+    { fr: "Samedi",   en: "Saturday",  bassa: "ŋgwà jôn",       audio: "samedi_1" },
+    { fr: "Dimanche", en: "Sunday",    bassa: "ŋgwà nɔŷ",       audio: "dimanche_1" },
+  ],
+  avoir: [
+    { fr: "J'ai",             en: "I have",            bassa: "mè gwě",  audio: "j_aiwav" },
+    { fr: "Tu as",            en: "You have",          bassa: "Ù gwě",   audio: "tu_as_1" },
+    { fr: "Il ou elle a",     en: "He / She has",      bassa: "A gwě",   audio: "il_ou_elle_a" },
+    { fr: "Nous avons",       en: "We have",           bassa: "Di gwě",  audio: "nous_avons_1" },
+    { fr: "Vous avez",        en: "You have (plural)", bassa: "Ni gwě",  audio: "vous_avez_1" },
+    { fr: "Ils ou elles ont", en: "They have",         bassa: "Ba gwě",  audio: "ils_ou_elles_ont" },
+  ],
+};
+
 
 
 /* ══════════════════════════════════════════════════════════════
@@ -246,94 +267,104 @@ export default function LessonScreen() {
         <Animated.View
           style={{ opacity: cardAnim, transform: [{ translateY: slideAnim }] }}
         >
-          {/* ── Category context pill (Bassa only) ── */}
-          {enrichment?.category ? (
-            <View style={s.categoryPill}>
-              <Ionicons name="book-outline" size={13} color={Colors.primary} style={{ marginRight: 5 }} />
-              <Text style={s.categoryText}>{enrichment.category}</Text>
-            </View>
-          ) : null}
+          {isBassa && (lesson.title?.toLowerCase().includes("jour") || lesson.title?.toLowerCase().includes("avoir")) ? (
+            <BassaSpecialView 
+              lessonTitle={lesson.title} 
+              uiLang={uiLang} 
+              t={t}
+            />
+          ) : (
+            <>
+              {/* ── Category context pill (Bassa only) ── */}
+              {enrichment?.category ? (
+                <View style={s.categoryPill}>
+                  <Ionicons name="book-outline" size={13} color={Colors.primary} style={{ marginRight: 5 }} />
+                  <Text style={s.categoryText}>{enrichment.category}</Text>
+                </View>
+              ) : null}
 
-          {/* ── Label leçon ── */}
-          <Text style={s.lessonLabel}>
-            {t("lessons.lessonNum", { num: lessonIdx + 1 })} / {total}
-          </Text>
-
-          {/* ── Titre de question ── */}
-          <Text style={s.questionTitle}>
-            {t("lessons.whatDoesThisMean")}
-          </Text>
-
-          {/* ── Carte mot source (FR ou EN selon langue UI) ── */}
-          <View style={[s.wordCard, Shadow.md]}>
-            <View style={s.wordCardIcon}>
-              <Ionicons name={themeIcon} size={28} color={Colors.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.wordFrLabel}>
-                {uiLang?.startsWith("en") ? "ENGLISH" : t("lessons.frenchLabel")}
+              {/* ── Label leçon ── */}
+              <Text style={s.lessonLabel}>
+                {t("lessons.lessonNum", { num: lessonIdx + 1 })} / {total}
               </Text>
-              <Text style={s.wordFr}>{getWordDisplay(lesson.title, uiLang)}</Text>
-            </View>
-            <TouchableOpacity
-              style={s.audioBtn}
-              activeOpacity={0.55}
-              delayPressIn={0}
-              onPress={() => {
-                try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
-                playAudio(effectiveAudioKey);
-              }}
-            >
-              <Ionicons name="volume-high" size={22} color={Colors.primary} />
-            </TouchableOpacity>
-          </View>
 
-          {/* ── Traduction Bassa / langue cible ── */}
-          <View style={[s.translationCard, Shadow.sm]}>
-            <View style={s.transHeader}>
-              <View style={{ flex: 1 }}>
-                <Text style={s.transLabel}>
-                  {t("lessons.translationIn", { lang: langName.toUpperCase() })}
-                </Text>
-                <Text style={s.transWord}>{translatedDisplay}</Text>
+              {/* ── Titre de question ── */}
+              <Text style={s.questionTitle}>
+                {t("lessons.whatDoesThisMean")}
+              </Text>
+
+              {/* ── Carte mot source (FR ou EN selon langue UI) ── */}
+              <View style={[s.wordCard, Shadow.md]}>
+                <View style={s.wordCardIcon}>
+                  <Ionicons name={themeIcon} size={28} color={Colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.wordFrLabel}>
+                    {uiLang?.startsWith("en") ? "ENGLISH" : t("lessons.frenchLabel")}
+                  </Text>
+                  <Text style={s.wordFr}>{getWordDisplay(lesson.title, uiLang)}</Text>
+                </View>
+                <TouchableOpacity
+                  style={s.audioBtn}
+                  activeOpacity={0.55}
+                  delayPressIn={0}
+                  onPress={() => {
+                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+                    playAudio(effectiveAudioKey);
+                  }}
+                >
+                  <Ionicons name="volume-high" size={22} color={Colors.primary} />
+                </TouchableOpacity>
               </View>
-              {/* Bouton audio langue cible */}
+
+              {/* ── Traduction Bassa / langue cible ── */}
+              <View style={[s.translationCard, Shadow.sm]}>
+                <View style={s.transHeader}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.transLabel}>
+                      {t("lessons.translationIn", { lang: langName.toUpperCase() })}
+                    </Text>
+                    <Text style={s.transWord}>{translatedDisplay}</Text>
+                  </View>
+                  {/* Bouton audio langue cible */}
+                  <TouchableOpacity
+                    style={s.audioBtn}
+                    activeOpacity={0.55}
+                    delayPressIn={0}
+                    onPress={() => {
+                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+                      playAudio(effectiveAudioKey);
+                    }}
+                  >
+                    <Ionicons name="volume-medium" size={22} color={Colors.primary} />
+                  </TouchableOpacity>
+                </View>
+                {lesson.hint ? (
+                  <View style={s.hintPill}>
+                    <Text style={s.hintText}>
+                      {t("lessons.startWith")} <Text style={s.hintLetter}>{lesson.hint}</Text>
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+
+              {/* ── Bouton écouter la prononciation ── */}
               <TouchableOpacity
-                style={s.audioBtn}
+                style={s.listenBtn}
                 activeOpacity={0.55}
                 delayPressIn={0}
                 onPress={() => {
-                  try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+                  try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
                   playAudio(effectiveAudioKey);
                 }}
               >
-                <Ionicons name="volume-medium" size={22} color={Colors.primary} />
-              </TouchableOpacity>
-            </View>
-            {lesson.hint ? (
-              <View style={s.hintPill}>
-                <Text style={s.hintText}>
-                  {t("lessons.startWith")} <Text style={s.hintLetter}>{lesson.hint}</Text>
+                <Ionicons name="volume-medium-outline" size={18} color={Colors.primary} />
+                <Text style={s.listenText}>
+                  {effectiveAudioKey ? t("lessons.listenPronunciation") : t("lessons.noAudioAvailable")}
                 </Text>
-              </View>
-            ) : null}
-          </View>
-
-          {/* ── Bouton écouter la prononciation ── */}
-          <TouchableOpacity
-            style={s.listenBtn}
-            activeOpacity={0.55}
-            delayPressIn={0}
-            onPress={() => {
-              try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
-              playAudio(effectiveAudioKey);
-            }}
-          >
-            <Ionicons name="volume-medium-outline" size={18} color={Colors.primary} />
-            <Text style={s.listenText}>
-              {effectiveAudioKey ? t("lessons.listenPronunciation") : t("lessons.noAudioAvailable")}
-            </Text>
-          </TouchableOpacity>
+              </TouchableOpacity>
+            </>
+          )}
 
           <View style={{ height: 160 }} />
         </Animated.View>
@@ -515,6 +546,79 @@ const s = StyleSheet.create({
   },
   continueTxt: {
     fontSize: 17, fontWeight: "800", color: "#FFFFFF",
+  },
+});
+
+const BassaSpecialView = ({ lessonTitle, uiLang, t }) => {
+  const isDays = lessonTitle.toLowerCase().includes("jour");
+  const data = isDays ? BASSA_SPECIAL_DATA.days : BASSA_SPECIAL_DATA.avoir;
+
+  const topicText = isDays
+    ? (uiLang.startsWith("en") 
+        ? "Learn the 7 days of the Week in Bassa" 
+        : "Apprenez les 7 jours de la semaine en Bassa")
+    : (uiLang.startsWith("en")
+        ? "Conjugation of the verb Avoir (to have)"
+        : "Conjugaison du verbe AVOIR");
+
+  return (
+    <View style={special.container}>
+      <Text style={special.topic}>{topicText}</Text>
+      
+      {data.map((item, idx) => (
+        <View key={idx} style={[special.card, Shadow.sm]}>
+          <View style={special.row}>
+            <View style={special.col}>
+              <Text style={special.sourceWord}>
+                {uiLang.startsWith("en") ? (item.en || item.fr) : item.fr}
+              </Text>
+              <Text style={special.langLabel}>{uiLang.startsWith("en") ? "ENGLISH" : "FRANÇAIS"}</Text>
+            </View>
+            
+            <Text style={special.dash}>-</Text>
+            
+            <View style={special.col}>
+              <Text style={special.bassaWord}>{item.bassa}</Text>
+              <Text style={special.langLabel}>BASSA</Text>
+            </View>
+
+            <TouchableOpacity 
+              style={special.audioBtn}
+              onPress={() => playAudio(item.audio)}
+            >
+              <Ionicons name="volume-high" size={20} color={Colors.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+};
+
+const special = StyleSheet.create({
+  container: { marginTop: Space.sm },
+  topic: {
+    fontSize: 24, fontWeight: "800", color: Colors.onSurface,
+    marginBottom: Space["2xl"], lineHeight: 32,
+  },
+  card: {
+    backgroundColor: Colors.surfaceContainerLowest,
+    borderRadius: Radius.lg,
+    padding: Space.lg,
+    marginBottom: Space.md,
+    borderWidth: 1.5,
+    borderColor: Colors.surfaceVariant,
+  },
+  row: { flexDirection: "row", alignItems: "center", gap: Space.md },
+  col: { flex: 1 },
+  sourceWord: { fontSize: 16, fontWeight: "700", color: Colors.onSurface, marginBottom: 2 },
+  bassaWord: { fontSize: 18, fontWeight: "800", color: Colors.primary, marginBottom: 2 },
+  langLabel: { fontSize: 10, fontWeight: "600", color: Colors.onSurfaceVariant, letterSpacing: 0.5 },
+  dash: { fontSize: 20, color: Colors.surfaceVariant, fontWeight: "300" },
+  audioBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: Colors.primary + "10",
+    alignItems: "center", justifyContent: "center",
   },
 });
 

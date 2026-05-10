@@ -450,41 +450,121 @@ export default function HomeScreen() {
   /* ── Language detection ── */
   const isBassa = (activeLanguage?.name ?? "").toLowerCase().includes("bassa");
   const isDuala = (activeLanguage?.name ?? "").toLowerCase().includes("duala") ||
-                  (activeLanguage?.name ?? "").toLowerCase().includes("douala");
+    (activeLanguage?.name ?? "").toLowerCase().includes("douala");
   const isGhomala = (activeLanguage?.name ?? "").toLowerCase().includes("ghomala") ||
-                    (activeLanguage?.name ?? "").toLowerCase().includes("ghomal");
+    (activeLanguage?.name ?? "").toLowerCase().includes("ghomal");
 
-  /* ── Lesson display items for the home page "Thèmes à explorer" section ── */
-  const lessonDisplayItems = (() => {
-    if (lessons.length > 0) {
-      const firstThemeId = themes[0]?.id;
-      return lessons.map((l) => ({
-        id: l.id,
-        name: l.title,
-        themeId: firstThemeId,
-        lessonsCount: l.wordIdsByGroup?.length || 0,
-        lessonsCompleted: l.isCompleted ? (l.wordIdsByGroup?.length || 0) : 0,
-        locked: !l.isUnlocked, // Use the service-calculated status
-      }));
-    }
-    return [];
-  })();
+  /* Bassa Custom Lessons Logic */
+  const getBassaLessons = () => {
+    // Rely on the first theme ID to avoid missing theme crashes
+    const defaultThemeId = themes && themes.length > 0 ? themes[0].id : "dummy";
+
+    const joursTheme = (themes || []).find((t) => t.code === "jours" || (t.name && t.name.toLowerCase().includes("jour")));
+    const verbesTheme = (themes || []).find((t) => t.code === "verbes" || (t.name && t.name.toLowerCase().includes("verbe")));
+
+    const joursId = joursTheme ? joursTheme.id : defaultThemeId;
+    const verbesId = verbesTheme ? verbesTheme.id : defaultThemeId;
+
+    const res = [
+      {
+        id: "jours_semaine",
+        name: joursTheme?.name || "Les 7 jours de la semaine",
+        nameLocal: joursTheme?.nameLocal || "Mànōk má sɔ̂ŋ",
+        code: "jours",
+        themeId: joursId,
+        lessonsCount: 7,
+        lessonsCompleted: 0,
+      }
+    ];
+
+    const verbs = [
+      { id: "verbe_avoir", name: "Verbe Avoir", nameLocal: "Bìhíkìí" },
+      { id: "verbe_etre", name: "Verbe Être", nameLocal: "Bìhíkìí" },
+      { id: "verbe_manger", name: "Verbe Manger", nameLocal: "Bìhíkìí" },
+      { id: "verbe_acheter", name: "Verbe Acheter", nameLocal: "Bìhíkìí" },
+      { id: "verbe_marcher", name: "Verbe Marcher", nameLocal: "Bìhíkìí" },
+      { id: "verbe_prendre", name: "Verbe Prendre", nameLocal: "Bìhíkìí" },
+    ];
+
+    verbs.forEach((v) => {
+      res.push({
+        ...v,
+        code: "verbes",
+        themeId: verbesId,
+        lessonsCount: 6,
+        lessonsCompleted: 0,
+      });
+    });
+
+    return res.map((item, idx) => ({
+      ...item,
+      locked: idx >= 2,
+    }));
+  };
+
+  /* Duala Custom Lessons Logic */
+  const getDualaLessons = () => {
+    const items = [
+      { id: "duala_jour", name: "Les sept jours de la semaine", nameLocal: "Minya mi mbu", code: "jours", lessonsCount: 7 },
+      { id: "duala_avoir", name: "Le verbe avoir", nameLocal: "Bìhíkìí", code: "verbes", lessonsCount: 6 },
+      { id: "duala_etre", name: "Le verbe être", nameLocal: "Bìhíkìí", code: "verbes", lessonsCount: 6 },
+      { id: "duala_pronoms", name: "Les pronoms personnels", nameLocal: "Bipapa", code: "pronoms", lessonsCount: 6 },
+      { id: "duala_chiffres", name: "Les chiffres 1-9 en duala", nameLocal: "Langa", code: "chiffres", lessonsCount: 9 },
+      { id: "duala_couleurs", name: "Les couleurs", nameLocal: "Langi", code: "couleurs", lessonsCount: 7 },
+    ];
+    return items.map((item, idx) => ({ ...item, themeId: item.id, lessonsCompleted: 0, locked: idx >= 2 }));
+  };
+
+  /* Ghomala Custom Lessons Logic */
+  const getGhomalaLessons = () => {
+    const items = [
+      { id: "ghomala_jour", name: "Les jours de la semaine en ghomala", code: "jours", lessonsCount: 7 },
+      { id: "ghomala_avoir", name: "Le verbe avoir en ghomala", code: "verbes", lessonsCount: 6 },
+      { id: "ghomala_etre", name: "Le verbe être en ghomala", code: "verbes", lessonsCount: 6 },
+      { id: "ghomala_chiffres", name: "Les chiffres 0-9 en ghomala", code: "chiffres", lessonsCount: 10 },
+      { id: "ghomala_manger", name: "Le verbe manger en ghomala", code: "verbes", lessonsCount: 6 },
+      { id: "ghomala_marcher", name: "Le verbe marcher en ghomala", code: "verbes", lessonsCount: 6 },
+      { id: "ghomala_acheter", name: "Le verbe acheter en ghomala", code: "verbes", lessonsCount: 6 },
+    ];
+    return items.map((item, idx) => ({ ...item, themeId: item.id, lessonsCompleted: 0, locked: idx >= 2 }));
+  };
+
+  const lessonDisplayItems = isBassa ? getBassaLessons() : isDuala ? getDualaLessons() : isGhomala ? getGhomalaLessons() : themes;
 
   /* ── Navigate to a lesson card → adventure tree ── */
   const handleLessonCardPress = (lesson) => {
     // Navigate straight to the adventure tree
     router.push({
       pathname: `/(tabs)/lessons/${lesson.themeId}`,
-      params: { 
-        title: themes[0]?.name || "Leçons", 
-        scrollToId: lesson.id 
+      params: {
+        title: isBassa ? "Bassa Lessons" : (themes[0]?.name || "Leçons"),
+        scrollToId: lesson.id
       },
     });
   };
 
   /* ── Exercise themes only (excludes lesson-type themes) ── */
   const LESSON_CODES = ["jours", "verbes", "pronoms", "chiffres", "couleurs"];
-  const exerciseThemes = themes.filter((t) => !LESSON_CODES.includes((t.code ?? "").toLowerCase()));
+  const exerciseThemes = themes.filter((t) => {
+    const code = (t.code ?? "").toLowerCase();
+    if (LESSON_CODES.includes(code)) return false;
+
+    // Explicitly hide these backend themes from the UI for Bassa
+    if (isBassa) {
+      const nm = (t.name || "").toLowerCase();
+      if (
+        nm.includes("niveau 1") ||
+        nm.includes("vie de famille") ||
+        nm.includes("savan") ||
+        nm.includes("cuisine") ||
+        nm.includes("fondation") ||
+        nm.includes("foundation")
+      ) {
+        return false;
+      }
+    }
+    return true;
+  });
 
   /* ── Animations d'entrée en cascade ── */
   const anims = useRef([0, 1, 2, 3, 4].map(() => new Animated.Value(0))).current;
@@ -571,7 +651,7 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
 
-            {loading ? (
+            {loading && lessonDisplayItems.length === 0 ? (
               <ActivityIndicator
                 size="large"
                 color={RED}

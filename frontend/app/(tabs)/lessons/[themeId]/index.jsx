@@ -287,7 +287,9 @@ export default function ThemeDetailScreen() {
   const { activeLanguage } = useLanguageStore();
 
   const lt = getLangTheme(activeLanguage?.name ?? "");
-  const isBassa = (activeLanguage?.name ?? "").toLowerCase().includes("bassa");
+  const langName = activeLanguage?.name ?? "";
+  const normalizedLang = langName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const isBassa = normalizedLang.includes("bassa") || normalizedLang.includes("basaa");
 
   // Refetch every time this screen gains focus so that newly-unlocked lessons
   // appear after returning from an exercise without needing a full remount.
@@ -300,7 +302,7 @@ export default function ThemeDetailScreen() {
   const displayLessons = lessons;
 
   const theme     = getThemeById(themeId);
-  const themeName = theme?.name_fr ?? theme?.name ?? titleParam ?? category ?? t("common.theme");
+  const themeName = isBassa ? "Bassa Lessons" : (theme?.name_fr ?? theme?.name ?? titleParam ?? category ?? t("common.theme"));
   const themeCode = (theme?.code ?? "").toLowerCase();
   const emoji     = getEmoji(themeCode);
 
