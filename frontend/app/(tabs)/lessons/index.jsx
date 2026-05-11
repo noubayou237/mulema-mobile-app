@@ -280,9 +280,12 @@ export default function ThemesScreen() {
       });
     });
 
+    const completed = verbesTheme?.lessonsCompleted || 0;
+
     return res.map((item, idx) => ({
       ...item,
-      locked: idx >= 2,
+      lessonsCompleted: idx < completed ? item.lessonsCount : 0, 
+      locked: idx > (completed + 1),
     }));
   };
 

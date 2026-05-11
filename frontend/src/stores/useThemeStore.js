@@ -77,11 +77,11 @@ export const useThemeStore = create((set, get) => ({
   // fetchLessons — Charge les leçons d'un thème
   // ═════════════════════════════════════════════════════════════
 
-  fetchLessons: async (themeId) => {
+  fetchLessons: async (themeId, force = false) => {
     if (!themeId || !isSessionActive()) return [];
 
     const reqKey = `lessons_${themeId}`;
-    if (inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
+    if (!force && inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
 
     const now = Date.now();
     const lastFetch = lastFetchTime.get(reqKey) || 0;
@@ -91,7 +91,7 @@ export const useThemeStore = create((set, get) => ({
     
     // Skip network for virtual themes (already injected in store)
     if (themeId?.toString().startsWith("virtual_")) {
-      if (currentThemeId === themeId && cached.length > 0) {
+      if (!force && currentThemeId === themeId && cached.length > 0) {
         return cached;
       }
       // If we somehow lost the virtual data, we can't fetch it from API
@@ -99,7 +99,7 @@ export const useThemeStore = create((set, get) => ({
       return cached; 
     }
 
-    if (currentThemeId === themeId && cached.length > 0 && (now - lastFetch < STALE_TIME)) {
+    if (!force && currentThemeId === themeId && cached.length > 0 && (now - lastFetch < STALE_TIME)) {
       return cached;
     }
 
