@@ -187,20 +187,23 @@ export function buildBassaSession(themeOrder, uiLang = "fr") {
     title: getWordDisplay(item.title, uiLang)
   });
 
-  // Get a pool of lesson words to mix in sparingly (Days/Verbs)
-  // We use max 3 total to avoid cluttering the theme experience
-  const lessonWords = shuffle([...DAYS_POOL, ...VERBS_POOL]).map(translateItem);
-  let lessonIdx = 0;
+  // --- PHASE 0: FOUNDATION RESET ---
+  // Pick exactly ONE foundation word to ground the session
+  const foundationPool = shuffle([...DAYS_POOL, ...VERBS_POOL]).map(translateItem);
+  const foundationWord = foundationPool[0];
+  
+  // Start with a simple Text QCM for the foundation word (since they lack images)
+  const others = shuffle(foundationPool.filter(o => o.id !== foundationWord.id)).slice(0, 3);
+  questions.push({ 
+    type: 'text_qcm', 
+    target: foundationWord, 
+    options: shuffle([foundationWord, ...others]) 
+  });
 
-  // 1. MATCH questions (Exercise 1)
+  // --- PHASE 1: MATCHING (Thematic) ---
   const PAIRS_PER_ROUND = 4;
   const matchTheme = data.match.map(translateItem);
   
-  // Inject exactly 1 lesson word into the match pool (at the beginning)
-  if (lessonIdx < lessonWords.length) {
-    matchTheme.unshift(lessonWords[lessonIdx++]);
-  }
-
   for (let i = 0; i < matchTheme.length; i += PAIRS_PER_ROUND) {
     const group = matchTheme.slice(i, i + PAIRS_PER_ROUND);
     if (group.length >= 2) {
@@ -212,26 +215,12 @@ export function buildBassaSession(themeOrder, uiLang = "fr") {
     }
   }
 
-  // 2. LISTEN & WRITE (Exercise 2)
-  // First, 1 mixed lesson word to keep things familiar
-  if (lessonIdx < lessonWords.length) {
-    questions.push({ type: 'listen_write', target: lessonWords[lessonIdx++] });
-  }
-  // Then all theme-specific phrases
+  // --- PHASE 2: LISTEN & WRITE (Thematic Phrases) ---
   for (const phrase of data.write.map(translateItem)) {
     questions.push({ type: 'listen_write', target: phrase });
   }
 
-  // 3. IMAGE QCM (Exercise 3)
-  // First, 1 mixed lesson word as a Text QCM (since lesson words lack images)
-  if (lessonIdx < lessonWords.length) {
-    const target = lessonWords[lessonIdx++];
-    // Distinct options for the mixed QCM
-    const others = shuffle(lessonWords.filter(o => o.id !== target.id)).slice(0, 3);
-    questions.push({ type: 'text_qcm', target, options: shuffle([target, ...others]) });
-  }
-  
-  // Then all theme-specific image QCMs
+  // --- PHASE 3: IMAGE QCM (Thematic Words) ---
   const imgItems = data.imageQcm.filter(i => i.imageUrl).map(translateItem);
   for (const item of imgItems) {
     const distractors = shuffle(imgItems.filter(d => d.id !== item.id)).slice(0, 3);
@@ -240,12 +229,13 @@ export function buildBassaSession(themeOrder, uiLang = "fr") {
   }
 
   // CRITICAL: NO SHUFFLE at the end.
-  // This preserves the sequential logic: Exercise 1 -> Exercise 2 -> Exercise 3 blocks.
+  // Sequence: Foundation -> Match Block -> Write Block -> Image QCM Block.
   return questions;
 }
 
 /**
- * Build a mixed exercise session using foundation Bassa content (Days + Verbs).
+ * Build a mixed exercise session using foundation Bassa content (Days + Verbs)
+ * AND thematic content from Themes 0-3.
  * Used as a gate to unlock Lesson 3 and beyond.
  */
 export function buildBassaMixedFoundationSession(uiLang = "fr") {
@@ -254,33 +244,66 @@ export function buildBassaMixedFoundationSession(uiLang = "fr") {
     title: getWordDisplay(item.title, uiLang)
   });
 
-  const days = DAYS_POOL.map(translateItem);
-  const verbs = VERBS_POOL.map(translateItem);
+  // 1. Pick 3 familiar words from lessons (Days/Verbs)
+  const lessonPool = shuffle([...DAYS_POOL, ...VERBS_POOL]).map(translateItem);
+  let lessonIdx = 0;
+
+  // 2. Collect thematic pools from Themes 0 to 3
+  const themesToInclude = [0, 1, 2, 3];
+  let allMatch = [];
+  let allWrite = [];
+  let allImageQcm = [];
+
+  themesToInclude.forEach(tIdx => {
+    const data = BASSA_EXERCISE_DATA[tIdx];
+    if (data) {
+      allMatch = [...allMatch, ...data.match.map(translateItem)];
+      allWrite = [...allWrite, ...data.write.map(translateItem)];
+      allImageQcm = [...allImageQcm, ...data.imageQcm.map(translateItem)];
+    }
+  });
 
   const questions = [];
 
-  // Match 1: 4 days
-  const p1 = shuffle(days).slice(0, 4);
-  questions.push({ type: 'match', pairs: p1, right: shuffle([...p1]) });
-
-  // Match 2: 4 verbs
-  const p2 = shuffle(verbs).slice(0, 4);
-  questions.push({ type: 'match', pairs: p2, right: shuffle([...p2]) });
-
-  // Text Selection: Mix of remaining
-  const qcmPool = shuffle([...days.slice(4), ...verbs.slice(4)]);
-  qcmPool.slice(0, 4).forEach(target => {
-    const others = shuffle(qcmPool.filter(x => x.id !== target.id)).slice(0, 3);
-    questions.push({ type: 'text_qcm', target, options: shuffle([target, ...others]) });
+  // --- PHASE 1: MATCHING (Exercise 1) ---
+  // Pick 4 thematic pairs + 1 lesson word
+  const matchGroup = shuffle(allMatch).slice(0, 4);
+  if (lessonIdx < lessonPool.length) {
+    matchGroup.unshift(lessonPool[lessonIdx++]);
+  }
+  questions.push({ 
+    type: 'match', 
+    pairs: matchGroup, 
+    right: shuffle([...matchGroup]) 
   });
 
-  // Listen & Write: 2 items
-  const writePool = shuffle([...days, ...verbs]);
-  writePool.slice(0, 3).forEach(target => {
+  // --- PHASE 2: LISTEN & WRITE (Exercise 2) ---
+  // 1 lesson word + 3 thematic phrases
+  if (lessonIdx < lessonPool.length) {
+    questions.push({ type: 'listen_write', target: lessonPool[lessonIdx++] });
+  }
+  shuffle(allWrite).slice(0, 3).forEach(target => {
     questions.push({ type: 'listen_write', target });
   });
 
-  return shuffle(questions);
+  // --- PHASE 3: IMAGE QCM (Exercise 3) ---
+  // 1 lesson word (Text QCM) + 3 thematic image QCMs
+  if (lessonIdx < lessonPool.length) {
+    const target = lessonPool[lessonIdx++];
+    const others = shuffle(lessonPool.filter(o => o.id !== target.id)).slice(0, 3);
+    questions.push({ type: 'text_qcm', target, options: shuffle([target, ...others]) });
+  }
+
+  const imgPool = allImageQcm.filter(i => i.imageUrl);
+  shuffle(imgPool).slice(0, 3).forEach(item => {
+    const distractors = shuffle(imgPool.filter(d => d.id !== item.id)).slice(0, 3);
+    questions.push({ type: 'image_qcm', target: item, options: shuffle([item, ...distractors]) });
+  });
+
+  // CRITICAL: NO FINAL SHUFFLE.
+  // This keeps the sequence: Match -> Write -> QCM.
+  return questions;
 }
+
 
 export default {};

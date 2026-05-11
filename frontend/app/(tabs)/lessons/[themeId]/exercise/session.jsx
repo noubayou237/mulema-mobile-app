@@ -871,8 +871,9 @@ export default function ExerciseSession() {
     if (th && th.order !== undefined) return th.order;
 
     // 2. Try mapping from category name (Bassa specific fallback)
-    if (isBassa && category) {
-      const catKey = category.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const catName = th?.category;
+    if (isBassa && catName) {
+      const catKey = catName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       for (const [key, val] of Object.entries(BASSA_CAT_MAP)) {
         if (catKey.includes(key)) return val;
       }
@@ -882,7 +883,7 @@ export default function ExerciseSession() {
     if (themeId && !isNaN(themeId) && parseInt(themeId, 10) < 10) return parseInt(themeId, 10);
 
     return null;
-  }, [themes, themeId, isBassa, category]);
+  }, [themes, themeId, isBassa]);
 
 
   useEffect(() => {
