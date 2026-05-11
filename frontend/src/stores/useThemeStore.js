@@ -1,3 +1,4 @@
+"use no memo";
 import Logger from "../utils/logger";
 import { create } from "zustand";
 import { themesService } from "../services/themes.service";
@@ -76,19 +77,21 @@ export const useThemeStore = create((set, get) => ({
   // fetchLessons — Charge les leçons d'un thème
   // ═════════════════════════════════════════════════════════════
 
-  fetchLessons: async (themeId) => {
+  fetchLessons: async (themeId, force = false) => {
     if (!themeId || !isSessionActive()) return [];
 
     const reqKey = `lessons_${themeId}`;
-    if (inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
+    if (!force && inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
 
     const now = Date.now();
     const lastFetch = lastFetchTime.get(reqKey) || 0;
-    const { currentThemeId, lessons: cached } = get();
+    const state = get();
+    const currentThemeId = state.currentThemeId;
+    const cached = state.lessons || [];
     
     // Skip network for virtual themes (already injected in store)
     if (themeId?.toString().startsWith("virtual_")) {
-      if (currentThemeId === themeId && cached.length > 0) {
+      if (!force && currentThemeId === themeId && cached.length > 0) {
         return cached;
       }
       // If we somehow lost the virtual data, we can't fetch it from API
@@ -96,7 +99,7 @@ export const useThemeStore = create((set, get) => ({
       return cached; 
     }
 
-    if (currentThemeId === themeId && cached.length > 0 && (now - lastFetch < STALE_TIME)) {
+    if (!force && currentThemeId === themeId && cached.length > 0 && (now - lastFetch < STALE_TIME)) {
       return cached;
     }
 
@@ -146,8 +149,9 @@ export const useThemeStore = create((set, get) => ({
     const reqKey = `words_${lessonId}`;
     
     // 1. Check if this is a "Virtual Lesson" (a group of MulemWords)
-    const { lessons } = get();
-    const lessonData = lessons.find(l => l.id === lessonId);
+    const state = get();
+    const lessonsList = state.lessons || [];
+    const lessonData = lessonsList.find(l => l.id === lessonId);
     
     if (lessonData && lessonData.words) {
       // It's a grouped virtual lesson. Return its words.
@@ -171,12 +175,13 @@ export const useThemeStore = create((set, get) => ({
     // 2. Check cache for traditional lessons
     const now = Date.now();
     const lastFetch = lastFetchTime.get(reqKey) || 0;
+    const wCache = state.wordsCache || {};
 
-    if (wordsCache[lessonId] && (now - lastFetch < STALE_TIME)) {
+    if (wCache[lessonId] && (now - lastFetch < STALE_TIME)) {
       if (!silent) {
-        set({ words: wordsCache[lessonId], currentLessonId: lessonId, wordsLoading: false });
+        set({ words: wCache[lessonId], currentLessonId: lessonId, wordsLoading: false });
       }
-      return wordsCache[lessonId];
+      return wCache[lessonId];
     }
 
     if (inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
@@ -238,8 +243,9 @@ export const useThemeStore = create((set, get) => ({
   // ═════════════════════════════════════════════════════════════
 
   isThemeLocked: (themeId) => {
-    const { themes } = get();
-    const theme = themes.find((t) => t.id === themeId);
+    const state = get();
+    const themesList = state.themes || [];
+    const theme = themesList.find((t) => t.id === themeId);
     if (!theme) return true;
 
     // Premier thème = toujours débloqué
@@ -249,7 +255,7 @@ export const useThemeStore = create((set, get) => ({
     if (theme.locked !== undefined) return theme.locked;
 
     // Fallback : vérifier le thème précédent
-    const prevTheme = themes.find((t) => t.order === theme.order - 1);
+    const prevTheme = themesList.find((t) => t.order === theme.order - 1);
     if (!prevTheme) return false;
 
     return !prevTheme.e3Completed;
@@ -261,12 +267,13 @@ export const useThemeStore = create((set, get) => ({
   // ═════════════════════════════════════════════════════════════
 
   getExerciseAccess: (themeId) => {
-    const { lessons } = get();
-    if (lessons.length === 0) return { e1: false, e2: false, e3: false };
+    const state = get();
+    const lessonsList = state.lessons || [];
+    if (lessonsList.length === 0) return { e1: false, e2: false, e3: false };
 
     // The final challenge (e1) is unlocked only when all regular category 
     // nodes in the tree are completed.
-    const allCompleted = lessons.every(l => l.isCompleted);
+    const allCompleted = lessonsList.every(l => l.isCompleted);
     return { e1: allCompleted, e2: allCompleted, e3: allCompleted };
   },
 
@@ -279,14 +286,15 @@ export const useThemeStore = create((set, get) => ({
     // First two lesson categories (order 0 and 1) are always unlocked
     if (order === 0 || order === 1) return false;
 
-    const { lessons } = get();
-    const lesson = lessons.find((l) => l.id === lessonId);
+    const state = get();
+    const lessonsList = state.lessons || [];
+    const lesson = lessonsList.find((l) => l.id === lessonId);
     
     // Use the isUnlocked property calculated by the service/backend
     if (lesson?.isUnlocked) return false;
 
     // Fallback logic: check previous lesson completion if not explicitly unlocked
-    const prevLesson = lessons.find((l) => l.order === order - 1);
+    const prevLesson = lessonsList.find((l) => l.order === order - 1);
     if (prevLesson && prevLesson.isCompleted) return false;
 
     return true;

@@ -126,12 +126,23 @@ export class ProgressService {
     // 1) Mark CURRENT category as completed
     const completedCategoryName = categories[completedLessonOrder];
     if (completedCategoryName && groupedWords[completedCategoryName]) {
+      const wordIds = groupedWords[completedCategoryName];
+      // Ensure records exist
+      await this.prisma.userProgress.createMany({
+        data: wordIds.map((id) => ({
+          userId,
+          mulemWordId: id,
+          isUnlocked: true,
+        })),
+        skipDuplicates: true,
+      });
+
       await this.prisma.userProgress.updateMany({
         where: {
           userId,
-          mulemWordId: { in: groupedWords[completedCategoryName] },
+          mulemWordId: { in: wordIds },
         },
-        data: { isCompleted: true, stars: 3 },
+        data: { isCompleted: true, isUnlocked: true, stars: 3 },
       });
     }
 
@@ -142,6 +153,15 @@ export class ProgressService {
     }
 
     const nextWordIds = groupedWords[nextCategoryName];
+    // Ensure records exist
+    await this.prisma.userProgress.createMany({
+      data: nextWordIds.map((id) => ({
+        userId,
+        mulemWordId: id,
+      })),
+      skipDuplicates: true,
+    });
+
     await this.prisma.userProgress.updateMany({
       where: {
         userId,
@@ -194,12 +214,23 @@ export class ProgressService {
 
       const lastCategoryName = categories[completedLessonOrder];
       if (lastCategoryName && groupedWords[lastCategoryName]) {
+        const wordIds = groupedWords[lastCategoryName];
+        // Ensure records exist
+        await this.prisma.userProgress.createMany({
+          data: wordIds.map((id) => ({
+            userId,
+            mulemWordId: id,
+            isUnlocked: true,
+          })),
+          skipDuplicates: true,
+        });
+
         await this.prisma.userProgress.updateMany({
           where: {
             userId,
-            mulemWordId: { in: groupedWords[lastCategoryName] },
+            mulemWordId: { in: wordIds },
           },
-          data: { isCompleted: true, stars: 3 },
+          data: { isCompleted: true, isUnlocked: true, stars: 3 },
         });
       }
     }

@@ -146,12 +146,25 @@ export default function ExerciseResults() {
       completeTheme(themeId, score);
       setShowFinalAnim(true);
       api.post(`/progress/unlock-final/${themeId}`)
+        .then(() => {
+          useThemeStore.getState().fetchLessons(themeId, true);
+          const langId = useLanguageStore.getState().getPatrimonialId(activeLanguage, useLanguageStore.getState().languages);
+          if (langId) useThemeStore.getState().fetchThemes(langId, true);
+        })
         .catch(err => Logger.warn("[Unlock] Final challenge:", err?.message));
     } else if (lessonIdxParam != null) {
       // Regular category node passed
       api.post(`/progress/unlock-next-lesson/${themeId}`, {
         completedLessonOrder: lessonIdxParam,
-      }).catch((err) => Logger.warn("[Unlock] Could not unlock next lesson:", err?.message));
+      })
+      .then(() => {
+        Logger.info(`[Unlock] Successfully unlocked next lesson after index ${lessonIdxParam}`);
+        // Refresh both lists to ensure immediate UI update
+        useThemeStore.getState().fetchLessons(themeId, true);
+        const langId = useLanguageStore.getState().getPatrimonialId(activeLanguage, useLanguageStore.getState().languages);
+        if (langId) useThemeStore.getState().fetchThemes(langId, true);
+      })
+      .catch((err) => Logger.warn("[Unlock] Could not unlock next lesson:", err?.message));
     }
   }, []);
 

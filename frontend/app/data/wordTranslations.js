@@ -92,6 +92,18 @@ const FR_TO_EN = {
   "Huit":   "Eight",
   "Neuf":   "Nine",
 
+  // ── Les Leçons de la Langue Bassa ─────────────────────────────
+  "le 7 jour de la semaine": "The 7 days of the week",
+  "Les 7 jours de la semaine": "The 7 days of the week",
+  "le 7 jours de la semaine": "The 7 days of the week",
+  "Les verbes": "The verbs",
+  "Verbe ÊTRE": "Verb TO BE",
+  "Verbe AVOIR": "Verb TO HAVE",
+  "Verbe MANGER": "Verb TO EAT",
+  "Verbe MARCHER": "Verb TO WALK",
+  "Verbe PRENDRE": "Verb TO TAKE",
+  "Verbe ACHETER": "Verb TO BUY",
+
   // ── Vie de Famille ────────────────────────────────────────────
   "Le papa":            "Dad",
   "La maman":           "Mom",
@@ -103,10 +115,10 @@ const FR_TO_EN = {
   "Mon frère":          "My brother",
   "Les enfants":        "The children",
   "Le bébé":            "The baby",
-  "Bonjour mon ami.":   "Hello my friend.",
+  "Bonjour mon ami":   "Hello my friend",
   "Comment vas-tu ?":   "How are you?",
-  "Je vais assez bien.":"I am doing well.",
-  "Merci.":             "Thank you.",
+  "Je vais assez bien": "I am doing well",
+  "Merci":             "Thank you",
 
   // ── La Savane ─────────────────────────────────────────────────
   "Le lion":        "The lion",
