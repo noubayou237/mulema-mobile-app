@@ -26,7 +26,7 @@ import Logger from "../../../../../src/utils/logger";
 import MatchScreen from "../../../../components/ui/MatchScreen";
 import PatrimonialKeyboard from "../../../../../src/components/ui/PatrimonialKeyboard";
 import { getWordDisplay } from "../../../../data/wordTranslations";
-import { buildBassaSession } from "../../../../data/bassaExerciseData";
+import { buildBassaSession, buildBassaMixedFoundationSession } from "../../../../data/bassaExerciseData";
 
 const { width: SW } = Dimensions.get("window");
 const CARD_W = (SW - 40 - 12) / 2;
@@ -698,10 +698,16 @@ const ListenWriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "
 
   useEffect(() => {
     Animated.timing(fadeIn, { toValue: 1, duration: 400, useNativeDriver: true }).start();
-    if (q.target.audioUrl) {
-      playWordAudio(q.target.audioUrl);
-      setPlayed(true);
-    }
+    
+    // Slight delay for auto-play to ensure audio engine is ready and user is focused
+    const timer = setTimeout(() => {
+      if (q.target.audioUrl) {
+        Logger.info("ListenWrite: Auto-playing audio", q.target.audioUrl);
+        playWordAudio(q.target.audioUrl);
+        setPlayed(true);
+      }
+    }, 500);
+
     const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, { toValue: 1.14, duration: 650, useNativeDriver: true }),
@@ -709,7 +715,10 @@ const ListenWriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "
       ])
     );
     pulse.start();
-    return () => pulse.stop();
+    return () => {
+      clearTimeout(timer);
+      pulse.stop();
+    };
   }, [q.target.id]);
 
   const shake = () =>
@@ -831,7 +840,7 @@ const ListenWriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "
 
 export default function ExerciseSession() {
   const router = useRouter();
-  const { themeId, wordCount: wordCountStr, lessonIdx: lessonIdxStr, isFinal } = useLocalSearchParams();
+  const { themeId, wordCount: wordCountStr, lessonIdx: lessonIdxStr, isFinal, isBassaMixed } = useLocalSearchParams();
 
   // wordCount: how many words to include (cumulative lessons so far)
   // lessonIdx: 0-based index of the lesson just completed (for unlock)
@@ -847,14 +856,38 @@ export default function ExerciseSession() {
 
   // Resolve whether the active language is Bassa and the theme's numeric order.
   const isBassa = langName.toLowerCase().includes("bassa") || langName.toLowerCase().includes("basaa");
-  const themeOrder = useMemo(
-    () => themes.find((th) => th.id === themeId)?.order ?? null,
-    [themes, themeId]
-  );
+
+  // Robust mapping for Bassa themes since IDs can vary between environments
+  const BASSA_CAT_MAP = {
+    'famille': 0, 'family': 0, 'vie de famille': 0,
+    'savane': 1, 'savanna': 1, 'nature': 1,
+    'cuisine': 2, 'culinaire': 2, 'culinary': 2, 'nourriture': 2,
+    'mode': 3, 'fashion': 3, 'vêtement': 3, 'vetement': 3
+  };
+
+  const themeOrder = useMemo(() => {
+    // 1. Try order from theme object
+    const th = themes.find((t) => String(t.id) === String(themeId));
+    if (th && th.order !== undefined) return th.order;
+
+    // 2. Try mapping from category name (Bassa specific fallback)
+    if (isBassa && category) {
+      const catKey = category.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      for (const [key, val] of Object.entries(BASSA_CAT_MAP)) {
+        if (catKey.includes(key)) return val;
+      }
+    }
+
+    // 3. Last resort: use the themeId as index if it's small or try lesson info
+    if (themeId && !isNaN(themeId) && parseInt(themeId, 10) < 10) return parseInt(themeId, 10);
+
+    return null;
+  }, [themes, themeId, isBassa, category]);
 
 
   useEffect(() => {
     pauseBackgroundMusic();
+    setAudioMode(); // Ensure audio session is initialized for playback in silent mode
     return () => { resumeBackgroundMusic(); };
   }, []);
 
@@ -883,12 +916,17 @@ export default function ExerciseSession() {
   // phrases from Ex 2, image QCM from Ex 3). Other languages keep the dynamic
   // builder that draws from the database lesson words.
   const questions = useMemo(() => {
-    if (isBassa && themeOrder !== null) {
-      const bassaQ = buildBassaSession(themeOrder);
-      if (bassaQ && bassaQ.length > 0) return bassaQ;
+    if (isBassa) {
+      if (isBassaMixed === "true") {
+        return buildBassaMixedFoundationSession(uiLang);
+      }
+      if (themeOrder !== null) {
+        const bassaQ = buildBassaSession(themeOrder, uiLang);
+        if (bassaQ && bassaQ.length > 0) return bassaQ;
+      }
     }
     return buildSession(wordsForSession);
-  }, [wordsForSession, isBassa, themeOrder]);
+  }, [wordsForSession, isBassa, themeOrder, isBassaMixed, uiLang]);
 
 
   const [idx, setIdx] = useState(0);

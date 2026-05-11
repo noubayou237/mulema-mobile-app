@@ -29,7 +29,7 @@ import { useThemeStore } from "../../../../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../../../../src/stores/useDashboardStore";
 import { useLanguageStore } from "../../../../../src/stores/useLanguageStore";
 import { pauseBackgroundMusic, resumeBackgroundMusic } from "../../../../../src/hooks/useBackgroundMusic";
-import { playAudioUrl } from "../../../../../src/utils/audioUtils";
+import { playAudioUrl, setAudioMode } from "../../../../../src/utils/audioUtils";
 import Logger from "../../../../../src/utils/logger";
 import { getBassaEnrichment } from "../../../../data/bassaLessonsData";
 import { getDualaEnrichment } from "../../../../data/dualaLessonsData";
@@ -38,7 +38,7 @@ import { getWordDisplay } from "../../../../data/wordTranslations";
 
 const playAudio = async (audioKey) => {
   if (!audioKey) {
-    try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); } catch {}
+    try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); } catch { }
     return;
   }
   try {
@@ -59,21 +59,61 @@ const THEME_ICONS = {
 /* ── Données Spéciales Bassa ───────────────────────────────────── */
 const BASSA_SPECIAL_DATA = {
   days: [
-    { fr: "Lundi",    en: "Monday",    bassa: "ŋgwà njaŋgumba", audio: "lundi_1" },
-    { fr: "Mardi",    en: "Tuesday",   bassa: "ŋgwà ûm",        audio: "mardi_1" },
-    { fr: "Mercredi", en: "Wednesday", bassa: "ŋgwà ŋgê",       audio: "mercredi_1" },
-    { fr: "Jeudi",    en: "Thursday",  bassa: "ŋgwà mbɔk",      audio: "jeudi_1" },
-    { fr: "Vendredi", en: "Friday",    bassa: "ŋgwà kɔɔ",       audio: "vendredi_1" },
-    { fr: "Samedi",   en: "Saturday",  bassa: "ŋgwà jôn",       audio: "samedi_1" },
-    { fr: "Dimanche", en: "Sunday",    bassa: "ŋgwà nɔŷ",       audio: "dimanche_1" },
+    { fr: "Lundi", en: "Monday", bassa: "ŋgwà njaŋgumba", audio: "lundi_1" },
+    { fr: "Mardi", en: "Tuesday", bassa: "ŋgwà ûm", audio: "mardi_1" },
+    { fr: "Mercredi", en: "Wednesday", bassa: "ŋgwà ŋgê", audio: "mercredi_1" },
+    { fr: "Jeudi", en: "Thursday", bassa: "ŋgwà mbɔk", audio: "jeudi_1" },
+    { fr: "Vendredi", en: "Friday", bassa: "ŋgwà kɔɔ", audio: "vendredi_1" },
+    { fr: "Samedi", en: "Saturday", bassa: "ŋgwà jôn", audio: "samedi_1" },
+    { fr: "Dimanche", en: "Sunday", bassa: "ŋgwà nɔŷ", audio: "dimanche_1" },
   ],
   avoir: [
-    { fr: "J'ai",             en: "I have",            bassa: "mè gwě",  audio: "j_aiwav" },
-    { fr: "Tu as",            en: "You have",          bassa: "Ù gwě",   audio: "tu_as_1" },
-    { fr: "Il ou elle a",     en: "He / She has",      bassa: "A gwě",   audio: "il_ou_elle_a" },
-    { fr: "Nous avons",       en: "We have",           bassa: "Di gwě",  audio: "nous_avons_1" },
-    { fr: "Vous avez",        en: "You have (plural)", bassa: "Ni gwě",  audio: "vous_avez_1" },
-    { fr: "Ils ou elles ont", en: "They have",         bassa: "Ba gwě",  audio: "ils_ou_elles_ont" },
+    { fr: "J'ai", en: "I have", bassa: "mè gwě", audio: "j_aiwav" },
+    { fr: "Tu as", en: "You have", bassa: "Ù gwě", audio: "tu_as_1" },
+    { fr: "Il ou elle a", en: "He / She has", bassa: "A gwě", audio: "il_ou_elle_a" },
+    { fr: "Nous avons", en: "We have", bassa: "Di gwě", audio: "nous_avons_1" },
+    { fr: "Vous avez", en: "You have (plural)", bassa: "Ni gwě", audio: "vous_avez_1" },
+    { fr: "Ils ou elles ont", en: "They have", bassa: "Ba gwě", audio: "ils_ou_elles_ont" },
+  ],
+  etre: [
+    { fr: "Je suis", en: "I am", bassa: "mè yè", audio: "je_suis_1" },
+    { fr: "Tu es", en: "You are", bassa: "Ù yè", audio: "tu_es_2" },
+    { fr: "Il ou elle est", en: "He / She is", bassa: "A yè", audio: "il_elle_on_est_1" },
+    { fr: "Nous sommes", en: "We are", bassa: "Di yè", audio: "nous_sommes_1" },
+    { fr: "Vous êtes", en: "You are (plural)", bassa: "Ni yè", audio: "vous_etes_1" },
+    { fr: "Ils ou elles sont", en: "They are", bassa: "Ba yè", audio: "ils_elles_sont_1" },
+  ],
+  manger: [
+    { fr: "Je mange", en: "I eat", bassa: "mè ŋjé", audio: "je_mange" },
+    { fr: "Tu manges", en: "You eat", bassa: "U ŋjé", audio: "tu_manges" },
+    { fr: "Il ou elle mange", en: "He / She eats", bassa: "A ŋjé", audio: "il_ou_elle_mange" },
+    { fr: "Nous mangeons", en: "We eat", bassa: "Di ŋjé", audio: "nous_mangeons" },
+    { fr: "Vous mangez", en: "You eat (plural)", bassa: "Ni ŋjé", audio: "vous_mangez" },
+    { fr: "Ils ou elles mangent", en: "They eat", bassa: "Ba ŋjé", audio: "ils_ou_elle_mangent" },
+  ],
+  marcher: [
+    { fr: "Je marche", en: "I walk", bassa: "mè Níòm", audio: "je_marche" },
+    { fr: "Tu marches", en: "You walk", bassa: "Ù Níòm", audio: "tu_marches" },
+    { fr: "Il ou elle marche", en: "He / She walks", bassa: "A Níòm", audio: "il_ou_elle_marche" },
+    { fr: "Nous marchons", en: "We walk", bassa: "Di Níòm", audio: "nous_marchons" },
+    { fr: "Vous marchez", en: "You walk (plural)", bassa: "Ni Níòm", audio: "vous_marchez" },
+    { fr: "Ils ou elles marchent", en: "They walk", bassa: "Ba Níòm", audio: "ils_ou_elles_marchent" },
+  ],
+  prendre: [
+    { fr: "Je prends", en: "I take", bassa: "Mè ŋýòŋ", audio: "je_prends" },
+    { fr: "Tu prends", en: "You take", bassa: "Ù ŋýòŋ", audio: "tu_prends" },
+    { fr: "Il ou elle prend", en: "He / She takes", bassa: "A ŋýòŋ", audio: "il_ou_elle_prend" },
+    { fr: "Nous prenons", en: "We take", bassa: "Di ŋýòŋ", audio: "nous_prenons" },
+    { fr: "Vous prenez", en: "You take (plural)", bassa: "Ni ŋýòŋ", audio: "vous_prenez" },
+    { fr: "Ils ou elles prennent", en: "They take", bassa: "Ba ŋýòŋ", audio: "ils_ou_elles_prennent" },
+  ],
+  acheter: [
+    { fr: "J'achète", en: "I buy", bassa: "Mè Ńsɔmb", audio: "j_achete" },
+    { fr: "Tu achètes", en: "You buy", bassa: "U Ńsɔmb", audio: "tu_achetes" },
+    { fr: "Il ou elle achète", en: "He / She buys", bassa: "A Ńsɔmb", audio: "il_ou_elle_achete" },
+    { fr: "Nous achetons", en: "We buy", bassa: "Di Ńsɔmb", audio: "nous_achetons" },
+    { fr: "Vous achetez", en: "You buy (plural)", bassa: "Ni Ńsɔmb", audio: "vous_achetez" },
+    { fr: "Ils ou elles achètent", en: "They buy", bassa: "Ba Ńsɔmb", audio: "ils_ou_elles_achetent" },
   ],
 };
 
@@ -118,13 +158,13 @@ export default function LessonScreen() {
 
   /* Trouver la leçon courante */
   const lessonIdx = displayLessons.findIndex((l) => l.id === lessonId);
-  const lesson    = displayLessons[lessonIdx] ?? null;
-  const total     = displayLessons.length || 10;
-  const isFirst   = lessonIdx >= 0 && lessonIdx === 0;
-  const isLast    = lessonIdx >= 0 && lessonIdx === total - 1;
+  const lesson = displayLessons[lessonIdx] ?? null;
+  const total = displayLessons.length || 10;
+  const isFirst = lessonIdx >= 0 && lessonIdx === 0;
+  const isLast = lessonIdx >= 0 && lessonIdx === total - 1;
 
   /* Thème courant */
-  const theme    = themes.find((t) => t.id === themeId);
+  const theme = themes.find((t) => t.id === themeId);
   const themeCode = theme?.code ?? "famille";
 
   const langName = activeLanguage?.name ?? "Duala";
@@ -133,7 +173,7 @@ export default function LessonScreen() {
   const isBassa = (activeLanguage?.name ?? "").toLowerCase().includes("bassa");
   const isDuala = (activeLanguage?.name ?? "").toLowerCase().includes("duala");
   const isGhomala = (activeLanguage?.name ?? "").toLowerCase().includes("ghomala");
-  
+
   let enrichment = null;
   if (isBassa) enrichment = getBassaEnrichment(lesson?.title ?? "");
   if (isDuala) enrichment = getDualaEnrichment(lesson?.title ?? "");
@@ -145,28 +185,58 @@ export default function LessonScreen() {
   const translatedDisplay = enrichment?.targetText || enrichment?.bassaText || enrichment?.dualaText || enrichment?.ghomalaText || lesson?.subtitle || "";
 
   /* Animations */
-  const cardAnim  = useRef(new Animated.Value(0)).current;
+  const cardAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(cardAnim,  { toValue: 1, duration: 450, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(cardAnim, { toValue: 1, duration: 450, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
       Animated.timing(slideAnim, { toValue: 0, duration: 450, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
     ]).start();
   }, [lessonId]);
 
   useEffect(() => {
     pauseBackgroundMusic();
+    setAudioMode();
     return () => {
       resumeBackgroundMusic();
     };
   }, []);
+
+  const [showGatePrompt, setShowGatePrompt] = useState(false);
+  const gateSlideAnim = useRef(new Animated.Value(500)).current;
+  const overlayFadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (showGatePrompt) {
+      Animated.parallel([
+        Animated.timing(overlayFadeAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.spring(gateSlideAnim, {
+          toValue: 0,
+          tension: 30,
+          friction: 9,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [showGatePrompt]);
 
   /* Navigation */
   const goNext = () => {
     if (isLast) {
       // Last lesson studied — return to the lessons overview tab
       router.replace(`/(tabs)/lessons`);
+      return;
+    }
+
+    // Bassa progression gate: after Lesson 2 (index 1) and each subsequent lesson,
+    // show a professional prompt to do a mixed exercise session to unlock the next node.
+    if (isBassa && lessonIdx >= 1) {
+      setShowGatePrompt(true);
       return;
     }
 
@@ -177,6 +247,18 @@ export default function LessonScreen() {
     router.replace({
       pathname: `/(tabs)/lessons/${themeId}/lesson/${nextLesson.id}`,
       params: { category }
+    });
+  };
+
+  const startMixedExercise = () => {
+    router.replace({
+      pathname: `/(tabs)/lessons/${themeId}/exercise/session`,
+      params: {
+        isBassaMixed: "true",
+        lessonIdx: lessonIdx,
+        themeId: themeId,
+        category: category || ""
+      }
     });
   };
 
@@ -267,10 +349,19 @@ export default function LessonScreen() {
         <Animated.View
           style={{ opacity: cardAnim, transform: [{ translateY: slideAnim }] }}
         >
-          {isBassa && (lesson.title?.toLowerCase().includes("jour") || lesson.title?.toLowerCase().includes("avoir")) ? (
-            <BassaSpecialView 
-              lessonTitle={lesson.title} 
-              uiLang={uiLang} 
+          {isBassa && (
+            lesson.title?.toLowerCase().includes("jour") ||
+            lesson.title?.toLowerCase().includes("avoir") ||
+            lesson.title?.toLowerCase().includes("etre") ||
+            lesson.title?.toLowerCase().includes("être") ||
+            lesson.title?.toLowerCase().includes("manger") ||
+            lesson.title?.toLowerCase().includes("marcher") ||
+            lesson.title?.toLowerCase().includes("prendre") ||
+            lesson.title?.toLowerCase().includes("acheter")
+          ) ? (
+            <BassaSpecialView
+              lessonTitle={lesson.title}
+              uiLang={uiLang}
               t={t}
             />
           ) : (
@@ -309,7 +400,7 @@ export default function LessonScreen() {
                   activeOpacity={0.55}
                   delayPressIn={0}
                   onPress={() => {
-                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+                    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch { }
                     playAudio(effectiveAudioKey);
                   }}
                 >
@@ -332,7 +423,7 @@ export default function LessonScreen() {
                     activeOpacity={0.55}
                     delayPressIn={0}
                     onPress={() => {
-                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch { }
                       playAudio(effectiveAudioKey);
                     }}
                   >
@@ -354,7 +445,7 @@ export default function LessonScreen() {
                 activeOpacity={0.55}
                 delayPressIn={0}
                 onPress={() => {
-                  try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
+                  try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch { }
                   playAudio(effectiveAudioKey);
                 }}
               >
@@ -370,20 +461,66 @@ export default function LessonScreen() {
         </Animated.View>
       </ScrollView>
 
-      {/* ── BOUTON BAS ── */}
-      <View style={s.footer}>
-        <TouchableOpacity
-          onPress={goNext}
-          activeOpacity={0.65}
-          delayPressIn={0}
-          style={s.continueBtn}
-        >
-          <Text style={s.continueTxt}>
-            {isLast ? t("lessons.finishLessons") : t("common.continue")}
-          </Text>
-          <Ionicons name="arrow-forward" size={20} color={Colors.onPrimary} style={{ marginLeft: 8 }} />
-        </TouchableOpacity>
-      </View>
+      {/* ── BOUTON BAS (Caché si prompt actif) ── */}
+      {!showGatePrompt && (
+        <View style={s.footer}>
+          <TouchableOpacity
+            onPress={goNext}
+            activeOpacity={0.65}
+            delayPressIn={0}
+            style={s.continueBtn}
+          >
+            <Text style={s.continueTxt}>
+              {isLast ? t("lessons.finishLessons") : t("common.continue")}
+            </Text>
+            <Ionicons name="arrow-forward" size={20} color={Colors.onPrimary} style={{ marginLeft: 8 }} />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* ── BASSA PROGRESSION GATE PROMPT ── */}
+      {showGatePrompt && (
+        <>
+          {/* Overlay flou/focus (Fades in) */}
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: "rgba(255,255,255,0.85)", opacity: overlayFadeAnim, zIndex: 99 }
+            ]}
+            pointerEvents="auto"
+          />
+
+          {/* CTA Bottom Sheet (Slides up) */}
+          <Animated.View style={[cta.wrap, { transform: [{ translateY: gateSlideAnim }], zIndex: 100 }]}>
+            <View style={cta.accentBar} />
+            <View style={cta.body}>
+              {/* <Text style={cta.eyebrow}>
+                {uiLang.startsWith("en") ? "Action Required" : "Action Requise"}
+              </Text> */}
+              <Text style={cta.heading}>
+                {uiLang.startsWith("en")
+                  ? `Take an exercise to unlock Lesson ${lessonIdx + 2}`
+                  : `Faites un exercice pour débloquer la leçon ${lessonIdx + 2}`}
+              </Text>
+              <Text style={cta.sub}>
+                {uiLang.startsWith("en")
+                  ? "Click the button to start your exercise and continue your learning journey."
+                  : "Cliquez sur le bouton pour commencer votre exercice et continuer votre apprentissage."}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={cta.btn}
+              activeOpacity={0.8}
+              onPress={startMixedExercise}
+            >
+              <Text style={cta.btnTxt}>
+                {uiLang.startsWith("en") ? "Start Exercise" : "Commencer l'exercice"}
+              </Text>
+              <Ionicons name="school" size={20} color="#FFF" />
+            </TouchableOpacity>
+          </Animated.View>
+        </>
+      )}
     </View>
   );
 }
@@ -392,7 +529,7 @@ export default function LessonScreen() {
    STYLES
    ────────────────────────────────────────────────────────────── */
 const s = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: Colors.surface },
+  root: { flex: 1, backgroundColor: Colors.surface },
   scroll: { paddingHorizontal: Space["2xl"], paddingTop: Space.lg },
 
   /* Top bar */
@@ -550,40 +687,76 @@ const s = StyleSheet.create({
 });
 
 const BassaSpecialView = ({ lessonTitle, uiLang, t }) => {
-  const isDays = lessonTitle.toLowerCase().includes("jour");
-  const data = isDays ? BASSA_SPECIAL_DATA.days : BASSA_SPECIAL_DATA.avoir;
+  const lowTitle = lessonTitle.toLowerCase();
 
-  const topicText = isDays
-    ? (uiLang.startsWith("en") 
-        ? "Learn the 7 days of the Week in Bassa" 
-        : "Apprenez les 7 jours de la semaine en Bassa")
-    : (uiLang.startsWith("en")
-        ? "Conjugation of the verb Avoir (to have)"
-        : "Conjugaison du verbe AVOIR");
+  let data = [];
+  let topicText = "";
+
+  if (lowTitle.includes("jour")) {
+    data = BASSA_SPECIAL_DATA.days;
+    topicText = uiLang.startsWith("en")
+      ? "Learn the 7 days of the Week in Bassa"
+      : "Apprenez les 7 jours de la semaine en Bassa";
+  } else if (lowTitle.includes("avoir")) {
+    data = BASSA_SPECIAL_DATA.avoir;
+    topicText = uiLang.startsWith("en")
+      ? "Conjugation of the verb Avoir (to have)"
+      : "Conjugaison du verbe AVOIR";
+  } else if (lowTitle.includes("etre") || lowTitle.includes("être")) {
+    data = BASSA_SPECIAL_DATA.etre;
+    topicText = uiLang.startsWith("en")
+      ? "Conjugation of the verb Être (to be)"
+      : "Conjugaison du verbe ÊTRE";
+  } else if (lowTitle.includes("manger")) {
+    data = BASSA_SPECIAL_DATA.manger;
+    topicText = uiLang.startsWith("en")
+      ? "Conjugation of the verb Manger (to eat)"
+      : "Conjugaison du verbe MANGER";
+  } else if (lowTitle.includes("marcher")) {
+    data = BASSA_SPECIAL_DATA.marcher;
+    topicText = uiLang.startsWith("en")
+      ? "Conjugation of the verb Marcher (to walk)"
+      : "Conjugaison du verbe MARCHER";
+  } else if (lowTitle.includes("prendre")) {
+    data = BASSA_SPECIAL_DATA.prendre;
+    topicText = uiLang.startsWith("en")
+      ? "Conjugation of the verb Prendre (to take)"
+      : "Conjugaison du verbe PRENDRE";
+  } else if (lowTitle.includes("acheter")) {
+    data = BASSA_SPECIAL_DATA.acheter;
+    topicText = uiLang.startsWith("en")
+      ? "Conjugation of the verb Acheter (to buy)"
+      : "Conjugaison du verbe ACHETER";
+  }
+
+  if (data.length === 0) return null;
 
   return (
     <View style={special.container}>
       <Text style={special.topic}>{topicText}</Text>
-      
+
       {data.map((item, idx) => (
         <View key={idx} style={[special.card, Shadow.sm]}>
           <View style={special.row}>
-            <View style={special.col}>
-              <Text style={special.sourceWord}>
-                {uiLang.startsWith("en") ? (item.en || item.fr) : item.fr}
-              </Text>
-              <Text style={special.langLabel}>{uiLang.startsWith("en") ? "ENGLISH" : "FRANÇAIS"}</Text>
-            </View>
-            
-            <Text style={special.dash}>-</Text>
-            
-            <View style={special.col}>
-              <Text style={special.bassaWord}>{item.bassa}</Text>
-              <Text style={special.langLabel}>BASSA</Text>
+            <View style={special.wordPairInner}>
+              <View style={special.col}>
+                <Text style={special.sourceWord}>
+                  {uiLang.startsWith("en") ? (item.en || item.fr) : item.fr}
+                </Text>
+                <Text style={special.langLabel}>{uiLang.startsWith("en") ? "ENGLISH" : "FRANÇAIS"}</Text>
+              </View>
+
+              <Text style={special.dash}>-</Text>
+
+              <View style={special.col}>
+                <Text style={special.bassaWord}>{item.bassa}</Text>
+                <Text style={special.langLabel}>BASSA</Text>
+              </View>
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={special.audioBtn}
+              activeOpacity={0.6}
               onPress={() => playAudio(item.audio)}
             >
               <Ionicons name="volume-high" size={20} color={Colors.primary} />
@@ -610,13 +783,14 @@ const special = StyleSheet.create({
     borderColor: Colors.surfaceVariant,
   },
   row: { flexDirection: "row", alignItems: "center", gap: Space.md },
-  col: { flex: 1 },
-  sourceWord: { fontSize: 16, fontWeight: "700", color: Colors.onSurface, marginBottom: 2 },
-  bassaWord: { fontSize: 18, fontWeight: "800", color: Colors.primary, marginBottom: 2 },
-  langLabel: { fontSize: 10, fontWeight: "600", color: Colors.onSurfaceVariant, letterSpacing: 0.5 },
-  dash: { fontSize: 20, color: Colors.surfaceVariant, fontWeight: "300" },
+  wordPairInner: { flex: 1, flexDirection: "row", alignItems: "center", gap: Space.sm },
+  col: { alignItems: "center", minWidth: 80 },
+  sourceWord: { fontSize: 16, fontWeight: "700", color: Colors.onSurface, marginBottom: 2, textAlign: "center" },
+  bassaWord: { fontSize: 18, fontWeight: "800", color: Colors.primary, marginBottom: 2, textAlign: "center" },
+  langLabel: { fontSize: 9, fontWeight: "700", color: Colors.onSurfaceVariant, letterSpacing: 0.8, textTransform: "uppercase" },
+  dash: { fontSize: 22, color: Colors.surfaceVariant, fontWeight: "300", marginHorizontal: 4 },
   audioBtn: {
-    width: 40, height: 40, borderRadius: 20,
+    width: 44, height: 44, borderRadius: 22,
     backgroundColor: Colors.primary + "10",
     alignItems: "center", justifyContent: "center",
   },
