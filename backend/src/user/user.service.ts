@@ -609,8 +609,19 @@ export class UserService {
   }
 
   async deductCowries(userId: string, amount: number) {
-    const cowry = await this.prisma.cowry.findUnique({ where: { userId } });
-    if (!cowry) return { currentCowries: 5 };
+    let cowry = await this.prisma.cowry.findUnique({ where: { userId } });
+    
+    if (!cowry) {
+      // Create record if missing (Self-healing)
+      cowry = await this.prisma.cowry.create({
+        data: {
+          userId,
+          currentCowries: 5,
+          maxCowries: 5,
+          rechargeTime: 0,
+        },
+      });
+    }
 
     let { currentCowries, rechargeTime, maxCowries } = cowry;
     if (currentCowries === maxCowries) {
@@ -626,5 +637,56 @@ export class UserService {
     });
 
     return this.syncCowries(userId, updated);
+  }
+
+  async purchaseHearts(userId: string, count: number) {
+    const cost = count * 30;
+
+    // 1. Check points
+    const stats = await this.prisma.statistics.findUnique({ where: { userId } });
+    if (!stats || stats.totalPrawns < cost) {
+      throw new BadRequestException('Insufficient points (XP)');
+    }
+
+    // 2. Perform transaction with self-healing for cowry record
+    const [updatedStats, updatedCowry] = await this.prisma.$transaction(async (tx) => {
+      // Update statistics
+      const statsUpdate = await tx.statistics.update({
+        where: { userId },
+        data: { totalPrawns: { decrement: cost } },
+      });
+
+      // Update user (redundant but kept for consistency)
+      await tx.user.update({
+        where: { id: userId },
+        data: { totalPrawns: { decrement: cost } },
+      });
+
+      // Upsert Cowry (Self-healing)
+      const cowryUpdate = await tx.cowry.upsert({
+        where: { userId },
+        create: {
+          userId,
+          currentCowries: 5 + count, // Default 5 + what was just bought
+          maxCowries: 5,
+          rechargeTime: 0,
+        },
+        update: {
+          currentCowries: { increment: count },
+        },
+      });
+
+      return [statsUpdate, cowryUpdate];
+    });
+
+    // 3. Sync cowries to refresh timer if needed
+    const synced = await this.syncCowries(userId, updatedCowry);
+
+    return {
+      success: true,
+      hearts: synced.currentCowries,
+      totalPoints: updatedStats.totalPrawns,
+      nextRechargeIn: synced.nextRechargeIn,
+    };
   }
 }

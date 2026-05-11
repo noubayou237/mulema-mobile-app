@@ -168,4 +168,16 @@ export class UserController {
     this.logger.log(`Select pre-drawn avatar request for user: ${user.userId}`);
     return this.userService.selectAvatar(user.userId, body.avatarId);
   }
+
+  // =====================
+  // PURCHASE HEARTS
+  // =====================
+  @Put('purchase-heart')
+  async purchaseHearts(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { count?: number },
+  ) {
+    this.logger.log(`Purchase heart request for user: ${user.userId}`);
+    return this.userService.purchaseHearts(user.userId, body.count || 1);
+  }
 }
