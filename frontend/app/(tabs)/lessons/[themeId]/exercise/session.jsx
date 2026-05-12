@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated, Dimensions, Keyboard, KeyboardAvoidingView,
+  Modal, ActivityIndicator,
   Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput,
   TouchableOpacity, View, Vibration,
 } from "react-native";
@@ -848,7 +849,7 @@ export default function ExerciseSession() {
   const lessonIdxParam = lessonIdxStr != null ? parseInt(lessonIdxStr, 10) : null;
 
   const { lessons, fetchLessons, themes, error } = useThemeStore();
-  const { fetchDashboard } = useDashboardStore();
+  const { fetchDashboard, purchaseHearts, data: dashboardData } = useDashboardStore();
   const { activeLanguage } = useLanguageStore();
   const { t, i18n } = useTranslation();
   const langName = activeLanguage?.name ?? "Duala";
@@ -939,6 +940,8 @@ export default function ExerciseSession() {
   const [hearts, setHearts] = useState(
     () => useDashboardStore.getState().data?.hearts ?? 5
   );
+  const [showRefill, setShowRefill] = useState(false);
+  const [isRefilling, setIsRefilling] = useState(false);
   // Only allow the "hearts exhausted" auto-exit when the player has actually
   // lost a heart in THIS session — prevents stale 0-hearts from closing the
   // screen instantly when the user retries after a previous failure.
@@ -1002,9 +1005,10 @@ export default function ExerciseSession() {
 
   useEffect(() => {
     if (heartsDrainedInSession.current && hearts <= 0) {
-      setTimeout(() => goResults(), 500);
+      setShowRefill(true);
+      // Wait for user to decide in modal; don't auto-exit yet
     }
-  }, [hearts, goResults]);
+  }, [hearts]);
 
   if (!curQ) {
     if (error && questions.length === 0) {
@@ -1045,6 +1049,23 @@ export default function ExerciseSession() {
       </View>
     );
   }
+
+  const handlePurchaseHearts = async (count = 1) => {
+    if (isRefilling) return;
+    setIsRefilling(true);
+    try {
+      const res = await purchaseHearts(count);
+      if (res?.success) {
+        setHearts(res.hearts); // Sync local state
+        setShowRefill(false);
+        Vibration.vibrate(50);
+      }
+    } catch (e) {
+      // Handled by store
+    } finally {
+      setIsRefilling(false);
+    }
+  };
 
   return (
     <View style={s.root}>
@@ -1120,6 +1141,92 @@ export default function ExerciseSession() {
           />
         )}
       </Animated.View>
+
+      <Modal
+        visible={showRefill}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {}}
+      >
+        <View style={rm.overlay}>
+          <View style={rm.card}>
+            <View style={rm.header}>
+              <View style={rm.iconCircle}>
+                <Ionicons name="heart" size={40} color={C.primary} />
+              </View>
+              <Text style={rm.title}>{t("exercises.refillTitle", "Plus de cœurs !")}</Text>
+              <Text style={rm.desc}>
+                {t("exercises.refillDesc", "Tu n'as plus de vies pour continuer. Échange tes points contre des cœurs pour finir l'exercice.")}
+              </Text>
+            </View>
+
+            <View style={rm.stats}>
+              <View style={rm.statItem}>
+                <Ionicons name="flash" size={20} color={C.orange} />
+                <Text style={rm.statTxt}>{dashboardData?.totalPoints ?? 0} XP</Text>
+              </View>
+              <View style={rm.divider} />
+              <View style={rm.statItem}>
+                <Ionicons name="heart" size={20} color={C.primary} />
+                <Text style={rm.statTxt}>{hearts} {t("exercises.hearts", "Cœurs")}</Text>
+              </View>
+            </View>
+
+            <View style={rm.actions}>
+              {(dashboardData?.totalPoints >= 30) ? (
+                <>
+                  <TouchableOpacity
+                    style={[rm.buyBtn, isRefilling && rm.btnDisabled]}
+                    onPress={() => handlePurchaseHearts(1)}
+                    disabled={isRefilling}
+                  >
+                    {isRefilling ? (
+                      <ActivityIndicator color="#FFF" />
+                    ) : (
+                      <>
+                        <Text style={rm.buyTxt}>+1 {t("common.heart", "Cœur")}</Text>
+                        <Text style={rm.priceTxt}>30 XP</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  {dashboardData?.totalPoints >= 90 && (
+                    <TouchableOpacity
+                      style={[rm.buyBtn, rm.buyBtnAlt, isRefilling && rm.btnDisabled]}
+                      onPress={() => handlePurchaseHearts(3)}
+                      disabled={isRefilling}
+                    >
+                      {isRefilling ? (
+                        <ActivityIndicator color={C.primary} />
+                      ) : (
+                        <>
+                          <Text style={[rm.buyTxt, { color: C.primary }]}>+3 {t("common.hearts", "Cœurs")}</Text>
+                          <Text style={[rm.priceTxt, { color: C.primary + "90" }]}>90 XP</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  )}
+                </>
+              ) : (
+                <View style={rm.noPoints}>
+                  <Ionicons name="alert-circle" size={20} color={C.primary} />
+                  <Text style={rm.noPointsTxt}>{t("exercises.notEnoughPoints", "Pas assez de points (30 XP requis)")}</Text>
+                </View>
+              )}
+
+              <TouchableOpacity
+                style={rm.quitBtn}
+                onPress={() => {
+                  setShowRefill(false);
+                  goResults();
+                }}
+              >
+                <Text style={rm.quitTxt}>{t("common.quit", "Quitter l'exercice")}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -1398,4 +1505,61 @@ const wx = StyleSheet.create({
     borderWidth: 1.5, borderColor: C.primary + "35",
   },
   specialKeyTxt: { fontSize: 18, fontWeight: "700", color: C.primary },
+});
+
+/* Refill Modal Styles */
+const rm = StyleSheet.create({
+  overlay: {
+    flex: 1, backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center", alignItems: "center", padding: 24,
+  },
+  card: {
+    width: "100%", backgroundColor: C.bg,
+    borderRadius: 32, padding: 32,
+    alignItems: "center", ...SHADOW,
+  },
+  header: { alignItems: "center", marginBottom: 24 },
+  iconCircle: {
+    width: 90, height: 90, borderRadius: 45,
+    backgroundColor: C.primaryLight,
+    alignItems: "center", justifyContent: "center",
+    marginBottom: 16,
+  },
+  title: { fontSize: 24, fontWeight: "900", color: C.text, marginBottom: 12 },
+  desc: {
+    fontSize: 15, color: C.textSub, textAlign: "center",
+    lineHeight: 22, paddingHorizontal: 10,
+  },
+  stats: {
+    flexDirection: "row", alignItems: "center", gap: 16,
+    backgroundColor: C.card, paddingHorizontal: 20, paddingVertical: 12,
+    borderRadius: 16, marginBottom: 32, borderWidth: 1, borderColor: C.border,
+  },
+  statItem: { flexDirection: "row", alignItems: "center", gap: 6 },
+  statTxt: { fontSize: 16, fontWeight: "800", color: C.text },
+  divider: { width: 1, height: 20, backgroundColor: C.border },
+  actions: { width: "100%", gap: 12 },
+  buyBtn: {
+    width: "100%", height: 60, borderRadius: 18,
+    backgroundColor: C.primary,
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: 24, ...SHADOW,
+  },
+  buyBtnAlt: {
+    backgroundColor: C.bg, borderWidth: 2, borderColor: C.primary,
+  },
+  buyTxt: { fontSize: 18, fontWeight: "800", color: "#FFF" },
+  priceTxt: { fontSize: 14, fontWeight: "700", color: "rgba(255,255,255,0.8)" },
+  btnDisabled: { opacity: 0.6 },
+  noPoints: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: C.primaryLight, padding: 16, borderRadius: 16,
+    marginBottom: 8,
+  },
+  noPointsTxt: { flex: 1, fontSize: 14, fontWeight: "700", color: C.primaryDark },
+  quitBtn: {
+    width: "100%", paddingVertical: 16,
+    alignItems: "center", marginTop: 8,
+  },
+  quitTxt: { fontSize: 15, fontWeight: "700", color: C.textSub },
 });

@@ -141,6 +141,16 @@ export class LevelService {
         return catWords.every((w) => w.userProgress[0]?.isCompleted);
       }).length;
 
+      // Count unlocked categories (at least one word unlocked)
+      const lessonsUnlockedCount = categoryNames.filter((catName) => {
+        const catWords = t.words.filter(
+          (w) => (w.category || 'Basics') === catName,
+        );
+        return catWords.some((w) => w.userProgress[0]?.isUnlocked);
+      }).length;
+
+      console.log(`[LevelService] Theme ${t.code}: lessonsCount=${lessonsCount}, completed=${lessonsCompletedCount}, unlocked=${lessonsUnlockedCount}`);
+
       // A theme unlocks only after the previous theme's final challenge is completed
       // AND its story video has been watched.
       let isThemeLocked = t.locked;
@@ -170,6 +180,7 @@ export class LevelService {
         lockHint: t.lock_hint,
         lessonsCount,
         lessonsCompleted: lessonsCompletedCount,
+        lessonsUnlocked: lessonsUnlockedCount,
         exercisesCount,
         exercisesCompleted,
         e3Completed,

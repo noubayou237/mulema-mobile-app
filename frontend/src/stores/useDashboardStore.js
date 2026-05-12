@@ -95,6 +95,33 @@ export const useDashboardStore = create((set) => ({
     }
   },
 
+  purchaseHearts: async (count = 1) => {
+    const { data } = useDashboardStore.getState();
+    if (!data) return null;
+
+    try {
+      const result = await dashboardService.purchaseHearts(count);
+      if (result.success) {
+        set((state) => ({
+          data: {
+            ...state.data,
+            hearts: result.hearts,
+            totalPoints: result.totalPoints,
+            nextRechargeIn: result.nextRechargeIn
+          },
+          error: null
+        }));
+        return result;
+      }
+      return null;
+    } catch (error) {
+      const msg = getFriendlyErrorMessage(error);
+      set({ error: msg });
+      Logger.error("[DashboardStore] purchaseHearts error:", msg);
+      throw error;
+    }
+  },
+
   // ═════════════════════════════════════════════════════════════
   // fetchLeaderboard — Charge le classement (indépendant de la langue)
   // ═════════════════════════════════════════════════════════════
