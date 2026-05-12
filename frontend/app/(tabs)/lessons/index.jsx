@@ -284,7 +284,7 @@ export default function ThemesScreen() {
     useCallback(() => {
       const langId = getPatrimonialId(activeLanguage, languages);
       if (langId) fetchThemes(langId, true);
-    }, [activeLanguage?.id])
+    }, [activeLanguage?.id, languages])
   );
 
   /* Bassa Custom Lessons Logic */
@@ -343,9 +343,13 @@ export default function ThemesScreen() {
       const theme = code === "jours" ? joursTheme : verbesTheme;
       const isThemeLocked = theme ? theme.locked : idx >= 2;
       const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
-      const lessonsUnlockedCount = theme ? (theme.lessonsUnlocked || 2) : 2;
-
-      const isUnlocked = !isThemeLocked && (themeIdx < lessonsUnlockedCount || themeIdx <= lessonsCompletedCount);
+      const categoryStatus = theme?.categories?.[themeIdx];
+      // Mirror the adventure tree: first 2 always unlocked, then use per-category DB flags
+      const isUnlocked = !isThemeLocked && (
+        themeIdx < 2 ||
+        categoryStatus?.isUnlocked ||
+        categoryStatus?.isCompleted
+      );
       return {
         ...item,
         lessonsCompleted: themeIdx < lessonsCompletedCount ? item.lessonsCount : 0,
@@ -374,9 +378,13 @@ export default function ThemesScreen() {
       const isThemeLocked = theme ? theme.locked : idx >= 2;
       const themeId = theme ? theme.id : item.id;
       const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
-      const lessonsUnlockedCount = theme ? (theme.lessonsUnlocked || 2) : 2;
-
-      const isUnlocked = !isThemeLocked && (themeIdx < lessonsUnlockedCount || themeIdx <= lessonsCompletedCount);
+      const categoryStatus = theme?.categories?.[themeIdx];
+      // Mirror the adventure tree: first 2 always unlocked, then use per-category DB flags
+      const isUnlocked = !isThemeLocked && (
+        themeIdx < 2 ||
+        categoryStatus?.isUnlocked ||
+        categoryStatus?.isCompleted
+      );
       return {
         ...item,
         themeId,
@@ -407,9 +415,13 @@ export default function ThemesScreen() {
       const isThemeLocked = theme ? theme.locked : idx >= 2;
       const themeId = theme ? theme.id : item.id;
       const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
-      const lessonsUnlockedCount = theme ? (theme.lessonsUnlocked || 2) : 2;
-
-      const isUnlocked = !isThemeLocked && (themeIdx < lessonsUnlockedCount || themeIdx <= lessonsCompletedCount);
+      const categoryStatus = theme?.categories?.[themeIdx];
+      // Mirror the adventure tree: first 2 always unlocked, then use per-category DB flags
+      const isUnlocked = !isThemeLocked && (
+        themeIdx < 2 ||
+        categoryStatus?.isUnlocked ||
+        categoryStatus?.isCompleted
+      );
       return {
         ...item,
         themeId,

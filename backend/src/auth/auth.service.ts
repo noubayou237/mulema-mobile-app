@@ -29,78 +29,105 @@ export class AuthService {
     username: string;
     name: string;
     password: string;
-    language?: string; // Ajouté
+    language?: string;
   }) {
     if (!body?.email || !body?.password || !body?.username || !body?.name) {
       throw new BadRequestException('Missing fields');
     }
 
+    const email = body.email.toLowerCase().trim();
+
+    // Check if an unverified user already exists with this email/username
+    // If they exist and are NOT verified, we allow deleting/re-creating them
+    // to resolve the "email already exists" blocker for failed signups.
+    const existingUser = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { email },
+          { username: body.username }
+        ]
+      }
+    });
+
+    if (existingUser) {
+      if (existingUser.isVerified) {
+        if (existingUser.email === email) {
+          throw new ConflictException('Un compte avec cet email existe déjà');
+        }
+        throw new ConflictException('Ce nom d\'utilisateur est déjà pris');
+      } else {
+        // User exists but is NOT verified. Delete them to allow a fresh registration attempt.
+        this.logger.warn(`Cleaning up unverified user ${existingUser.id} (${existingUser.email}) to allow fresh signup.`);
+        await this.prisma.user.delete({ where: { id: existingUser.id } });
+      }
+    }
+
     try {
       const passwordHash = await bcrypt.hash(body.password, 10);
-
-      const user = await this.prisma.user.create({
-        data: {
-          email: body.email,
-          username: body.username,
-          name: body.name,
-          passwordHash,
-          language: body.language || 'fr', // Par défaut français
-          // Initialiser les records liés
-          statistics: {
-            create: {
-              totalLearningTime: 0,
-              lessonsCompleted: 0,
-              exercisesCompleted: 0,
-              totalPrawns: 0,
-            },
-          },
-          rootsStreak: {
-            create: {
-              daysConnected: 0,
-              lastConnectedAt: new Date(Date.now() - 48 * 60 * 60 * 1000), // 2 days ago
-            },
-          },
-          cowry: {
-            create: {
-              maxCowries: 5,
-              currentCowries: 5,
-              rechargeTime: 0,
-            },
-          },
-        },
-      });
-
-      // Generate and send OTP for email verification
       const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-      await this.prisma.otp.create({
-        data: {
-          code: otpCode,
-          purpose: 'VERIFY_EMAIL',
-          userId: user.id,
-          expiresAt: new Date(Date.now() + 1000 * 60 * 10), // 10 min
-        },
-      });
+      // Start transaction
+      const user = await this.prisma.$transaction(async (tx) => {
+        const newUser = await tx.user.create({
+          data: {
+            email,
+            username: body.username,
+            name: body.name,
+            passwordHash,
+            language: body.language || 'fr',
+            statistics: {
+              create: {
+                totalLearningTime: 0,
+                lessonsCompleted: 0,
+                exercisesCompleted: 0,
+                totalPrawns: 0,
+              },
+            },
+            rootsStreak: {
+              create: {
+                daysConnected: 0,
+                lastConnectedAt: new Date(Date.now() - 48 * 60 * 60 * 1000),
+              },
+            },
+            cowry: {
+              create: {
+                maxCowries: 5,
+                currentCowries: 5,
+                rechargeTime: 0,
+              },
+            },
+            otps: {
+              create: {
+                code: otpCode,
+                purpose: 'VERIFY_EMAIL',
+                expiresAt: new Date(Date.now() + 1000 * 60 * 10), // 10 min
+              },
+            },
+          },
+        });
 
-      // Send OTP email
-      try {
-        await this.emailService.sendOtp(user.email, otpCode, 'verification');
-        this.logger.log(`OTP sent to ${user.email} for registration`);
-      } catch (emailError) {
-        this.logger.error(`Failed to send OTP to ${user.email}:`, emailError);
-        // Don't fail registration if email fails
-      }
+        // 🚨 IMPORTANT: Send OTP email INSIDE the transaction logic flow
+        // If this throws, the transaction will rollback.
+        try {
+          await this.emailService.sendOtp(newUser.email, otpCode, 'verification');
+          this.logger.log(`OTP sent to ${newUser.email} for registration`);
+        } catch (emailError) {
+          this.logger.error(`Failed to send OTP to ${newUser.email}. Rolling back.`, emailError);
+          // Throwing here triggers the rollback of the newUser creation.
+          throw new BadRequestException('Impossible d\'envoyer l\'email de vérification. Veuillez vérifier votre connexion.');
+        }
+
+        return newUser;
+      });
 
       return {
         id: user.id,
         email: user.email,
-        message:
-          'Registration successful. Please check your email for verification code.',
+        message: 'Registration successful. Please check your email for verification code.',
       };
     } catch (error) {
-      // Handle Prisma P2002 error (unique constraint violation)
       if (error.code === 'P2002') {
-        throw new ConflictException('Un compte avec cet email existe déjà');
+        throw new ConflictException('Un compte avec cet email ou nom d\'utilisateur existe déjà');
       }
       throw error;
     }
@@ -120,6 +147,10 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!user.isVerified) {
+      throw new UnauthorizedException('Account not verified');
     }
 
     const valid = await bcrypt.compare(body.password, user.passwordHash);
