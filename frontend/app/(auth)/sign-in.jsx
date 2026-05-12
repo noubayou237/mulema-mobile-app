@@ -88,6 +88,19 @@ const SignInScreen = () => {
     try {
       await login(email, password);
     } catch (err) {
+      if (err.response?.data?.message === "Account not verified") {
+        return Alert.alert(
+          t("errors.accountNotVerified"),
+          t("errors.unverifiedAccountHint"),
+          [
+            { text: t("common.cancel"), style: "cancel" },
+            { 
+              text: t("auth.verifyNow"), 
+              onPress: () => router.push({ pathname: "/(auth)/verify-email", params: { email } }) 
+            }
+          ]
+        );
+      }
       Alert.alert(t("common.error"), getFriendlyErrorMessage(err));
     } finally {
       setLoading(false);

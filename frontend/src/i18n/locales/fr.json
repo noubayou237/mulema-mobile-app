@@ -89,7 +89,8 @@
     "socialLoginError": "Erreur lors de la connexion sociale. Veuillez réessayer.",
     "dontHaveCode": "Vous n'avez pas reçu de code ?",
     "resendOtpIn": "Renvoyer dans {{count}}s",
-    "welcome": "Bienvenue"
+    "welcome": "Bienvenue",
+    "verifyNow": "Vérifier maintenant"
   },
   "profile": {
     "title": "Profil",
@@ -317,7 +318,9 @@
     "deleteFailed": "Impossible de supprimer le compte. Réessayez plus tard.",
     "noThemesRefresh": "Aucun thème disponible.\nTire vers le bas pour actualiser.",
     "noInternet": "Pas de connexion internet",
-    "backOnline": "Connexion rétablie"
+    "backOnline": "Connexion rétablie",
+    "accountNotVerified": "Compte non vérifié",
+    "unverifiedAccountHint": "Votre email n'a pas encore été vérifié. Vérifiez votre boîte de réception ou demandez un nouveau code."
   },
   "messages": {
     "accountCreated": "Compte créé avec succès !",

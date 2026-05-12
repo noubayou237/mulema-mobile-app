@@ -86,7 +86,8 @@
     "socialLoginError": "Social login error. Please try again.",
     "dontHaveCode": "Didn't receive a code?",
     "resendOtpIn": "Resend in {{count}}s",
-    "welcome": "Welcome"
+    "welcome": "Welcome",
+    "verifyNow": "Verify Now"
   },
   "profile": {
     "title": "Profile",
@@ -310,7 +311,9 @@
     "deleteConfirmType": "Please type 'DELETE' to confirm.",
     "deleteFailed": "Unable to delete account. Please try again later.",
     "noInternet": "No internet connection",
-    "backOnline": "Back online"
+    "backOnline": "Back online",
+    "accountNotVerified": "Account not verified",
+    "unverifiedAccountHint": "Your email has not been verified yet. Check your inbox or request a new code."
   },
   "messages": {
     "accountCreated": "Account created successfully!",

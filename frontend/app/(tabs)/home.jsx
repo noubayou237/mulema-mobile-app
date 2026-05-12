@@ -517,16 +517,18 @@ export default function HomeScreen() {
       const theme = code === "jours" ? joursTheme : verbesTheme;
       const isThemeLocked = theme ? theme.locked : idx >= 2;
       const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
-      const lessonsUnlockedCount = theme ? (theme.lessonsUnlocked || 2) : 2;
-      
-      // Use lessonsUnlockedCount from backend if available, fallback to 2
-      const isUnlocked = !isThemeLocked && (themeIdx < lessonsUnlockedCount || themeIdx <= lessonsCompletedCount);
+      const categoryStatus = theme?.categories?.[themeIdx];
+      // Mirror the adventure tree: first 2 always unlocked, then use per-category DB flags
+      const isUnlocked = !isThemeLocked && (
+        themeIdx < 2 ||
+        categoryStatus?.isUnlocked ||
+        categoryStatus?.isCompleted
+      );
 
       return {
         ...item,
         locked: !isUnlocked,
         lessonsCompleted: lessonsCompletedCount,
-        lessonsUnlocked: lessonsUnlockedCount,
       };
     });
   };
@@ -552,15 +554,18 @@ export default function HomeScreen() {
       const isThemeLocked = theme ? theme.locked : idx >= 2;
       const themeId = theme ? theme.id : item.id;
       const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
-      const lessonsUnlockedCount = theme ? (theme.lessonsUnlocked || 2) : 2;
-
-      const isUnlocked = !isThemeLocked && (themeIdx < lessonsUnlockedCount || themeIdx <= lessonsCompletedCount);
-      return { 
-        ...item, 
-        themeId, 
+      const categoryStatus = theme?.categories?.[themeIdx];
+      // Mirror the adventure tree: first 2 always unlocked, then use per-category DB flags
+      const isUnlocked = !isThemeLocked && (
+        themeIdx < 2 ||
+        categoryStatus?.isUnlocked ||
+        categoryStatus?.isCompleted
+      );
+      return {
+        ...item,
+        themeId,
         locked: !isUnlocked,
-        lessonsCompleted: lessonsCompletedCount, 
-        lessonsUnlocked: lessonsUnlockedCount,
+        lessonsCompleted: lessonsCompletedCount,
       };
     });
   };
@@ -587,15 +592,18 @@ export default function HomeScreen() {
       const isThemeLocked = theme ? theme.locked : idx >= 2;
       const themeId = theme ? theme.id : item.id;
       const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
-      const lessonsUnlockedCount = theme ? (theme.lessonsUnlocked || 2) : 2;
-
-      const isUnlocked = !isThemeLocked && (themeIdx < lessonsUnlockedCount || themeIdx <= lessonsCompletedCount);
-      return { 
-        ...item, 
-        themeId, 
+      const categoryStatus = theme?.categories?.[themeIdx];
+      // Mirror the adventure tree: first 2 always unlocked, then use per-category DB flags
+      const isUnlocked = !isThemeLocked && (
+        themeIdx < 2 ||
+        categoryStatus?.isUnlocked ||
+        categoryStatus?.isCompleted
+      );
+      return {
+        ...item,
+        themeId,
         locked: !isUnlocked,
-        lessonsCompleted: lessonsCompletedCount, 
-        lessonsUnlocked: lessonsUnlockedCount,
+        lessonsCompleted: lessonsCompletedCount,
       };
     });
   };
@@ -721,6 +729,14 @@ export default function HomeScreen() {
                 <Text style={[Typo.titleSm, { color: RED }]}>{t("home.seeAll")}</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Syncing indicator when refreshing in background */}
+            {tLoading && lessonDisplayItems.length > 0 && (
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 6 }}>
+                <ActivityIndicator size="small" color={RED} style={{ marginRight: 6 }} />
+                <Text style={[Typo.labelMd, { color: Colors.textTertiary }]}>Synchronisation...</Text>
+              </View>
+            )}
 
             {loading && lessonDisplayItems.length === 0 ? (
               <ActivityIndicator

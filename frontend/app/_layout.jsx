@@ -60,14 +60,24 @@ function AuthGate({ children }) {
     if (isAuthenticated) {
       const { user } = useAuthStore.getState();
 
-      // Fast path: AsyncStorage reads are ~10ms — show the app immediately.
-      loadActiveLanguage().finally(() => setIsReady(true));
-
-      // Background: refresh languages from API then reconcile (non-blocking).
-      fetchLanguages()
-        .then(() => syncWithUser(user))
-        .then(() => loadActiveLanguage())
-        .catch(() => {});
+      // Ensure stable state before setting ready
+      (async () => {
+        try {
+          // 1. Initial local load
+          await loadActiveLanguage();
+          
+          // 2. Fetch fresh languages and sync
+          await fetchLanguages();
+          await syncWithUser(user);
+          
+          // 3. Final reload to pick up synced state
+          await loadActiveLanguage();
+        } catch (err) {
+          Logger.warn("[AuthGate] Sync error:", err);
+        } finally {
+          setIsReady(true);
+        }
+      })();
     } else {
       setIsReady(true);
     }

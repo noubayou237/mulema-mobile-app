@@ -149,6 +149,18 @@ export class LevelService {
         return catWords.some((w) => w.userProgress[0]?.isUnlocked);
       }).length;
 
+      // Per-category unlock/completion status — same source of truth as the adventure tree
+      const categories = categoryNames.map((catName) => {
+        const catWords = t.words.filter(
+          (w) => (w.category || 'Basics') === catName,
+        );
+        return {
+          name: catName,
+          isUnlocked: catWords.some((w) => w.userProgress[0]?.isUnlocked),
+          isCompleted: catWords.every((w) => w.userProgress[0]?.isCompleted),
+        };
+      });
+
       console.log(`[LevelService] Theme ${t.code}: lessonsCount=${lessonsCount}, completed=${lessonsCompletedCount}, unlocked=${lessonsUnlockedCount}`);
 
       // A theme unlocks only after the previous theme's final challenge is completed
@@ -181,6 +193,7 @@ export class LevelService {
         lessonsCount,
         lessonsCompleted: lessonsCompletedCount,
         lessonsUnlocked: lessonsUnlockedCount,
+        categories,
         exercisesCount,
         exercisesCompleted,
         e3Completed,

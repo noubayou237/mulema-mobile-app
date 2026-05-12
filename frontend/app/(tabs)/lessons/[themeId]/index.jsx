@@ -295,7 +295,7 @@ export default function ThemeDetailScreen() {
   // appear after returning from an exercise without needing a full remount.
   useFocusEffect(
     useCallback(() => {
-      if (themeId) fetchLessons(themeId);
+      if (themeId) fetchLessons(themeId, true);
     }, [themeId])
   );
 

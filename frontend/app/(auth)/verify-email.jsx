@@ -62,13 +62,13 @@ const DigitBox = ({ digit, focused }) => {
           backgroundColor: focused
             ? Colors.primary + "14"
             : digit
-            ? Colors.primary + "0A"
-            : Colors.surfaceContainerLow,
+              ? Colors.primary + "0A"
+              : Colors.surfaceContainerLow,
           borderColor: focused
             ? Colors.primary
             : digit
-            ? Colors.primary + "40"
-            : Colors.transparent,
+              ? Colors.primary + "40"
+              : Colors.transparent,
           borderWidth: focused || digit ? 2 : 0,
         },
         focused && Shadow.sm,
@@ -104,11 +104,11 @@ const VerifyEmail = () => {
   const countdownRef = useRef(null);
 
   // ── Animations ──
-  const heroAnim   = useRef(new Animated.Value(0)).current;
-  const titleAnim  = useRef(new Animated.Value(0)).current;
-  const formAnim   = useRef(new Animated.Value(0)).current;
+  const heroAnim = useRef(new Animated.Value(0)).current;
+  const titleAnim = useRef(new Animated.Value(0)).current;
+  const formAnim = useRef(new Animated.Value(0)).current;
   const footerAnim = useRef(new Animated.Value(0)).current;
-  const heroScale  = useRef(new Animated.Value(0.7)).current;
+  const heroScale = useRef(new Animated.Value(0.7)).current;
 
   useEffect(() => {
     Animated.stagger(120, [
@@ -127,19 +127,36 @@ const VerifyEmail = () => {
     return () => { if (countdownRef.current) clearInterval(countdownRef.current); };
   }, [footerAnim, formAnim, heroAnim, heroScale, titleAnim, checkClipboard]);
 
-  // ── Clipboard Detection ──
+  // ── Clipboard Detection & Auto-paste (iOS focused) ──
   const checkClipboard = async () => {
     try {
       const text = await Clipboard.getStringAsync();
       const clean = text?.trim();
-      // If it's a 6-digit number and we don't have a code yet
-      if (clean && /^\d{6}$/.test(clean) && code === "") {
+
+      // If it's a 6-digit number and current code is empty or partially filled
+      if (clean && /^\d{6}$/.test(clean) && code !== clean) {
+        // Log it for debugging in dev
+
         setCode(clean);
+
+        // On iOS, users expect auto-paste to also trigger verification if the box is full
+        if (clean.length === CODE_LENGTH) {
+          // Small delay to let the UI update and show the digits before jumping
+          setTimeout(() => {
+            handleVerification(clean);
+          }, 400);
+        }
       }
     } catch (_e) {
       // Ignore clipboard errors
     }
   };
+
+  // Poll clipboard when screen is active/focused to catch background copy
+  useEffect(() => {
+    const interval = setInterval(checkClipboard, 2000);
+    return () => clearInterval(interval);
+  }, [code]);
 
   // ── Countdown — ORIGINAL LOGIC ──
   const startCountdown = () => {
@@ -171,19 +188,21 @@ const VerifyEmail = () => {
   };
 
   // ── Verify — ORIGINAL LOGIC ──
-  const handleVerification = async () => {
-    if (!code.trim()) return Alert.alert(t("errors.codeRequired"), t("errors.enterCode"));
+  const handleVerification = async (manualCode) => {
+    const finalCode = (typeof manualCode === "string" ? manualCode : code).trim();
+    if (!finalCode) return Alert.alert(t("errors.codeRequired"), t("errors.enterCode"));
+
     setLoading(true);
     try {
       if (flow === "reset") {
         router.push({
           pathname: "/(auth)/ResetPasswordScreen",
-          params: { email, otpCode: code.trim() },
+          params: { email, otpCode: finalCode },
         });
       } else {
         const response = await api.post("/auth/verify-email-and-login", {
           email,
-          otpCode: code.trim(),
+          otpCode: finalCode,
         });
         Alert.alert(t("common.success"), t("messages.emailVerified"));
         await autoLogin(response.data);
@@ -238,11 +257,11 @@ const VerifyEmail = () => {
         >
           {/* ── Header ── */}
           <View style={s.header}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => {
                 if (router.canGoBack()) router.back();
                 else router.replace("/(auth)/sign-in");
-              }} 
+              }}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
               <Ionicons name="arrow-back" size={24} color={Colors.onSurface} />

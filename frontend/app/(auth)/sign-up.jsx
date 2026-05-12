@@ -191,6 +191,22 @@ const SignUpScreen = () => {
       });
     } catch (err) {
       const message = getFriendlyErrorMessage(err);
+      
+      // If email exists, check if it's unverified and offer to verify
+      if (err.response?.status === 409 || message === t("errors.emailAlreadyExists")) {
+        return Alert.alert(
+          t("signUp.error.title"),
+          message,
+          [
+            { text: t("common.cancel"), style: "cancel" },
+            { 
+              text: t("auth.verifyNow"), 
+              onPress: () => router.push({ pathname: "/(auth)/verify-email", params: { email: form.email, flow: "verify" } }) 
+            }
+          ]
+        );
+      }
+      
       Alert.alert(t("signUp.error.title"), message);
     } finally {
       setLoading(false);

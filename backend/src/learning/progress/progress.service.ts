@@ -18,7 +18,7 @@ export class ProgressService {
     if (words.length === 0) return;
 
     // Identify the first two categories
-    const categories = Array.from(new Set(words.map(w => w.category || 'Uncategorized')));
+    const categories = Array.from(new Set(words.map(w => w.category || 'Basics')));
     const unlockedCategories = [categories[0], categories[1]].filter(Boolean);
 
     await this.prisma.$transaction(
@@ -28,13 +28,13 @@ export class ProgressService {
             userId_mulemWordId: { userId, mulemWordId: word.id },
           },
           update: {
-            ...(unlockedCategories.includes(word.category || 'Uncategorized') ? { isUnlocked: true } : {})
+            ...(unlockedCategories.includes(word.category || 'Basics') ? { isUnlocked: true } : {})
           },
           create: {
             userId,
             mulemWordId: word.id,
             // Unlock first two categories by default
-            isUnlocked: unlockedCategories.includes(word.category || 'Uncategorized'),
+            isUnlocked: unlockedCategories.includes(word.category || 'Basics'),
             isCompleted: false,
             stars: 0,
           },
@@ -115,7 +115,7 @@ export class ProgressService {
     const groupedWords: Record<string, string[]> = {};
 
     allWords.forEach((word) => {
-      const cat = word.category || 'Uncategorized';
+      const cat = word.category || 'Basics';
       if (!groupedWords[cat]) {
         groupedWords[cat] = [];
         categories.push(cat);
@@ -204,7 +204,7 @@ export class ProgressService {
       const categories: string[] = [];
       const groupedWords: Record<string, string[]> = {};
       allWords.forEach((word) => {
-        const cat = word.category || 'Uncategorized';
+        const cat = word.category || 'Basics';
         if (!groupedWords[cat]) {
           groupedWords[cat] = [];
           categories.push(cat);

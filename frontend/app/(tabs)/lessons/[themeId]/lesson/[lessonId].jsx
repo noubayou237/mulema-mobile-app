@@ -170,6 +170,16 @@ export default function LessonScreen() {
   const langName = activeLanguage?.name ?? "Duala";
 
   /* Language enrichment — local audio + authoritative text */
+  const langCode = (activeLanguage?.name ?? activeLanguage?.code ?? "duala")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z]/g, "")
+    .trim();
+
+  // Flag to identify if we just unlocked the final challenge gate
+  const isGateUnlock = lessonIdx != null && lessons && lessonIdx === lessons.length - 1;
+
   const isBassa = (activeLanguage?.name ?? "").toLowerCase().includes("bassa");
   const isDuala = (activeLanguage?.name ?? "").toLowerCase().includes("duala");
   const isGhomala = (activeLanguage?.name ?? "").toLowerCase().includes("ghomala");
@@ -225,18 +235,17 @@ export default function LessonScreen() {
     }
   }, [showGatePrompt]);
 
-  /* Navigation */
   const goNext = () => {
-    if (isLast) {
-      // Last lesson studied — return to the lessons overview tab
-      router.replace(`/(tabs)/lessons`);
+    // Bassa progression gate: after Lesson 2 (index 1) and each subsequent lesson
+    // (including the LAST one), show a prompt to do a mixed exercise to unlock next.
+    if (isBassa && lessonIdx >= 1) {
+      setShowGatePrompt(true);
       return;
     }
 
-    // Bassa progression gate: after Lesson 2 (index 1) and each subsequent lesson,
-    // show a professional prompt to do a mixed exercise session to unlock the next node.
-    if (isBassa && lessonIdx >= 1) {
-      setShowGatePrompt(true);
+    if (isLast) {
+      // Non-Bassa last lesson — return to the lessons overview tab
+      router.replace(`/(tabs)/lessons`);
       return;
     }
 
@@ -280,6 +289,8 @@ export default function LessonScreen() {
   const progressAnim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.timing(progressAnim, {
+      toValue: progressPct,
+      duration: 500,
       toValue: progressPct,
       duration: 500,
       useNativeDriver: false,
@@ -471,7 +482,12 @@ export default function LessonScreen() {
             style={s.continueBtn}
           >
             <Text style={s.continueTxt}>
-              {isLast ? t("lessons.finishLessons") : t("common.continue")}
+              {isLast
+                ? (isBassa
+                  ? t("lessons.takeExercise", "Passer l'exercice")
+                  : t("lessons.finishLessons"))
+                : t("common.continue")
+              }
             </Text>
             <Ionicons name="arrow-forward" size={20} color={Colors.onPrimary} style={{ marginLeft: 8 }} />
           </TouchableOpacity>
@@ -494,18 +510,25 @@ export default function LessonScreen() {
           <Animated.View style={[cta.wrap, { transform: [{ translateY: gateSlideAnim }], zIndex: 100 }]}>
             <View style={cta.accentBar} />
             <View style={cta.body}>
-              {/* <Text style={cta.eyebrow}>
-                {uiLang.startsWith("en") ? "Action Required" : "Action Requise"}
-              </Text> */}
               <Text style={cta.heading}>
-                {uiLang.startsWith("en")
-                  ? `Take an exercise to unlock Lesson ${lessonIdx + 2}`
-                  : `Faites un exercice pour débloquer la leçon ${lessonIdx + 2}`}
+                {isLast
+                  ? (uiLang.startsWith("en")
+                    ? "Take an exercise to unlock the Final Challenge!"
+                    : "Faites un exercice pour débloquer le Défi Final !")
+                  : (uiLang.startsWith("en")
+                    ? `Take an exercise to unlock Lesson ${lessonIdx + 2}`
+                    : `Faites un exercice pour débloquer la leçon ${lessonIdx + 2}`)
+                }
               </Text>
               <Text style={cta.sub}>
-                {uiLang.startsWith("en")
-                  ? "Click the button to start your exercise and continue your learning journey."
-                  : "Cliquez sur le bouton pour commencer votre exercice et continuer votre apprentissage."}
+                {isLast
+                  ? (uiLang.startsWith("en")
+                    ? "Pass this exercise to unlock the final challenge and complete the theme!"
+                    : "Réussissez cet exercice pour débloquer le défi final et terminer le thème !")
+                  : (uiLang.startsWith("en")
+                    ? "Click the button to start your exercise and continue your learning journey."
+                    : "Cliquez sur le bouton pour commencer votre exercice et continuer votre apprentissage.")
+                }
               </Text>
             </View>
             <TouchableOpacity

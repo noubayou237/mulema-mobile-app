@@ -40,8 +40,8 @@ export const getFriendlyErrorMessage = (error) => {
       if (msg === "Invalid credentials") {
         return t("errors.invalidCredentials");
       }
-      if (msg === "Invalid or expired OTP") {
-        return t("errors.verifyFailed");
+      if (msg === "Account not verified") {
+        return t("errors.accountNotVerified");
       }
       return t("auth.passwordResetError"); // Generic auth error catch
     }
