@@ -156,8 +156,6 @@ export const useLanguageStore = create((set, get) => ({
     if (!found) return;
 
     await get().setActiveLanguage(found);
-    set({ hasSeenIntro: true });
-    AsyncStorage.setItem("hasSeenIntro", "true").catch(() => {});
   },
 
   reset: async () => {
@@ -168,6 +166,14 @@ export const useLanguageStore = create((set, get) => ({
     _languagesFetchPromise = null;
     _languagesLastFetch = 0;
     set({ activeLanguage: null, hasSeenIntro: false, languages: [], isLoaded: false });
+  },
+
+  getPatrimonialId: (lang, allLangs) => {
+    const l = lang || get().activeLanguage;
+    const langs = allLangs || get().languages;
+    if (l?.type === "patrimonial") return l.id;
+    const p = (langs || []).find((lan) => lan.type === "patrimonial");
+    return p?.id ?? null;
   },
 }));
 

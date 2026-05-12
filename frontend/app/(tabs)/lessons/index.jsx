@@ -59,6 +59,60 @@ const icon = (code) => ICONS[(code ?? "").toLowerCase()] ?? "book-outline";
 
 
 /* ════════════════════════════════════════════════════════════════
+   SYNC BAR — subtle animated indicator during background refresh
+   ════════════════════════════════════════════════════════════════ */
+const SyncBar = () => {
+  const slideAnim = useRef(new Animated.Value(-width)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.timing(slideAnim, {
+        toValue: width,
+        duration: 1200,
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true,
+      })
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
+
+  return (
+    <View style={syncStyles.wrap}>
+      <View style={syncStyles.track}>
+        <Animated.View
+          style={[syncStyles.bar, { transform: [{ translateX: slideAnim }] }]}
+        />
+      </View>
+      <View style={syncStyles.labelRow}>
+        <ActivityIndicator size="small" color={RED} style={{ marginRight: 6 }} />
+        <Text style={syncStyles.label}>Synchronisation...</Text>
+      </View>
+    </View>
+  );
+};
+
+const syncStyles = StyleSheet.create({
+  wrap: { paddingHorizontal: 16, paddingBottom: 4 },
+  track: {
+    height: 3, backgroundColor: RED + "15",
+    borderRadius: 2, overflow: "hidden",
+  },
+  bar: {
+    width: width * 0.4, height: "100%",
+    backgroundColor: RED, borderRadius: 2,
+  },
+  labelRow: {
+    flexDirection: "row", alignItems: "center",
+    justifyContent: "center", paddingTop: 4,
+  },
+  label: {
+    fontSize: 11, fontFamily: "Nunito-Regular",
+    color: TEXT_SUB,
+  },
+});
+
+/* ════════════════════════════════════════════════════════════════
    THEME CARD (Leçons tab)
    ════════════════════════════════════════════════════════════════ */
 const ThemeCard = ({ theme, index, onPress, onPressIn }) => {
@@ -240,7 +294,6 @@ export default function ThemesScreen() {
   const isGhomala = (activeLanguage?.name ?? "").toLowerCase().includes("ghomala") ||
                     (activeLanguage?.name ?? "").toLowerCase().includes("ghomal");
   const getBassaLessons = () => {
-    // Rely on the first theme ID to avoid missing theme crashes
     const defaultThemeId = themes && themes.length > 0 ? themes[0].id : "dummy";
 
     const joursTheme = (themes || []).find((t) => t.code === "jours" || (t.name && t.name.toLowerCase().includes("jour")));
@@ -280,13 +333,25 @@ export default function ThemesScreen() {
       });
     });
 
-    const completed = verbesTheme?.lessonsCompleted || 0;
+    // Use per-theme counters from backend
+    const counts = {};
+    return res.map((item, idx) => {
+      const code = item.code;
+      if (counts[code] === undefined) counts[code] = 0;
+      const themeIdx = counts[code]++;
 
-    return res.map((item, idx) => ({
-      ...item,
-      lessonsCompleted: idx < completed ? item.lessonsCount : 0, 
-      locked: idx > (completed + 1),
-    }));
+      const theme = code === "jours" ? joursTheme : verbesTheme;
+      const isThemeLocked = theme ? theme.locked : idx >= 2;
+      const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
+      const lessonsUnlockedCount = theme ? (theme.lessonsUnlocked || 2) : 2;
+
+      const isUnlocked = !isThemeLocked && (themeIdx < lessonsUnlockedCount || themeIdx <= lessonsCompletedCount);
+      return {
+        ...item,
+        lessonsCompleted: themeIdx < lessonsCompletedCount ? item.lessonsCount : 0,
+        locked: !isUnlocked,
+      };
+    });
   };
 
   /* Duala Custom Lessons Logic */
@@ -299,7 +364,26 @@ export default function ThemesScreen() {
       { id: "duala_chiffres", name: "Les chiffres 1-9 en duala",    nameLocal: "Langa",        code: "chiffres", lessonsCount: 9 },
       { id: "duala_couleurs", name: "Les couleurs",                 nameLocal: "Langi",        code: "couleurs", lessonsCount: 7 },
     ];
-    return items.map((item, idx) => ({ ...item, themeId: item.id, lessonsCompleted: 0, locked: idx >= 2 }));
+    const counts = {};
+    return items.map((item, idx) => {
+      const code = item.code || item.id;
+      if (counts[code] === undefined) counts[code] = 0;
+      const themeIdx = counts[code]++;
+
+      const theme = (themes || []).find(t => t.code === item.code);
+      const isThemeLocked = theme ? theme.locked : idx >= 2;
+      const themeId = theme ? theme.id : item.id;
+      const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
+      const lessonsUnlockedCount = theme ? (theme.lessonsUnlocked || 2) : 2;
+
+      const isUnlocked = !isThemeLocked && (themeIdx < lessonsUnlockedCount || themeIdx <= lessonsCompletedCount);
+      return {
+        ...item,
+        themeId,
+        lessonsCompleted: themeIdx < lessonsCompletedCount ? item.lessonsCount : 0,
+        locked: !isUnlocked,
+      };
+    });
   };
 
   /* Ghomala Custom Lessons Logic */
@@ -313,7 +397,26 @@ export default function ThemesScreen() {
       { id: "ghomala_marcher",  name: "Le verbe marcher en ghomala",          code: "verbes",   lessonsCount: 6  },
       { id: "ghomala_acheter",  name: "Le verbe acheter en ghomala",          code: "verbes",   lessonsCount: 6  },
     ];
-    return items.map((item, idx) => ({ ...item, themeId: item.id, lessonsCompleted: 0, locked: idx >= 2 }));
+    const counts = {};
+    return items.map((item, idx) => {
+      const code = item.code || item.id;
+      if (counts[code] === undefined) counts[code] = 0;
+      const themeIdx = counts[code]++;
+
+      const theme = (themes || []).find(t => t.code === item.code);
+      const isThemeLocked = theme ? theme.locked : idx >= 2;
+      const themeId = theme ? theme.id : item.id;
+      const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
+      const lessonsUnlockedCount = theme ? (theme.lessonsUnlocked || 2) : 2;
+
+      const isUnlocked = !isThemeLocked && (themeIdx < lessonsUnlockedCount || themeIdx <= lessonsCompletedCount);
+      return {
+        ...item,
+        themeId,
+        lessonsCompleted: themeIdx < lessonsCompletedCount ? item.lessonsCount : 0,
+        locked: !isUnlocked,
+      };
+    });
   };
 
   const displayItems = isBassa ? getBassaLessons() : isDuala ? getDualaLessons() : isGhomala ? getGhomalaLessons() : themes;
@@ -343,9 +446,14 @@ export default function ThemesScreen() {
             <Ionicons name="heart" size={13} color="#E53E3E" />
             <Text style={[s.badgeXP, { color: "#E53E3E" }]}>{dash?.hearts ?? 5}</Text>
           </View>
-          <View style={s.avatar} />
+        <View style={s.avatar} />
         </View>
       </View>
+
+      {/* ── Syncing indicator (background refresh) ── */}
+      {isLoading && displayItems.length > 0 && (
+        <SyncBar />
+      )}
 
       <ScrollView
         contentContainerStyle={s.scroll}

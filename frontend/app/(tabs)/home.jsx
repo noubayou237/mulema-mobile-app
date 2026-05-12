@@ -722,6 +722,14 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
 
+            {/* Syncing indicator when refreshing in background */}
+            {tLoading && lessonDisplayItems.length > 0 && (
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 6 }}>
+                <ActivityIndicator size="small" color={RED} style={{ marginRight: 6 }} />
+                <Text style={[Typo.labelMd, { color: Colors.textTertiary }]}>Synchronisation...</Text>
+              </View>
+            )}
+
             {loading && lessonDisplayItems.length === 0 ? (
               <ActivityIndicator
                 size="large"

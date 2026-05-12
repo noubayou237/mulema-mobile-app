@@ -273,7 +273,15 @@ export const useThemeStore = create((set, get) => ({
 
     // The final challenge (e1) is unlocked only when all regular category 
     // nodes in the tree are completed.
+    const completedCount = lessonsList.filter(l => l.isCompleted).length;
     const allCompleted = lessonsList.every(l => l.isCompleted);
+    
+    if (allCompleted) {
+      Logger.info(`[ThemeStore] All ${lessonsList.length} categories completed. Final challenge unlocked!`);
+    } else {
+      Logger.debug(`[ThemeStore] Final challenge locked: ${completedCount}/${lessonsList.length} categories completed.`);
+    }
+
     return { e1: allCompleted, e2: allCompleted, e3: allCompleted };
   },
 
