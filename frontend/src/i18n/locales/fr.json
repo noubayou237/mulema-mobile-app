@@ -41,7 +41,10 @@
     "tip": "Astuce",
     "retry": "Réessayer",
     "progress": "Progression",
-    "comingSoon": "Bientôt disponible"
+    "comingSoon": "Bientôt disponible",
+    "heart": "Cœur",
+    "hearts": "Cœurs",
+    "quit": "Quitter"
   },
   "nav": {
     "lessons": "Leçons",
@@ -284,7 +287,11 @@
     "tipIsSaid": "se dit",
     "listenAndWrite": "Écoutez et écrivez en {{lang}}",
     "tapToListen": "Appuyez pour écouter",
-    "listenHint": "Écoutez l'audio et écrivez le mot"
+    "listenHint": "Écoutez l'audio et écrivez le mot",
+    "refillTitle": "Plus de cœurs !",
+    "refillDesc": "Tu n'as plus de vies pour continuer. Échange tes points contre des cœurs pour finir l'exercice.",
+    "hearts": "Cœurs",
+    "notEnoughPoints": "Pas assez de points (30 XP requis)"
   },
   "errors": {
     "networkError": "Erreur réseau. Veuillez vérifier votre connexion.",

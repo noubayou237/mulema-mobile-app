@@ -39,6 +39,16 @@ export const dashboardService = {
     const { data } = await api.put("/user/cowries", { amount });
     return data;
   },
+
+  /**
+   * Purchase hearts using points (XP)
+   * PUT /user/purchase-heart
+   * @param {number} count - Number of hearts to buy (30 XP per heart)
+   */
+  purchaseHearts: async (count = 1) => {
+    const { data } = await api.put("/user/purchase-heart", { count });
+    return data;
+  },
 };
 
 export default dashboardService;

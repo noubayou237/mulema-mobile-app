@@ -25,6 +25,7 @@ import {
   Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 
@@ -350,32 +351,44 @@ export default function HomeScreen() {
     return p?.id ?? null;
   };
 
+  // Fetch basic data once when activeLanguage changes
   useEffect(() => {
-    const start = Date.now();
     const init = async () => {
       try {
         if (activeLanguage) {
           const langId = getPatrimonialId(activeLanguage, languages);
-          const tasks = [fetchDashboard()];
-          if (langId) tasks.push(fetchThemes(langId));
-          await Promise.all(tasks);
+          if (langId) {
+            // Initial load without forcing unless store is empty
+            fetchDashboard();
+            fetchThemes(langId);
+          }
         } else {
           const langs = await fetchLanguages().catch(() => []);
           const lang = await loadActiveLanguage();
           const langId2 = getPatrimonialId(lang, langs);
-          const tasks = [fetchDashboard()];
-          if (langId2) tasks.push(fetchThemes(langId2));
-          await Promise.all(tasks);
+          if (langId2) {
+            fetchDashboard();
+            fetchThemes(langId2);
+          }
         }
-        const total = Date.now() - start;
-        if (__DEV__ || total > 1000) {
-        }
-      } catch (err) {
-        // Error handling handled by stores
-      }
+      } catch (err) {}
     };
     init();
   }, [activeLanguage]);
+
+  // REFRESH on Screen Focus (When returning from an exercise)
+  useFocusEffect(
+    useCallback(() => {
+      if (activeLanguage) {
+        const langId = getPatrimonialId(activeLanguage, languages);
+        if (langId) {
+          // Force fetch fresh data from backend
+          fetchDashboard();
+          fetchThemes(langId, true); 
+        }
+      }
+    }, [activeLanguage, languages])
+  );
 
   useEffect(() => {
     if (themes.length > 0 && !tLoading) {
@@ -473,7 +486,6 @@ export default function HomeScreen() {
         code: "jours",
         themeId: joursId,
         lessonsCount: 7,
-        lessonsCompleted: 0,
       }
     ];
 
@@ -492,14 +504,31 @@ export default function HomeScreen() {
         code: "verbes",
         themeId: verbesId,
         lessonsCount: 6,
-        lessonsCompleted: 0,
       });
     });
 
-    return res.map((item, idx) => ({
-      ...item,
-      locked: idx >= 2,
-    }));
+    const counts = {};
+
+    return res.map((item, idx) => {
+      const code = item.code;
+      if (counts[code] === undefined) counts[code] = 0;
+      const themeIdx = counts[code]++;
+
+      const theme = code === "jours" ? joursTheme : verbesTheme;
+      const isThemeLocked = theme ? theme.locked : idx >= 2;
+      const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
+      const lessonsUnlockedCount = theme ? (theme.lessonsUnlocked || 2) : 2;
+      
+      // Use lessonsUnlockedCount from backend if available, fallback to 2
+      const isUnlocked = !isThemeLocked && (themeIdx < lessonsUnlockedCount || themeIdx <= lessonsCompletedCount);
+
+      return {
+        ...item,
+        locked: !isUnlocked,
+        lessonsCompleted: lessonsCompletedCount,
+        lessonsUnlocked: lessonsUnlockedCount,
+      };
+    });
   };
 
   /* Duala Custom Lessons Logic */
@@ -512,7 +541,28 @@ export default function HomeScreen() {
       { id: "duala_chiffres", name: "Les chiffres 1-9 en duala", nameLocal: "Langa", code: "chiffres", lessonsCount: 9 },
       { id: "duala_couleurs", name: "Les couleurs", nameLocal: "Langi", code: "couleurs", lessonsCount: 7 },
     ];
-    return items.map((item, idx) => ({ ...item, themeId: item.id, lessonsCompleted: 0, locked: idx >= 2 }));
+    
+    const counts = {};
+    return items.map((item, idx) => {
+      const code = item.code || item.id;
+      if (counts[code] === undefined) counts[code] = 0;
+      const themeIdx = counts[code]++;
+
+      const theme = (themes || []).find(t => t.code === item.code);
+      const isThemeLocked = theme ? theme.locked : idx >= 2;
+      const themeId = theme ? theme.id : item.id;
+      const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
+      const lessonsUnlockedCount = theme ? (theme.lessonsUnlocked || 2) : 2;
+
+      const isUnlocked = !isThemeLocked && (themeIdx < lessonsUnlockedCount || themeIdx <= lessonsCompletedCount);
+      return { 
+        ...item, 
+        themeId, 
+        locked: !isUnlocked,
+        lessonsCompleted: lessonsCompletedCount, 
+        lessonsUnlocked: lessonsUnlockedCount,
+      };
+    });
   };
 
   /* Ghomala Custom Lessons Logic */
@@ -526,7 +576,28 @@ export default function HomeScreen() {
       { id: "ghomala_marcher", name: "Le verbe marcher en ghomala", code: "verbes", lessonsCount: 6 },
       { id: "ghomala_acheter", name: "Le verbe acheter en ghomala", code: "verbes", lessonsCount: 6 },
     ];
-    return items.map((item, idx) => ({ ...item, themeId: item.id, lessonsCompleted: 0, locked: idx >= 2 }));
+
+    const counts = {};
+    return items.map((item, idx) => {
+      const code = item.code || item.id;
+      if (counts[code] === undefined) counts[code] = 0;
+      const themeIdx = counts[code]++;
+
+      const theme = (themes || []).find(t => t.code === item.code);
+      const isThemeLocked = theme ? theme.locked : idx >= 2;
+      const themeId = theme ? theme.id : item.id;
+      const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
+      const lessonsUnlockedCount = theme ? (theme.lessonsUnlocked || 2) : 2;
+
+      const isUnlocked = !isThemeLocked && (themeIdx < lessonsUnlockedCount || themeIdx <= lessonsCompletedCount);
+      return { 
+        ...item, 
+        themeId, 
+        locked: !isUnlocked,
+        lessonsCompleted: lessonsCompletedCount, 
+        lessonsUnlocked: lessonsUnlockedCount,
+      };
+    });
   };
 
   const lessonDisplayItems = isBassa ? getBassaLessons() : isDuala ? getDualaLessons() : isGhomala ? getGhomalaLessons() : themes;
