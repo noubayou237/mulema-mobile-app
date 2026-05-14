@@ -35,9 +35,6 @@ import { useLanguageStore } from "../../src/stores/useLanguageStore";
 import { useThemeStore } from "../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../src/stores/useDashboardStore";
 import { DrawerContent } from "../../src/components/layout/DrawerContent";
-import { getDualaVirtualData } from "../data/dualaLessonsData";
-import { getGhomalaVirtualData } from "../data/ghomalaLessonsData";
-
 import { useTranslation } from "react-i18next";
 import { changeLanguage, getCurrentLanguage } from "../../src/i18n";
 
@@ -333,7 +330,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { activeLanguage, languages, fetchLanguages, loadActiveLanguage } = useLanguageStore();
-  const { themes, lessons, isLoading: tLoading, fetchThemes, fetchLessons } = useThemeStore();
+  const { themes, lessons, isLoading: tLoading, fetchThemes, fetchLessons, setVirtualData } = useThemeStore();
   const { data: dash, isLoading: dLoading, error: dashError, fetchDashboard } = useDashboardStore();
 
   const { t, i18n } = useTranslation();
@@ -461,11 +458,10 @@ export default function HomeScreen() {
   };
 
   /* ── Language detection ── */
-  const isBassa = (activeLanguage?.name ?? "").toLowerCase().includes("bassa");
-  const isDuala = (activeLanguage?.name ?? "").toLowerCase().includes("duala") ||
-    (activeLanguage?.name ?? "").toLowerCase().includes("douala");
-  const isGhomala = (activeLanguage?.name ?? "").toLowerCase().includes("ghomala") ||
-    (activeLanguage?.name ?? "").toLowerCase().includes("ghomal");
+  const langCode = (activeLanguage?.name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const isBassa = langCode.includes("bassa");
+  const isDuala = langCode.includes("duala") || langCode.includes("douala");
+  const isGhomala = langCode.includes("ghomala") || langCode.includes("ghomal");
 
   /* Bassa Custom Lessons Logic */
   const getBassaLessons = () => {
@@ -613,8 +609,9 @@ export default function HomeScreen() {
   /* ── Navigate to a lesson card → adventure tree ── */
   const handleLessonCardPress = (lesson) => {
     // Navigate straight to the adventure tree
+
     router.push({
-      pathname: `/(tabs)/lessons/${lesson.themeId}`,
+      pathname: `/(tabs)/lessons/${lesson.themeId || lesson.id}`,
       params: {
         title: isBassa ? "Bassa Lessons" : (themes[0]?.name || "Leçons"),
         scrollToId: lesson.id

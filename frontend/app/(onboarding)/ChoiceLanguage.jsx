@@ -65,40 +65,42 @@ export default function ChoiceLanguage() {
     }
   };
 
-  const handleLanguageSelect = async (language) => {
+  const handleLanguageSelect = (language) => {
     if (!language) return;
 
-    setLoading(true);
+    // Immediately update UI state for faster perceived performance without blocking
     setSelected(language.code);
-    try {
-      // Enregistrer dans le backend
+    
+    // Navigate immediately to avoid UI blocking
+    router.replace(`/(onboarding)/PageVideo?lang=${encodeURIComponent(language.name)}`);
+
+    // Run async tasks in background (fire-and-forget)
+    (async () => {
       try {
-        await api.post("/user-languages", {
-          patrimonialLanguageId: language.id,
-        });
-      } catch (apiError) {
-        Logger.warn("[ChoiceLanguage] Language might already exist:", apiError.message);
+        // Enregistrer dans le backend
+        try {
+          await api.post("/user-languages", {
+            patrimonialLanguageId: language.id,
+          });
+        } catch (apiError) {
+          Logger.warn("[ChoiceLanguage] Language might already exist:", apiError.message);
+        }
+
+        // Mettre à jour le store (synchronise AsyncStorage + state)
+        await setActiveLanguage(language);
+      } catch (e) {
+        Logger.error("Error saving language in background:", e);
       }
-
-      // Mettre à jour le store (synchronise AsyncStorage + state)
-      await setActiveLanguage(language);
-
-      router.replace(`/(onboarding)/PageVideo?lang=${encodeURIComponent(language.name)}`);
-    } catch (e) {
-      Logger.error("Error saving language:", e);
-      Alert.alert(t("common.error"), t("errors.languageNotSelected"));
-    } finally {
-      setLoading(false);
-    }
+    })();
   };
 
-  const handleContinue = async () => {
+  const handleContinue = () => {
     if (!selected) {
       return Alert.alert(t("onboarding.choiceRequired"), t("onboarding.pleaseSelect"));
     }
 
     const language = languages.find((l) => l.code === selected);
-    await handleLanguageSelect(language);
+    handleLanguageSelect(language);
   };
 
   if (initializing) {

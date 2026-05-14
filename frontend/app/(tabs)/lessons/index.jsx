@@ -128,7 +128,7 @@ const ThemeCard = ({ theme, index, onPress, onPressIn }) => {
   }, []);
 
   const locked = theme.locked ?? false;
-  const pct = theme.lessonsCount > 0
+  const pct = theme.lessoansCount > 0
     ? Math.round((theme.lessonsCompleted / theme.lessonsCount) * 100) : 0;
 
   const R = 34;
@@ -291,11 +291,10 @@ export default function ThemesScreen() {
   );
 
   /* Bassa Custom Lessons Logic */
-  const isBassa = (activeLanguage?.name ?? "").toLowerCase().includes("bassa");
-  const isDuala = (activeLanguage?.name ?? "").toLowerCase().includes("duala") ||
-    (activeLanguage?.name ?? "").toLowerCase().includes("douala");
-  const isGhomala = (activeLanguage?.name ?? "").toLowerCase().includes("ghomala") ||
-    (activeLanguage?.name ?? "").toLowerCase().includes("ghomal");
+  const langCode = (activeLanguage?.name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const isBassa = langCode.includes("bassa");
+  const isDuala = langCode.includes("duala") || langCode.includes("douala");
+  const isGhomala = langCode.includes("ghomala") || langCode.includes("ghomal");
   const getBassaLessons = () => {
     const defaultThemeId = themes && themes.length > 0 ? themes[0].id : "dummy";
 
@@ -531,32 +530,10 @@ export default function ThemesScreen() {
                   theme={item}
                   index={idx}
                   onPress={(item) => {
-                    if (isGhomala) {
-                      const virtualData = getGhomalaVirtualData(item.id);
-                      if (virtualData) {
-                        setVirtualData(item.id, virtualData);
-                        router.push({
-                          pathname: `/(tabs)/lessons/${item.id}`,
-                          params: { title: item.name, category: item.name },
-                        });
-                      }
-                      return;
-                    }
-                    if (isDuala) {
-                      const virtualData = getDualaVirtualData(item.id);
-                      if (virtualData) {
-                        setVirtualData(item.id, virtualData);
-                        router.push({
-                          pathname: `/(tabs)/lessons/${item.id}`,
-                          params: { title: item.name, category: item.name },
-                        });
-                      }
-                      return;
-                    }
-                    if (isBassa) {
+                    if (isGhomala || isDuala || isBassa) {
                       router.push({
                         pathname: `/(tabs)/lessons/${item.themeId || item.id}`,
-                        params: { title: "Bassa Lessons", category: item.name },
+                        params: { title: item.name, category: item.name },
                       });
                       return;
                     }

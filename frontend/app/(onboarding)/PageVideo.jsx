@@ -208,27 +208,33 @@ export default function PageVideo() {
   const videoUri = VIDEO_BY_LANG[langResolved] ?? VIDEO_BY_LANG.default;
 
   // ── Persist & navigate ──
-  const persistAndGoHome = async () => {
-    const { languages, setActiveLanguage, setHasSeenIntro } =
-      useLanguageStore.getState();
-
-    // Find the matching language in the store — use normalizeLangKey for robust matching
-    const lang = languages.find(
-      (l) =>
-        normalizeLangKey(l.code) === langResolved ||
-        normalizeLangKey(l.name) === langResolved
-    );
-    if (lang) {
-      await setActiveLanguage(lang);
-    } else {
-      await AsyncStorage.setItem(HAS_SELECTED_LANGUAGE, langResolved);
-    }
-
-    // 2. Marquer l'intro comme vue (déclenche la redirection dans RootLayout)
-    await setHasSeenIntro(true);
-
-    // 3. Navigation explicite au cas où
+  const persistAndGoHome = () => {
+    // Navigate immediately to avoid UI blocking
     router.replace("/(tabs)/home");
+
+    // Run async tasks in background
+    (async () => {
+      try {
+        const { languages, setActiveLanguage, setHasSeenIntro } = useLanguageStore.getState();
+
+        // Find the matching language in the store — use normalizeLangKey for robust matching
+        const lang = languages.find(
+          (l) =>
+            normalizeLangKey(l.code) === langResolved ||
+            normalizeLangKey(l.name) === langResolved
+        );
+        if (lang) {
+          await setActiveLanguage(lang);
+        } else {
+          await AsyncStorage.setItem(HAS_SELECTED_LANGUAGE, langResolved);
+        }
+
+        // Marquer l'intro comme vue
+        await setHasSeenIntro(true);
+      } catch (err) {
+        Logger.error("Failed to persist onboarding state in background:", err);
+      }
+    })();
   };
 
   // ── Play handler ──
