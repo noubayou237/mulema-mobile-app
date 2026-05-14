@@ -166,7 +166,10 @@ const ThemeCard = ({ theme, index, onPress, onPressIn }) => {
         </View>
 
         <Text style={[s.cardName, locked && { color: FAINT }]} numberOfLines={1}>
-          {i18n.language.startsWith("en") && theme.name_en ? theme.name_en : theme.name ?? "—"}
+          {theme.code === 'fondations'
+            ? t("lessons.foundations")
+            : (i18n.language.startsWith("en") && theme.name_en ? theme.name_en : (theme.name ?? "—")).replace(/Niveau \d+\s*:\s*/gi, "")
+          }
         </Text>
         {theme.nameLocal ? (
           <Text style={[s.cardLocal, locked && { color: FAINT }]} numberOfLines={1}>
@@ -290,9 +293,9 @@ export default function ThemesScreen() {
   /* Bassa Custom Lessons Logic */
   const isBassa = (activeLanguage?.name ?? "").toLowerCase().includes("bassa");
   const isDuala = (activeLanguage?.name ?? "").toLowerCase().includes("duala") ||
-                  (activeLanguage?.name ?? "").toLowerCase().includes("douala");
+    (activeLanguage?.name ?? "").toLowerCase().includes("douala");
   const isGhomala = (activeLanguage?.name ?? "").toLowerCase().includes("ghomala") ||
-                    (activeLanguage?.name ?? "").toLowerCase().includes("ghomal");
+    (activeLanguage?.name ?? "").toLowerCase().includes("ghomal");
   const getBassaLessons = () => {
     const defaultThemeId = themes && themes.length > 0 ? themes[0].id : "dummy";
 
@@ -315,14 +318,14 @@ export default function ThemesScreen() {
     ];
 
     const verbs = [
-      { id: "verbe_avoir",   name: "Verbe Avoir",   nameLocal: "Bìhíkìí" },
-      { id: "verbe_etre",    name: "Verbe Être",    nameLocal: "Bìhíkìí" },
-      { id: "verbe_manger",  name: "Verbe Manger",  nameLocal: "Bìhíkìí" },
+      { id: "verbe_avoir", name: "Verbe Avoir", nameLocal: "Bìhíkìí" },
+      { id: "verbe_etre", name: "Verbe Être", nameLocal: "Bìhíkìí" },
+      { id: "verbe_manger", name: "Verbe Manger", nameLocal: "Bìhíkìí" },
       { id: "verbe_acheter", name: "Verbe Acheter", nameLocal: "Bìhíkìí" },
       { id: "verbe_marcher", name: "Verbe Marcher", nameLocal: "Bìhíkìí" },
       { id: "verbe_prendre", name: "Verbe Prendre", nameLocal: "Bìhíkìí" },
     ];
-    
+
     verbs.forEach((v) => {
       res.push({
         ...v,
@@ -361,12 +364,12 @@ export default function ThemesScreen() {
   /* Duala Custom Lessons Logic */
   const getDualaLessons = () => {
     const items = [
-      { id: "duala_jour",     name: "Les sept jours de la semaine", nameLocal: "Minya mi mbu", code: "jours",    lessonsCount: 7 },
-      { id: "duala_avoir",    name: "Le verbe avoir",               nameLocal: "Bìhíkìí",      code: "verbes",   lessonsCount: 6 },
-      { id: "duala_etre",     name: "Le verbe être",                nameLocal: "Bìhíkìí",      code: "verbes",   lessonsCount: 6 },
-      { id: "duala_pronoms",  name: "Les pronoms personnels",       nameLocal: "Bipapa",       code: "pronoms",  lessonsCount: 6 },
-      { id: "duala_chiffres", name: "Les chiffres 1-9 en duala",    nameLocal: "Langa",        code: "chiffres", lessonsCount: 9 },
-      { id: "duala_couleurs", name: "Les couleurs",                 nameLocal: "Langi",        code: "couleurs", lessonsCount: 7 },
+      { id: "duala_jour", name: "Les sept jours de la semaine", nameLocal: "Minya mi mbu", code: "jours", lessonsCount: 1 },
+      { id: "duala_avoir", name: "Le verbe avoir", nameLocal: "Bìhíkìí", code: "verbes", lessonsCount: 1 },
+      { id: "duala_etre", name: "Le verbe être", nameLocal: "Bìhíkìí", code: "verbes", lessonsCount: 1 },
+      { id: "duala_pronoms", name: "Les pronoms personnels", nameLocal: "Bipapa", code: "pronoms", lessonsCount: 1 },
+      { id: "duala_chiffres", name: "Les chiffres 1-9 en duala", nameLocal: "Langa", code: "chiffres", lessonsCount: 1 },
+      { id: "duala_couleurs", name: "Les couleurs", nameLocal: "Langi", code: "couleurs", lessonsCount: 1 },
     ];
     const counts = {};
     return items.map((item, idx) => {
@@ -397,13 +400,13 @@ export default function ThemesScreen() {
   /* Ghomala Custom Lessons Logic */
   const getGhomalaLessons = () => {
     const items = [
-      { id: "ghomala_jour",     name: "Les jours de la semaine en ghomala",   code: "jours",    lessonsCount: 7  },
-      { id: "ghomala_avoir",    name: "Le verbe avoir en ghomala",            code: "verbes",   lessonsCount: 6  },
-      { id: "ghomala_etre",     name: "Le verbe être en ghomala",             code: "verbes",   lessonsCount: 6  },
-      { id: "ghomala_chiffres", name: "Les chiffres 0-9 en ghomala",         code: "chiffres", lessonsCount: 10 },
-      { id: "ghomala_manger",   name: "Le verbe manger en ghomala",           code: "verbes",   lessonsCount: 6  },
-      { id: "ghomala_marcher",  name: "Le verbe marcher en ghomala",          code: "verbes",   lessonsCount: 6  },
-      { id: "ghomala_acheter",  name: "Le verbe acheter en ghomala",          code: "verbes",   lessonsCount: 6  },
+      { id: "ghomala_jour", name: "Les jours de la semaine en ghomala", code: "jours", lessonsCount: 1 },
+      { id: "ghomala_avoir", name: "Le verbe avoir en ghomala", code: "verbes", lessonsCount: 1 },
+      { id: "ghomala_etre", name: "Le verbe être en ghomala", code: "verbes", lessonsCount: 1 },
+      { id: "ghomala_chiffres", name: "Les chiffres 0-9 en ghomala", code: "chiffres", lessonsCount: 1 },
+      { id: "ghomala_manger", name: "Le verbe manger en ghomala", code: "verbes", lessonsCount: 1 },
+      { id: "ghomala_marcher", name: "Le verbe marcher en ghomala", code: "verbes", lessonsCount: 1 },
+      { id: "ghomala_acheter", name: "Le verbe acheter en ghomala", code: "verbes", lessonsCount: 1 },
     ];
     const counts = {};
     return items.map((item, idx) => {
@@ -458,7 +461,7 @@ export default function ThemesScreen() {
             <Ionicons name="heart" size={13} color="#E53E3E" />
             <Text style={[s.badgeXP, { color: "#E53E3E" }]}>{dash?.hearts ?? 5}</Text>
           </View>
-        <View style={s.avatar} />
+          <View style={s.avatar} />
         </View>
       </View>
 
@@ -527,7 +530,7 @@ export default function ThemesScreen() {
                   key={item.id}
                   theme={item}
                   index={idx}
-      onPress={(item) => {
+                  onPress={(item) => {
                     if (isGhomala) {
                       const virtualData = getGhomalaVirtualData(item.id);
                       if (virtualData) {
@@ -567,27 +570,27 @@ export default function ThemesScreen() {
 
         <View style={{ height: 24 }} />
       </ScrollView>
-  {/* ══ DRAWER OVERLAY ══ */}
-  {drawerOpen && (
-    <Animated.View
-      style={[StyleSheet.absoluteFillObject, { backgroundColor: "rgba(0,0,0,0.38)", zIndex: 90, opacity: overlayAnim }]}
-      pointerEvents="box-none"
-    >
-      <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={closeDrawer} />
-    </Animated.View>
-  )}
+      {/* ══ DRAWER OVERLAY ══ */}
+      {drawerOpen && (
+        <Animated.View
+          style={[StyleSheet.absoluteFillObject, { backgroundColor: "rgba(0,0,0,0.38)", zIndex: 90, opacity: overlayAnim }]}
+          pointerEvents="box-none"
+        >
+          <TouchableOpacity style={StyleSheet.absoluteFill} activeOpacity={1} onPress={closeDrawer} />
+        </Animated.View>
+      )}
 
-  {/* ══ DRAWER PANEL ══ */}
-  <Animated.View style={[s.drawer, { transform: [{ translateX: drawerAnim }] }]}>
-    <DrawerContent
-      user={user}
-      dashboard={dash}
-      onClose={closeDrawer}
-      onNav={handleDrawerNav}
-      onLogout={handleLogout}
-    />
-  </Animated.View>
-</SafeAreaView>
+      {/* ══ DRAWER PANEL ══ */}
+      <Animated.View style={[s.drawer, { transform: [{ translateX: drawerAnim }] }]}>
+        <DrawerContent
+          user={user}
+          dashboard={dash}
+          onClose={closeDrawer}
+          onNav={handleDrawerNav}
+          onLogout={handleLogout}
+        />
+      </Animated.View>
+    </SafeAreaView>
   );
 }
 

@@ -188,15 +188,106 @@ export function getGhomalaVirtualData(themeId) {
 
   // Create individual lessons per word — the lesson screen navigates one
   // lesson per swipe card, and enrichment lookup uses lesson.title.
+  // Create a single consolidated lesson for the entire theme
   return {
-    lessons: data.items.map((item, idx) => ({
-      id: `virt_${themeId}_${idx}`,
-      title: item.sourceText,
-      subtitle: item.targetText,
-      audioUrl: item.audioKey,
-      order: idx,
-    })),
+    lessons: [
+      {
+        id: `virt_${themeId}_0`,
+        title: data.title,
+        subtitle: "Consolidated Lesson",
+        audioUrl: null,
+        order: 0,
+      }
+    ],
   };
+}
+
+export function getGhomalaThemeItems(themeId) {
+  const themeMap = {
+    "ghomala_jour": {
+      title: "Les sept jour de la semaine",
+      items: [
+        { sourceText: "Lundi",    targetText: "Dzə́ tàkə",    audioKey: "lundi" },
+        { sourceText: "Mardi",    targetText: "Dzə́ ghɔ̌m",    audioKey: "mardi" },
+        { sourceText: "Mercredi", targetText: "Dzə́ ghǎ",     audioKey: "mercredi" },
+        { sourceText: "Jeudi",    targetText: "Dzə́ shwì",    audioKey: "jeudi" },
+        { sourceText: "Vendredi", targetText: "Dzə́ gʉ̌",      audioKey: "vendredi" },
+        { sourceText: "Samedi",   targetText: "Dzə́ pfǒtsə́",  audioKey: "samedi" },
+        { sourceText: "Dimanche", targetText: "Dzə́ dʉm/ Dzə́ sɔ̂n", audioKey: "dimanche" },
+      ],
+    },
+    "ghomala_etre": {
+      title: "Verbe Être",
+      items: [
+        { sourceText: "Je suis",           targetText: "Gɔ â",           audioKey: "je_suis" },
+        { sourceText: "Tu es",             targetText: "O â",             audioKey: "tu_es" },
+        { sourceText: "Il/Elle est",       targetText: "A â",             audioKey: "il_elle_est" },
+        { sourceText: "Nous sommes",       targetText: "Pəkyə́ / pə́ â",        audioKey: "nous_sommes" },
+        { sourceText: "Vous êtes",         targetText: "Pə́ pu â",         audioKey: "vous_etes" },
+        { sourceText: "Ils/Elles sont",    targetText: "Pɔ́ â",            audioKey: "ils_elles_sont" },
+      ],
+    },
+    "ghomala_avoir": {
+      title: "Verbe Avoir",
+      items: [
+        { sourceText: "J'ai",              targetText: "Gɔ ghǎ pə",              audioKey: "jai_en_ngohmala" },
+        { sourceText: "Tu as",             targetText: "O ghǎ pə",             audioKey: "tu_as_en_ngohmala" },
+        { sourceText: "Il/Elle a",         targetText: "À ghǎ pə",         audioKey: "il_elle_a" },
+        { sourceText: "Nous avons",        targetText: "Pékyə́ / Pé ghǎ pə",        audioKey: "nous_avons" },
+        { sourceText: "Vous avez",         targetText: "Pə́/pú ghǎ pə",         audioKey: "vous_avez_en_ngohmala" },
+        { sourceText: "Ils/Elles ont",     targetText: "Pɔ̀  ghǎ pə",     audioKey: "ils_elles_ont_en_ngohmala" },
+      ],
+    },
+    "ghomala_manger": {
+      title: "Le Verbe Manger",
+      items: [
+        { sourceText: "Je Mange",           targetText: "Gɔ zə̂ pə́",           audioKey: "je_mange" },
+        { sourceText: "Tu manges",          targetText: "O zə̂ pə",          audioKey: "tu_manges" },
+        { sourceText: "Il/Elle Mange",      targetText: "A zə̂ pə",      audioKey: "il_mange" },
+        { sourceText: "Nous mangeons",      targetText: "Pəkyə / Pə zə̂ pə",      audioKey: "nous_mangeons" },
+        { sourceText: "Vous mangez",        targetText: "Pə pu zə̂ pə",        audioKey: "vous_mangez" },
+        { sourceText: "Ils/Elles mangent",  targetText: "Pɔ́ zə̂ pə",  audioKey: "ils_mangent" },
+      ],
+    },
+    "ghomala_marcher": {
+      title: "Travailler/Marcher",
+      items: [
+        { sourceText: "Moi",  targetText: "Gɔ",  audioKey: "Moi" },
+        { sourceText: "Tu",   targetText: "O / wǒ",   audioKey: "Tu" },
+        { sourceText: "Il/Elle", targetText: "Ayə́ / â", audioKey: "IlElle" },
+        { sourceText: "Nous", targetText: "Pə́kyə́ / pé", audioKey: "Nous" },
+        { sourceText: "Vous", targetText: "Pə́", audioKey: "Vous" },
+        { sourceText: "Ils/Elles", targetText: "Pɔ́",  audioKey: "IlsElles" },
+      ],
+    },
+    "ghomala_chiffres": {
+      title: "Les chiffres de 1 à 9",
+      items: [
+        { sourceText: "Zéro", targetText: "ywə̂ně", audioKey: "le_chiffre_0_en_ngohmala" },
+        { sourceText: "Un", targetText: "Nə́mʉ", audioKey: "le_chiffre_1_en_ngohmala" },
+        { sourceText: "Deux", targetText: "Pʉə", audioKey: "le_chiffre_2_en_ngohmala" },
+        { sourceText: "Trois", targetText: "Tá", audioKey: "le_chiffre_3_en_ngohmala" },
+        { sourceText: "Quatre", targetText: "Kwà", audioKey: "le_chiffre_4_en_ngohmala" },
+        { sourceText: "Cinq", targetText: "Tʉ́", audioKey: "le_chiffre_5_en_ngohmala" },
+        { sourceText: "Six", targetText: "Ntɔ̌kɔ́", audioKey: "le_chiffre_6_en_ngohmala" },
+        { sourceText: "Sept", targetText: "Sɔ̀mbwə́", audioKey: "le_chiffre_7_en_ngohmala" },
+        { sourceText: "Huit", targetText: "Hɔ̌m", audioKey: "le_chiffre_8_en_ngohmala" },
+        { sourceText: "Neuf", targetText: "Vʉ̌'ʉ̀", audioKey: "le_chiffre_9_en_ngohmala" },
+      ],
+    },
+    "ghomala_couleurs": {
+      title: "Couleurs",
+      items: [
+        { sourceText: "Noir",   targetText: "Bvʉ̀sʉ̂",   audioKey: "noir" },
+        { sourceText: "Blanc",  targetText: "Bvʉ́fə́k",  audioKey: "blanc" },
+        { sourceText: "Jaune",  targetText: "Dəmďʒě",  audioKey: "jaune" },
+        { sourceText: "Rouge",  targetText: "Bvʉ́pʉ̂",  audioKey: "rouge" },
+        { sourceText: "Bleu",   targetText: "Dyəmďʒɔ̌yɔ̌",   audioKey: "bleu" },
+        { sourceText: "Vert",   targetText: "Ndɔngkaŋ",   audioKey: "vert" },
+      ],
+    },
+  };
+  return themeMap[themeId]?.items || [];
 }
 
 export default {};

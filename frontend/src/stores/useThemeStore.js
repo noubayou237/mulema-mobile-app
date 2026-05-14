@@ -78,7 +78,8 @@ export const useThemeStore = create((set, get) => ({
   // ═════════════════════════════════════════════════════════════
 
   fetchLessons: async (themeId, force = false) => {
-    if (!themeId || !isSessionActive()) return [];
+    // Return early if no themeId is provided or it matches string literals from uninitialized state
+    if (!themeId || themeId === "undefined" || themeId === "null" || !isSessionActive()) return [];
 
     const reqKey = `lessons_${themeId}`;
     if (!force && inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
@@ -144,7 +145,7 @@ export const useThemeStore = create((set, get) => ({
   // ═════════════════════════════════════════════════════════════
 
   fetchWords: async (lessonId, silent = false) => {
-    if (!lessonId || !isSessionActive()) return [];
+    if (!lessonId || lessonId === "undefined" || lessonId === "null" || !isSessionActive()) return [];
 
     const reqKey = `words_${lessonId}`;
     
