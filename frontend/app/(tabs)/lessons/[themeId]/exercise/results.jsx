@@ -218,8 +218,8 @@ export default function ExerciseResults() {
             size={48}
             color="rgba(255,255,255,0.9)"
           />
-          <Text style={s.bannerTitle}>{showFinalAnim ? t("exercises.finalChallengeUnlocked", "Final Challenge Unlocked!") : msg.title}</Text>
-          <Text style={s.bannerSub}>{showFinalAnim ? t("exercises.storyVideoAvailable", "The story video is now available!") : msg.sub}</Text>
+          <Text style={s.bannerTitle}>{showFinalAnim ? t("exercises.themeDiscoveryComplete", "Theme Discovery Complete!") : msg.title}</Text>
+          <Text style={s.bannerSub}>{showFinalAnim ? t("exercises.watchStoryVideoToUnlockNext", "Watch the story video to unlock the next theme!") : msg.sub}</Text>
         </View>
 
         {/* ── Score + étoiles ── */}
@@ -257,29 +257,27 @@ export default function ExerciseResults() {
 
         {/* ── Boutons ── */}
         <View style={s.buttons}>
-          {/* Story video CTA — shown after passing the final challenge */}
-          {showFinalAnim && success && (
-            <TouchableOpacity
+          {/* Story video CTA — shown after passing the final lesson */}
+          {showFinalAnim && success ? (
+             <TouchableOpacity
               onPress={() =>
                 router.replace(`/modal/story-video?themeId=${themeId}&langCode=${langCode}`)
               }
-              style={s.videoBtnWrap}
+              style={[s.primaryBtn, { backgroundColor: "#7F0000" }]} 
               activeOpacity={0.88}
             >
-              <View style={s.videoBtn}>
-                <Ionicons name="film" size={22} color="#FFF" />
-                <Text style={s.videoBtnTxt}>{t("exercises.watchStoryVideo", "Voir la vidéo histoire")}</Text>
-              </View>
-              <Text style={s.videoBtnSub}>{t("exercises.videoUnlocksNext", "Débloque le thème suivant")}</Text>
+              <Ionicons name="film" size={22} color="#FFF" />
+              <Text style={s.primaryTxt}>{t("exercises.watchStoryVideo", "Watch Bassa Story Video")}</Text>
+              <Ionicons name="play" size={16} color="#FFF" style={{ marginLeft: 4 }} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={handleContinue} style={s.primaryBtn} activeOpacity={0.85}>
+              <Text style={s.primaryTxt}>
+                {success ? t("exercises.continueAdventure") : t("exercises.reviewLessons")}
+              </Text>
+              <Ionicons name="arrow-forward" size={18} color="#FFF" />
             </TouchableOpacity>
           )}
-
-          <TouchableOpacity onPress={handleContinue} style={s.primaryBtn} activeOpacity={0.85}>
-            <Text style={s.primaryTxt}>
-              {success ? t("exercises.continueAdventure") : t("exercises.reviewLessons")}
-            </Text>
-            <Ionicons name="arrow-forward" size={18} color="#FFF" />
-          </TouchableOpacity>
 
           <TouchableOpacity onPress={handleRetry} style={s.secondaryBtn} activeOpacity={0.8}>
             <Ionicons name="refresh" size={16} color={Colors.primary} />

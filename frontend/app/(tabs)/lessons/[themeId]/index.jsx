@@ -213,66 +213,6 @@ const LessonNode = ({ lesson, index, onPress, lt, isLocked }) => {
   );
 };
 
-/* ═══════════════════════════════════════════════════════════════
-   NŒUD EXERCICE FINAL (étoile brillante style score-hero)
-   ═══════════════════════════════════════════════════════════════ */
-const ExerciseNode = ({ onPress, lt, isLocked }) => {
-  const { t } = useTranslation();
-  const scaleAnim = useRef(new Animated.Value(0)).current;
-  const rotAnim   = useRef(new Animated.Value(0)).current;
-  const glowAnim  = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.spring(scaleAnim, { toValue: 1, delay: 400, tension: 80, friction: 6, useNativeDriver: true }).start();
-    Animated.loop(
-      Animated.timing(rotAnim, { toValue: 1, duration: 8000, useNativeDriver: true })
-    ).start();
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowAnim, { toValue: 1, duration: 1200, useNativeDriver: true }),
-        Animated.timing(glowAnim, { toValue: 0.3, duration: 1200, useNativeDriver: true }),
-      ])
-    ).start();
-  }, []);
-
-  const spin = rotAnim.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] });
-  const glowOpacity = glowAnim;
-
-  return (
-    <View style={{ alignItems: "center", marginTop: 24, marginBottom: 40 }}>
-      {/* Séparateur */}
-      <View style={[ex.divider, { borderColor: lt.accent + "50" }]}>
-        <View style={[ex.divLine, { backgroundColor: lt.accent + "30" }]} />
-        <Text style={[ex.divTxt, { color: lt.accent }]}>{t("lessons.finalChallenge")}</Text>
-        <View style={[ex.divLine, { backgroundColor: lt.accent + "30" }]} />
-      </View>
-
-      {/* Halo rotatif */}
-      <Animated.View style={[ex.glowRing, { borderColor: lt.accent + "40", opacity: glowOpacity }]} />
-      <Animated.View style={[ex.glowRing2, { borderColor: lt.accentGlow, transform: [{ rotate: spin }] }]} />
-
-      {/* Bouton étoile */}
-      <Animated.View style={[ex.btnWrap, { transform: [{ scale: scaleAnim }] }]}>
-        <TouchableOpacity onPress={onPress} activeOpacity={isLocked ? 1 : 0.85}>
-          <LinearGradient
-            colors={isLocked ? ["#333", "#222"] : [lt.nodeActive, lt.nodeDone]}
-            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            style={[ex.btn, isLocked && { opacity: 0.6 }]}
-          >
-            <Text style={[ex.emoji, isLocked && { opacity: 0.3 }]}>{isLocked ? "🔒" : "🎯"}</Text>
-            <Text style={[ex.title, { color: isLocked ? "rgba(255,255,255,0.4)" : "#FFF" }]}>{isLocked ? t("common.locked") : t("nav.exercises")}</Text>
-            <Text style={[ex.sub, isLocked && { color: "rgba(255,255,255,0.2)" }]}>{t("lessons.exerciseCount", { count: 15, types: 3 })}</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </Animated.View>
-
-      {/* Badge XP potentiel */}
-      <View style={[ex.xpBadge, { backgroundColor: lt.accent + "20", borderColor: lt.accent + "50" }]}>
-        <Text style={[ex.xpTxt, { color: lt.accent }]}>{t("lessons.xpPotential", { points: 100 })}</Text>
-      </View>
-    </View>
-  );
-};
 
 /* ═══════════════════════════════════════════════════════════════
    ÉCRAN PRINCIPAL
@@ -437,20 +377,6 @@ export default function ThemeDetailScreen() {
                 isLocked={isLessonLocked(lesson.id, idx)}
               />
             ))}
-            <ExerciseNode
-              lt={lt}
-              isLocked={!getExerciseAccess(themeId).e1}
-              onPress={() => {
-                if (!getExerciseAccess(themeId).e1) return;
-                // Always run the Final Challenge: all words, last lesson index.
-                // No wordCount param → session uses the full lessons list.
-                // lessonIdx = last index → results.jsx identifies this as the
-                // final challenge and triggers video unlock on success.
-                const params = new URLSearchParams({ lessonIdx: String(displayLessons.length - 1) });
-                if (category) params.set("category", category);
-                router.push(`/(tabs)/lessons/${themeId}/exercise/session?${params.toString()}`);
-              }}
-            />
           </View>
         )}
       </ScrollView>

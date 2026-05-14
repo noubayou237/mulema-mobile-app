@@ -266,7 +266,8 @@ export default function LessonScreen() {
         isBassaMixed: "true",
         lessonIdx: lessonIdx,
         themeId: themeId,
-        category: category || ""
+        category: category || "",
+        isFinal: isLast ? "true" : "false"
       }
     });
   };
