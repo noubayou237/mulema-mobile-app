@@ -641,11 +641,27 @@ export class UserService {
 
   async purchaseHearts(userId: string, count: number) {
     const cost = count * 30;
+    const MAX_HEARTS = 5;
 
-    // 1. Check points
-    const stats = await this.prisma.statistics.findUnique({ where: { userId } });
+    // 1. Check points and current hearts
+    const [stats, cowry] = await Promise.all([
+      this.prisma.statistics.findUnique({ where: { userId } }),
+      this.prisma.cowry.findUnique({ where: { userId } }),
+    ]);
+
     if (!stats || stats.totalPrawns < cost) {
       throw new BadRequestException('Insufficient points (XP)');
+    }
+
+    const currentHearts = cowry?.currentCowries ?? 5;
+    if (currentHearts >= MAX_HEARTS) {
+      throw new BadRequestException('Maximum hearts capacity reached');
+    }
+
+    if (currentHearts + count > MAX_HEARTS) {
+      throw new BadRequestException(
+        `Cannot purchase ${count} hearts. You can only have up to ${MAX_HEARTS} hearts.`,
+      );
     }
 
     // 2. Perform transaction with self-healing for cowry record
@@ -667,9 +683,9 @@ export class UserService {
         where: { userId },
         create: {
           userId,
-          currentCowries: 5 + count, // Default 5 + what was just bought
+          currentCowries: count, 
           maxCowries: 5,
-          rechargeTime: 0,
+          rechargeTime: Math.floor(Date.now() / 1000), // Start recharge timer if less than max
         },
         update: {
           currentCowries: { increment: count },

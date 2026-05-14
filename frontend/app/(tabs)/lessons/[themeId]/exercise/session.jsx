@@ -977,7 +977,7 @@ export default function ExerciseSession() {
     router.replace(
       `/(tabs)/lessons/${themeId}/exercise/results?score=${score}&correct=${correct}&total=${answered}${wcParam}${extra}${final}`
     );
-  }, [correct, answered, themeId, lessonIdxParam, wordCountStr]);
+  }, [correct, answered, themeId, lessonIdxParam, wordCountStr, isFinal]);
 
 
   const crossFade = (cb) => {

@@ -99,6 +99,20 @@ export const useDashboardStore = create((set) => ({
     const { data } = useDashboardStore.getState();
     if (!data) return null;
 
+    // Prevention: User cannot exceed 5 hearts
+    const MAX_HEARTS = 5;
+    if (data.hearts >= MAX_HEARTS) {
+      const msg = i18n.t("dashboard.maxHeartsReached", "Tu as déjà le maximum de cœurs !");
+      set({ error: msg });
+      return null;
+    }
+
+    if (data.hearts + count > MAX_HEARTS) {
+      const msg = i18n.t("dashboard.tooManyHearts", "Tu ne peux pas acheter autant de cœurs (max 5).");
+      set({ error: msg });
+      return null;
+    }
+
     try {
       const result = await dashboardService.purchaseHearts(count);
       if (result.success) {
