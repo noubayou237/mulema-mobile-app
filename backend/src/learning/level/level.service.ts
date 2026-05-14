@@ -29,6 +29,14 @@ export class LevelService {
   }
 
   async getThemeWords(themeId: string, userId: string) {
+    if (!themeId || themeId === 'undefined') return [];
+    
+    // Basic UUID format check to avoid unnecessary DB searches for malformed IDs
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(themeId) && !themeId.startsWith('virtual_')) {
+      return [];
+    }
+
     const words = await this.prisma.mulemWord.findMany({
       where: { themeId },
       orderBy: { order: 'asc' },

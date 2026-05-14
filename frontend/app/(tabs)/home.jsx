@@ -391,7 +391,7 @@ export default function HomeScreen() {
   );
 
   useEffect(() => {
-    if (themes.length > 0 && !tLoading) {
+    if (themes.length > 0 && !tLoading && themes[0]?.id && themes[0].id !== "undefined") {
       fetchLessons(themes[0].id);
     }
   }, [themes, tLoading]);

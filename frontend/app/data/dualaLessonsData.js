@@ -176,15 +176,96 @@ export function getDualaVirtualData(themeId) {
   const data = themeMap[themeId];
   if (!data) return null;
 
+  // Create a single consolidated lesson for the entire theme
   return {
-    lessons: data.items.map((item, idx) => ({
-      id: `virt_${themeId}_${idx}`,
-      title: item.sourceText,
-      subtitle: item.targetText,
-      audioUrl: item.audioKey,
-      order: idx,
-    })),
+    lessons: [
+      {
+        id: `virt_${themeId}_0`,
+        title: data.title,
+        subtitle: "Consolidated Lesson",
+        audioUrl: null,
+        order: 0,
+      }
+    ],
   };
+}
+
+export function getDualaThemeItems(themeId) {
+  const themeMap = {
+    "duala_jour": {
+      title: "Les sept jour de la semaine",
+      items: [
+        { sourceText: "Lundi",    targetText: "Lundi (Duala)",    audioKey: "lundi" },
+        { sourceText: "Mardi",    targetText: "Mardi (Duala)",    audioKey: "mardi" },
+        { sourceText: "Mercredi", targetText: "Mercredi (Duala)", audioKey: "mercredi" },
+        { sourceText: "Jeudi",    targetText: "Jeudi (Duala)",   audioKey: "jeudi" },
+        { sourceText: "Vendredi", targetText: "Vendredi (Duala)", audioKey: "vendredi" },
+        { sourceText: "Samedi",   targetText: "Samedi (Duala)",   audioKey: "samedi" },
+        { sourceText: "Dimanche", targetText: "Dimanche (Duala)", audioKey: "dimanche" },
+      ],
+    },
+    "duala_pronoms": {
+      title: "Les pronoms personnel",
+      items: [
+        { sourceText: "Moi",  targetText: "Moi (Duala)",  audioKey: "Moi" },
+        { sourceText: "Toi",  targetText: "Toi (Duala)",  audioKey: "Toi" },
+        { sourceText: "Lui",  targetText: "Lui (Duala)",  audioKey: "Lui" },
+        { sourceText: "Nous", targetText: "Nous (Duala)", audioKey: "Nous" },
+        { sourceText: "Vous", targetText: "Vous (Duala)", audioKey: "Vous" },
+        { sourceText: "Eux",  targetText: "Eux (Duala)",  audioKey: "Eux" },
+      ],
+    },
+    "duala_etre": {
+      title: "Le verbe etre",
+      items: [
+        { sourceText: "Je suis",           targetText: "Je suis (Duala)",           audioKey: "je_suis" },
+        { sourceText: "Tu es",             targetText: "Tu es (Duala)",             audioKey: "tu_es" },
+        { sourceText: "Il ou elle est",    targetText: "Il ou elle est (Duala)",    audioKey: "il_elle_est" },
+        { sourceText: "Nous sommes",       targetText: "Nous sommes (Duala)",       audioKey: "nous_sommes" },
+        { sourceText: "Vous êtes",         targetText: "Vous êtes (Duala)",         audioKey: "vous_etes" },
+        { sourceText: "Ils ou elles sont", targetText: "Ils ou elles sont (Duala)", audioKey: "ils_elles_sont" },
+      ],
+    },
+    "duala_avoir": {
+      title: "Le verbe avoir",
+      items: [
+        { sourceText: "J'ai",              targetText: "J'ai (Duala)",              audioKey: "j_ai" },
+        { sourceText: "Tu as",             targetText: "Tu as (Duala)",             audioKey: "tu_as" },
+        { sourceText: "Il ou elle a",      targetText: "Il ou elle a (Duala)",      audioKey: "il_elle_a" },
+        { sourceText: "Nous avons",        targetText: "Nous avons (Duala)",        audioKey: "nous_avons" },
+        { sourceText: "Vous avez",         targetText: "Vous avez (Duala)",         audioKey: "vous_avez" },
+        { sourceText: "Ils ou elles ont",  targetText: "Ils ou elles ont (Duala)",  audioKey: "ils_elles_ont" },
+      ],
+    },
+    "duala_chiffres": {
+      title: "Les chiffres 1-9 en duala",
+      items: [
+        { sourceText: "Zéro",  targetText: "Zéro (Duala)",  audioKey: "zero" },
+        { sourceText: "Un",    targetText: "Un (Duala)",    audioKey: "un" },
+        { sourceText: "Deux",  targetText: "Deux (Duala)",  audioKey: "deux" },
+        { sourceText: "Trois", targetText: "Trois (Duala)", audioKey: "trois" },
+        { sourceText: "Quatre",targetText: "Quatre (Duala)",audioKey: "quatre" },
+        { sourceText: "Cinq",  targetText: "Cinq (Duala)",  audioKey: "cinq" },
+        { sourceText: "Six",   targetText: "Six (Duala)",   audioKey: "six" },
+        { sourceText: "Sept",  targetText: "Sept (Duala)",  audioKey: "sept" },
+        { sourceText: "Huit",  targetText: "Huit (Duala)",  audioKey: "huit" },
+        { sourceText: "Neuf",  targetText: "Neuf (Duala)",  audioKey: "neuf" },
+      ],
+    },
+    "duala_couleurs": {
+      title: "Les couleur",
+      items: [
+        { sourceText: "Noir",   targetText: "Noir (Duala)",   audioKey: "noir" },
+        { sourceText: "Blanc",  targetText: "Blanc (Duala)",  audioKey: "blanc" },
+        { sourceText: "Jaune",  targetText: "Jaune (Duala)",  audioKey: "jaune" },
+        { sourceText: "Orange", targetText: "Orange (Duala)", audioKey: "orange" },
+        { sourceText: "Rouge",  targetText: "Rouge (Duala)",  audioKey: "rouge" },
+        { sourceText: "Bleu",   targetText: "Bleu (Duala)",   audioKey: "bleu" },
+        { sourceText: "Vert",   targetText: "Vert (Duala)",   audioKey: "vert" },
+      ],
+    },
+  };
+  return themeMap[themeId]?.items || [];
 }
 
 export default {};

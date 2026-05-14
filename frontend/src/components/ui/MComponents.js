@@ -417,3 +417,38 @@ const styles = StyleSheet.create({
     paddingVertical: Space.sm,
   },
 });
+
+/* ══════════════════════════════════════════════════════════════
+   MLoader — Premium full-screen loading overlay
+   ══════════════════════════════════════════════════════════════ */
+
+export const MLoader = ({ message, fullScreen = true }) => (
+  <View style={[
+    styles.loaderContainer,
+    fullScreen && StyleSheet.absoluteFill,
+    fullScreen && { backgroundColor: "rgba(10, 10, 15, 0.85)", zIndex: 9999 }
+  ]}>
+    <View style={styles.loaderContent}>
+      <ActivityIndicator size="large" color={Colors.primary} />
+      {message && (
+        <Text style={[Typo.bodyMd, { color: Colors.textSecondary, marginTop: Space.lg, textAlign: "center" }]}>
+          {message}
+        </Text>
+      )}
+    </View>
+  </View>
+);
+
+Object.assign(styles, {
+  loaderContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loaderContent: {
+    padding: Space["2xl"],
+    borderRadius: Radius.xl,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    alignItems: "center",
+    minWidth: 120,
+  }
+});

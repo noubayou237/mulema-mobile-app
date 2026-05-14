@@ -32,8 +32,8 @@ import { pauseBackgroundMusic, resumeBackgroundMusic } from "../../../../../src/
 import { playAudioUrl, setAudioMode } from "../../../../../src/utils/audioUtils";
 import Logger from "../../../../../src/utils/logger";
 import { getBassaEnrichment } from "../../../../data/bassaLessonsData";
-import { getDualaEnrichment } from "../../../../data/dualaLessonsData";
-import { getGhomalaEnrichment } from "../../../../data/ghomalaLessonsData";
+import { getDualaEnrichment, getDualaThemeItems } from "../../../../data/dualaLessonsData";
+import { getGhomalaEnrichment, getGhomalaThemeItems } from "../../../../data/ghomalaLessonsData";
 import { getWordDisplay } from "../../../../data/wordTranslations";
 
 const playAudio = async (audioKey) => {
@@ -236,15 +236,15 @@ export default function LessonScreen() {
   }, [showGatePrompt]);
 
   const goNext = () => {
-    // Bassa progression gate: after Lesson 2 (index 1) and each subsequent lesson
-    // (including the LAST one), show a prompt to do a mixed exercise to unlock next.
-    if (isBassa && lessonIdx >= 1) {
+    // Progression gate: after Lesson 2 (index 1) and each subsequent lesson
+    // (including the LAST one), OR if it's the ONLY lesson (isLast), show a prompt to do a mixed exercise to unlock next.
+    if (lessonIdx >= 1 || isLast) {
       setShowGatePrompt(true);
       return;
     }
 
     if (isLast) {
-      // Non-Bassa last lesson — return to the lessons overview tab
+      // Return to the lessons overview tab
       router.replace(`/(tabs)/lessons`);
       return;
     }
@@ -376,6 +376,10 @@ export default function LessonScreen() {
               uiLang={uiLang}
               t={t}
             />
+          ) : isDuala && getDualaThemeItems(themeId).length > 0 ? (
+            <DualaSpecialView themeId={themeId} uiLang={uiLang} t={t} />
+          ) : isGhomala && getGhomalaThemeItems(themeId).length > 0 ? (
+            <GhomalaSpecialView themeId={themeId} uiLang={uiLang} t={t} />
           ) : (
             <>
               {/* ── Category context pill (Bassa only) ── */}
@@ -782,6 +786,88 @@ const BassaSpecialView = ({ lessonTitle, uiLang, t }) => {
               style={special.audioBtn}
               activeOpacity={0.6}
               onPress={() => playAudio(item.audio)}
+            >
+              <Ionicons name="volume-high" size={20} color={Colors.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+};
+
+const DualaSpecialView = ({ themeId, uiLang, t }) => {
+  const data = getDualaThemeItems(themeId);
+  if (!data || data.length === 0) return null;
+
+  return (
+    <View style={special.container}>
+      <Text style={special.topic}>
+        {uiLang.startsWith("en") ? "Learn in Duala" : "Apprenez en Duala"}
+      </Text>
+
+      {data.map((item, idx) => (
+        <View key={idx} style={[special.card, Shadow.sm]}>
+          <View style={special.row}>
+            <View style={special.wordPairInner}>
+              <View style={special.col}>
+                <Text style={special.sourceWord}>{item.sourceText}</Text>
+                <Text style={special.langLabel}>{uiLang.startsWith("en") ? "ENGLISH" : "FRANÇAIS"}</Text>
+              </View>
+
+              <Text style={special.dash}>-</Text>
+
+              <View style={special.col}>
+                <Text style={special.bassaWord}>{item.targetText}</Text>
+                <Text style={special.langLabel}>DUALA</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={special.audioBtn}
+              activeOpacity={0.6}
+              onPress={() => playAudio(item.audioKey)}
+            >
+              <Ionicons name="volume-high" size={20} color={Colors.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+};
+
+const GhomalaSpecialView = ({ themeId, uiLang, t }) => {
+  const data = getGhomalaThemeItems(themeId);
+  if (!data || data.length === 0) return null;
+
+  return (
+    <View style={special.container}>
+      <Text style={special.topic}>
+        {uiLang.startsWith("en") ? "Learn in Ghomálá'" : "Apprenez en Ghomálá'"}
+      </Text>
+
+      {data.map((item, idx) => (
+        <View key={idx} style={[special.card, Shadow.sm]}>
+          <View style={special.row}>
+            <View style={special.wordPairInner}>
+              <View style={special.col}>
+                <Text style={special.sourceWord}>{item.sourceText}</Text>
+                <Text style={special.langLabel}>{uiLang.startsWith("en") ? "ENGLISH" : "FRANÇAIS"}</Text>
+              </View>
+
+              <Text style={special.dash}>-</Text>
+
+              <View style={special.col}>
+                <Text style={special.bassaWord}>{item.targetText}</Text>
+                <Text style={special.langLabel}>GHOMÁLÁ'</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={special.audioBtn}
+              activeOpacity={0.6}
+              onPress={() => playAudio(item.audioKey)}
             >
               <Ionicons name="volume-high" size={20} color={Colors.primary} />
             </TouchableOpacity>

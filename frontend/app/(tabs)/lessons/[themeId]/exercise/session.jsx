@@ -297,7 +297,7 @@ const FeedbackBanner = ({ correct, correctAnswer, onNext }) => {
    TYPE 1 — IMAGE QCM
    Sélectionne → VÉRIFIER → Feedback
    ════════════════════════════════════════════════════════════════ */
-const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
+const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr" }) => {
   const { t } = useTranslation();
   const [sel, setSel] = useState(null);
   const [feedback, setFeedback] = useState(null);
@@ -321,19 +321,26 @@ const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
   };
 
-  const cardBorder = (opt) => {
+  const cardStyle = (opt) => {
     if (!feedback) {
-      return sel === opt.id ? { borderColor: C.primary, borderWidth: 3 } : {};
+      if (sel === opt.id) return [iq.card, iq.cardSel];
+      return iq.card;
     }
-    if (opt.id === q.target.id) return { borderColor: C.correct, borderWidth: 3 };
-    if (opt.id === sel && sel !== q.target.id) return { borderColor: C.primary, borderWidth: 3 };
-    return { opacity: 0.4 };
+    if (opt.id === q.target.id) return [iq.card, iq.cardCorrect];
+    if (opt.id === sel) return [iq.card, iq.cardWrong];
+    return [iq.card, { opacity: 0.4 }];
   };
 
-
   const a1 = useRef(new Animated.Value(0)).current;
+  const anims = useRef(q.options.map(() => new Animated.Value(0))).current;
+
   useEffect(() => {
-    Animated.timing(a1, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+    Animated.parallel([
+      Animated.timing(a1, { toValue: 1, duration: 400, useNativeDriver: true }),
+      Animated.stagger(100, anims.map(a => 
+        Animated.spring(a, { toValue: 1, tension: 50, friction: 7, useNativeDriver: true })
+      ))
+    ]).start();
   }, []);
 
   useEffect(() => {
@@ -347,61 +354,78 @@ const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext }) => {
         <Text style={iq.title}>{t("exercises.pickImageFor")}</Text>
 
         {/* Mot Duala + bouton audio */}
-        <View style={iq.wordRow}>
-          <Text style={iq.word}>{q.target.subtitle}</Text>
+        <View style={qx.wordRow}>
+          <View style={qx.wordPill}>
+            <Text style={qx.keyword}>"{q.target.subtitle}"</Text>
+          </View>
           <AudioBtn url={q.target.audioUrl} size={24} />
         </View>
 
         {/* Grille 2×2 */}
         <View style={iq.grid}>
-          {q.options.map((opt) => (
-            <TouchableOpacity
+          {q.options.map((opt, idx) => (
+            <Animated.View
               key={opt.id}
-              onPress={() => !feedback && setSel(opt.id)}
-              activeOpacity={feedback ? 1 : 0.8}
-              style={[iq.card, cardBorder(opt)]}
+              style={{
+                opacity: anims[idx] || 1,
+                transform: [{ scale: anims[idx] || 1 }]
+              }}
             >
-              <View style={iq.imgWrap}>
-                {opt.imageUrl && typeof opt.imageUrl === 'string' && opt.imageUrl.trim() !== "" ? (
-                  <Image source={IMAGES_MAP[opt.imageUrl] ? IMAGES_MAP[opt.imageUrl] : { uri: opt.imageUrl }} style={iq.img} contentFit="cover" />
-                ) : (
-                  <View style={[iq.img, iq.imgPlaceholder]}>
-                    <Ionicons name="image-outline" size={32} color={C.textFaint} />
-                  </View>
-                )}
-                {feedback && opt.id === q.target.id && (
-                  <View style={[iq.overlay, { backgroundColor: "rgba(46,204,113,0.38)" }]}>
-                    <View style={[iq.overlayCircle, { backgroundColor: C.correct }]}>
-                      <Ionicons name="checkmark" size={22} color="#FFF" />
+              <TouchableOpacity
+                onPress={() => !feedback && setSel(opt.id)}
+                activeOpacity={0.8}
+                style={cardStyle(opt)}
+              >
+                <View style={iq.imgWrap}>
+                  {opt.imageUrl && typeof opt.imageUrl === 'string' && opt.imageUrl.trim() !== "" ? (
+                    <Image source={IMAGES_MAP[opt.imageUrl] ? IMAGES_MAP[opt.imageUrl] : { uri: opt.imageUrl }} style={iq.img} contentFit="cover" />
+                  ) : (
+                    <View style={[iq.img, iq.imgPlaceholder]}>
+                      <Ionicons name="image-outline" size={32} color={C.textFaint} />
                     </View>
-                  </View>
-                )}
-                {feedback && opt.id === sel && sel !== q.target.id && (
-                  <View style={[iq.overlay, { backgroundColor: "rgba(183,28,28,0.38)" }]}>
-                    <View style={[iq.overlayCircle, { backgroundColor: C.primary }]}>
-                      <Ionicons name="close" size={22} color="#FFF" />
-                    </View>
-                  </View>
-                )}
-              </View>
+                  )}
 
-              {/* Audio par image */}
-              <View style={iq.labelRow}>
-                <Text
-                  style={[
-                    iq.label,
-                    feedback && opt.id === q.target.id && { color: C.correct, fontWeight: "700" },
-                    feedback && opt.id === sel && sel !== q.target.id && { color: C.primary },
-                  ]}
-                  numberOfLines={2}
-                >
-                  {opt.title}
-                </Text>
-                {opt.audioUrl && (
-                  <AudioBtn url={opt.audioUrl} size={16} color={C.textSub} />
-                )}
-              </View>
-            </TouchableOpacity>
+                  {sel === opt.id && !feedback && (
+                    <View style={qx.badge}>
+                      <Ionicons name="checkmark-circle" size={24} color={C.primary} />
+                    </View>
+                  )}
+
+                  {feedback && opt.id === q.target.id && (
+                    <View style={[iq.overlay, { backgroundColor: "rgba(46,204,113,0.25)" }]}>
+                      <View style={[iq.overlayCircle, { backgroundColor: C.correct }]}>
+                        <Ionicons name="checkmark" size={28} color="#FFF" />
+                      </View>
+                    </View>
+                  )}
+                  {feedback && opt.id === sel && sel !== q.target.id && (
+                    <View style={[iq.overlay, { backgroundColor: "rgba(183,28,28,0.25)" }]}>
+                      <View style={[iq.overlayCircle, { backgroundColor: C.primary }]}>
+                        <Ionicons name="close" size={28} color="#FFF" />
+                      </View>
+                    </View>
+                  )}
+                </View>
+
+                {/* Audio par image */}
+                <View style={iq.labelRow}>
+                  <Text
+                    style={[
+                      iq.label,
+                      sel === opt.id && !feedback && { color: C.primary, fontWeight: "700" },
+                      feedback && opt.id === q.target.id && { color: C.correct, fontWeight: "700" },
+                      feedback && opt.id === sel && sel !== q.target.id && { color: C.primary, fontWeight: "700" },
+                    ]}
+                    numberOfLines={2}
+                  >
+                    {opt.title}
+                  </Text>
+                  {opt.audioUrl && (
+                    <AudioBtn url={opt.audioUrl} size={16} color={C.textSub} />
+                  )}
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
           ))}
         </View>
 
@@ -477,12 +501,24 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr" 
     return [qx.optTxt, { color: C.textFaint }];
   };
 
+  const a1 = useRef(new Animated.Value(0)).current;
+  const anims = useRef(q.options.map(() => new Animated.Value(0))).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(a1, { toValue: 1, duration: 400, useNativeDriver: true }),
+      Animated.stagger(100, anims.map(a => 
+        Animated.spring(a, { toValue: 1, tension: 50, friction: 7, useNativeDriver: true })
+      ))
+    ]).start();
+  }, []);
+
   useEffect(() => {
     if (q.target.audioUrl) playWordAudio(q.target.audioUrl);
   }, [q.target.id]);
 
   return (
-    <Animated.View style={[{ flex: 1 }, { transform: [{ translateX: shakeX }] }]}>
+    <Animated.View style={[{ flex: 1, opacity: a1 }, { transform: [{ translateX: shakeX }] }]}>
       <ScrollView ref={scrollRef} contentContainerStyle={qx.scroll} showsVerticalScrollIndicator={false}>
 
         <Text style={qx.title}>{t("exercises.howToSayIn", { lang: langName })}</Text>
@@ -497,39 +533,46 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr" 
 
         {/* Grille 2×2 */}
         <View style={qx.grid}>
-          {q.options.map((opt) => (
-            <TouchableOpacity
+          {q.options.map((opt, idx) => (
+            <Animated.View
               key={opt.id}
-              onPress={() => !feedback && setSel(opt.id)}
-              activeOpacity={0.6}
-              style={cardStyle(opt)}
+              style={{
+                opacity: anims[idx] || 1,
+                transform: [{ scale: anims[idx] || 1 }]
+              }}
             >
-              {opt.imageUrl && typeof opt.imageUrl === 'string' && opt.imageUrl.trim() !== "" ? (
-                <Image source={IMAGES_MAP[opt.imageUrl] ? IMAGES_MAP[opt.imageUrl] : { uri: opt.imageUrl }} style={qx.optImg} contentFit="cover" />
-              ) : (
-                <View style={qx.optImgPlaceholder}>
-                  <Ionicons name="language" size={26} color={sel === opt.id ? C.primary : C.textFaint} />
-                </View>
-              )}
-
-              {sel === opt.id && !feedback && (
-                <View style={qx.badge}>
-                  <Ionicons name="checkmark-circle" size={20} color={C.primary} />
-                </View>
-              )}
-              {feedback && opt.id === q.target.id && (
-                <View style={qx.badge}>
-                  <Ionicons name="checkmark-circle" size={20} color={C.correct} />
-                </View>
-              )}
-
-              <View style={qx.optBottom}>
-                <Text style={labelStyle(opt)} numberOfLines={2}>{opt.subtitle}</Text>
-                {opt.audioUrl && (
-                  <AudioBtn url={opt.audioUrl} size={15} color={C.textSub} style={{ marginTop: 4 }} />
+              <TouchableOpacity
+                onPress={() => !feedback && setSel(opt.id)}
+                activeOpacity={0.6}
+                style={cardStyle(opt)}
+              >
+                {opt.imageUrl && typeof opt.imageUrl === 'string' && opt.imageUrl.trim() !== "" ? (
+                  <Image source={IMAGES_MAP[opt.imageUrl] ? IMAGES_MAP[opt.imageUrl] : { uri: opt.imageUrl }} style={qx.optImg} contentFit="cover" />
+                ) : (
+                  <View style={qx.optImgPlaceholder}>
+                    <Ionicons name="language" size={26} color={sel === opt.id ? C.primary : C.textFaint} />
+                  </View>
                 )}
-              </View>
-            </TouchableOpacity>
+
+                {sel === opt.id && !feedback && (
+                  <View style={qx.badge}>
+                    <Ionicons name="checkmark-circle" size={20} color={C.primary} />
+                  </View>
+                )}
+                {feedback && opt.id === q.target.id && (
+                  <View style={qx.badge}>
+                    <Ionicons name="checkmark-circle" size={20} color={C.correct} />
+                  </View>
+                )}
+
+                <View style={qx.optBottom}>
+                  <Text style={labelStyle(opt)} numberOfLines={2}>{opt.subtitle}</Text>
+                  {opt.audioUrl && (
+                    <AudioBtn url={opt.audioUrl} size={15} color={C.textSub} style={{ marginTop: 4 }} />
+                  )}
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
           ))}
         </View>
 
@@ -574,6 +617,11 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr" })
   const scrollRef = useRef(null);
   const shakeX = useRef(new Animated.Value(0)).current;
 
+  const a1 = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(a1, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+  }, []);
+
   const shake = () =>
     Animated.sequence([
       Animated.timing(shakeX, { toValue: 8, duration: 55, useNativeDriver: true }),
@@ -602,7 +650,7 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr" })
   const displayTitle = getWordDisplay(q.target.title, uiLang);
 
   return (
-    <View style={{ flex: 1 }}>
+    <Animated.View style={[{ flex: 1, opacity: a1 }]}>
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={wx.scroll}
@@ -615,13 +663,13 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr" })
         {/* Carte mot + audio */}
         <View style={[wx.hintCard, SHADOW]}>
           <View style={wx.hintIcon}>
-            <Ionicons name="chatbubble-ellipses" size={22} color={C.primary} />
+            <Ionicons name="chatbubbles" size={24} color={C.primary} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={wx.hintLabel}>{t("exercises.howToSay")}</Text>
             <Text style={wx.hintWord}>"{displayTitle}"</Text>
           </View>
-          <AudioBtn url={q.target.audioUrl} size={22} />
+          <AudioBtn url={q.target.audioUrl} size={28} />
           <View style={wx.blob} />
         </View>
 
@@ -644,7 +692,7 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr" })
             spellCheck={false}
             showSoftInputOnFocus={false}
             placeholder={t("exercises.typeTranslation")}
-            placeholderTextColor={C.textFaint}
+            placeholderTextColor={C.textSub}
             editable={!feedback}
           />
           {typed.length > 0 && !feedback && (
@@ -652,7 +700,7 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr" })
               onPress={() => setTyped("")}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Ionicons name="close-circle" size={20} color={C.textFaint} />
+              <Ionicons name="close-circle" size={22} color={C.textFaint} />
             </TouchableOpacity>
           )}
         </Animated.View>
@@ -676,7 +724,7 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr" })
           onNext={() => { setTyped(""); setFeedback(null); onNext(); }}
         />
       )}
-    </View>
+    </Animated.View>
   );
 };
 
@@ -908,10 +956,29 @@ export default function ExerciseSession() {
 
   // Slice lessons to cumulative word count (or all if no wordCount param)
   const lessonsKey = lessons.map((l) => l.id).join(",");
-  const wordsForSession = useMemo(
-    () => (wordCount ? lessons.slice(0, wordCount) : lessons),
-    [lessonsKey, wordCount]
-  );
+  const wordsForSession = useMemo(() => {
+    let rawItems = [];
+    if (isDuala) {
+      const { getDualaThemeItems } = require("../../../../data/dualaLessonsData");
+      rawItems = getDualaThemeItems(themeId) || [];
+    } else if (isGhomala) {
+      const { getGhomalaThemeItems } = require("../../../../data/ghomalaLessonsData");
+      rawItems = getGhomalaThemeItems(themeId) || [];
+    }
+
+    if (rawItems.length > 0) {
+      // Map to standard exercise item shape
+      return rawItems.map((item, idx) => ({
+        id: `virt_${themeId}_${idx}`,
+        title: item.sourceText,
+        subtitle: item.targetText,
+        audioUrl: item.audioKey ? `/audio/${themeId}/${item.audioKey}.mp3` : null,
+        imageUrl: item.imageUrl || null,
+        order: idx,
+      }));
+    }
+    return wordCount ? lessons.slice(0, wordCount) : lessons;
+  }, [lessonsKey, wordCount, isDuala, isGhomala, themeId]);
 
   // For Bassa, use the fixed docx-driven exercise questions so the content
   // matches exactly what the docx files specify (match words from Ex 1, write
@@ -1358,20 +1425,22 @@ const tipS = StyleSheet.create({
 const iq = StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingTop: 16 },
   title: { fontSize: 18, fontWeight: "600", color: C.textSub, marginBottom: 8 },
-  wordRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 24 },
-  word: { fontSize: 28, fontWeight: "800", color: C.primary, flex: 1 },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   card: {
     width: CARD_W,
     backgroundColor: C.card,
-    borderRadius: 20, overflow: "hidden",
-    borderWidth: 3, borderColor: "transparent",
+    borderRadius: 24, overflow: "hidden",
+    borderWidth: 3, borderColor: C.border,
+    paddingBottom: 4,
     ...SHADOW,
   },
+  cardSel: { borderColor: C.primary, backgroundColor: C.primaryLight },
+  cardCorrect: { borderColor: C.correct, backgroundColor: C.correctLight },
+  cardWrong: { borderColor: C.primary, backgroundColor: C.primaryLight },
   imgWrap: { position: "relative" },
-  img: { width: "100%", height: CARD_W },
+  img: { width: "100%", height: CARD_W * 0.95 },
   imgPlaceholder: {
-    width: "100%", height: CARD_W,
+    width: "100%", height: CARD_W * 0.95,
     backgroundColor: "#F8EDED",
     alignItems: "center", justifyContent: "center",
   },
@@ -1380,14 +1449,15 @@ const iq = StyleSheet.create({
     alignItems: "center", justifyContent: "center",
   },
   overlayCircle: {
-    width: 48, height: 48, borderRadius: 24,
+    width: 54, height: 54, borderRadius: 27,
     alignItems: "center", justifyContent: "center",
+    ...SHADOW,
   },
   labelRow: {
     flexDirection: "row", alignItems: "center",
-    paddingVertical: 8, paddingHorizontal: 8, gap: 4,
+    paddingVertical: 10, paddingHorizontal: 8, gap: 4,
   },
-  label: { flex: 1, fontSize: 13, fontWeight: "600", color: C.text, textAlign: "center" },
+  label: { flex: 1, fontSize: 14, fontWeight: "600", color: C.text, textAlign: "center" },
 });
 
 /* Text QCM */
@@ -1403,8 +1473,8 @@ const qx = StyleSheet.create({
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 20 },
   card: {
     width: CARD_W, backgroundColor: C.card,
-    borderRadius: 20, overflow: "hidden",
-    borderWidth: 2.5, borderColor: C.border,
+    borderRadius: 24, overflow: "hidden",
+    borderWidth: 3, borderColor: C.border,
     alignItems: "center", paddingBottom: 12,
     ...SHADOW,
   },
@@ -1457,35 +1527,36 @@ const wx = StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingTop: 16 },
   title: { fontSize: 22, fontWeight: "800", color: C.text, lineHeight: 30, marginBottom: 20 },
   hintCard: {
-    flexDirection: "row", alignItems: "center", gap: 14,
+    flexDirection: "row", alignItems: "center", gap: 16,
     backgroundColor: C.primaryLight,
-    borderRadius: 20, padding: 20,
-    marginBottom: 20, overflow: "hidden",
+    borderRadius: 24, padding: 22,
+    marginBottom: 24, overflow: "hidden",
+    borderWidth: 1, borderColor: C.primary + "20",
   },
   hintIcon: {
-    width: 48, height: 48, borderRadius: 24,
-    backgroundColor: C.primary + "25",
+    width: 52, height: 52, borderRadius: 26,
+    backgroundColor: C.primary + "20",
     alignItems: "center", justifyContent: "center",
   },
-  hintLabel: { fontSize: 12, fontWeight: "600", color: C.textSub, marginBottom: 4 },
-  hintWord: { fontSize: 20, fontWeight: "800", color: C.primary },
+  hintLabel: { fontSize: 13, fontWeight: "700", color: C.textSub, marginBottom: 4 },
+  hintWord: { fontSize: 22, fontWeight: "800", color: C.primary, letterSpacing: 0.5 },
   blob: {
-    position: "absolute", width: 100, height: 100, borderRadius: 50,
-    backgroundColor: "rgba(183,28,28,0.07)", right: -20, top: -20,
+    position: "absolute", width: 120, height: 120, borderRadius: 60,
+    backgroundColor: "rgba(183,28,28,0.08)", right: -30, top: -30,
   },
   inputBox: {
     flexDirection: "row", alignItems: "center",
     backgroundColor: C.card,
-    borderRadius: 18, paddingHorizontal: 18, paddingVertical: 4,
-    marginBottom: 16,
+    borderRadius: 20, paddingHorizontal: 20, paddingVertical: 6,
+    marginBottom: 20,
     borderWidth: 2, borderColor: C.border,
     ...SHADOW,
   },
   inputOk: { borderColor: C.correct, backgroundColor: C.correctLight },
   inputKo: { borderColor: C.primary, backgroundColor: C.primaryLight },
   input: {
-    flex: 1, fontSize: 20, fontWeight: "700",
-    color: C.text, paddingVertical: 14,
+    flex: 1, fontSize: 22, fontWeight: "700",
+    color: C.text, paddingVertical: 16,
   },
   /* Barre chars spéciaux */
   specialBar: {
@@ -1494,10 +1565,10 @@ const wx = StyleSheet.create({
     paddingVertical: 8,
   },
   specialRowContent: {
-    paddingHorizontal: 16, gap: 8,
+    paddingHorizontal: 16, gap: 10,
   },
   specialKey: {
-    minWidth: 44, height: 44,
+    minWidth: 48, height: 48,
     backgroundColor: C.primaryLight,
     borderRadius: 10,
     alignItems: "center", justifyContent: "center",

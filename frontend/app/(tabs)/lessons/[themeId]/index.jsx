@@ -21,6 +21,7 @@ import { useThemeStore }    from "../../../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../../../src/stores/useDashboardStore";
 import { useLanguageStore }  from "../../../../src/stores/useLanguageStore";
 import { useTranslation } from "react-i18next";
+import { MLoader } from "../../../../src/components/ui/MComponents";
 
 const { width: SW } = Dimensions.get("window");
 
@@ -242,8 +243,21 @@ export default function ThemeDetailScreen() {
   const displayLessons = lessons;
 
   const theme     = getThemeById(themeId);
-  const themeName = isBassa ? "Bassa Lessons" : (theme?.name_fr ?? theme?.name ?? titleParam ?? category ?? t("common.theme"));
   const themeCode = (theme?.code ?? "").toLowerCase();
+  
+  // Clean up theme name: remove "Niveau 1 :" etc. 
+  // For 'fondations' code, use localized "Foundations" / "Fondations"
+  let themeName = (theme?.name_fr ?? theme?.name ?? titleParam ?? category ?? t("common.theme"));
+  if (themeCode === 'fondations') {
+    themeName = t("lessons.foundations");
+  } else {
+    themeName = themeName.replace(/Niveau \d+\s*:\s*/gi, "");
+  }
+
+  // Bassa fallback
+  if (isBassa && themeName === t("common.theme")) {
+    themeName = "Bassa Lessons";
+  }
   const emoji     = getEmoji(themeCode);
 
   const completed = displayLessons.filter((l) => l.isCompleted).length;
@@ -338,7 +352,9 @@ export default function ThemeDetailScreen() {
 
         {/* ── Chemin de leçons ── */}
         {lessonsLoading && displayLessons.length === 0 ? (
-          <ActivityIndicator size="large" color={lt.accent} style={{ marginVertical: 60 }} />
+          <View style={{ marginTop: 60 }}>
+            <MLoader message={t("common.loading") || "Loading lessons..."} fullScreen={false} />
+          </View>
         ) : displayLessons.length === 0 ? (
           <View style={s.empty}>
             {error ? (
@@ -357,10 +373,11 @@ export default function ThemeDetailScreen() {
             ) : (
               <>
                 <Text style={{ fontSize: 48 }}>📭</Text>
-                <Text style={[s.emptyTxt, { color: lt.accent + "80" }]}>{t("lessons.noLessons")}</Text>
+                <Text style={[s.emptyTxt, { color: lt.accent + "80", marginTop: 12 }]}>{t("lessons.noLessons", "No lessons available")}</Text>
               </>
             )}
           </View>
+
         ) : (
           <View style={s.path}>
             {displayLessons.map((lesson, idx) => (
