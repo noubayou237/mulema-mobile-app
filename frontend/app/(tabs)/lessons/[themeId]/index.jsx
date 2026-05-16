@@ -301,6 +301,8 @@ export default function ThemeDetailScreen() {
     themeCode === 'fondations' || 
     themeName.toLowerCase().includes('fondation') ||
     themeName.toLowerCase().includes('foundation') ||
+    themeName.toLowerCase().includes('mots de base') ||
+    themeName.toLowerCase().includes('basic words') ||
     themeName === t("lessons.foundations") || 
     themeName === t("common.theme");
 

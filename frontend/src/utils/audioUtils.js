@@ -16,7 +16,6 @@ const DEFAULT_AUDIO_MODE = {
 export async function setAudioMode(options = DEFAULT_AUDIO_MODE) {
   try {
     await Audio.setAudioModeAsync(options);
-    console.log("[AudioUtils] Audio mode configured successfully");
   } catch (error) {
     Logger.error("Failed to set audio mode", error);
   }
@@ -28,7 +27,7 @@ export async function setAudioMode(options = DEFAULT_AUDIO_MODE) {
  */
 export async function playAudioUrl(url) {
   if (!url) {
-    console.warn("[AudioUtils] No URL/Key provided to playAudioUrl");
+    Logger.warn("[AudioUtils] No URL/Key provided to playAudioUrl");
     return;
   }
 
@@ -38,10 +37,9 @@ export async function playAudioUrl(url) {
 
     // 2. Resolve source (local require or remote URI)
     const source = AUDIOS_MAP[url] ? AUDIOS_MAP[url] : { uri: url };
-    console.log(`[AudioUtils] Attempting to play: ${url}`, source);
 
     if (!AUDIOS_MAP[url] && !url.startsWith("http")) {
-      console.warn(`[AudioUtils] Key "${url}" not found in AUDIOS_MAP and doesn't look like a URL.`);
+      Logger.warn(`[AudioUtils] Key "${url}" not found in AUDIOS_MAP and doesn't look like a URL.`);
     }
 
     // 3. Create and play the sound
@@ -50,7 +48,6 @@ export async function playAudioUrl(url) {
       { shouldPlay: true, volume: 1.0 },
       (status) => {
         if (status.didJustFinish) {
-          console.log(`[AudioUtils] Finished playing: ${url}`);
           sound.unloadAsync();
         }
       }
@@ -58,7 +55,6 @@ export async function playAudioUrl(url) {
 
     return sound;
   } catch (error) {
-    console.error(`[AudioUtils] CRITICAL AUDIO ERROR for "${url}":`, error);
     Logger.error("playAudioUrl failed", error);
   }
 }
