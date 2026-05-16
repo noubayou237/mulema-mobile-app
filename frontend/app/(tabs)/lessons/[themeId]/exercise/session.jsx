@@ -157,12 +157,11 @@ const buildSession = (words) => {
     }
   }
 
-  // ── Write — word[2] and word[3] (two different words → each appears once in write)
+  // ── Listen & Write replaces Write for higher difficulty ──────────────────
   const wt1 = sw[2 % n];
   const wt2 = sw[3 % n];
-  questions.push({ type: "write", target: wt1 });
-  // Only push second write if it targets a genuinely different word
-  if (wt2.id !== wt1.id) questions.push({ type: "write", target: wt2 });
+  questions.push({ type: "listen_write", target: wt1 });
+  if (wt2.id !== wt1.id) questions.push({ type: "listen_write", target: wt2 });
 
   // ── Listen & Write — the "unknown/surprise" question ──────────────────
   // Prefer a word not yet used in QCM or Write, keeping this question fresh
@@ -361,15 +360,7 @@ const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr"
             <Text style={qx.subLabel}>{uiLang?.startsWith("en") ? "ENGLISH" : "FRANÇAIS"}</Text>
           </View>
 
-          <View style={qx.divider} />
-
-          <View style={qx.localCol}>
-            <View style={{ flex: 1 }}>
-              <Text style={qx.localWord}>{q.target.subtitle}</Text>
-              <Text style={qx.langLabel}>{langName}</Text>
-            </View>
-            <AudioBtn url={q.target.audioUrl} size={22} style={qx.audioFixed} />
-          </View>
+          <AudioBtn url={q.target.audioUrl} size={28} style={qx.audioFixed} />
         </View>
 
         {/* Grille 2×2 */}
@@ -824,17 +815,13 @@ const ListenWriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "
               activeOpacity={0.62}
               style={lw.bigSpeaker}
             >
-              <Ionicons name={played ? "volume-high" : "volume-medium"} size={48} color="#FFF" />
+              <Ionicons name="mic" size={48} color="#FFF" />
             </TouchableOpacity>
           </Animated.View>
           <Text style={lw.tapHint}>{t("exercises.tapToListen")}</Text>
         </View>
 
-        {/* Translation Card always visible (Image 1 style) */}
-        <View style={[wx.hintCardV3, SHADOW]}>
-          <Text style={wx.hintLabel}>{uiLang?.startsWith("en") ? "ENGLISH" : "FRANÇAIS"}</Text>
-          <Text style={wx.hintWord}>{getWordDisplay(q.target.title, uiLang)}</Text>
-        </View>
+        {/* Hint card removed to test listening recall as requested */}
 
         {/* Input field — showSoftInputOnFocus=false, patrimonial keyboard handles all input */}
         <Animated.View
@@ -1505,9 +1492,9 @@ const qx = StyleSheet.create({
   badgeV2: { position: "absolute", top: 8, right: 8 },
 
   wordRowV2: {
-    flexDirection: "row", alignItems: "center",
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     backgroundColor: C.card,
-    borderRadius: 20, padding: 16,
+    borderRadius: 20, padding: 18,
     marginBottom: 28, borderWidth: 1.5, borderColor: C.border,
     ...SHADOW,
   },

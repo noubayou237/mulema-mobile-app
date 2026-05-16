@@ -410,16 +410,14 @@ const s = StyleSheet.create({
     position: "absolute",
     right: Space["2xl"],
     top: Platform.OS === "ios" ? 58 : 40,
-    paddingHorizontal: Space.lg,
-    paddingVertical: Space.sm,
-    borderRadius: Radius.full,
-    backgroundColor: "rgba(255,255,255,0.12)",
-    zIndex: 10
+    backgroundColor: "rgba(255,255,255,0.92)",
+    paddingVertical: 10, paddingHorizontal: 18,
+    borderRadius: 24,
+    flexDirection: "row", alignItems: "center", gap: 6,
+    // Premium shadow for depth
+    shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 4
   },
-  skipText: {
-    color: Colors.onPrimary,
-    ...Typo.titleSm
-  },
+  skipText: { color: "#111", fontWeight: "700", fontSize: 13, textTransform: "uppercase", letterSpacing: 0.8 },
 
   // Play button center
   playCenterWrap: {
