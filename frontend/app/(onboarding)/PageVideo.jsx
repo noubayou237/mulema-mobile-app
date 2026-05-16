@@ -207,34 +207,27 @@ export default function PageVideo() {
   const videoUri = VIDEO_BY_LANG[langResolved] ?? VIDEO_BY_LANG.default;
 
   // ── Persist & navigate ──
+  // ── Reactive Navigation Trigger ──
+  // Instead of manual routing, we update the store. The AuthGate in _layout.jsx
+  // will detect hasSeenIntro=true and swap the navigator group instantly.
   const persistAndGoHome = () => {
-    // Navigate immediately to avoid UI blocking
-    router.replace("/(tabs)/home");
+    // 1. Immediately signal the store. This is a synchronous state update.
+    const { setHasSeenIntro } = useLanguageStore.getState();
+    setHasSeenIntro(true);
 
-    // Run async tasks in background
-    (async () => {
-      try {
-        const { languages, setActiveLanguage, setHasSeenIntro } = useLanguageStore.getState();
-
-        // Find the matching language in the store — use normalizeLangKey for robust matching
-        const lang = languages.find(
-          (l) =>
-            normalizeLangKey(l.code) === langResolved ||
-            normalizeLangKey(l.name) === langResolved
-        );
-        if (lang) {
-          await setActiveLanguage(lang);
-        } else {
-          await AsyncStorage.setItem(HAS_SELECTED_LANGUAGE, langResolved);
-        }
-
-        // Marquer l'intro comme vue
-        await setHasSeenIntro(true);
-      } catch (err) {
-        Logger.error("Failed to persist onboarding state in background:", err);
-      }
-    })();
+    // 2. The screen will be unmounted by the navigator in the next frame.
+    // We don't call router.replace() here to avoid transition conflicts.
   };
+
+  // ── Background Cleanup/Sync ──
+  // This runs after the user has "seen" the intro. Since the navigator swaps
+  // components, PageVideo will unmount.
+  useEffect(() => {
+    return () => {
+      // If we unmount before persistAndGoHome was called (rare but possible),
+      // we ensure the music is resumed. Logic already exists in the first useEffect.
+    };
+  }, []);
 
   // ── Play handler ──
   const handlePlay = async () => {
@@ -344,8 +337,7 @@ export default function PageVideo() {
         {/* ── Skip button (top right) ── */}
         <TouchableOpacity
           onPress={persistAndGoHome}
-          activeOpacity={0.7}
-          delayPressIn={0}
+          activeOpacity={0.8}
           style={s.skipBtn}
         >
           <Text style={s.skipText}>Skip</Text>
@@ -369,8 +361,7 @@ export default function PageVideo() {
           {/* Continue button — instant response, no animation delay */}
           <TouchableOpacity
             onPress={persistAndGoHome}
-            activeOpacity={0.7}
-            delayPressIn={0}
+            activeOpacity={0.8}
             style={{ width: "100%" }}
           >
             <LinearGradient
@@ -385,7 +376,7 @@ export default function PageVideo() {
                 minHeight: 54,
               }}
             >
-              <Text style={[{ color: Colors.onPrimary, fontSize: 16, fontWeight: "700" }]}>
+              <Text style={[{ color: Colors.onPrimary, fontSize: 18, fontWeight: "700", fontFamily: "Fredoka_600SemiBold" }]}>
                 {t("common.continue")}
               </Text>
             </LinearGradient>

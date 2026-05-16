@@ -124,10 +124,15 @@ export const useLanguageStore = create((set, get) => ({
   },
 
   setHasSeenIntro: async (val) => {
+    // 1. Update state immediately for UI reactivity (e.g. AuthGate navigation)
     set({ hasSeenIntro: val });
+    
+    // 2. Persist in background
     try {
       await AsyncStorage.setItem("hasSeenIntro", val ? "true" : "false");
-    } catch {}
+    } catch (err) {
+      Logger.warn("[LanguageStore] Failed to persist hasSeenIntro:", err);
+    }
   },
 
   hasLanguage: () => get().activeLanguage !== null,
