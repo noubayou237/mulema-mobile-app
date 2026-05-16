@@ -290,4 +290,45 @@ export function getGhomalaThemeItems(themeId) {
   return themeMap[themeId]?.items || [];
 }
 
+/**
+ * All known Ghomala virtual theme IDs
+ */
+const GHOMALA_VIRTUAL_IDS = [
+  "ghomala_jour",
+  "ghomala_chiffres",
+  "ghomala_etre",
+  "ghomala_avoir",
+  "ghomala_manger",
+  "ghomala_marcher",
+  "ghomala_acheter",
+];
+
+/**
+ * Check if a themeId is a known Ghomala virtual ID
+ */
+export function isGhomalaVirtualId(themeId) {
+  return GHOMALA_VIRTUAL_IDS.includes(themeId);
+}
+
+/**
+ * Returns ALL Ghomala virtual lessons combined into a single list.
+ * No matter which lesson card the user clicks, they see every Ghomala lesson
+ * as a node in the adventure tree.
+ */
+export function getAllGhomalaVirtualData() {
+  const lessons = GHOMALA_VIRTUAL_IDS.map((id, idx) => {
+    const data = getGhomalaVirtualData(id);
+    if (!data || !data.lessons || data.lessons.length === 0) return null;
+    // Take the single lesson from each virtual theme and re-order
+    return {
+      ...data.lessons[0],
+      id: `virt_${id}_0`,
+      order: idx,
+      virtualThemeId: id,
+    };
+  }).filter(Boolean);
+
+  return { lessons };
+}
+
 export default {};

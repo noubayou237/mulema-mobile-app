@@ -33,7 +33,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
-import { MButton } from "../../src/components/ui/MComponents";
 import { VIDEOS_MAP, IMAGES_MAP } from "../../src/utils/AssetsMap";
 import {
   pauseBackgroundMusic,
@@ -346,6 +345,7 @@ export default function PageVideo() {
         <TouchableOpacity
           onPress={persistAndGoHome}
           activeOpacity={0.7}
+          delayPressIn={0}
           style={s.skipBtn}
         >
           <Text style={s.skipText}>Skip</Text>
@@ -366,13 +366,30 @@ export default function PageVideo() {
           {/* Description */}
           <Text style={s.description}>{getDescription(langResolved)}</Text>
 
-          {/* Continue button */}
-          <MButton
-            title={t("common.continue")}
+          {/* Continue button — instant response, no animation delay */}
+          <TouchableOpacity
             onPress={persistAndGoHome}
-            // icon="arrow-forward"
+            activeOpacity={0.7}
+            delayPressIn={0}
             style={{ width: "100%" }}
-          />
+          >
+            <LinearGradient
+              colors={[Colors.primaryContainer, Colors.primary]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{
+                paddingVertical: 16,
+                borderRadius: 999,
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 54,
+              }}
+            >
+              <Text style={[{ color: Colors.onPrimary, fontSize: 16, fontWeight: "700" }]}>
+                {t("common.continue")}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
       </View>
     </View>

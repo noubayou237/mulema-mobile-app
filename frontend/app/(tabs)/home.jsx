@@ -8,7 +8,7 @@
  *  app/(tabs)/home.jsx
  */
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -330,7 +330,26 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { activeLanguage, languages, fetchLanguages, loadActiveLanguage } = useLanguageStore();
-  const { themes, lessons, isLoading: tLoading, fetchThemes, fetchLessons, setVirtualData } = useThemeStore();
+  const { themes: baseThemes, isLoading: tLoading, fetchThemes, setVirtualData } = useThemeStore();
+  
+  // Map themes to update "Foundations" titles for specific languages
+  const themes = useMemo(() => {
+    const langName = activeLanguage?.name || "";
+    const norm = langName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    
+    return (baseThemes || []).map(t => {
+      const code = (t.code || "").toLowerCase();
+      const name = t.name || "";
+      const isFoundations = code === "fondations" || name.toLowerCase().includes("fondation") || name.toLowerCase().includes("foundation");
+      
+      if (isFoundations) {
+        if (norm.includes("bassa")) return { ...t, name: "Bassa Lessons", name_en: "Bassa Lessons" };
+        if (norm.includes("duala") || norm.includes("douala")) return { ...t, name: "Duala Lessons", name_en: "Duala Lessons" };
+        if (norm.includes("ghomala")) return { ...t, name: "Ghomala Lessons", name_en: "Ghomala Lessons" };
+      }
+      return t;
+    });
+  }, [baseThemes, activeLanguage]);
   const { data: dash, isLoading: dLoading, error: dashError, fetchDashboard } = useDashboardStore();
 
   const { t, i18n } = useTranslation();
@@ -387,11 +406,7 @@ export default function HomeScreen() {
     }, [activeLanguage, languages])
   );
 
-  useEffect(() => {
-    if (themes.length > 0 && !tLoading && themes[0]?.id && themes[0].id !== "undefined") {
-      fetchLessons(themes[0].id);
-    }
-  }, [themes, tLoading]);
+
 
   /* ── Drawer ── */
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -613,7 +628,7 @@ export default function HomeScreen() {
     router.push({
       pathname: `/(tabs)/lessons/${lesson.themeId || lesson.id}`,
       params: {
-        title: isBassa ? "Bassa Lessons" : (themes[0]?.name || "Leçons"),
+        title: isBassa ? "Bassa Lessons" : isDuala ? "Duala Lessons" : isGhomala ? "Ghomala Lessons" : (themes[0]?.name || "Leçons"),
         scrollToId: lesson.id
       },
     });

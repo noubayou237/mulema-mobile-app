@@ -84,7 +84,8 @@ export const useThemeStore = create((set, get) => ({
     const reqKey = `lessons_${themeId}`;
     if (!force && inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
 
-    const now = Date.now();
+    const startTime = Date.now();
+    const now = startTime;
     const lastFetch = lastFetchTime.get(reqKey) || 0;
     const state = get();
     const currentThemeId = state.currentThemeId;
@@ -104,12 +105,25 @@ export const useThemeStore = create((set, get) => ({
       return cached;
     }
 
-    const hasCache = currentThemeId === themeId && cached.length > 0;
-    set({ currentThemeId: themeId, lessonsLoading: !hasCache });
+    // When switching to a different theme, clear stale lessons so the UI
+    // doesn't flash old data while the new theme's lessons are loading.
+    set({
+      currentThemeId: themeId,
+      lessonsLoading: true,
+      error: null,
+      ...(currentThemeId !== themeId ? { lessons: [] } : {}),
+    });
 
     const fetchPromise = (async () => {
       try {
         const lessons = await themesService.getLessons(themeId);
+        
+        // Race condition: If state was updated (e.g., setVirtualData) while we were fetching, ignore this result.
+        if (lastFetchTime.get(reqKey) > startTime) {
+          Logger.log(`[ThemeStore] fetchLessons(${themeId}) result ignored: newer data present.`);
+          return get().lessons;
+        }
+
         set({ lessons, lessonsLoading: false });
         lastFetchTime.set(reqKey, Date.now());
 
@@ -125,6 +139,11 @@ export const useThemeStore = create((set, get) => ({
 
         return lessons;
       } catch (error) {
+        // If state was updated while we were fetching, don't set error/empty lessons.
+        if (lastFetchTime.get(reqKey) > startTime) {
+          return get().lessons;
+        }
+
         const msg = getFriendlyErrorMessage(error);
         set({ lessonsLoading: false, error: msg });
         if (error?.response?.status !== 401 && !isNetworkError(error)) {

@@ -268,4 +268,32 @@ export function getDualaThemeItems(themeId) {
   return themeMap[themeId]?.items || [];
 }
 
+export const DUALA_VIRTUAL_IDS = [
+  "duala_jour",
+  "duala_pronoms",
+  "duala_etre",
+  "duala_avoir",
+  "duala_chiffres",
+  "duala_couleurs",
+];
+
+export function isDualaVirtualId(themeId) {
+  return DUALA_VIRTUAL_IDS.includes(themeId);
+}
+
+export function getAllDualaVirtualData() {
+  const lessons = DUALA_VIRTUAL_IDS.map((id, idx) => {
+    const data = getDualaVirtualData(id);
+    if (!data || !data.lessons || data.lessons.length === 0) return null;
+    return {
+      ...data.lessons[0],
+      id: `virt_${id}_0`,
+      order: idx,
+      virtualThemeId: id,
+    };
+  }).filter(Boolean);
+
+  return { lessons };
+}
+
 export default {};

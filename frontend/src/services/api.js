@@ -38,7 +38,7 @@ const getBaseUrl = () => {
 
 const BASE_URL = getBaseUrl();
 const STORAGE_KEY = "userSession";
-const TIMEOUT = 6000;
+const TIMEOUT = 15000;
 
 // Synchronous flag — set/cleared together with AsyncStorage so that store
 // fetch functions can guard against post-logout calls without async I/O.

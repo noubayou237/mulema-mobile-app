@@ -4,7 +4,7 @@
  * Nœuds : cercle (leçon) · hexagone (défi) · étoile (bonus final)
  */
 
-import { useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity,
   Animated, StyleSheet, Platform, StatusBar,
@@ -22,6 +22,8 @@ import { useDashboardStore } from "../../../../src/stores/useDashboardStore";
 import { useLanguageStore }  from "../../../../src/stores/useLanguageStore";
 import { useTranslation } from "react-i18next";
 import { MLoader } from "../../../../src/components/ui/MComponents";
+import { getGhomalaVirtualData, getAllGhomalaVirtualData, isGhomalaVirtualId } from "../../../data/ghomalaLessonsData";
+import { getDualaVirtualData, getAllDualaVirtualData, isDualaVirtualId } from "../../../data/dualaLessonsData";
 
 const { width: SW } = Dimensions.get("window");
 
@@ -223,24 +225,69 @@ export default function ThemeDetailScreen() {
   const { themeId, category, title: titleParam } = useLocalSearchParams();
   const { t }       = useTranslation();
 
-  const { fetchLessons, getThemeById, lessons, lessonsLoading, clearTheme, isLessonLocked, getExerciseAccess, error } = useThemeStore();
+  const { fetchLessons, getThemeById, lessons, lessonsLoading, clearTheme, isLessonLocked, getExerciseAccess, setVirtualData, error } = useThemeStore();
   const { data: dash } = useDashboardStore();
   const { activeLanguage } = useLanguageStore();
+
+  // Track whether we're actively loading for *this* themeId specifically
+  const [isInitializing, setIsInitializing] = useState(true);
 
   const lt = getLangTheme(activeLanguage?.name ?? "");
   const langName = activeLanguage?.name ?? "";
   const normalizedLang = langName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const isBassa = normalizedLang.includes("bassa") || normalizedLang.includes("basaa");
+  const isGhomalaLanguage = normalizedLang.includes("ghomala") || normalizedLang.includes("ghomal") || normalizedLang.includes("bamilek");
+  const isDualaLanguage = normalizedLang.includes("duala") || normalizedLang.includes("douala");
 
-  // Refetch every time this screen gains focus so that newly-unlocked lessons
-  // appear after returning from an exercise without needing a full remount.
+  // Detect non-UUID themeIds (hardcoded fallback IDs)
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const isRealThemeId = themeId && (UUID_REGEX.test(themeId) || themeId.startsWith("virtual_"));
+
+  // Load lessons: use virtual data for Ghomala/Duala, API for real UUIDs
   useFocusEffect(
     useCallback(() => {
-      if (themeId) fetchLessons(themeId, true);
-    }, [themeId])
+      if (!themeId) return;
+
+      // Always inject the full virtual tree for Ghomala and Duala, regardless of the themeId origin
+      const isGhomala = isGhomalaLanguage || isGhomalaVirtualId(themeId);
+      const isDuala = isDualaLanguage || isDualaVirtualId(themeId);
+
+      // Always inject the full virtual tree for Ghomala and Duala, regardless of the themeId origin
+      if (isGhomala) {
+        setVirtualData(themeId, getAllGhomalaVirtualData());
+        setIsInitializing(false);
+        return;
+      }
+
+      if (isDuala) {
+        setVirtualData(themeId, getAllDualaVirtualData());
+        setIsInitializing(false);
+        return;
+      }
+
+      // For remaining hardcoded IDs without a matched language (fallback), inject virtual data locally
+      // because the backend rejects non-UUID themeIds and returns []
+      if (!isRealThemeId) {
+        let virtualData;
+        const dualaData = getDualaVirtualData?.(themeId);
+        virtualData = dualaData || getGhomalaVirtualData(themeId);
+
+        if (virtualData) {
+          setVirtualData(themeId, virtualData);
+        }
+        setIsInitializing(false);
+        return;
+      }
+
+      // Real UUID — fetch from API
+      setIsInitializing(true);
+      fetchLessons(themeId, true).finally(() => setIsInitializing(false));
+    }, [themeId, isGhomalaLanguage, isDualaLanguage])
   );
 
-  const displayLessons = lessons;
+  // Only show lessons that belong to *this* themeId (avoid stale data from previous theme)
+  const currentThemeId = useThemeStore((s) => s.currentThemeId);
+  const displayLessons = currentThemeId === themeId ? lessons : [];
 
   const theme     = getThemeById(themeId);
   const themeCode = (theme?.code ?? "").toLowerCase();
@@ -248,15 +295,24 @@ export default function ThemeDetailScreen() {
   // Clean up theme name: remove "Niveau 1 :" etc. 
   // For 'fondations' code, use localized "Foundations" / "Fondations"
   let themeName = (theme?.name_fr ?? theme?.name ?? titleParam ?? category ?? t("common.theme"));
-  if (themeCode === 'fondations') {
-    themeName = t("lessons.foundations");
+
+  // Language-specific "Lessons" title for foundations or generic theme
+  const isFoundations = 
+    themeCode === 'fondations' || 
+    themeName.toLowerCase().includes('fondation') ||
+    themeName.toLowerCase().includes('foundation') ||
+    themeName === t("lessons.foundations") || 
+    themeName === t("common.theme");
+
+  if (isFoundations) {
+    if (isBassa) themeName = "Bassa Lessons";
+    else if (isDualaLanguage) themeName = "Duala Lessons";
+    else if (isGhomalaLanguage) themeName = "Ghomala Lessons";
+    else if (themeCode === 'fondations') {
+      themeName = t("lessons.foundations");
+    }
   } else {
     themeName = themeName.replace(/Niveau \d+\s*:\s*/gi, "");
-  }
-
-  // Bassa fallback
-  if (isBassa && themeName === t("common.theme")) {
-    themeName = "Bassa Lessons";
   }
   const emoji     = getEmoji(themeCode);
 
@@ -351,7 +407,7 @@ export default function ThemeDetailScreen() {
         </LinearGradient>
 
         {/* ── Chemin de leçons ── */}
-        {lessonsLoading && displayLessons.length === 0 ? (
+        {(isInitializing || lessonsLoading) && displayLessons.length === 0 ? (
           <View style={{ marginTop: 60 }}>
             <MLoader message={t("common.loading") || "Loading lessons..."} fullScreen={false} />
           </View>

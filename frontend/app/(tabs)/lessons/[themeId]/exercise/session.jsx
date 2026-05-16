@@ -905,6 +905,8 @@ export default function ExerciseSession() {
 
   // Resolve whether the active language is Bassa and the theme's numeric order.
   const isBassa = langName.toLowerCase().includes("bassa") || langName.toLowerCase().includes("basaa");
+  const isDuala = langName.toLowerCase().includes("duala") || langName.toLowerCase().includes("douala");
+  const isGhomala = langName.toLowerCase().includes("ghomala") || langName.toLowerCase().includes("ghomálá");
 
   // Robust mapping for Bassa themes since IDs can vary between environments
   const BASSA_CAT_MAP = {
@@ -972,7 +974,7 @@ export default function ExerciseSession() {
         id: `virt_${themeId}_${idx}`,
         title: item.sourceText,
         subtitle: item.targetText,
-        audioUrl: item.audioKey ? `/audio/${themeId}/${item.audioKey}.mp3` : null,
+        audioUrl: item.audioKey ? item.audioKey : null,
         imageUrl: item.imageUrl || null,
         order: idx,
       }));
