@@ -40,6 +40,8 @@ const TRACK = Colors.surfaceContainerHigh;
 const TEXT = Colors.onSurface;
 const TEXT_SUB = Colors.textTertiary;
 const FAINT = Colors.textTertiary + "80";
+const GREEN = Colors.success || "#2E7D32";
+const GREEN_L = GREEN + "15";
 
 /* ── Icônes par code thème ──────────────────────────────────── */
 const ICONS = {
@@ -177,10 +179,11 @@ const ThemeCard = ({ theme, index, onPress, onPressIn }) => {
           </Text>
         ) : null}
 
-        {locked
-          ? <Text style={s.lockMsg} numberOfLines={2}>{theme.lockHint || t("lessons.locked")}</Text>
-          : <Text style={s.cardPct}>{t("lessons.percentCompleted", { percent: pct })}</Text>
-        }
+        <View style={[s.statusBadge, { backgroundColor: locked ? "#EDEDF2" : GREEN_L }]}>
+          <Text style={[s.statusTxt, { color: locked ? FAINT : GREEN }]}>
+            {locked ? (theme.lockHint || t("lessons.locked")) : "Unlocked"}
+          </Text>
+        </View>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -678,6 +681,16 @@ const s = StyleSheet.create({
   cardName: { fontSize: 14, fontFamily: "Fredoka_600SemiBold", color: TEXT, marginTop: 10, textAlign: "center" },
   cardLocal: { fontSize: 11, fontFamily: "Nunito-Regular", color: TEXT_SUB, textAlign: "center", marginTop: 1 },
   cardPct: { fontSize: 12, fontFamily: "Nunito-Regular", color: TEXT_SUB, marginTop: 3 },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  statusTxt: {
+    fontSize: 12,
+    fontFamily: "Fredoka_600SemiBold",
+  },
   lockMsg: { fontSize: 11, fontFamily: "Nunito-Regular", color: FAINT, textAlign: "center", lineHeight: 16, marginTop: 3 },
 
   empty: { alignItems: "center", paddingVertical: 48 },

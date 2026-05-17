@@ -44,6 +44,8 @@ const RED_L = Colors.primary + "15";
 const GREEN = Colors.success || "#2E7D32";
 const GREEN_L = GREEN + "15";
 const GOLD = Colors.secondaryContainer || "#FD9D1A";
+const TEXT_SUB = Colors.textTertiary;
+const FAINT = Colors.textTertiary + "80";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 const DRAWER_WIDTH = SCREEN_W * 0.78;
@@ -266,60 +268,29 @@ const ThemeCard = ({ theme, onPress }) => {
         activeOpacity={locked ? 1 : 0.9}
         style={[s.themeCard, Shadow.sm, locked && { opacity: 0.45 }]}
       >
-        {pct > 0 && <View style={[s.themeProgress, { width: `${pct}%` }]} />}
 
         <View style={s.themeTop}>
           <View style={[s.themeIcon, { backgroundColor: locked ? Colors.surfaceVariant : RED_L }]}>
             <Ionicons name={getIcon(theme.name)} size={22} color={locked ? Colors.textTertiary : RED} />
           </View>
-          {locked
-            ? <Ionicons name="lock-closed" size={14} color={Colors.textTertiary} />
-            : pct > 0 && (
-              <View style={s.pctBadge}>
-                <Text style={[Typo.labelMd, { color: GREEN }]}>{pct}%</Text>
-              </View>
-            )
-          }
+          <View style={[s.pctBadge, { backgroundColor: locked ? Colors.surfaceVariant : GREEN_L }]}>
+            <Text style={[Typo.labelMd, { color: locked ? Colors.textTertiary : GREEN, fontSize: 10 }]}>
+              {locked ? t("lessons.locked") : "Unlocked"}
+            </Text>
+          </View>
         </View>
 
         <Text style={[Typo.titleSm, { marginTop: Space.md, color: Colors.onSurface }]} numberOfLines={1}>
           {i18n.language.startsWith("en") && theme.name_en ? theme.name_en : theme.name}
         </Text>
-        <Text style={[Typo.labelSm, { marginTop: Space.xs, color: Colors.textTertiary }]}>
-          {t("lessons.lessonsCount", { count: theme.lessonsCount })}
-        </Text>
+        {/* <Text style={[Typo.labelSm, { color: locked ? Colors.textTertiary : GREEN, marginTop: 4, fontFamily: "Fredoka_600SemiBold" }]}>
+          {locked ? t("lessons.locked") : "Unlocked"}
+        </Text> */}
       </TouchableOpacity>
     </Animated.View>
   );
 };
 
-/* ════════════════════════════════════════════════════════════════════
-   EXERCICES DU JOUR
-   ════════════════════════════════════════════════════════════════════ */
-
-const ExerciseRow = ({ exo, onPress }) => {
-  const { t } = useTranslation();
-  return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={s.exoRow}>
-      <View style={[s.exoIcon, { backgroundColor: exo.done ? GREEN_L : Colors.surfaceContainerLow }]}>
-        <Ionicons name={exo.icon} size={18} color={exo.done ? GREEN : Colors.textTertiary} />
-      </View>
-      <Text style={[Typo.titleSm, { flex: 1, marginLeft: Space.lg, color: Colors.onSurface }]} numberOfLines={1}>
-        {exo.label}
-      </Text>
-      {exo.done ? (
-        <View style={s.doneBadge}>
-          <Ionicons name="checkmark" size={12} color="#fff" />
-          <Text style={[Typo.labelMd, { color: "#fff", marginLeft: 3 }]}>{t("exercises.done")}</Text>
-        </View>
-      ) : (
-        <View style={s.todoBadge}>
-          <Text style={[Typo.labelMd, { color: Colors.textTertiary }]}>{t("exercises.todo")}</Text>
-        </View>
-      )}
-    </TouchableOpacity>
-  );
-};
 import { IMAGES_MAP } from "../../src/utils/AssetsMap";
 
 /* ════════════════════════════════════════════════════════════════════
@@ -331,17 +302,17 @@ export default function HomeScreen() {
   const { user, logout } = useAuthStore();
   const { activeLanguage, languages, fetchLanguages, loadActiveLanguage } = useLanguageStore();
   const { themes: baseThemes, isLoading: tLoading, fetchThemes, setVirtualData } = useThemeStore();
-  
+
   // Map themes to update "Foundations" titles for specific languages
   const themes = useMemo(() => {
     const langName = activeLanguage?.name || "";
     const norm = langName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    
+
     return (baseThemes || []).map(t => {
       const code = (t.code || "").toLowerCase();
       const name = t.name || "";
       const isFoundations = code === "fondations" || name.toLowerCase().includes("fondation") || name.toLowerCase().includes("foundation");
-      
+
       if (isFoundations) {
         if (norm.includes("bassa")) return { ...t, name: "Bassa Lessons", name_en: "Bassa Lessons" };
         if (norm.includes("duala") || norm.includes("douala")) return { ...t, name: "Duala Lessons", name_en: "Duala Lessons" };
@@ -387,7 +358,7 @@ export default function HomeScreen() {
             fetchThemes(langId2);
           }
         }
-      } catch (err) {}
+      } catch (err) { }
     };
     init();
   }, [activeLanguage]);
@@ -400,7 +371,7 @@ export default function HomeScreen() {
         if (langId) {
           // Force fetch fresh data from backend
           fetchDashboard();
-          fetchThemes(langId, true); 
+          fetchThemes(langId, true);
         }
       }
     }, [activeLanguage, languages])
@@ -559,7 +530,7 @@ export default function HomeScreen() {
       { id: "duala_couleurs", name: "Les couleurs", nameLocal: "Langi", code: "couleurs", lessonsCount: 7 },
     ];
 
-    
+
     const counts = {};
     return items.map((item, idx) => {
       const code = item.code || item.id;
@@ -654,28 +625,6 @@ export default function HomeScreen() {
     });
   };
 
-  /* ── Exercise themes only (excludes lesson-type themes) ── */
-  const LESSON_CODES = ["jours", "verbes", "pronoms", "chiffres", "couleurs"];
-  const exerciseThemes = themes.filter((t) => {
-    const code = (t.code ?? "").toLowerCase();
-    if (LESSON_CODES.includes(code)) return false;
-
-    // Explicitly hide these backend themes from the UI for Bassa
-    if (isBassa) {
-      const nm = (t.name || "").toLowerCase();
-      if (
-        nm.includes("niveau 1") ||
-        nm.includes("vie de famille") ||
-        nm.includes("savan") ||
-        nm.includes("cuisine") ||
-        nm.includes("fondation") ||
-        nm.includes("foundation")
-      ) {
-        return false;
-      }
-    }
-    return true;
-  });
 
   /* ── Animations d'entrée en cascade ── */
   const anims = useRef([0, 1, 2, 3, 4].map(() => new Animated.Value(0))).current;
@@ -792,27 +741,6 @@ export default function HomeScreen() {
             )}
           </Animated.View>
 
-          {/* Exercices du jour */}
-          <Animated.View style={[s.section, fadeUp(anims[3], 22)]}>
-            <View style={s.sectionHead}>
-              <Text style={[Typo.headlineMd, { color: Colors.onSurface }]}>{t("home.exercises")}</Text>
-              <View style={s.exoBadgeCount}>
-                <Text style={[Typo.labelMd, { color: RED }]}>
-                  {getThemeExos(exerciseThemes).filter((e) => e.done).length}/{getThemeExos(exerciseThemes).length}
-                </Text>
-              </View>
-            </View>
-
-            <View style={s.exoList}>
-              {getThemeExos(exerciseThemes).map((exo) => (
-                <ExerciseRow
-                  key={exo.id}
-                  exo={exo}
-                  onPress={() => router.push(exo.route)}
-                />
-              ))}
-            </View>
-          </Animated.View>
 
           <View style={{ height: Space["4xl"] }} />
 
@@ -1006,12 +934,18 @@ const s = StyleSheet.create({
     borderRadius: 23,
     alignItems: "center", justifyContent: "center",
   },
-  pctBadge: {
-    backgroundColor: GREEN_L,
-    borderRadius: Radius.full,
-    paddingHorizontal: Space.md,
-    paddingVertical: 2,
+  cardPct: { fontSize: 12, fontFamily: "Nunito-Regular", color: TEXT_SUB, marginTop: 3 },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 8,
   },
+  statusTxt: {
+    fontSize: 12,
+    fontFamily: "Fredoka_600SemiBold",
+  },
+  lockMsg: { fontSize: 11, fontFamily: "Nunito-Regular", color: FAINT, textAlign: "center", lineHeight: 16, marginTop: 3 },
   empty: { alignItems: "center", paddingVertical: Space["4xl"] },
 
   /* Exercices */

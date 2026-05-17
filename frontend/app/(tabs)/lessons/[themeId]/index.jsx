@@ -245,6 +245,10 @@ export default function ThemeDetailScreen() {
   const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const isRealThemeId = themeId && (UUID_REGEX.test(themeId) || themeId.startsWith("virtual_"));
 
+  // Only show lessons that belong to *this* themeId (avoid stale data from previous theme)
+  const currentThemeId = useThemeStore((s) => s.currentThemeId);
+  const displayLessons = currentThemeId === themeId ? (lessons || []) : [];
+
   // Load lessons — unified path for ALL languages (Bassa, Duala, Ghomala)
   // Since themeId is now always a UUID from the theme list page,
   // all languages use the same fetchLessons API call.
@@ -252,15 +256,14 @@ export default function ThemeDetailScreen() {
     useCallback(() => {
       if (!themeId) return;
 
-      // Real UUID — fetch from API (same path for all 3 languages)
-      setIsInitializing(true);
-      fetchLessons(themeId, true).finally(() => setIsInitializing(false));
-    }, [themeId])
+      // Real UUID — fetch from API 
+      // Use cached data first for instant display, then sync in background
+      const hasLessons = displayLessons.length > 0;
+      if (!hasLessons) setIsInitializing(true);
+      
+      fetchLessons(themeId, false).finally(() => setIsInitializing(false));
+    }, [themeId, displayLessons.length])
   );
-
-  // Only show lessons that belong to *this* themeId (avoid stale data from previous theme)
-  const currentThemeId = useThemeStore((s) => s.currentThemeId);
-  const displayLessons = currentThemeId === themeId ? lessons : [];
 
   const theme     = getThemeById(themeId);
   const themeCode = (theme?.code ?? "").toLowerCase();

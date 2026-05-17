@@ -417,6 +417,41 @@ export const useThemeStore = create((set, get) => ({
   },
 
   // ═════════════════════════════════════════════════════════════
+  // Optimistic Updates — Pour un déblocage instantané côté UI
+  // ═════════════════════════════════════════════════════════════
+
+  /**
+   * Marque une catégorie comme terminée et débloque la suivante
+   * sans attendre la réponse de l'API.
+   */
+  optimisticUnlockCategory: (themeId, currentOrder) => {
+    const { lessons, currentThemeId } = get();
+    if (currentThemeId !== themeId || !lessons.length) return;
+
+    const updated = lessons.map(l => {
+      // Mark current as completed
+      if (l.order === currentOrder) return { ...l, isCompleted: true };
+      // Unlock next one
+      if (l.order === currentOrder + 1) return { ...l, isUnlocked: true };
+      return l;
+    });
+
+    set({ lessons: updated });
+  },
+
+  /**
+   * Marque le défi final comme réussi et prépare l'accès vidéo.
+   */
+  optimisticUnlockFinal: (themeId) => {
+    const { themes } = get();
+    const updated = themes.map(t => {
+      if (t.id === themeId) return { ...t, e3Completed: true };
+      return t;
+    });
+    set({ themes: updated });
+  },
+
+  // ═════════════════════════════════════════════════════════════
   // setVirtualData — Injects virtual lessons/words for specific themes
   // ═════════════════════════════════════════════════════════════
   setVirtualData: (themeId, data) => {
