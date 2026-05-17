@@ -40,12 +40,7 @@ import { changeLanguage, getCurrentLanguage } from "../../src/i18n";
 
 /* ── Palette ── */
 const RED = Colors.primary;
-const RED_L = Colors.primary + "15";
-const GREEN = Colors.success || "#2E7D32";
-const GREEN_L = GREEN + "15";
 const GOLD = Colors.secondaryContainer || "#FD9D1A";
-const TEXT_SUB = Colors.textTertiary;
-const FAINT = Colors.textTertiary + "80";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 const DRAWER_WIDTH = SCREEN_W * 0.78;
@@ -66,33 +61,8 @@ const getIcon = (name) => {
   return "book";
 };
 
-/* ── Exercices basés sur les thèmes (Dynamique) ── */
-const getThemeExos = (themes) => {
-  if (!themes || themes.length === 0) return [];
-  // Afficher les thèmes actifs (commencés)
-  const activeThemes = themes.filter((t) => t.lessonsCount > 0 && t.lessonsCompleted > 0);
+// Removed getThemeExos logic - exercises not needed on home screen
 
-  if (activeThemes.length === 0) {
-    // S'il n'a rien commencé, on propose le premier thème dispo
-    const first = themes[0];
-    return [{
-      id: first.id,
-      label: first.name,
-      icon: getIcon(first.name),
-      route: `/(tabs)/lessons/${first.id}/exercise/session?wordCount=10`,
-      done: false,
-    }];
-  }
-
-  // Trier par les plus récents (les moins complétés d'abord, ou simplement les 3 premiers)
-  return activeThemes.slice(0, 3).map(theme => ({
-    id: theme.id,
-    label: theme.name,
-    icon: getIcon(theme.name),
-    route: `/(tabs)/lessons/${theme.id}/exercise/session?wordCount=10`,
-    done: theme.lessonsCompleted >= theme.lessonsCount,
-  }));
-};
 
 // Drawer Content moved to shared component
 
@@ -115,7 +85,7 @@ const HomeHeader = ({ streak = 0, xp = 0, hearts = 5, nextRechargeIn = 0, onMenu
     <View style={s.header}>
       <View style={s.headerLeft}>
         <TouchableOpacity onPress={onMenuPress} activeOpacity={0.7} style={s.menuBtn}>
-          <Ionicons name="menu" size={22} color={RED} />
+          <Ionicons name="menu" size={22} color={Colors.primary} />
         </TouchableOpacity>
         <Image source={IMAGES_MAP.logo} style={{ width: 72, height: 72, marginLeft: Space.sm }} contentFit="contain" />
       </View>
@@ -134,18 +104,18 @@ const HomeHeader = ({ streak = 0, xp = 0, hearts = 5, nextRechargeIn = 0, onMenu
             );
           }}
           activeOpacity={0.7}
-          style={[s.headerBadge, { backgroundColor: RED_L, paddingHorizontal: 8, paddingVertical: 6 }]}
+          style={[s.headerBadge, { backgroundColor: Colors.primary + "15", paddingHorizontal: 8, paddingVertical: 6 }]}
         >
-          <Ionicons name="globe-outline" size={18} color={RED} />
+          <Ionicons name="globe-outline" size={18} color={Colors.primary} />
         </TouchableOpacity>
-        <View style={[s.headerBadge, { backgroundColor: RED_L, marginLeft: Space.xs }]}>
-          <Ionicons name="heart" size={14} color={RED} />
+        <View style={[s.headerBadge, { backgroundColor: Colors.primary + "15", marginLeft: Space.xs }]}>
+          <Ionicons name="heart" size={14} color={Colors.primary} />
           <Text style={[Typo.labelLg, { color: Colors.onSurface, marginLeft: 4 }]}>
             {hearts}
           </Text>
         </View>
-        <View style={[s.headerBadge, { backgroundColor: GREEN_L, marginLeft: Space.xs }]}>
-          <Ionicons name="leaf" size={14} color={GREEN} />
+        <View style={[s.headerBadge, { backgroundColor: Colors.GREEN_L, marginLeft: Space.xs }]}>
+          <Ionicons name="leaf" size={14} color={Colors.GREEN} />
           <Text style={[Typo.labelLg, { color: Colors.onSurface, marginLeft: 4 }]}>{streak}</Text>
         </View>
         <View style={[s.headerBadge, { backgroundColor: "#FFF7E6", marginLeft: Space.sm }]}>
@@ -167,11 +137,11 @@ const LangBanner = ({ lang, onPress }) => {
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={s.langBanner}>
       <View style={s.langDot} />
-      <Text style={[Typo.labelLg, { color: RED, marginLeft: Space.md, flex: 1 }]}>
+      <Text style={[Typo.labelLg, { color: Colors.primary, marginLeft: Space.md, flex: 1 }]}>
         {lang.name}
       </Text>
-      <Text style={[Typo.bodySm, { color: RED }]}>{t("common.edit")}</Text>
-      <Ionicons name="chevron-forward" size={13} color={RED} style={{ marginLeft: 2 }} />
+      <Text style={[Typo.bodySm, { color: Colors.primary }]}>{t("common.edit")}</Text>
+      <Ionicons name="chevron-forward" size={13} color={Colors.primary} style={{ marginLeft: 2 }} />
     </TouchableOpacity>
   );
 };
@@ -237,8 +207,8 @@ const DashCard = ({ user, percent = 0, mins = 0, goal = 40, onContinue }) => {
       </View>
 
       <TouchableOpacity onPress={onContinue} activeOpacity={0.85} style={s.continueBtn}>
-        <Ionicons name="play" size={16} color={RED} />
-        <Text style={[Typo.titleSm, { color: RED, marginLeft: Space.sm }]}>
+        <Ionicons name="play" size={16} color={Colors.primary} />
+        <Text style={[Typo.titleSm, { color: Colors.primary, marginLeft: Space.sm }]}>
           {t("home.continueLearning")}
         </Text>
       </TouchableOpacity>
@@ -270,11 +240,11 @@ const ThemeCard = ({ theme, onPress }) => {
       >
 
         <View style={s.themeTop}>
-          <View style={[s.themeIcon, { backgroundColor: locked ? Colors.surfaceVariant : RED_L }]}>
-            <Ionicons name={getIcon(theme.name)} size={22} color={locked ? Colors.textTertiary : RED} />
+          <View style={[s.themeIcon, { backgroundColor: locked ? Colors.surfaceVariant : Colors.primary + "15" }]}>
+            <Ionicons name={getIcon(theme.name)} size={22} color={locked ? Colors.TEXT_SUB : Colors.primary} />
           </View>
-          <View style={[s.pctBadge, { backgroundColor: locked ? Colors.surfaceVariant : GREEN_L }]}>
-            <Text style={[Typo.labelMd, { color: locked ? Colors.textTertiary : GREEN, fontSize: 10 }]}>
+          <View style={[s.pctBadge, { backgroundColor: locked ? Colors.surfaceVariant : Colors.GREEN_L }]}>
+            <Text style={[Typo.labelMd, { color: locked ? Colors.TEXT_SUB : Colors.GREEN, fontSize: 10 }]}>
               {locked ? t("lessons.locked") : "Unlocked"}
             </Text>
           </View>
@@ -678,15 +648,16 @@ export default function HomeScreen() {
           {/* Bannière d'erreur (Connexion) */}
           {dashError && (
             <View style={s.errorBanner}>
-              <Ionicons name="cloud-offline-outline" size={24} color={RED} />
+              <Ionicons name="cloud-offline-outline" size={24} color={Colors.primary} />
               <View style={{ flex: 1 }}>
                 <Text style={s.errorTitle}>{t("common.error", "Erreur")}</Text>
                 <Text style={s.errorTxt}>{dashError}</Text>
               </View>
               <TouchableOpacity onPress={fetchDashboard} style={s.retryBtn}>
-                <Ionicons name="refresh" size={18} color={RED} />
+                <Ionicons name="refresh" size={18} color={Colors.primary} />
               </TouchableOpacity>
             </View>
+
           )}
 
           {/* Dashboard */}
@@ -707,24 +678,27 @@ export default function HomeScreen() {
                 onPress={() => router.push("/(tabs)/lessons")}
                 activeOpacity={0.7}
               >
-                <Text style={[Typo.titleSm, { color: RED }]}>{t("home.seeAll")}</Text>
+                <Text style={[Typo.titleSm, { color: Colors.primary }]}>{t("home.seeAll")}</Text>
               </TouchableOpacity>
+
             </View>
 
             {/* Syncing indicator when refreshing in background */}
             {tLoading && lessonDisplayItems.length > 0 && (
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 6 }}>
-                <ActivityIndicator size="small" color={RED} style={{ marginRight: 6 }} />
+                <ActivityIndicator size="small" color={Colors.primary} style={{ marginRight: 6 }} />
                 <Text style={[Typo.labelMd, { color: Colors.textTertiary }]}>Synchronisation...</Text>
               </View>
+
             )}
 
             {loading && lessonDisplayItems.length === 0 ? (
               <ActivityIndicator
                 size="large"
-                color={RED}
+                color={Colors.primary}
                 style={{ marginVertical: Space["3xl"] }}
               />
+
             ) : lessonDisplayItems.length === 0 ? (
               <View style={s.empty}>
                 <Ionicons name="book-outline" size={38} color={Colors.textTertiary} />
@@ -803,7 +777,7 @@ const s = StyleSheet.create({
   menuBtn: {
     width: 40, height: 40,
     borderRadius: 20,
-    backgroundColor: RED_L,
+    backgroundColor: Colors.primary + "15",
     alignItems: "center", justifyContent: "center",
   },
   headerCenter: { flexDirection: "row", alignItems: "center" },
@@ -821,7 +795,7 @@ const s = StyleSheet.create({
   langBanner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: RED_L,
+    backgroundColor: Colors.primary + "15",
     borderRadius: Radius.lg,
     paddingHorizontal: Space.lg,
     paddingVertical: Space.md,
@@ -830,12 +804,12 @@ const s = StyleSheet.create({
   langDot: {
     width: 8, height: 8,
     borderRadius: 4,
-    backgroundColor: RED,
+    backgroundColor: Colors.primary,
   },
 
   /* Dashboard card */
   dashCard: {
-    backgroundColor: RED,
+    backgroundColor: Colors.primary,
     borderRadius: Radius.xl,
     padding: Space["4xl"],
     marginBottom: Space["2xl"],
@@ -877,7 +851,7 @@ const s = StyleSheet.create({
   progressFill: {
     position: "absolute",
     left: 0, top: 0, bottom: 0,
-    backgroundColor: GREEN, // Keep Green for progress metric
+    backgroundColor: Colors.GREEN, // Keep Green for progress metric
     borderRadius: Radius.full,
   },
   progressLabel: {
@@ -925,7 +899,7 @@ const s = StyleSheet.create({
     position: "absolute",
     bottom: 0, left: 0,
     height: 3,
-    backgroundColor: GREEN, // Keep green for progress
+    backgroundColor: Colors.GREEN, // Keep green for progress
     borderRadius: Radius.full,
   },
   themeTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
@@ -934,76 +908,38 @@ const s = StyleSheet.create({
     borderRadius: 23,
     alignItems: "center", justifyContent: "center",
   },
-  cardPct: { fontSize: 12, fontFamily: "Nunito-Regular", color: TEXT_SUB, marginTop: 3 },
+  cardPct: { fontSize: 12, fontFamily: "Nunito-Regular", color: Colors.TEXT_SUB, marginTop: 3 },
   statusBadge: {
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
     marginTop: 8,
+    backgroundColor: Colors.primary + "15",
   },
   statusTxt: {
     fontSize: 12,
     fontFamily: "Fredoka_600SemiBold",
   },
-  lockMsg: { fontSize: 11, fontFamily: "Nunito-Regular", color: FAINT, textAlign: "center", lineHeight: 16, marginTop: 3 },
+  lockMsg: { fontSize: 11, fontFamily: "Nunito-Regular", color: Colors.FAINT, textAlign: "center", lineHeight: 16, marginTop: 3 },
   empty: { alignItems: "center", paddingVertical: Space["4xl"] },
 
-  /* Exercices */
-  exoBadgeCount: {
-    backgroundColor: RED_L,
-    borderRadius: Radius.full,
-    paddingHorizontal: Space.md,
-    paddingVertical: 2,
-  },
-  exoList: {
-    backgroundColor: "#fff",
-    borderRadius: Radius.xl,
-    overflow: "hidden",
-    ...Shadow.sm,
-  },
-  exoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Space.lg,
-    paddingVertical: Space.lg,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.surfaceVariant,
-  },
-  exoIcon: {
-    width: 40, height: 40,
-    borderRadius: 20,
-    alignItems: "center", justifyContent: "center",
-  },
-  doneBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: GREEN, // Done is success metric
-    borderRadius: Radius.full,
-    paddingHorizontal: Space.md,
-    paddingVertical: 4,
-  },
-  todoBadge: {
-    backgroundColor: Colors.surfaceContainerLow,
-    borderRadius: Radius.full,
-    paddingHorizontal: Space.md,
-    paddingVertical: 4,
-  },
   /* Error banner */
+
   errorBanner: {
-    backgroundColor: RED_L,
+    backgroundColor: Colors.primary + "15",
     flexDirection: "row",
     alignItems: "center",
     padding: Space.lg,
     borderRadius: Radius.lg,
     marginBottom: Space.lg,
-    gap: Space.md,
+    gap: 12,
     borderWidth: 1,
-    borderColor: RED + "30",
+    borderColor: Colors.primary + "30",
   },
   errorTitle: {
     fontSize: 14,
     fontFamily: "Fredoka_600SemiBold",
-    color: RED,
+    color: Colors.primary,
     marginBottom: 2,
   },
   errorTxt: {
@@ -1041,7 +977,7 @@ const dr = StyleSheet.create({
     position: "absolute",
     top: 0, left: 0, right: 0,
     height: 4,
-    backgroundColor: RED,
+    backgroundColor: Colors.primary,
   },
   container: {
     flex: 1,
@@ -1071,7 +1007,7 @@ const dr = StyleSheet.create({
     width: 60, height: 60,
     borderRadius: 30,
     borderWidth: 2.5,
-    borderColor: RED,
+    borderColor: Colors.primary,
     alignItems: "center", justifyContent: "center",
     overflow: "hidden",
   },
@@ -1079,7 +1015,7 @@ const dr = StyleSheet.create({
   levelBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: RED_L,
+    backgroundColor: Colors.primary + "15",
     borderRadius: Radius.full,
     paddingHorizontal: Space.md,
     paddingVertical: 2,
@@ -1089,7 +1025,7 @@ const dr = StyleSheet.create({
   streakBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: GREEN_L,
+    backgroundColor: Colors.GREEN_L,
     borderRadius: Radius.full,
     paddingHorizontal: Space.lg,
     paddingVertical: Space.sm,
@@ -1107,7 +1043,7 @@ const dr = StyleSheet.create({
     paddingVertical: Space.lg,
   },
   menuItemHL: {
-    backgroundColor: RED_L,
+    backgroundColor: Colors.primary + "15",
     borderRadius: Radius.xl,
     paddingHorizontal: Space.lg,
     marginHorizontal: -Space.lg,

@@ -1,6 +1,8 @@
 import { Audio } from "expo-av";
 import { AUDIOS_MAP } from "./AssetsMap";
 import Logger from "./logger";
+import { Alert } from "react-native";
+import i18n from "../i18n";
 
 const DEFAULT_AUDIO_MODE = {
   allowsRecordingIOS: false,
@@ -40,6 +42,8 @@ export async function playAudioUrl(url) {
 
     if (!AUDIOS_MAP[url] && !url.startsWith("http")) {
       Logger.warn(`[AudioUtils] Key "${url}" not found in AUDIOS_MAP and doesn't look like a URL.`);
+      // If it's a missing local key, we might want to skip createAsync to avoid crash logs, 
+      // but catching the error below is more robust.
     }
 
     // 3. Create and play the sound
@@ -56,5 +60,13 @@ export async function playAudioUrl(url) {
     return sound;
   } catch (error) {
     Logger.error("playAudioUrl failed", error);
+    
+    // Show user-friendly error if audio fails
+    const title = i18n.t("errors.audioError");
+    const message = i18n.t("errors.audioNotAvailable");
+    
+    Alert.alert(title, message, [{ text: "OK" }], { cancelable: true });
+    
+    return null; // Return null so callers can handle failure if needed
   }
 }

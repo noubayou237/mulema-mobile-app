@@ -219,6 +219,43 @@ const LessonNode = ({ lesson, index, onPress, lt, isLocked }) => {
 };
 
 
+const SyncBar = ({ loading, message, lt }) => {
+  if (!loading) return null;
+  return (
+    <View style={{
+      position: 'absolute',
+      bottom: 30,
+      left: 20,
+      right: 20,
+      backgroundColor: 'rgba(0,0,0,0.85)',
+      paddingVertical: 12,
+      paddingHorizontal: 20,
+      borderRadius: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      borderWidth: 1,
+      borderColor: lt.accent + "40",
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4.65,
+      elevation: 8,
+    }}>
+      <ActivityIndicator size="small" color={lt.accent} style={{ marginRight: 12 }} />
+      <Text style={{ 
+        color: '#FFF', 
+        fontSize: 14, 
+        fontFamily: "Fredoka_600SemiBold",
+        letterSpacing: 0.3 
+      }}>
+        {message}
+      </Text>
+    </View>
+  );
+};
+
 /* ═══════════════════════════════════════════════════════════════
    ÉCRAN PRINCIPAL
    ═══════════════════════════════════════════════════════════════ */
@@ -242,7 +279,6 @@ export default function ThemeDetailScreen() {
   const isDualaLanguage = normalizedLang.includes("duala") || normalizedLang.includes("douala");
 
   // Detect non-UUID themeIds (hardcoded fallback IDs)
-  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const isRealThemeId = themeId && (UUID_REGEX.test(themeId) || themeId.startsWith("virtual_"));
 
   // Only show lessons that belong to *this* themeId (avoid stale data from previous theme)
@@ -301,6 +337,13 @@ export default function ThemeDetailScreen() {
   return (
     <View style={[s.root, { backgroundColor: lt.bg }]}>
       <StatusBar barStyle="light-content" />
+
+      {/* Background sync loader */}
+      <SyncBar 
+        loading={lessonsLoading && displayLessons.length > 0} 
+        message={t("lessons.unlocking") || "Unlocking next level..."} 
+        lt={lt} 
+      />
 
       {/* ── Fond étoilé ── */}
       <View style={StyleSheet.absoluteFill} pointerEvents="none">

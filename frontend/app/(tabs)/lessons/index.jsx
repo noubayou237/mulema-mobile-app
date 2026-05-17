@@ -29,19 +29,11 @@ import { getGhomalaVirtualData } from "../../data/ghomalaLessonsData";
 // ID Duala connu — fallback 
 
 const { width } = Dimensions.get("window");
+const SCREEN_W = width;
 const CARD_W = (width - Space["2xl"] * 2 - Space.lg) / 2;
 
-/* ── Palette — Adjusted to use design tokens where possible ── */
-const RED = Colors.primary;
-const RED_L = Colors.primary + "15";
-const BG = Colors.surface;
-const CARD_BG = Colors.surfaceContainerLowest;
-const TRACK = Colors.surfaceContainerHigh;
-const TEXT = Colors.onSurface;
-const TEXT_SUB = Colors.textTertiary;
-const FAINT = Colors.textTertiary + "80";
-const GREEN = Colors.success || "#2E7D32";
-const GREEN_L = GREEN + "15";
+// Legacy constants removed in favor of design tokens
+
 
 /* ── Icônes par code thème ──────────────────────────────────── */
 const ICONS = {
@@ -87,9 +79,10 @@ const SyncBar = () => {
         />
       </View>
       <View style={syncStyles.labelRow}>
-        <ActivityIndicator size="small" color={RED} style={{ marginRight: 6 }} />
+        <ActivityIndicator size="small" color={Colors.primary} style={{ marginRight: 6 }} />
         <Text style={syncStyles.label}>Synchronisation...</Text>
       </View>
+
     </View>
   );
 };
@@ -97,20 +90,21 @@ const SyncBar = () => {
 const syncStyles = StyleSheet.create({
   wrap: { paddingHorizontal: 16, paddingBottom: 4 },
   track: {
-    height: 3, backgroundColor: RED + "15",
+    height: 3, backgroundColor: Colors.primary + "15",
     borderRadius: 2, overflow: "hidden",
   },
   bar: {
     width: width * 0.4, height: "100%",
-    backgroundColor: RED, borderRadius: 2,
+    backgroundColor: Colors.primary, borderRadius: 2,
   },
+
   labelRow: {
     flexDirection: "row", alignItems: "center",
     justifyContent: "center", paddingTop: 4,
   },
   label: {
     fontSize: 11, fontFamily: "Nunito-Regular",
-    color: TEXT_SUB,
+    color: Colors.TEXT_SUB,
   },
 });
 
@@ -144,43 +138,30 @@ const ThemeCard = ({ theme, index, onPress, onPressIn }) => {
         activeOpacity={locked ? 1 : 0.75}
         style={[s.card, locked && s.cardLocked]}
       >
-        {/* Anneau SVG + icône */}
+        {/* Icône sans anneau de progression percentage */}
         <View style={s.ringWrap}>
-          <Svg width={80} height={80} style={StyleSheet.absoluteFill}>
-            <Circle cx={40} cy={40} r={R} stroke={locked ? "#E0E0EA" : TRACK} strokeWidth={5} fill="none" />
-            {!locked && pct > 0 && (
-              <Circle
-                cx={40} cy={40} r={R}
-                stroke={RED} strokeWidth={5} fill="none"
-                strokeDasharray={`${C2} ${C2}`}
-                strokeDashoffset={C2 - (pct / 100) * C2}
-                strokeLinecap="round"
-                rotation="-90" origin="40, 40"
-              />
-            )}
-          </Svg>
           <View style={[s.iconCircle, locked && s.iconCircleLocked]}>
             {locked
-              ? <Ionicons name="lock-closed" size={20} color={FAINT} />
-              : <Ionicons name={icon(theme.code)} size={24} color={RED} />
+              ? <Ionicons name="lock-closed" size={20} color={Colors.FAINT} />
+              : <Ionicons name={icon(theme.code)} size={24} color={Colors.primary} />
             }
           </View>
         </View>
 
-        <Text style={[s.cardName, locked && { color: FAINT }]} numberOfLines={1}>
+        <Text style={[s.cardName, locked && { color: Colors.FAINT }]} numberOfLines={1}>
           {theme.code === 'fondations'
             ? t("lessons.foundations")
             : (i18n.language.startsWith("en") && theme.name_en ? theme.name_en : (theme.name ?? "—")).replace(/Niveau \d+\s*:\s*/gi, "")
           }
         </Text>
         {theme.nameLocal ? (
-          <Text style={[s.cardLocal, locked && { color: FAINT }]} numberOfLines={1}>
+          <Text style={[s.cardLocal, locked && { color: Colors.FAINT }]} numberOfLines={1}>
             {theme.nameLocal}
           </Text>
         ) : null}
 
-        <View style={[s.statusBadge, { backgroundColor: locked ? "#EDEDF2" : GREEN_L }]}>
-          <Text style={[s.statusTxt, { color: locked ? FAINT : GREEN }]}>
+        <View style={[s.statusBadge, { backgroundColor: locked ? "#EDEDF2" : Colors.GREEN_L }]}>
+          <Text style={[s.statusTxt, { color: locked ? Colors.FAINT : Colors.GREEN }]}>
             {locked ? (theme.lockHint || t("lessons.locked")) : "Unlocked"}
           </Text>
         </View>
@@ -458,13 +439,13 @@ export default function ThemesScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
-      <StatusBar barStyle="dark-content" backgroundColor={BG} />
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
 
       {/* ── HEADER ── */}
       <View style={s.header}>
         <View style={s.headerLeft}>
           <TouchableOpacity style={s.menuBtn} onPress={openDrawer}>
-            <Ionicons name="menu" size={24} color={TEXT} />
+            <Ionicons name="menu" size={24} color={Colors.onSurface} />
           </TouchableOpacity>
           <View>
             <Text style={s.headerTitle}>{t("lessons.title", "Thèmes")}</Text>
@@ -485,6 +466,7 @@ export default function ThemesScreen() {
         </View>
       </View>
 
+
       {/* ── Syncing indicator (background refresh) ── */}
       {isLoading && displayItems.length > 0 && (
         <SyncBar />
@@ -494,8 +476,9 @@ export default function ThemesScreen() {
         contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[RED]} tintColor={RED} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} tintColor={Colors.primary} />
         }
+
       >
         {/* ── HERO CARD ── */}
         <View style={s.hero}>
@@ -507,21 +490,26 @@ export default function ThemesScreen() {
             {t("lessons.stepByStep", "Continuez votre voyage linguistique\nà travers la culture Camerounaise.")}
           </Text>
           <View style={s.streakPill}>
-            <Text style={s.streakIcon}>✦</Text>
+            <Text style={[s.streakIcon, { color: "#FFD166" }]}>✦</Text>
             <Text style={s.streakTxt}>
               {t("stats.streakDaysShort", { count: dash?.streakDays || 0 })}
             </Text>
           </View>
         </View>
 
+
         {/* ── CONTENT ── */}
         {isLoading && displayItems.length === 0 ? (
-          <ActivityIndicator size="large" color={RED} style={{ marginVertical: 48 }} />
+          <ActivityIndicator size="large" color={Colors.primary} style={{ marginVertical: 48 }} />
+
         ) : !isLoading && displayItems.length === 0 ? (
-          <View style={s.empty}>
-            <Ionicons name="book-outline" size={44} color={FAINT} />
+          <View style={[s.empty, { opacity: 0.6 }]}>
+            <Ionicons name="book-outline" size={44} color={Colors.FAINT} />
+            <Text style={s.emptyTitle}>
+              {t("lessons.nothingToReview") || "Rien à réviser"}
+            </Text>
             <Text style={s.emptyTxt}>
-              {t("errors.noThemesRefresh")}
+              {t("lessons.nothingFound") || "Aucun thème ne correspond à votre recherche."}
             </Text>
           </View>
         ) : (
@@ -529,21 +517,23 @@ export default function ThemesScreen() {
             {/* Bannière d'erreur (Connexion) */}
             {themeError && (
               <View style={s.errorBanner}>
-                <Ionicons name="cloud-offline-outline" size={24} color={RED} />
+                <Ionicons name="cloud-offline-outline" size={24} color={Colors.primary} />
                 <View style={{ flex: 1 }}>
                   <Text style={s.errorTitle}>{t("common.error", "Erreur")}</Text>
                   <Text style={s.errorTxt}>{themeError}</Text>
                 </View>
                 <TouchableOpacity onPress={onRefresh} style={s.retryBtn}>
-                  <Ionicons name="refresh" size={18} color={RED} />
+                  <Ionicons name="refresh" size={18} color={Colors.primary} />
                 </TouchableOpacity>
               </View>
             )}
 
+
             <View style={s.sectionHeader}>
-              <Ionicons name="book" size={18} color={RED} />
+              <Ionicons name="book" size={18} color={Colors.primary} />
               <Text style={s.sectionTitle}>{t("lessons.available")}</Text>
             </View>
+
             <View style={s.grid}>
               {displayItems.map((item, idx) => (
                 <ThemeCard
@@ -594,7 +584,7 @@ export default function ThemesScreen() {
 
 /* ── Styles ─────────────────────────────────────────────────── */
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BG },
+  safe: { flex: 1, backgroundColor: Colors.surface },
   scroll: { paddingHorizontal: 16, paddingTop: 8 },
 
   /* Header */
@@ -602,12 +592,12 @@ const s = StyleSheet.create({
     flexDirection: "row", alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16, paddingVertical: 10,
-    backgroundColor: BG,
+    backgroundColor: Colors.surface,
   },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
   menuBtn: { padding: 4 },
-  headerTitle: { fontSize: 18, fontFamily: "Fredoka_600SemiBold", color: TEXT, lineHeight: 22 },
-  headerSub: { fontSize: 13, fontFamily: "Nunito-Regular", color: TEXT_SUB },
+  headerTitle: { fontSize: SCREEN_W > 400 ? 28 : 24, fontFamily: "Fredoka_700Bold", color: Colors.onSurface, marginBottom: 4 },
+  headerSub: { fontSize: 13, fontFamily: "Nunito-Regular", color: Colors.TEXT_SUB },
   headerRight: { flexDirection: "row", alignItems: "center", gap: 8 },
   badge: {
     flexDirection: "row", alignItems: "center", gap: 4,
@@ -618,12 +608,12 @@ const s = StyleSheet.create({
   badgeXP: { fontSize: 13, fontFamily: "Fredoka_600SemiBold", color: "#E8A020" },
   avatar: {
     width: 34, height: 34, borderRadius: 17,
-    backgroundColor: RED,
+    backgroundColor: Colors.primary,
   },
 
   /* Hero */
   hero: {
-    backgroundColor: RED,
+    backgroundColor: Colors.primary,
     borderRadius: 24, padding: 24,
     marginBottom: 20, overflow: "hidden",
   },
@@ -640,7 +630,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 8,
     borderWidth: 1, borderColor: "rgba(255,255,255,0.25)",
   },
-  streakIcon: { color: "#FFD166", fontSize: 12 },
+  streakIcon: { fontSize: 12 },
   streakTxt: { fontSize: 12, fontFamily: "Fredoka_600SemiBold", color: "#FFF", letterSpacing: 0.8 },
 
   /* Section Headers */
@@ -649,7 +639,7 @@ const s = StyleSheet.create({
     marginBottom: 6,
   },
   sectionTitle: {
-    fontSize: 16, fontFamily: "Fredoka_600SemiBold", color: TEXT,
+    fontSize: 16, fontFamily: "Fredoka_600SemiBold", color: Colors.onSurface,
   },
 
   /* Grille */
@@ -657,7 +647,7 @@ const s = StyleSheet.create({
 
   /* Card (Leçons) */
   card: {
-    width: CARD_W, backgroundColor: CARD_BG,
+    width: CARD_W, backgroundColor: Colors.surfaceContainerLowest,
     borderRadius: 20, alignItems: "center",
     paddingVertical: 20, paddingHorizontal: 10,
     shadowColor: "#A0A8C0", shadowOffset: { width: 0, height: 4 },
@@ -673,14 +663,14 @@ const s = StyleSheet.create({
   },
   iconCircle: {
     width: 54, height: 54, borderRadius: 27,
-    backgroundColor: RED_L,
+    backgroundColor: Colors.primary + "15",
     alignItems: "center", justifyContent: "center",
   },
   iconCircleLocked: { backgroundColor: "#EDEDF2" },
 
-  cardName: { fontSize: 14, fontFamily: "Fredoka_600SemiBold", color: TEXT, marginTop: 10, textAlign: "center" },
-  cardLocal: { fontSize: 11, fontFamily: "Nunito-Regular", color: TEXT_SUB, textAlign: "center", marginTop: 1 },
-  cardPct: { fontSize: 12, fontFamily: "Nunito-Regular", color: TEXT_SUB, marginTop: 3 },
+  cardName: { fontSize: 14, fontFamily: "Fredoka_600SemiBold", color: Colors.onSurface, marginTop: 10, textAlign: "center" },
+  cardLocal: { fontSize: 11, fontFamily: "Nunito-Regular", color: Colors.TEXT_SUB, textAlign: "center", marginTop: 1 },
+  cardPct: { fontSize: 12, fontFamily: "Nunito-Regular", color: Colors.TEXT_SUB, marginTop: 3 },
   statusBadge: {
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -691,14 +681,14 @@ const s = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Fredoka_600SemiBold",
   },
-  lockMsg: { fontSize: 11, fontFamily: "Nunito-Regular", color: FAINT, textAlign: "center", lineHeight: 16, marginTop: 3 },
+  lockMsg: { fontSize: 11, fontFamily: "Nunito-Regular", color: Colors.FAINT, textAlign: "center", lineHeight: 16, marginTop: 3 },
 
   empty: { alignItems: "center", paddingVertical: 48 },
-  emptyTxt: { fontSize: 14, fontFamily: "Nunito-Regular", color: FAINT, textAlign: "center", marginTop: 12, lineHeight: 20 },
+  emptyTxt: { fontSize: 14, fontFamily: "Nunito-Regular", color: Colors.FAINT, textAlign: "center", marginTop: 12, lineHeight: 20 },
 
   /* Error banner */
   errorBanner: {
-    backgroundColor: RED_L,
+    backgroundColor: Colors.primary + "15",
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
@@ -706,18 +696,18 @@ const s = StyleSheet.create({
     marginBottom: 20,
     gap: 12,
     borderWidth: 1,
-    borderColor: RED + "30",
+    borderColor: Colors.primary + "30",
   },
   errorTitle: {
     fontSize: 14,
     fontFamily: "Fredoka_600SemiBold",
-    color: RED,
+    color: Colors.primary,
     marginBottom: 2,
   },
   errorTxt: {
     fontSize: 13,
     fontFamily: "Nunito-Regular",
-    color: TEXT_SUB,
+    color: Colors.TEXT_SUB,
     lineHeight: 18,
   },
   retryBtn: {

@@ -50,7 +50,17 @@ export const Colors = {
   successContainer:"#A5D6A7",
   onSuccess:       "#FFFFFF",
 
-  // ── Helpers ──
+  // ── Legacy / Specific Helpers ──
+  GREEN:           "#2E7D32",
+  GREEN_L:         "#2E7D3215",
+  TEXT_SUB:        "#9CA3AF",
+  FAINT:           "#9CA3AF80",
+  
+  // Aliases for camelCase usage in components
+  green:           "#2E7D32",
+  greenLight:      "#2E7D3215",
+  textSub:         "#9CA3AF",
+  faint:           "#EDEDF2",
   textPrimary:     "#131B2E",
   textSecondary:   "#6B7280",
   textTertiary:    "#9CA3AF",
