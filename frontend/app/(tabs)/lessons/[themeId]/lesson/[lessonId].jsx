@@ -787,7 +787,7 @@ const BassaSpecialView = ({ lessonTitle, uiLang, t }) => {
             <View style={special.wordPairInner}>
               <View style={special.col}>
                 <Text style={special.sourceWord}>
-                  {uiLang.startsWith("en") ? (item.en || item.fr) : item.fr}
+                  {getWordDisplay(item.fr, uiLang)}
                 </Text>
                 <Text style={special.langLabel}>{uiLang.startsWith("en") ? "ENGLISH" : "FRANÇAIS"}</Text>
               </View>
@@ -851,7 +851,7 @@ const DualaSpecialView = ({ lessonTitle, uiLang, t }) => {
           <View style={special.row}>
             <View style={special.wordPairInner}>
               <View style={special.col}>
-                <Text style={special.sourceWord}>{item.sourceText}</Text>
+                <Text style={special.sourceWord}>{getWordDisplay(item.sourceText, uiLang)}</Text>
                 <Text style={special.langLabel}>{uiLang.startsWith("en") ? "ENGLISH" : "FRANÇAIS"}</Text>
               </View>
 
@@ -920,7 +920,7 @@ const GhomalaSpecialView = ({ lessonTitle, uiLang, t }) => {
           <View style={special.row}>
             <View style={special.wordPairInner}>
               <View style={special.col}>
-                <Text style={special.sourceWord}>{item.sourceText}</Text>
+                <Text style={special.sourceWord}>{getWordDisplay(item.sourceText, uiLang)}</Text>
                 <Text style={special.langLabel}>{uiLang.startsWith("en") ? "ENGLISH" : "FRANÇAIS"}</Text>
               </View>
 

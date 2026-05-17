@@ -9,6 +9,22 @@
  */
 
 const FR_TO_EN = {
+  // ── Pronoms ──────────────────────────────────────────────────
+  "Moi":                "Me",
+  "Toi":                "You",
+  "Lui":                "Him / Her",
+  "Elle":               "Her",
+  "Nous":               "We",
+  "Vous":               "You (plural)",
+  "Eux":                "Them",
+  "Tu":                 "You",
+  "Il ou Elle":         "He or She",
+  "Il / Elle":          "He / She",
+  "Il/Elle":            "He / She",
+  "Ils ou Elles":       "They",
+  "Ils / Elles":        "They",
+  "Ils/Elles":          "They",
+
   // ── Les 7 Jours de la Semaine ──────────────────────────────────
   "Lundi":     "Monday",
   "Mardi":     "Tuesday",
@@ -23,50 +39,66 @@ const FR_TO_EN = {
   "Tu es":              "You are",
   "Il / Elle est":      "He / She is",
   "Il ou Elle est":     "He / She is",
+  "Il/Elle est":        "He / She is",
+  "Il ou elle est":     "He / She is",
   "Nous sommes":        "We are",
   "Vous êtes":          "You are (plural)",
+  "Vous etes":          "You are (plural)",
   "Ils / Elles sont":   "They are",
   "Ils ou Elles sont":  "They are",
+  "Ils/Elles sont":     "They are",
+  "Ils ou elles sont":  "They are",
 
   // ── Verbe AVOIR ───────────────────────────────────────────────
+  "J'ai":               "I have",
   "J'ai":               "I have",
   "Tu as":              "You have",
   "Il / Elle a":        "He / She has",
   "Il ou Elle a":       "He / She has",
+  "Il/Elle a":          "He / She has",
+  "Il ou elle a":       "He / She has",
   "Nous avons":         "We have",
   "Vous avez":          "You have (plural)",
   "Ils / Elles ont":    "They have",
   "Ils ou Elles ont":   "They have",
+  "Ils/Elles ont":      "They have",
+  "Ils ou elles ont":   "They have",
 
   // ── Verbe MANGER ──────────────────────────────────────────────
   "Je mange":             "I eat",
   "Tu manges":            "You eat",
   "Il / Elle mange":      "He / She eats",
   "Il ou Elle mange":     "He / She eats",
+  "Il ou elle mange":     "He / She eats",
   "Nous mangeons":        "We eat",
   "Vous mangez":          "You eat (plural)",
   "Ils / Elles mangent":  "They eat",
   "Ils ou Elles mangent": "They eat",
+  "Ils ou elles mangent": "They eat",
 
   // ── Verbe MARCHER ─────────────────────────────────────────────
   "Je marche":              "I walk",
   "Tu marches":             "You walk",
   "Il / Elle marche":       "He / She walks",
   "Il ou Elle marche":      "He / She walks",
+  "Il ou elle marche":      "He / She walks",
   "Nous marchons":          "We walk",
   "Vous marchez":           "You walk (plural)",
   "Ils / Elles marchent":   "They walk",
   "Ils ou Elles marchent":  "They walk",
+  "Ils ou elles marchent":  "They walk",
 
   // ── Verbe PRENDRE ─────────────────────────────────────────────
   "Je prends":              "I take",
   "Tu prends":              "You take",
   "Il / Elle prend":        "He / She takes",
   "Il ou Elle prend":       "He / She takes",
+  "Il ou elle prend":       "He / She takes",
   "Nous prenons":           "We take",
   "Vous prenez":            "You take (plural)",
   "Ils / Elles prennent":   "They take",
   "Ils ou Elles prennent":  "They take",
+  "Ils ou elles prennent":  "They take",
 
   // ── Verbe ACHETER ─────────────────────────────────────────────
   "J'achète":               "I buy",
@@ -75,13 +107,18 @@ const FR_TO_EN = {
   "Tu achetes":             "You buy",
   "Il / Elle achète":       "He / She buys",
   "Il ou Elle achete":      "He / She buys",
+  "Il ou elle achète":      "He / She buys",
+  "Il ou elle achete":      "He / She buys",
   "Nous achetons":          "We buy",
   "Vous achetez":           "You buy (plural)",
   "Ils / Elles achètent":   "They buy",
   "Ils ou Elles achetent":  "They buy",
+  "Ils ou elles achètent":  "They buy",
+  "Ils ou elles achetent":  "They buy",
 
   // ── Les Chiffres ──────────────────────────────────────────────
   "Zéro":   "Zero",
+  "Zero":   "Zero",
   "Un":     "One",
   "Deux":   "Two",
   "Trois":  "Three",
@@ -91,6 +128,15 @@ const FR_TO_EN = {
   "Sept":   "Seven",
   "Huit":   "Eight",
   "Neuf":   "Nine",
+
+  // ── Les Couleurs ──────────────────────────────────────────────
+  "Noir":   "Black",
+  "Blanc":  "White",
+  "Jaune":  "Yellow",
+  "Orange": "Orange",
+  "Rouge":  "Red",
+  "Bleu":   "Blue",
+  "Vert":   "Green",
 
   // ── Les Leçons de la Langue Bassa ─────────────────────────────
   "le 7 jour de la semaine": "The 7 days of the week",
@@ -167,16 +213,13 @@ const FR_TO_EN = {
   "La chaussure":    "The shoe",
 
   // ── Duala — Vie de Famille ────────────────────────────────────
-  "Le papa":                 "Dad",
   "La tante paternelle":     "Paternal aunt",
-  "La maman":                "Mom",
   "L'oncle paternel":        "Paternal uncle",
   "Le frère":                "Brother",
   "La sœur":                 "Sister",
   "Bonjour":                 "Hello",
   "Bonne chance":            "Good luck",
   "Bonsoir":                 "Good evening",
-  "Merci":                   "Thank you",
 
   // ── Common across languages ───────────────────────────────────
   "Le bœuf":          "The ox / The bull",
@@ -185,31 +228,10 @@ const FR_TO_EN = {
   "Le chat":          "The cat",
   "Les termites":     "Termites",
   "La farine":        "Flour",
-  "La flamme":        "The flame",
-  "Le feu":           "Fire",
-  "Le sel":           "Salt",
-  "L'eau":            "Water",
   "Le sucre":         "Sugar",
-  "L'huile":          "Oil",
   "La pierre":        "The stone",
   "Le couteau":       "The knife",
-  "Le poisson":       "Fish",
-  "Le gibier":        "Game (meat)",
-  "Ce chapeau":       "This hat",
-  "Ce manteau":       "This coat",
-  "Ce pantalon":      "These trousers",
-  "Ces boubous":      "These boubous",
-  "Ces caleçons":     "These underwear",
-  "Ces costumes":     "These suits",
-  "Cet habit":        "This outfit",
-  "Cette chaussure":  "This shoe",
-  "Cette chemise":    "This shirt",
-  "La veste":         "The jacket",
-  "La cravate":       "The tie",
-  "Un habit":         "An outfit",
-  "Une chemise":      "A shirt",
-  "Les pantalons":    "Trousers",
-  "La chaussure":     "The shoe",
+
 };
 
 /**
