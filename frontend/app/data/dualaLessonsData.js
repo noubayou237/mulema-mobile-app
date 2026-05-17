@@ -23,7 +23,7 @@ export const DUALA_ENRICHMENT_MAP = {
   // ── Le verbe avoir ───────────────────────────────────────────────────────
   "j ai":               { targetText: "Na bén", audioKey: "j_ai", category: "Le verbe avoir" },
   "tu as":              { targetText: "O bén", audioKey: "tu_as", category: "Le verbe avoir" },
-  "il ou elle a":       { targetText: "A bén", audioKey: "il_elle_a", category: "Le verbe avoir" },
+  "il ou elle a":       { targetText: "A bén", audioKey: "il_elle_on_a", category: "Le verbe avoir" },
   "nous avons":         { targetText: "DI bén", audioKey: "nous_avons", category: "Le verbe avoir" },
   "vous avez":          { targetText: "LO bén", audioKey: "vous_avez", category: "Le verbe avoir" },
   "ils ou elles ont":   { targetText: "BA bén", audioKey: "ils_elles_ont", category: "Le verbe avoir" },
@@ -139,7 +139,7 @@ export function getDualaVirtualData(themeId) {
       items: [
         { sourceText: "J'ai",              targetText: "J'ai (Duala)",              audioKey: "j_ai" },
         { sourceText: "Tu as",             targetText: "Tu as (Duala)",             audioKey: "tu_as" },
-        { sourceText: "Il ou elle a",      targetText: "Il ou elle a (Duala)",      audioKey: "il_elle_a" },
+        { sourceText: "Il ou elle a",      targetText: "Il ou elle a (Duala)",      audioKey: "il_elle_on_a" },
         { sourceText: "Nous avons",        targetText: "Nous avons (Duala)",        audioKey: "nous_avons" },
         { sourceText: "Vous avez",         targetText: "Vous avez (Duala)",         audioKey: "vous_avez" },
         { sourceText: "Ils ou elles ont",  targetText: "Ils ou elles ont (Duala)",  audioKey: "ils_elles_ont" },
@@ -232,7 +232,7 @@ export function getDualaThemeItems(themeId) {
       items: [
         { sourceText: "J'ai",              targetText: "Na bén",              audioKey: "j_ai" },
         { sourceText: "Tu as",             targetText: "O bén",             audioKey: "tu_as" },
-        { sourceText: "Il ou elle a",      targetText: "A bén",      audioKey: "il_elle_a" },
+        { sourceText: "Il ou elle a",      targetText: "A bén",      audioKey: "il_elle_on_a" },
         { sourceText: "Nous avons",        targetText: "DI bén",        audioKey: "nous_avons" },
         { sourceText: "Vous avez",         targetText: "LO bén",         audioKey: "vous_avez" },
         { sourceText: "Ils ou elles ont",  targetText: "BA bén",  audioKey: "ils_elles_ont" },

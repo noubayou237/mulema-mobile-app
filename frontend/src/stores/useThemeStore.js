@@ -29,6 +29,30 @@ export const useThemeStore = create((set, get) => ({
   // Cache pour les mots (pour éviter de re-fetcher en boucle)
   wordsCache: {},            // { [lessonId]: Word[] }
 
+  // ── Helper ──
+  getRealThemeId: (id) => {
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    // Check if it's already a UUID or look-alike
+    if (!id || id.toString().length > 20 || UUID_REGEX.test(id)) return id;
+
+    const themes = get().themes;
+    const lowerId = id.toString().toLowerCase();
+
+    // Logic for Duala/Ghomala virtual IDs
+    if (lowerId.includes("duala")) {
+      return themes.find(t => t.name.toLowerCase().includes("duala"))?.id || id;
+    }
+    if (lowerId.includes("ghomala")) {
+      return themes.find(t => t.name.toLowerCase().includes("ghomala"))?.id || id;
+    }
+
+    // For Bassa or generic codes
+    const foundByCode = themes.find(t => t.code === id || (t.name && t.name.toLowerCase().includes(id)));
+    if (foundByCode) return foundByCode.id;
+
+    return id;
+  },
+
   // ═════════════════════════════════════════════════════════════
   // fetchThemes — Charge les thèmes d'une langue
   // ═════════════════════════════════════════════════════════════

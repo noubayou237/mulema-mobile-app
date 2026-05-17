@@ -27,6 +27,8 @@ import { getDualaVirtualData, getAllDualaVirtualData, isDualaVirtualId } from ".
 
 const { width: SW } = Dimensions.get("window");
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 /* ═══════════════════════════════════════════════════════════════
    THÈME IMMERSIF PAR LANGUE
    ═══════════════════════════════════════════════════════════════ */
@@ -243,46 +245,17 @@ export default function ThemeDetailScreen() {
   const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const isRealThemeId = themeId && (UUID_REGEX.test(themeId) || themeId.startsWith("virtual_"));
 
-  // Load lessons: use virtual data for Ghomala/Duala, API for real UUIDs
+  // Load lessons — unified path for ALL languages (Bassa, Duala, Ghomala)
+  // Since themeId is now always a UUID from the theme list page,
+  // all languages use the same fetchLessons API call.
   useFocusEffect(
     useCallback(() => {
       if (!themeId) return;
 
-      // Always inject the full virtual tree for Ghomala and Duala, regardless of the themeId origin
-      const isGhomala = isGhomalaLanguage || isGhomalaVirtualId(themeId);
-      const isDuala = isDualaLanguage || isDualaVirtualId(themeId);
-
-      // Always inject the full virtual tree for Ghomala and Duala, regardless of the themeId origin
-      if (isGhomala) {
-        setVirtualData(themeId, getAllGhomalaVirtualData());
-        setIsInitializing(false);
-        return;
-      }
-
-      if (isDuala) {
-        setVirtualData(themeId, getAllDualaVirtualData());
-        setIsInitializing(false);
-        return;
-      }
-
-      // For remaining hardcoded IDs without a matched language (fallback), inject virtual data locally
-      // because the backend rejects non-UUID themeIds and returns []
-      if (!isRealThemeId) {
-        let virtualData;
-        const dualaData = getDualaVirtualData?.(themeId);
-        virtualData = dualaData || getGhomalaVirtualData(themeId);
-
-        if (virtualData) {
-          setVirtualData(themeId, virtualData);
-        }
-        setIsInitializing(false);
-        return;
-      }
-
-      // Real UUID — fetch from API
+      // Real UUID — fetch from API (same path for all 3 languages)
       setIsInitializing(true);
       fetchLessons(themeId, true).finally(() => setIsInitializing(false));
-    }, [themeId, isGhomalaLanguage, isDualaLanguage])
+    }, [themeId])
   );
 
   // Only show lessons that belong to *this* themeId (avoid stale data from previous theme)

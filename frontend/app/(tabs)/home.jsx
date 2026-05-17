@@ -546,14 +546,19 @@ export default function HomeScreen() {
 
   /* Duala Custom Lessons Logic */
   const getDualaLessons = () => {
+    // Use the first/only Duala theme as the source of truth (same as Bassa)
+    const defaultTheme = (themes || [])[0];
+    const defaultThemeId = defaultTheme ? defaultTheme.id : null;
+
     const items = [
       { id: "duala_jour", name: "Les sept jours de la semaine", nameLocal: "Minya mi mbu", code: "jours", lessonsCount: 7 },
       { id: "duala_avoir", name: "Le verbe avoir", nameLocal: "Bìhíkìí", code: "verbes", lessonsCount: 6 },
       { id: "duala_etre", name: "Le verbe être", nameLocal: "Bìhíkìí", code: "verbes", lessonsCount: 6 },
       { id: "duala_pronoms", name: "Les pronoms personnels", nameLocal: "Bipapa", code: "pronoms", lessonsCount: 6 },
-      { id: "duala_chiffres", name: "Les chiffres 1-9 en duala", nameLocal: "Langa", code: "chiffres", lessonsCount: 9 },
+      { id: "duala_chiffres", name: "Les chiffres 1-9 en duala", nameLocal: "Langa", code: "chiffres", lessonsCount: 10 },
       { id: "duala_couleurs", name: "Les couleurs", nameLocal: "Langi", code: "couleurs", lessonsCount: 7 },
     ];
+
     
     const counts = {};
     return items.map((item, idx) => {
@@ -561,14 +566,19 @@ export default function HomeScreen() {
       if (counts[code] === undefined) counts[code] = 0;
       const themeIdx = counts[code]++;
 
-      const theme = (themes || []).find(t => t.code === item.code);
+      // Match theme by code OR name (same pattern as Bassa)
+      const theme = (themes || []).find(t =>
+        t.code === item.code ||
+        (t.name && t.name.toLowerCase().includes(item.code))
+      ) || defaultTheme;
       const isThemeLocked = theme ? theme.locked : idx >= 2;
-      const themeId = theme ? theme.id : item.id;
+      // ALWAYS use real UUID — never fall back to virtual string ID
+      const themeId = theme ? theme.id : defaultThemeId || item.id;
       const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
-      const categoryStatus = theme?.categories?.[themeIdx];
+      const categoryStatus = theme?.categories?.[idx];
       // Mirror the adventure tree: first 2 always unlocked, then use per-category DB flags
       const isUnlocked = !isThemeLocked && (
-        themeIdx < 2 ||
+        idx < 2 ||
         categoryStatus?.isUnlocked ||
         categoryStatus?.isCompleted
       );
@@ -576,21 +586,26 @@ export default function HomeScreen() {
         ...item,
         themeId,
         locked: !isUnlocked,
-        lessonsCompleted: lessonsCompletedCount,
+        lessonsCompleted: idx < lessonsCompletedCount ? item.lessonsCount : 0,
       };
     });
   };
 
   /* Ghomala Custom Lessons Logic */
   const getGhomalaLessons = () => {
+    // Use the first/only Ghomala theme as the source of truth (same as Bassa)
+    const defaultTheme = (themes || [])[0];
+    const defaultThemeId = defaultTheme ? defaultTheme.id : null;
+
     const items = [
-      { id: "ghomala_jour", name: "Les jours de la semaine en ghomala", code: "jours", lessonsCount: 7 },
+      { id: "ghomala_jour", name: "Les jours de la semaine en ghomala", code: "jours", lessonsCount: 8 },
       { id: "ghomala_avoir", name: "Le verbe avoir en ghomala", code: "verbes", lessonsCount: 6 },
       { id: "ghomala_etre", name: "Le verbe être en ghomala", code: "verbes", lessonsCount: 6 },
-      { id: "ghomala_chiffres", name: "Les chiffres 0-9 en ghomala", code: "chiffres", lessonsCount: 10 },
       { id: "ghomala_manger", name: "Le verbe manger en ghomala", code: "verbes", lessonsCount: 6 },
       { id: "ghomala_marcher", name: "Le verbe marcher en ghomala", code: "verbes", lessonsCount: 6 },
       { id: "ghomala_acheter", name: "Le verbe acheter en ghomala", code: "verbes", lessonsCount: 6 },
+      { id: "ghomala_pronoms", name: "Les pronoms personnels en ghomala", code: "pronoms", lessonsCount: 6 },
+      { id: "ghomala_chiffres", name: "Les chiffres 0-9 en ghomala", code: "chiffres", lessonsCount: 10 },
     ];
 
     const counts = {};
@@ -599,14 +614,19 @@ export default function HomeScreen() {
       if (counts[code] === undefined) counts[code] = 0;
       const themeIdx = counts[code]++;
 
-      const theme = (themes || []).find(t => t.code === item.code);
+      // Match theme by code OR name (same pattern as Bassa)
+      const theme = (themes || []).find(t =>
+        t.code === item.code ||
+        (t.name && t.name.toLowerCase().includes(item.code))
+      ) || defaultTheme;
       const isThemeLocked = theme ? theme.locked : idx >= 2;
-      const themeId = theme ? theme.id : item.id;
+      // ALWAYS use real UUID
+      const themeId = theme ? theme.id : defaultThemeId || item.id;
       const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
-      const categoryStatus = theme?.categories?.[themeIdx];
+      const categoryStatus = theme?.categories?.[idx];
       // Mirror the adventure tree: first 2 always unlocked, then use per-category DB flags
       const isUnlocked = !isThemeLocked && (
-        themeIdx < 2 ||
+        idx < 2 ||
         categoryStatus?.isUnlocked ||
         categoryStatus?.isCompleted
       );
@@ -614,7 +634,7 @@ export default function HomeScreen() {
         ...item,
         themeId,
         locked: !isUnlocked,
-        lessonsCompleted: lessonsCompletedCount,
+        lessonsCompleted: idx < lessonsCompletedCount ? item.lessonsCount : 0,
       };
     });
   };

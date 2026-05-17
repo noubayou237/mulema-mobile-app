@@ -52,6 +52,35 @@ const THEMES = [
       { order: 17, category: 'Verbe ÊTRE', word_fr: 'Nous sommes',     word_local: 'Jé',    hint: 'J', audio_key: 'nous_sommes' },
       { order: 18, category: 'Verbe ÊTRE', word_fr: 'Vous êtes',       word_local: "L'e",   hint: 'L', audio_key: 'vous_etes' },
       { order: 19, category: 'Verbe ÊTRE', word_fr: 'Ils/Elles sont',  word_local: "B'e",   hint: 'B', audio_key: 'ils_elles_sont' },
+
+      // --- Leçon 4 : Les Pronoms Personnels ---
+      { order: 20, category: 'Les pronoms personnels', word_fr: 'Moi (je)',             word_local: 'mba',    hint: 'm', audio_key: 'moi' },
+      { order: 21, category: 'Les pronoms personnels', word_fr: 'Toi (tu)',             word_local: 'wa',     hint: 'w', audio_key: 'toi' },
+      { order: 22, category: 'Les pronoms personnels', word_fr: 'Lui / Elle (il/elle)', word_local: 'mɔ́',     hint: 'm', audio_key: 'lui' },
+      { order: 23, category: 'Les pronoms personnels', word_fr: 'Nous',                 word_local: 'bisɔ́',   hint: 'b', audio_key: 'nous' },
+      { order: 24, category: 'Les pronoms personnels', word_fr: 'Vous',                 word_local: 'binyɔ́',  hint: 'b', audio_key: 'vous' },
+      { order: 25, category: 'Les pronoms personnels', word_fr: 'Eux / Elles (ils/elles)', word_local: 'babó', hint: 'b', audio_key: 'eux' },
+
+      // --- Leçon 5 : Les Chiffres 1-9 en duala ---
+      { order: 26, category: 'Les chiffres 1-9 en duala', word_fr: 'Zéro',   word_local: 'tɔ lambo', hint: 't', audio_key: 'zero' },
+      { order: 27, category: 'Les chiffres 1-9 en duala', word_fr: 'Un',     word_local: 'ewɔ́',     hint: 'e', audio_key: 'un' },
+      { order: 28, category: 'Les chiffres 1-9 en duala', word_fr: 'Deux',   word_local: 'ɓéɓǎ',    hint: 'ɓ', audio_key: 'deux' },
+      { order: 29, category: 'Les chiffres 1-9 en duala', word_fr: 'Trois',  word_local: 'ɓélálo',  hint: 'ɓ', audio_key: 'trois' },
+      { order: 30, category: 'Les chiffres 1-9 en duala', word_fr: 'Quatre', word_local: 'ɓénɛí',   hint: 'ɓ', audio_key: 'quatre' },
+      { order: 31, category: 'Les chiffres 1-9 en duala', word_fr: 'Cinq',   word_local: 'ɓétánu',  hint: 'ɓ', audio_key: 'cinq' },
+      { order: 32, category: 'Les chiffres 1-9 en duala', word_fr: 'Six',    word_local: 'mutóɓá',  hint: 'm', audio_key: 'six' },
+      { order: 33, category: 'Les chiffres 1-9 en duala', word_fr: 'Sept',   word_local: 'saámbá',  hint: 's', audio_key: 'sept' },
+      { order: 34, category: 'Les chiffres 1-9 en duala', word_fr: 'Huit',   word_local: 'lɔɔmbi',  hint: 'l', audio_key: 'huit' },
+      { order: 35, category: 'Les chiffres 1-9 en duala', word_fr: 'Neuf',   word_local: 'dibuá',   hint: 'd', audio_key: 'neuf' },
+
+      // --- Leçon 6 : Les couleurs ---
+      { order: 36, category: 'Les couleurs', word_fr: 'Noir',   word_local: 'mundo', hint: 'm', audio_key: 'noir' },
+      { order: 37, category: 'Les couleurs', word_fr: 'Blanc',  word_local: 'sánga', hint: 's', audio_key: 'blanc' },
+      { order: 38, category: 'Les couleurs', word_fr: 'Jaune',  word_local: 'njabi', hint: 'n', audio_key: 'jaune' },
+      { order: 39, category: 'Les couleurs', word_fr: 'Orange', word_local: 'epumá', hint: 'e', audio_key: 'orange' },
+      { order: 40, category: 'Les couleurs', word_fr: 'Rouge',  word_local: 'jóla',  hint: 'j', audio_key: 'rouge' },
+      { order: 41, category: 'Les couleurs', word_fr: 'Bleu',   word_local: 'bulu',  hint: 'b', audio_key: 'bleu' },
+      { order: 42, category: 'Les couleurs', word_fr: 'Vert',   word_local: "musono mw'éyadí", hint: 'm', audio_key: 'vert' },
     ],
   },
 

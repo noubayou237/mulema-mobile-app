@@ -360,8 +360,12 @@ export default function ThemesScreen() {
     });
   };
 
-  /* Duala Custom Lessons Logic */
+  /* Duala Custom Lessons Logic — uses same UUID-based pattern as Bassa */
   const getDualaLessons = () => {
+    // Use the first/only Duala theme as the source of truth (same as Bassa)
+    const defaultTheme = (themes || [])[0];
+    const defaultThemeId = defaultTheme ? defaultTheme.id : null;
+
     const items = [
       { id: "duala_jour", name: "Les sept jours de la semaine", nameLocal: "Minya mi mbu", code: "jours", lessonsCount: 1 },
       { id: "duala_avoir", name: "Le verbe avoir", nameLocal: "Bìhíkìí", code: "verbes", lessonsCount: 1 },
@@ -376,28 +380,37 @@ export default function ThemesScreen() {
       if (counts[code] === undefined) counts[code] = 0;
       const themeIdx = counts[code]++;
 
-      const theme = (themes || []).find(t => t.code === item.code);
+      // Match theme by code OR name (same pattern as Bassa)
+      const theme = (themes || []).find(t =>
+        t.code === item.code ||
+        (t.name && t.name.toLowerCase().includes(item.code))
+      ) || defaultTheme;
       const isThemeLocked = theme ? theme.locked : idx >= 2;
-      const themeId = theme ? theme.id : item.id;
+      // ALWAYS use real UUID — never fall back to virtual string ID
+      const themeId = theme ? theme.id : defaultThemeId || item.id;
       const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
-      const categoryStatus = theme?.categories?.[themeIdx];
+      const categoryStatus = theme?.categories?.[idx];
       // Mirror the adventure tree: first 2 always unlocked, then use per-category DB flags
       const isUnlocked = !isThemeLocked && (
-        themeIdx < 2 ||
+        idx < 2 ||
         categoryStatus?.isUnlocked ||
         categoryStatus?.isCompleted
       );
       return {
         ...item,
         themeId,
-        lessonsCompleted: themeIdx < lessonsCompletedCount ? item.lessonsCount : 0,
+        lessonsCompleted: idx < lessonsCompletedCount ? item.lessonsCount : 0,
         locked: !isUnlocked,
       };
     });
   };
 
-  /* Ghomala Custom Lessons Logic */
+  /* Ghomala Custom Lessons Logic — uses same UUID-based pattern as Bassa */
   const getGhomalaLessons = () => {
+    // Use the first/only Ghomala theme as the source of truth (same as Bassa)
+    const defaultTheme = (themes || [])[0];
+    const defaultThemeId = defaultTheme ? defaultTheme.id : null;
+
     const items = [
       { id: "ghomala_jour", name: "Les jours de la semaine en ghomala", code: "jours", lessonsCount: 1 },
       { id: "ghomala_avoir", name: "Le verbe avoir en ghomala", code: "verbes", lessonsCount: 1 },
@@ -413,21 +426,26 @@ export default function ThemesScreen() {
       if (counts[code] === undefined) counts[code] = 0;
       const themeIdx = counts[code]++;
 
-      const theme = (themes || []).find(t => t.code === item.code);
+      // Match theme by code OR name (same pattern as Bassa)
+      const theme = (themes || []).find(t =>
+        t.code === item.code ||
+        (t.name && t.name.toLowerCase().includes(item.code))
+      ) || defaultTheme;
       const isThemeLocked = theme ? theme.locked : idx >= 2;
-      const themeId = theme ? theme.id : item.id;
+      // ALWAYS use real UUID — never fall back to virtual string ID
+      const themeId = theme ? theme.id : defaultThemeId || item.id;
       const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
-      const categoryStatus = theme?.categories?.[themeIdx];
+      const categoryStatus = theme?.categories?.[idx];
       // Mirror the adventure tree: first 2 always unlocked, then use per-category DB flags
       const isUnlocked = !isThemeLocked && (
-        themeIdx < 2 ||
+        idx < 2 ||
         categoryStatus?.isUnlocked ||
         categoryStatus?.isCompleted
       );
       return {
         ...item,
         themeId,
-        lessonsCompleted: themeIdx < lessonsCompletedCount ? item.lessonsCount : 0,
+        lessonsCompleted: idx < lessonsCompletedCount ? item.lessonsCount : 0,
         locked: !isUnlocked,
       };
     });

@@ -142,28 +142,26 @@ export default function ExerciseResults() {
     if (!themeId || !success) return;
 
     if (isFinal === "true") {
-      // Final Challenge successfully passed
+      // Final Challenge successfully passed — same path for ALL languages
       completeTheme(themeId, score);
       setShowFinalAnim(true);
       api.post(`/progress/unlock-final/${themeId}`)
         .then(() => {
-          Logger.info("[Unlock] Final challenge success - refreshing tree");
+          Logger.info(`[Unlock] Final challenge success on ${themeId} - refreshing tree`);
           useThemeStore.getState().fetchLessons(themeId, true);
           const langId = useLanguageStore.getState().getPatrimonialId();
           if (langId) useThemeStore.getState().fetchThemes(langId, true);
         })
         .catch(err => Logger.warn("[Unlock] Final challenge error:", err?.message));
     } else if (lessonIdxParam != null) {
-      // Regular category node or gate passed
+      // Regular category node completed — same path for ALL languages
       api.post(`/progress/unlock-next-lesson/${themeId}`, {
         completedLessonOrder: lessonIdxParam,
       })
       .then(() => {
-        Logger.info(`[Unlock] Category ${lessonIdxParam} completed successfully`);
-        // Refresh lessons to update tree completion status (unlocks Final Challenge if all are done)
+        Logger.info(`[Unlock] Category ${lessonIdxParam} completed on theme ${themeId}`);
         useThemeStore.getState().fetchLessons(themeId, true);
         
-        // Also refresh themes to update total progress bars elsewhere
         const langId = useLanguageStore.getState().getPatrimonialId();
         if (langId) useThemeStore.getState().fetchThemes(langId, true);
       })

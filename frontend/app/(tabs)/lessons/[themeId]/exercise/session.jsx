@@ -409,23 +409,12 @@ const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr"
                   )}
                 </View>
 
-                {/* Audio par image */}
-                <View style={iq.labelRow}>
-                  <Text
-                    style={[
-                      iq.label,
-                      sel === opt.id && !feedback && { color: C.primary, fontWeight: "700" },
-                      feedback && opt.id === q.target.id && { color: C.correct, fontWeight: "700" },
-                      feedback && opt.id === sel && sel !== q.target.id && { color: C.primary, fontWeight: "700" },
-                    ]}
-                    numberOfLines={2}
-                  >
-                    {opt.title}
-                  </Text>
-                  {opt.audioUrl && (
-                    <AudioBtn url={opt.audioUrl} size={16} color={C.textSub} />
-                  )}
-                </View>
+                {/* Grid labels removed to force audio-visual reliance as requested */}
+                {opt.audioUrl && (
+                  <View style={iq.labelRow}>
+                    <AudioBtn url={opt.audioUrl} size={18} color={C.textSub} />
+                  </View>
+                )}
               </TouchableOpacity>
             </Animated.View>
           ))}
@@ -525,14 +514,11 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr" 
 
         <Text style={qx.title}>{t("exercises.howToSayIn", { lang: langName })}</Text>
 
-        {/* Simplified Target Word Card (Image 2 style) */}
+        {/* Simplified Target Word Card — translation (subtitle) removed to keep it challenging */}
         <View style={qx.targetCard}>
           <Text style={qx.targetLabel}>{uiLang?.startsWith("en") ? "ENGLISH" : "FRANÇAIS"}</Text>
           <Text style={qx.targetWord}>{getWordDisplay(q.target.title, uiLang)}</Text>
-          <View style={qx.targetAudioRow}>
-            <Text style={qx.targetSubtitle}>{q.target.subtitle}</Text>
-            <AudioBtn url={q.target.audioUrl} size={20} color={C.primary} />
-          </View>
+          <AudioBtn url={q.target.audioUrl} size={24} color={C.primary} />
         </View>
 
         {/* Grille 2×2 (Image 2 style) */}
@@ -952,31 +938,42 @@ export default function ExerciseSession() {
     });
   }, [themeId]);
 
-  // Slice lessons to cumulative word count (or all if no wordCount param)
-  const lessonsKey = lessons.map((l) => l.id).join(",");
   const wordsForSession = useMemo(() => {
-    let rawItems = [];
-    if (isDuala) {
-      const { getDualaThemeItems } = require("../../../../data/dualaLessonsData");
-      rawItems = getDualaThemeItems(themeId) || [];
-    } else if (isGhomala) {
-      const { getGhomalaThemeItems } = require("../../../../data/ghomalaLessonsData");
-      rawItems = getGhomalaThemeItems(themeId) || [];
+    let wordsToUse = [];
+
+    // The backend `lessons` array is actually an array of category groups.
+    // Each category has an array of `.words`.
+    if (isFinal === "true") {
+      // Final Challenge: pull words from ALL categories in the theme to test mastery
+      lessons.forEach(cat => {
+        if (cat.words) wordsToUse.push(...cat.words);
+      });
+    } else if (lessonIdxParam != null && lessons[lessonIdxParam]) {
+      // Routine exercise: pull words exclusively from the targeted category
+      const currentCat = lessons[lessonIdxParam];
+      if (currentCat.words) {
+        wordsToUse = currentCat.words;
+      }
+    } else if (lessons.length > 0 && lessons[0].words) {
+      // Fallback
+      wordsToUse = lessons[0].words;
     }
 
-    if (rawItems.length > 0) {
-      // Map to standard exercise item shape
-      return rawItems.map((item, idx) => ({
-        id: `virt_${themeId}_${idx}`,
-        title: item.sourceText,
-        subtitle: item.targetText,
-        audioUrl: item.audioKey ? item.audioKey : null,
-        imageUrl: item.imageUrl || null,
-        order: idx,
+    if (wordsToUse.length > 0) {
+      // Map backend MulemWord format to standard exercise item shape
+      return wordsToUse.map((w, idx) => ({
+        id: w.id,
+        title: w.word_fr,
+        subtitle: w.word_local,
+        audioUrl: w.audio_url || w.audio_key || null,
+        imageUrl: w.image_url || w.image_key || null,
+        order: w.order ?? idx,
       }));
     }
+
+    // Legacy structural fallback
     return wordCount ? lessons.slice(0, wordCount) : lessons;
-  }, [lessonsKey, wordCount, isDuala, isGhomala, themeId]);
+  }, [lessons, lessonIdxParam, isFinal, wordCount]);
 
   // For Bassa, use the fixed docx-driven exercise questions so the content
   // matches exactly what the docx files specify (match words from Ex 1, write
@@ -1184,8 +1181,8 @@ export default function ExerciseSession() {
           />
         )}
         {curQ.type === "write" && (
-          <WriteScreen
-            key={`write-${dispIdx}`}
+          <ListenWriteScreen
+            key={`lw-write-${dispIdx}`}
             q={curQ}
             langName={langName}
             uiLang={uiLang}
