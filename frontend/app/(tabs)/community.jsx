@@ -117,7 +117,7 @@ const Avatar = ({ uri, size = 48, rank, borderColor = Colors.primary }) => (
 /* ══════════════════════════════════════════════════════════════
    PODIUM (Top 3)
    ══════════════════════════════════════════════════════════════ */
-const Podium = ({ top3 = [], leagueColor = "#FF9800", onReport }) => {
+const Podium = ({ top3 = [], leagueColor = "#FF9800", onReport: onReportAction }) => {
   const first = top3[0];
   const second = top3[1];
   const third = top3[2];
@@ -132,7 +132,7 @@ const Podium = ({ top3 = [], leagueColor = "#FF9800", onReport }) => {
     }).start();
   }, []);
 
-  const PodiumUser = ({ user, position, size = 56, elevated = false, onReport: onReportProp }) => {
+  const PodiumUser = ({ user, position, size = 56, elevated = false, onReport: onReportCb }) => {
     if (!user) return <View style={{ width: size + 20, height: elevated ? 160 : 130 }} />;
     return (
       <Animated.View
@@ -158,7 +158,7 @@ const Podium = ({ top3 = [], leagueColor = "#FF9800", onReport }) => {
         {!user.isCurrentUser && user.id !== "me" && (
           <TouchableOpacity
             style={pod.reportBtn}
-            onPress={() => onReportProp?.(user)}
+            onPress={() => onReportCb?.(user)}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Ionicons name="flag-outline" size={14} color={Colors.textTertiary} />
@@ -171,11 +171,11 @@ const Podium = ({ top3 = [], leagueColor = "#FF9800", onReport }) => {
   return (
     <View style={pod.container}>
       {/* 2nd place */}
-      <PodiumUser user={second} position={2} size={52} onReport={onReport} />
+      <PodiumUser user={second} position={2} size={52} onReport={onReportAction} />
       {/* 1st place (center, elevated) */}
-      <PodiumUser user={first} position={1} size={72} elevated onReport={onReport} />
+      <PodiumUser user={first} position={1} size={72} elevated onReport={onReportAction} />
       {/* 3rd place */}
-      <PodiumUser user={third} position={3} size={52} onReport={onReport} />
+      <PodiumUser user={third} position={3} size={52} onReport={onReportAction} />
     </View>
   );
 };

@@ -60,23 +60,31 @@ export const useThemeStore = create((set, get) => ({
   fetchThemes: async (languageId, force = false) => {
     if (!languageId || !isSessionActive()) return [];
 
-    // 1. De-duplication: Return existing promise if already fetching this lang
     const reqKey = `themes_${languageId}`;
-    if (!force && inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
 
-    // 2. Cache Logic: If data is fresh, don't fetch
+    // 1. Cache Logic: If data is fresh and not forced, return cached data
     const now = Date.now();
     const lastFetch = lastFetchTime.get(reqKey) || 0;
-    if (!force && get().themes.length > 0 && (now - lastFetch < STALE_TIME)) {
+    if (!force && get().themes?.length > 0 && (now - lastFetch < STALE_TIME)) {
       return get().themes;
     }
 
-    const hasCache = get().themes.length > 0;
-    set({ isLoading: !hasCache });
+    // 2. De-duplication: If there's an inflight request AND we are not forcing, return it.
+    // IF we ARE forcing, we ignore the inflight request to ensure we get absolute fresh data.
+    if (!force && inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
+
+    const hasCache = get().themes?.length > 0;
+    if (!hasCache) set({ isLoading: true });
 
     const fetchPromise = (async () => {
       try {
         const themes = await themesService.getByLanguage(languageId);
+        
+        // Race condition check: Ensure this response is still relevant
+        if (lastFetchTime.get(reqKey) > now && force) {
+           return themes;
+        }
+
         set({ themes, isLoading: false, error: null });
         lastFetchTime.set(reqKey, Date.now());
         return themes;
@@ -89,7 +97,10 @@ export const useThemeStore = create((set, get) => ({
         }
         return [];
       } finally {
-        inflightRequests.delete(reqKey);
+        // Only delete from inflightRequests if this WAS the currently tracked promise
+        if (inflightRequests.get(reqKey) === fetchPromise) {
+          inflightRequests.delete(reqKey);
+        }
       }
     })();
 
@@ -450,6 +461,13 @@ export const useThemeStore = create((set, get) => ({
     // 3. Invalidate the lessons cache for this theme so the next focus on
     //    the lesson page triggers a fresh network fetch (not stale cached data).
     lastFetchTime.delete(`lessons_${themeId}`);
+    
+    // Also invalidate the themes cache so the home screen triggers a fresh fetch.
+    const firstTheme = themes && themes.length > 0 ? themes[0] : null;
+    const langId = firstTheme?.patrimonialLanguageId || firstTheme?.languageId;
+    if (langId) {
+      lastFetchTime.delete(`themes_${langId}`);
+    }
   },
 
   /**

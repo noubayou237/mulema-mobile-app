@@ -135,39 +135,50 @@ export class LevelService {
       const e3Completed = userThemeProg?.isCompleted || false;
       const videoWatched = userThemeProg?.videoWatched || false;
 
-      // Group words into categories to count virtual lessons
-      const categoryNames = Array.from(
-        new Set(t.words.map((w) => w.category || 'Basics')),
-      );
-      const lessonsCount = categoryNames.length;
+      // Single-pass grouping to avoid O(N^2) complexity with multiple filters
+      const catsMap = new Map<string, { 
+        isUnlocked: boolean; 
+        isCompleted: boolean; 
+      }>();
+      const catNames: string[] = [];
 
-      // Count completed categories
-      const lessonsCompletedCount = categoryNames.filter((catName) => {
-        const catWords = t.words.filter(
-          (w) => (w.category || 'Basics') === catName,
-        );
-        return catWords.every((w) => w.userProgress[0]?.isCompleted);
-      }).length;
+      t.words.forEach(w => {
+        const catName = w.category || 'Basics';
+        const prog = w.userProgress[0];
+        const isUnlocked = prog?.isUnlocked || false;
+        const isCompleted = prog?.isCompleted || false;
 
-      // Count unlocked categories (at least one word unlocked)
-      const lessonsUnlockedCount = categoryNames.filter((catName) => {
-        const catWords = t.words.filter(
-          (w) => (w.category || 'Basics') === catName,
-        );
-        return catWords.some((w) => w.userProgress[0]?.isUnlocked);
-      }).length;
+        if (!catsMap.has(catName)) {
+          catNames.push(catName);
+          catsMap.set(catName, { isUnlocked, isCompleted });
+        } else {
+          const current = catsMap.get(catName)!;
+          catsMap.set(catName, {
+            isUnlocked: current.isUnlocked || isUnlocked, // Category is unlocked if any word is unlocked
+            isCompleted: current.isCompleted && isCompleted // Category is completed if all words are completed
+          });
+        }
+      });
 
-      // Per-category unlock/completion status — same source of truth as the adventure tree
-      const categories = categoryNames.map((catName) => {
-        const catWords = t.words.filter(
-          (w) => (w.category || 'Basics') === catName,
-        );
+      let categories = catNames.map(name => ({
+        name,
+        ...catsMap.get(name)!
+      }));
+
+      // Second pass: sequential unlocking logic
+      categories = categories.map((cat, idx) => {
+        const isFirstTwo = idx < 2;
+        const prevCompleted = idx > 0 && categories[idx - 1].isCompleted;
         return {
-          name: catName,
-          isUnlocked: catWords.some((w) => w.userProgress[0]?.isUnlocked),
-          isCompleted: catWords.every((w) => w.userProgress[0]?.isCompleted),
+          ...cat,
+          isUnlocked: cat.isUnlocked || isFirstTwo || prevCompleted
         };
       });
+
+      const lessonsCount = categories.length;
+      const symbolsCount = t.words.length; // Approximate count of distinct units
+      const lessonsUnlockedCount = categories.filter(c => c.isUnlocked).length;
+      const lessonsCompletedCount = categories.filter(c => c.isCompleted).length;
 
 
 
