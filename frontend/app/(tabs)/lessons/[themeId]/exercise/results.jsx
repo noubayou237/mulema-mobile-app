@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  Platform, StatusBar, Animated, Easing,
+  Platform, StatusBar, Animated, Easing, ActivityIndicator,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";

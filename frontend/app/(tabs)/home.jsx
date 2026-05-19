@@ -424,8 +424,8 @@ export default function HomeScreen() {
     // Rely on the first theme ID to avoid missing theme crashes
     const defaultThemeId = themes && themes.length > 0 ? themes[0].id : "dummy";
 
-    const joursTheme = (themes || []).find((t) => t.code === "jours" || (t.name && t.name.toLowerCase().includes("jour")));
-    const verbesTheme = (themes || []).find((t) => t.code === "verbes" || (t.name && t.name.toLowerCase().includes("verbe")));
+    const joursTheme = (themes || []).find((t) => t.code === "jours" || t.code === "fondations" || (t.name && t.name.toLowerCase().includes("jour")));
+    const verbesTheme = (themes || []).find((t) => t.code === "verbes" || t.code === "fondations" || (t.name && t.name.toLowerCase().includes("verbe")));
 
     const joursId = joursTheme ? joursTheme.id : defaultThemeId;
     const verbesId = verbesTheme ? verbesTheme.id : defaultThemeId;
@@ -459,17 +459,15 @@ export default function HomeScreen() {
       });
     });
 
-    const counts = {};
-
     return res.map((item, idx) => {
       const code = item.code;
-      if (counts[code] === undefined) counts[code] = 0;
-      const themeIdx = counts[code]++;
+      const themeIdx = idx;
 
       const theme = code === "jours" ? joursTheme : verbesTheme;
       const isThemeLocked = theme ? theme.locked : idx >= 2;
       const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
       const categoryStatus = theme?.categories?.[themeIdx];
+
       // Mirror the adventure tree: first 2 always unlocked, then use per-category DB flags
       const isUnlocked = !isThemeLocked && (
         themeIdx < 2 ||

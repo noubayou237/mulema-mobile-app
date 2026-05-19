@@ -317,15 +317,8 @@ export const useThemeStore = create((set, get) => ({
 
     // The final challenge (e1) is unlocked only when all regular category 
     // nodes in the tree are completed.
-    const completedCount = lessonsList.filter(l => l.isCompleted).length;
     const allCompleted = lessonsList.every(l => l.isCompleted);
     
-    if (allCompleted) {
-      Logger.info(`[ThemeStore] All ${lessonsList.length} categories completed. Final challenge unlocked!`);
-    } else {
-      Logger.debug(`[ThemeStore] Final challenge locked: ${completedCount}/${lessonsList.length} categories completed.`);
-    }
-
     return { e1: allCompleted, e2: allCompleted, e3: allCompleted };
   },
 
@@ -425,18 +418,32 @@ export const useThemeStore = create((set, get) => ({
    * sans attendre la réponse de l'API.
    */
   optimisticUnlockCategory: (themeId, currentOrder) => {
-    const { lessons, currentThemeId } = get();
-    if (currentThemeId !== themeId || !lessons.length) return;
+    const { lessons, currentThemeId, themes } = get();
+    
+    // 1. Update lessons if we are currently looking at this theme's adventure tree
+    if (currentThemeId === themeId && lessons.length > 0) {
+      const updatedLessons = lessons.map(l => {
+        if (l.order === currentOrder) return { ...l, isCompleted: true };
+        if (l.order === currentOrder + 1) return { ...l, isUnlocked: true };
+        return l;
+      });
+      set({ lessons: updatedLessons });
+    }
 
-    const updated = lessons.map(l => {
-      // Mark current as completed
-      if (l.order === currentOrder) return { ...l, isCompleted: true };
-      // Unlock next one
-      if (l.order === currentOrder + 1) return { ...l, isUnlocked: true };
-      return l;
+    // 2. Update themes list (used by home screen cards)
+    const updatedThemes = themes.map(t => {
+      if (t.id === themeId && t.categories) {
+        const updatedCats = t.categories.map((c, idx) => {
+          if (idx === currentOrder) return { ...c, isCompleted: true };
+          if (idx === currentOrder + 1) return { ...c, isUnlocked: true };
+          return c;
+        });
+        return { ...t, categories: updatedCats };
+      }
+      return t;
     });
 
-    set({ lessons: updated });
+    set({ themes: updatedThemes });
   },
 
   /**
