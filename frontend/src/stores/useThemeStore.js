@@ -60,23 +60,31 @@ export const useThemeStore = create((set, get) => ({
   fetchThemes: async (languageId, force = false) => {
     if (!languageId || !isSessionActive()) return [];
 
-    // 1. De-duplication: Return existing promise if already fetching this lang
     const reqKey = `themes_${languageId}`;
-    if (!force && inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
 
-    // 2. Cache Logic: If data is fresh, don't fetch
+    // 1. Cache Logic: If data is fresh and not forced, return cached data
     const now = Date.now();
     const lastFetch = lastFetchTime.get(reqKey) || 0;
-    if (!force && get().themes.length > 0 && (now - lastFetch < STALE_TIME)) {
+    if (!force && get().themes?.length > 0 && (now - lastFetch < STALE_TIME)) {
       return get().themes;
     }
 
-    const hasCache = get().themes.length > 0;
-    set({ isLoading: !hasCache });
+    // 2. De-duplication: If there's an inflight request AND we are not forcing, return it.
+    // IF we ARE forcing, we ignore the inflight request to ensure we get absolute fresh data.
+    if (!force && inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
+
+    const hasCache = get().themes?.length > 0;
+    if (!hasCache) set({ isLoading: true });
 
     const fetchPromise = (async () => {
       try {
         const themes = await themesService.getByLanguage(languageId);
+        
+        // Race condition check: Ensure this response is still relevant
+        if (lastFetchTime.get(reqKey) > now && force) {
+           return themes;
+        }
+
         set({ themes, isLoading: false, error: null });
         lastFetchTime.set(reqKey, Date.now());
         return themes;
@@ -89,7 +97,10 @@ export const useThemeStore = create((set, get) => ({
         }
         return [];
       } finally {
-        inflightRequests.delete(reqKey);
+        // Only delete from inflightRequests if this WAS the currently tracked promise
+        if (inflightRequests.get(reqKey) === fetchPromise) {
+          inflightRequests.delete(reqKey);
+        }
       }
     })();
 
@@ -106,7 +117,8 @@ export const useThemeStore = create((set, get) => ({
     if (!themeId || themeId === "undefined" || themeId === "null" || !isSessionActive()) return [];
 
     const reqKey = `lessons_${themeId}`;
-    if (!force && inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
+    // Always deduplicate in-flight requests — even forced ones — to avoid double network calls.
+    if (inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
 
     const startTime = Date.now();
     const now = startTime;
@@ -418,16 +430,17 @@ export const useThemeStore = create((set, get) => ({
    * sans attendre la réponse de l'API.
    */
   optimisticUnlockCategory: (themeId, currentOrder) => {
-    const { lessons, currentThemeId, themes } = get();
+    const { lessons, themes } = get();
     
-    // 1. Update lessons if we are currently looking at this theme's adventure tree
-    if (currentThemeId === themeId && lessons.length > 0) {
+    // 1. Always update lessons for this themeId (not gated on currentThemeId,
+    //    because results.jsx fires before the user navigates back to the lesson page).
+    if (lessons.length > 0) {
       const updatedLessons = lessons.map(l => {
         if (l.order === currentOrder) return { ...l, isCompleted: true };
         if (l.order === currentOrder + 1) return { ...l, isUnlocked: true };
         return l;
       });
-      set({ lessons: updatedLessons });
+      set({ lessons: updatedLessons, currentThemeId: themeId });
     }
 
     // 2. Update themes list (used by home screen cards)
@@ -444,6 +457,17 @@ export const useThemeStore = create((set, get) => ({
     });
 
     set({ themes: updatedThemes });
+
+    // 3. Invalidate the lessons cache for this theme so the next focus on
+    //    the lesson page triggers a fresh network fetch (not stale cached data).
+    lastFetchTime.delete(`lessons_${themeId}`);
+    
+    // Also invalidate the themes cache so the home screen triggers a fresh fetch.
+    const firstTheme = themes && themes.length > 0 ? themes[0] : null;
+    const langId = firstTheme?.patrimonialLanguageId || firstTheme?.languageId;
+    if (langId) {
+      lastFetchTime.delete(`themes_${langId}`);
+    }
   },
 
   /**

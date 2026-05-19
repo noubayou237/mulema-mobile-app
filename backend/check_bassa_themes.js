@@ -8,7 +8,6 @@ async function checkBassaThemes() {
   });
 
   if (!bassa) {
-    console.log('Bassa language not found');
     return;
   }
 
@@ -17,9 +16,7 @@ async function checkBassaThemes() {
     orderBy: { order: 'asc' }
   });
 
-  console.log('Bassa Themes in DB:');
   themes.forEach(t => {
-    console.log(`- ID: ${t.id}, Code: ${t.code}, Title: ${t.title}, Order: ${t.order}`);
   });
 }
 

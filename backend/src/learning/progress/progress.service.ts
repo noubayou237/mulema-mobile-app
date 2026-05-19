@@ -158,6 +158,7 @@ export class ProgressService {
       data: nextWordIds.map((id) => ({
         userId,
         mulemWordId: id,
+        isUnlocked: true,
       })),
       skipDuplicates: true,
     });
