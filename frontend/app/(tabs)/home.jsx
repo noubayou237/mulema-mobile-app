@@ -8,7 +8,7 @@
  *  app/(tabs)/home.jsx
  */
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -35,17 +35,11 @@ import { useLanguageStore } from "../../src/stores/useLanguageStore";
 import { useThemeStore } from "../../src/stores/useThemeStore";
 import { useDashboardStore } from "../../src/stores/useDashboardStore";
 import { DrawerContent } from "../../src/components/layout/DrawerContent";
-import { getDualaVirtualData } from "../data/dualaLessonsData";
-import { getGhomalaVirtualData } from "../data/ghomalaLessonsData";
-
 import { useTranslation } from "react-i18next";
 import { changeLanguage, getCurrentLanguage } from "../../src/i18n";
 
 /* ── Palette ── */
 const RED = Colors.primary;
-const RED_L = Colors.primary + "15";
-const GREEN = Colors.success || "#2E7D32";
-const GREEN_L = GREEN + "15";
 const GOLD = Colors.secondaryContainer || "#FD9D1A";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
@@ -67,33 +61,8 @@ const getIcon = (name) => {
   return "book";
 };
 
-/* ── Exercices basés sur les thèmes (Dynamique) ── */
-const getThemeExos = (themes) => {
-  if (!themes || themes.length === 0) return [];
-  // Afficher les thèmes actifs (commencés)
-  const activeThemes = themes.filter((t) => t.lessonsCount > 0 && t.lessonsCompleted > 0);
+// Removed getThemeExos logic - exercises not needed on home screen
 
-  if (activeThemes.length === 0) {
-    // S'il n'a rien commencé, on propose le premier thème dispo
-    const first = themes[0];
-    return [{
-      id: first.id,
-      label: first.name,
-      icon: getIcon(first.name),
-      route: `/(tabs)/lessons/${first.id}/exercise/session?wordCount=10`,
-      done: false,
-    }];
-  }
-
-  // Trier par les plus récents (les moins complétés d'abord, ou simplement les 3 premiers)
-  return activeThemes.slice(0, 3).map(theme => ({
-    id: theme.id,
-    label: theme.name,
-    icon: getIcon(theme.name),
-    route: `/(tabs)/lessons/${theme.id}/exercise/session?wordCount=10`,
-    done: theme.lessonsCompleted >= theme.lessonsCount,
-  }));
-};
 
 // Drawer Content moved to shared component
 
@@ -116,7 +85,7 @@ const HomeHeader = ({ streak = 0, xp = 0, hearts = 5, nextRechargeIn = 0, onMenu
     <View style={s.header}>
       <View style={s.headerLeft}>
         <TouchableOpacity onPress={onMenuPress} activeOpacity={0.7} style={s.menuBtn}>
-          <Ionicons name="menu" size={22} color={RED} />
+          <Ionicons name="menu" size={22} color={Colors.primary} />
         </TouchableOpacity>
         <Image source={IMAGES_MAP.logo} style={{ width: 72, height: 72, marginLeft: Space.sm }} contentFit="contain" />
       </View>
@@ -135,18 +104,18 @@ const HomeHeader = ({ streak = 0, xp = 0, hearts = 5, nextRechargeIn = 0, onMenu
             );
           }}
           activeOpacity={0.7}
-          style={[s.headerBadge, { backgroundColor: RED_L, paddingHorizontal: 8, paddingVertical: 6 }]}
+          style={[s.headerBadge, { backgroundColor: Colors.primary + "15", paddingHorizontal: 8, paddingVertical: 6 }]}
         >
-          <Ionicons name="globe-outline" size={18} color={RED} />
+          <Ionicons name="globe-outline" size={18} color={Colors.primary} />
         </TouchableOpacity>
-        <View style={[s.headerBadge, { backgroundColor: RED_L, marginLeft: Space.xs }]}>
-          <Ionicons name="heart" size={14} color={RED} />
+        <View style={[s.headerBadge, { backgroundColor: Colors.primary + "15", marginLeft: Space.xs }]}>
+          <Ionicons name="heart" size={14} color={Colors.primary} />
           <Text style={[Typo.labelLg, { color: Colors.onSurface, marginLeft: 4 }]}>
             {hearts}
           </Text>
         </View>
-        <View style={[s.headerBadge, { backgroundColor: GREEN_L, marginLeft: Space.xs }]}>
-          <Ionicons name="leaf" size={14} color={GREEN} />
+        <View style={[s.headerBadge, { backgroundColor: Colors.GREEN_L, marginLeft: Space.xs }]}>
+          <Ionicons name="leaf" size={14} color={Colors.GREEN} />
           <Text style={[Typo.labelLg, { color: Colors.onSurface, marginLeft: 4 }]}>{streak}</Text>
         </View>
         <View style={[s.headerBadge, { backgroundColor: "#FFF7E6", marginLeft: Space.sm }]}>
@@ -168,11 +137,11 @@ const LangBanner = ({ lang, onPress }) => {
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={s.langBanner}>
       <View style={s.langDot} />
-      <Text style={[Typo.labelLg, { color: RED, marginLeft: Space.md, flex: 1 }]}>
+      <Text style={[Typo.labelLg, { color: Colors.primary, marginLeft: Space.md, flex: 1 }]}>
         {lang.name}
       </Text>
-      <Text style={[Typo.bodySm, { color: RED }]}>{t("common.edit")}</Text>
-      <Ionicons name="chevron-forward" size={13} color={RED} style={{ marginLeft: 2 }} />
+      <Text style={[Typo.bodySm, { color: Colors.primary }]}>{t("common.edit")}</Text>
+      <Ionicons name="chevron-forward" size={13} color={Colors.primary} style={{ marginLeft: 2 }} />
     </TouchableOpacity>
   );
 };
@@ -238,8 +207,8 @@ const DashCard = ({ user, percent = 0, mins = 0, goal = 40, onContinue }) => {
       </View>
 
       <TouchableOpacity onPress={onContinue} activeOpacity={0.85} style={s.continueBtn}>
-        <Ionicons name="play" size={16} color={RED} />
-        <Text style={[Typo.titleSm, { color: RED, marginLeft: Space.sm }]}>
+        <Ionicons name="play" size={16} color={Colors.primary} />
+        <Text style={[Typo.titleSm, { color: Colors.primary, marginLeft: Space.sm }]}>
           {t("home.continueLearning")}
         </Text>
       </TouchableOpacity>
@@ -269,60 +238,29 @@ const ThemeCard = ({ theme, onPress }) => {
         activeOpacity={locked ? 1 : 0.9}
         style={[s.themeCard, Shadow.sm, locked && { opacity: 0.45 }]}
       >
-        {pct > 0 && <View style={[s.themeProgress, { width: `${pct}%` }]} />}
 
         <View style={s.themeTop}>
-          <View style={[s.themeIcon, { backgroundColor: locked ? Colors.surfaceVariant : RED_L }]}>
-            <Ionicons name={getIcon(theme.name)} size={22} color={locked ? Colors.textTertiary : RED} />
+          <View style={[s.themeIcon, { backgroundColor: locked ? Colors.surfaceVariant : Colors.primary + "15" }]}>
+            <Ionicons name={getIcon(theme.name)} size={22} color={locked ? Colors.TEXT_SUB : Colors.primary} />
           </View>
-          {locked
-            ? <Ionicons name="lock-closed" size={14} color={Colors.textTertiary} />
-            : pct > 0 && (
-              <View style={s.pctBadge}>
-                <Text style={[Typo.labelMd, { color: GREEN }]}>{pct}%</Text>
-              </View>
-            )
-          }
+          <View style={[s.pctBadge, { backgroundColor: locked ? Colors.surfaceVariant : Colors.GREEN_L }]}>
+            <Text style={[Typo.labelMd, { color: locked ? Colors.TEXT_SUB : Colors.GREEN, fontSize: 10 }]}>
+              {locked ? t("lessons.locked") : "Unlocked"}
+            </Text>
+          </View>
         </View>
 
         <Text style={[Typo.titleSm, { marginTop: Space.md, color: Colors.onSurface }]} numberOfLines={1}>
           {i18n.language.startsWith("en") && theme.name_en ? theme.name_en : theme.name}
         </Text>
-        <Text style={[Typo.labelSm, { marginTop: Space.xs, color: Colors.textTertiary }]}>
-          {t("lessons.lessonsCount", { count: theme.lessonsCount })}
-        </Text>
+        {/* <Text style={[Typo.labelSm, { color: locked ? Colors.textTertiary : GREEN, marginTop: 4, fontFamily: "Fredoka_600SemiBold" }]}>
+          {locked ? t("lessons.locked") : "Unlocked"}
+        </Text> */}
       </TouchableOpacity>
     </Animated.View>
   );
 };
 
-/* ════════════════════════════════════════════════════════════════════
-   EXERCICES DU JOUR
-   ════════════════════════════════════════════════════════════════════ */
-
-const ExerciseRow = ({ exo, onPress }) => {
-  const { t } = useTranslation();
-  return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={s.exoRow}>
-      <View style={[s.exoIcon, { backgroundColor: exo.done ? GREEN_L : Colors.surfaceContainerLow }]}>
-        <Ionicons name={exo.icon} size={18} color={exo.done ? GREEN : Colors.textTertiary} />
-      </View>
-      <Text style={[Typo.titleSm, { flex: 1, marginLeft: Space.lg, color: Colors.onSurface }]} numberOfLines={1}>
-        {exo.label}
-      </Text>
-      {exo.done ? (
-        <View style={s.doneBadge}>
-          <Ionicons name="checkmark" size={12} color="#fff" />
-          <Text style={[Typo.labelMd, { color: "#fff", marginLeft: 3 }]}>{t("exercises.done")}</Text>
-        </View>
-      ) : (
-        <View style={s.todoBadge}>
-          <Text style={[Typo.labelMd, { color: Colors.textTertiary }]}>{t("exercises.todo")}</Text>
-        </View>
-      )}
-    </TouchableOpacity>
-  );
-};
 import { IMAGES_MAP } from "../../src/utils/AssetsMap";
 
 /* ════════════════════════════════════════════════════════════════════
@@ -333,7 +271,26 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { activeLanguage, languages, fetchLanguages, loadActiveLanguage } = useLanguageStore();
-  const { themes, lessons, isLoading: tLoading, fetchThemes, fetchLessons } = useThemeStore();
+  const { themes: baseThemes, isLoading: tLoading, fetchThemes, setVirtualData } = useThemeStore();
+
+  // Map themes to update "Foundations" titles for specific languages
+  const themes = useMemo(() => {
+    const langName = activeLanguage?.name || "";
+    const norm = langName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+    return (baseThemes || []).map(t => {
+      const code = (t.code || "").toLowerCase();
+      const name = t.name || "";
+      const isFoundations = code === "fondations" || name.toLowerCase().includes("fondation") || name.toLowerCase().includes("foundation");
+
+      if (isFoundations) {
+        if (norm.includes("bassa")) return { ...t, name: "Bassa Lessons", name_en: "Bassa Lessons" };
+        if (norm.includes("duala") || norm.includes("douala")) return { ...t, name: "Duala Lessons", name_en: "Duala Lessons" };
+        if (norm.includes("ghomala")) return { ...t, name: "Ghomala Lessons", name_en: "Ghomala Lessons" };
+      }
+      return t;
+    });
+  }, [baseThemes, activeLanguage]);
   const { data: dash, isLoading: dLoading, error: dashError, fetchDashboard } = useDashboardStore();
 
   const { t, i18n } = useTranslation();
@@ -371,7 +328,7 @@ export default function HomeScreen() {
             fetchThemes(langId2);
           }
         }
-      } catch (err) {}
+      } catch (err) { }
     };
     init();
   }, [activeLanguage]);
@@ -384,17 +341,13 @@ export default function HomeScreen() {
         if (langId) {
           // Force fetch fresh data from backend
           fetchDashboard();
-          fetchThemes(langId, true); 
+          fetchThemes(langId, true);
         }
       }
     }, [activeLanguage, languages])
   );
 
-  useEffect(() => {
-    if (themes.length > 0 && !tLoading && themes[0]?.id && themes[0].id !== "undefined") {
-      fetchLessons(themes[0].id);
-    }
-  }, [themes, tLoading]);
+
 
   /* ── Drawer ── */
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -461,11 +414,10 @@ export default function HomeScreen() {
   };
 
   /* ── Language detection ── */
-  const isBassa = (activeLanguage?.name ?? "").toLowerCase().includes("bassa");
-  const isDuala = (activeLanguage?.name ?? "").toLowerCase().includes("duala") ||
-    (activeLanguage?.name ?? "").toLowerCase().includes("douala");
-  const isGhomala = (activeLanguage?.name ?? "").toLowerCase().includes("ghomala") ||
-    (activeLanguage?.name ?? "").toLowerCase().includes("ghomal");
+  const langCode = (activeLanguage?.name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const isBassa = langCode.includes("bassa");
+  const isDuala = langCode.includes("duala") || langCode.includes("douala");
+  const isGhomala = langCode.includes("ghomala") || langCode.includes("ghomal");
 
   /* Bassa Custom Lessons Logic */
   const getBassaLessons = () => {
@@ -535,29 +487,39 @@ export default function HomeScreen() {
 
   /* Duala Custom Lessons Logic */
   const getDualaLessons = () => {
+    // Use the first/only Duala theme as the source of truth (same as Bassa)
+    const defaultTheme = (themes || [])[0];
+    const defaultThemeId = defaultTheme ? defaultTheme.id : null;
+
     const items = [
       { id: "duala_jour", name: "Les sept jours de la semaine", nameLocal: "Minya mi mbu", code: "jours", lessonsCount: 7 },
       { id: "duala_avoir", name: "Le verbe avoir", nameLocal: "Bìhíkìí", code: "verbes", lessonsCount: 6 },
       { id: "duala_etre", name: "Le verbe être", nameLocal: "Bìhíkìí", code: "verbes", lessonsCount: 6 },
       { id: "duala_pronoms", name: "Les pronoms personnels", nameLocal: "Bipapa", code: "pronoms", lessonsCount: 6 },
-      { id: "duala_chiffres", name: "Les chiffres 1-9 en duala", nameLocal: "Langa", code: "chiffres", lessonsCount: 9 },
+      { id: "duala_chiffres", name: "Les chiffres 1-9 en duala", nameLocal: "Langa", code: "chiffres", lessonsCount: 10 },
       { id: "duala_couleurs", name: "Les couleurs", nameLocal: "Langi", code: "couleurs", lessonsCount: 7 },
     ];
-    
+
+
     const counts = {};
     return items.map((item, idx) => {
       const code = item.code || item.id;
       if (counts[code] === undefined) counts[code] = 0;
       const themeIdx = counts[code]++;
 
-      const theme = (themes || []).find(t => t.code === item.code);
+      // Match theme by code OR name (same pattern as Bassa)
+      const theme = (themes || []).find(t =>
+        t.code === item.code ||
+        (t.name && t.name.toLowerCase().includes(item.code))
+      ) || defaultTheme;
       const isThemeLocked = theme ? theme.locked : idx >= 2;
-      const themeId = theme ? theme.id : item.id;
+      // ALWAYS use real UUID — never fall back to virtual string ID
+      const themeId = theme ? theme.id : defaultThemeId || item.id;
       const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
-      const categoryStatus = theme?.categories?.[themeIdx];
+      const categoryStatus = theme?.categories?.[idx];
       // Mirror the adventure tree: first 2 always unlocked, then use per-category DB flags
       const isUnlocked = !isThemeLocked && (
-        themeIdx < 2 ||
+        idx < 2 ||
         categoryStatus?.isUnlocked ||
         categoryStatus?.isCompleted
       );
@@ -565,21 +527,26 @@ export default function HomeScreen() {
         ...item,
         themeId,
         locked: !isUnlocked,
-        lessonsCompleted: lessonsCompletedCount,
+        lessonsCompleted: idx < lessonsCompletedCount ? item.lessonsCount : 0,
       };
     });
   };
 
   /* Ghomala Custom Lessons Logic */
   const getGhomalaLessons = () => {
+    // Use the first/only Ghomala theme as the source of truth (same as Bassa)
+    const defaultTheme = (themes || [])[0];
+    const defaultThemeId = defaultTheme ? defaultTheme.id : null;
+
     const items = [
-      { id: "ghomala_jour", name: "Les jours de la semaine en ghomala", code: "jours", lessonsCount: 7 },
+      { id: "ghomala_jour", name: "Les jours de la semaine en ghomala", code: "jours", lessonsCount: 8 },
       { id: "ghomala_avoir", name: "Le verbe avoir en ghomala", code: "verbes", lessonsCount: 6 },
       { id: "ghomala_etre", name: "Le verbe être en ghomala", code: "verbes", lessonsCount: 6 },
-      { id: "ghomala_chiffres", name: "Les chiffres 0-9 en ghomala", code: "chiffres", lessonsCount: 10 },
       { id: "ghomala_manger", name: "Le verbe manger en ghomala", code: "verbes", lessonsCount: 6 },
       { id: "ghomala_marcher", name: "Le verbe marcher en ghomala", code: "verbes", lessonsCount: 6 },
       { id: "ghomala_acheter", name: "Le verbe acheter en ghomala", code: "verbes", lessonsCount: 6 },
+      { id: "ghomala_pronoms", name: "Les pronoms personnels en ghomala", code: "pronoms", lessonsCount: 6 },
+      { id: "ghomala_chiffres", name: "Les chiffres 0-9 en ghomala", code: "chiffres", lessonsCount: 10 },
     ];
 
     const counts = {};
@@ -588,14 +555,19 @@ export default function HomeScreen() {
       if (counts[code] === undefined) counts[code] = 0;
       const themeIdx = counts[code]++;
 
-      const theme = (themes || []).find(t => t.code === item.code);
+      // Match theme by code OR name (same pattern as Bassa)
+      const theme = (themes || []).find(t =>
+        t.code === item.code ||
+        (t.name && t.name.toLowerCase().includes(item.code))
+      ) || defaultTheme;
       const isThemeLocked = theme ? theme.locked : idx >= 2;
-      const themeId = theme ? theme.id : item.id;
+      // ALWAYS use real UUID
+      const themeId = theme ? theme.id : defaultThemeId || item.id;
       const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
-      const categoryStatus = theme?.categories?.[themeIdx];
+      const categoryStatus = theme?.categories?.[idx];
       // Mirror the adventure tree: first 2 always unlocked, then use per-category DB flags
       const isUnlocked = !isThemeLocked && (
-        themeIdx < 2 ||
+        idx < 2 ||
         categoryStatus?.isUnlocked ||
         categoryStatus?.isCompleted
       );
@@ -603,7 +575,7 @@ export default function HomeScreen() {
         ...item,
         themeId,
         locked: !isUnlocked,
-        lessonsCompleted: lessonsCompletedCount,
+        lessonsCompleted: idx < lessonsCompletedCount ? item.lessonsCount : 0,
       };
     });
   };
@@ -613,37 +585,16 @@ export default function HomeScreen() {
   /* ── Navigate to a lesson card → adventure tree ── */
   const handleLessonCardPress = (lesson) => {
     // Navigate straight to the adventure tree
+
     router.push({
-      pathname: `/(tabs)/lessons/${lesson.themeId}`,
+      pathname: `/(tabs)/lessons/${lesson.themeId || lesson.id}`,
       params: {
-        title: isBassa ? "Bassa Lessons" : (themes[0]?.name || "Leçons"),
+        title: isBassa ? "Bassa Lessons" : isDuala ? "Duala Lessons" : isGhomala ? "Ghomala Lessons" : (themes[0]?.name || "Leçons"),
         scrollToId: lesson.id
       },
     });
   };
 
-  /* ── Exercise themes only (excludes lesson-type themes) ── */
-  const LESSON_CODES = ["jours", "verbes", "pronoms", "chiffres", "couleurs"];
-  const exerciseThemes = themes.filter((t) => {
-    const code = (t.code ?? "").toLowerCase();
-    if (LESSON_CODES.includes(code)) return false;
-
-    // Explicitly hide these backend themes from the UI for Bassa
-    if (isBassa) {
-      const nm = (t.name || "").toLowerCase();
-      if (
-        nm.includes("niveau 1") ||
-        nm.includes("vie de famille") ||
-        nm.includes("savan") ||
-        nm.includes("cuisine") ||
-        nm.includes("fondation") ||
-        nm.includes("foundation")
-      ) {
-        return false;
-      }
-    }
-    return true;
-  });
 
   /* ── Animations d'entrée en cascade ── */
   const anims = useRef([0, 1, 2, 3, 4].map(() => new Animated.Value(0))).current;
@@ -697,15 +648,16 @@ export default function HomeScreen() {
           {/* Bannière d'erreur (Connexion) */}
           {dashError && (
             <View style={s.errorBanner}>
-              <Ionicons name="cloud-offline-outline" size={24} color={RED} />
+              <Ionicons name="cloud-offline-outline" size={24} color={Colors.primary} />
               <View style={{ flex: 1 }}>
                 <Text style={s.errorTitle}>{t("common.error", "Erreur")}</Text>
                 <Text style={s.errorTxt}>{dashError}</Text>
               </View>
               <TouchableOpacity onPress={fetchDashboard} style={s.retryBtn}>
-                <Ionicons name="refresh" size={18} color={RED} />
+                <Ionicons name="refresh" size={18} color={Colors.primary} />
               </TouchableOpacity>
             </View>
+
           )}
 
           {/* Dashboard */}
@@ -726,24 +678,27 @@ export default function HomeScreen() {
                 onPress={() => router.push("/(tabs)/lessons")}
                 activeOpacity={0.7}
               >
-                <Text style={[Typo.titleSm, { color: RED }]}>{t("home.seeAll")}</Text>
+                <Text style={[Typo.titleSm, { color: Colors.primary }]}>{t("home.seeAll")}</Text>
               </TouchableOpacity>
+
             </View>
 
             {/* Syncing indicator when refreshing in background */}
             {tLoading && lessonDisplayItems.length > 0 && (
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 6 }}>
-                <ActivityIndicator size="small" color={RED} style={{ marginRight: 6 }} />
+                <ActivityIndicator size="small" color={Colors.primary} style={{ marginRight: 6 }} />
                 <Text style={[Typo.labelMd, { color: Colors.textTertiary }]}>Synchronisation...</Text>
               </View>
+
             )}
 
             {loading && lessonDisplayItems.length === 0 ? (
               <ActivityIndicator
                 size="large"
-                color={RED}
+                color={Colors.primary}
                 style={{ marginVertical: Space["3xl"] }}
               />
+
             ) : lessonDisplayItems.length === 0 ? (
               <View style={s.empty}>
                 <Ionicons name="book-outline" size={38} color={Colors.textTertiary} />
@@ -760,27 +715,6 @@ export default function HomeScreen() {
             )}
           </Animated.View>
 
-          {/* Exercices du jour */}
-          <Animated.View style={[s.section, fadeUp(anims[3], 22)]}>
-            <View style={s.sectionHead}>
-              <Text style={[Typo.headlineMd, { color: Colors.onSurface }]}>{t("home.exercises")}</Text>
-              <View style={s.exoBadgeCount}>
-                <Text style={[Typo.labelMd, { color: RED }]}>
-                  {getThemeExos(exerciseThemes).filter((e) => e.done).length}/{getThemeExos(exerciseThemes).length}
-                </Text>
-              </View>
-            </View>
-
-            <View style={s.exoList}>
-              {getThemeExos(exerciseThemes).map((exo) => (
-                <ExerciseRow
-                  key={exo.id}
-                  exo={exo}
-                  onPress={() => router.push(exo.route)}
-                />
-              ))}
-            </View>
-          </Animated.View>
 
           <View style={{ height: Space["4xl"] }} />
 
@@ -843,7 +777,7 @@ const s = StyleSheet.create({
   menuBtn: {
     width: 40, height: 40,
     borderRadius: 20,
-    backgroundColor: RED_L,
+    backgroundColor: Colors.primary + "15",
     alignItems: "center", justifyContent: "center",
   },
   headerCenter: { flexDirection: "row", alignItems: "center" },
@@ -861,7 +795,7 @@ const s = StyleSheet.create({
   langBanner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: RED_L,
+    backgroundColor: Colors.primary + "15",
     borderRadius: Radius.lg,
     paddingHorizontal: Space.lg,
     paddingVertical: Space.md,
@@ -870,12 +804,12 @@ const s = StyleSheet.create({
   langDot: {
     width: 8, height: 8,
     borderRadius: 4,
-    backgroundColor: RED,
+    backgroundColor: Colors.primary,
   },
 
   /* Dashboard card */
   dashCard: {
-    backgroundColor: RED,
+    backgroundColor: Colors.primary,
     borderRadius: Radius.xl,
     padding: Space["4xl"],
     marginBottom: Space["2xl"],
@@ -917,7 +851,7 @@ const s = StyleSheet.create({
   progressFill: {
     position: "absolute",
     left: 0, top: 0, bottom: 0,
-    backgroundColor: GREEN, // Keep Green for progress metric
+    backgroundColor: Colors.GREEN, // Keep Green for progress metric
     borderRadius: Radius.full,
   },
   progressLabel: {
@@ -965,7 +899,7 @@ const s = StyleSheet.create({
     position: "absolute",
     bottom: 0, left: 0,
     height: 3,
-    backgroundColor: GREEN, // Keep green for progress
+    backgroundColor: Colors.GREEN, // Keep green for progress
     borderRadius: Radius.full,
   },
   themeTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
@@ -974,70 +908,38 @@ const s = StyleSheet.create({
     borderRadius: 23,
     alignItems: "center", justifyContent: "center",
   },
-  pctBadge: {
-    backgroundColor: GREEN_L,
-    borderRadius: Radius.full,
-    paddingHorizontal: Space.md,
-    paddingVertical: 2,
+  cardPct: { fontSize: 12, fontFamily: "Nunito-Regular", color: Colors.TEXT_SUB, marginTop: 3 },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 8,
+    backgroundColor: Colors.primary + "15",
   },
+  statusTxt: {
+    fontSize: 12,
+    fontFamily: "Fredoka_600SemiBold",
+  },
+  lockMsg: { fontSize: 11, fontFamily: "Nunito-Regular", color: Colors.FAINT, textAlign: "center", lineHeight: 16, marginTop: 3 },
   empty: { alignItems: "center", paddingVertical: Space["4xl"] },
 
-  /* Exercices */
-  exoBadgeCount: {
-    backgroundColor: RED_L,
-    borderRadius: Radius.full,
-    paddingHorizontal: Space.md,
-    paddingVertical: 2,
-  },
-  exoList: {
-    backgroundColor: "#fff",
-    borderRadius: Radius.xl,
-    overflow: "hidden",
-    ...Shadow.sm,
-  },
-  exoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Space.lg,
-    paddingVertical: Space.lg,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Colors.surfaceVariant,
-  },
-  exoIcon: {
-    width: 40, height: 40,
-    borderRadius: 20,
-    alignItems: "center", justifyContent: "center",
-  },
-  doneBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: GREEN, // Done is success metric
-    borderRadius: Radius.full,
-    paddingHorizontal: Space.md,
-    paddingVertical: 4,
-  },
-  todoBadge: {
-    backgroundColor: Colors.surfaceContainerLow,
-    borderRadius: Radius.full,
-    paddingHorizontal: Space.md,
-    paddingVertical: 4,
-  },
   /* Error banner */
+
   errorBanner: {
-    backgroundColor: RED_L,
+    backgroundColor: Colors.primary + "15",
     flexDirection: "row",
     alignItems: "center",
     padding: Space.lg,
     borderRadius: Radius.lg,
     marginBottom: Space.lg,
-    gap: Space.md,
+    gap: 12,
     borderWidth: 1,
-    borderColor: RED + "30",
+    borderColor: Colors.primary + "30",
   },
   errorTitle: {
     fontSize: 14,
     fontFamily: "Fredoka_600SemiBold",
-    color: RED,
+    color: Colors.primary,
     marginBottom: 2,
   },
   errorTxt: {
@@ -1075,7 +977,7 @@ const dr = StyleSheet.create({
     position: "absolute",
     top: 0, left: 0, right: 0,
     height: 4,
-    backgroundColor: RED,
+    backgroundColor: Colors.primary,
   },
   container: {
     flex: 1,
@@ -1105,7 +1007,7 @@ const dr = StyleSheet.create({
     width: 60, height: 60,
     borderRadius: 30,
     borderWidth: 2.5,
-    borderColor: RED,
+    borderColor: Colors.primary,
     alignItems: "center", justifyContent: "center",
     overflow: "hidden",
   },
@@ -1113,7 +1015,7 @@ const dr = StyleSheet.create({
   levelBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: RED_L,
+    backgroundColor: Colors.primary + "15",
     borderRadius: Radius.full,
     paddingHorizontal: Space.md,
     paddingVertical: 2,
@@ -1123,7 +1025,7 @@ const dr = StyleSheet.create({
   streakBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: GREEN_L,
+    backgroundColor: Colors.GREEN_L,
     borderRadius: Radius.full,
     paddingHorizontal: Space.lg,
     paddingVertical: Space.sm,
@@ -1141,7 +1043,7 @@ const dr = StyleSheet.create({
     paddingVertical: Space.lg,
   },
   menuItemHL: {
-    backgroundColor: RED_L,
+    backgroundColor: Colors.primary + "15",
     borderRadius: Radius.xl,
     paddingHorizontal: Space.lg,
     marginHorizontal: -Space.lg,

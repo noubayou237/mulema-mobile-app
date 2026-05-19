@@ -169,7 +169,7 @@ export class LevelService {
         };
       });
 
-      console.log(`[LevelService] Theme ${t.code}: lessonsCount=${lessonsCount}, completed=${lessonsCompletedCount}, unlocked=${lessonsUnlockedCount}`);
+
 
       // A theme unlocks only after the previous theme's final challenge is completed
       // AND its story video has been watched.

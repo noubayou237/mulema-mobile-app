@@ -39,6 +39,8 @@ import { useLanguageStore } from "../../src/stores/useLanguageStore";
 import { useDashboardStore } from "../../src/stores/useDashboardStore";
 import { DrawerContent } from "../../src/components/layout/DrawerContent";
 import { useTranslation } from "react-i18next";
+import { MReportModal } from "../../src/components/ui/MReportModal";
+
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
@@ -151,6 +153,17 @@ const Podium = ({ top3 = [], leagueColor = "#FF9800" }) => {
         <View style={[pod.xpBadge, { backgroundColor: leagueColor + "22" }]}>
           <Text style={[pod.xpText, { color: leagueColor }]}>{user.totalXP} XP</Text>
         </View>
+
+        {/* Report Button (UGC Compliance) */}
+        {!user.isCurrentUser && user.id !== "me" && (
+          <TouchableOpacity
+            style={pod.reportBtn}
+            onPress={() => onReport?.(user)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="flag-outline" size={14} color={Colors.textTertiary} />
+          </TouchableOpacity>
+        )}
       </Animated.View>
     );
   };
@@ -158,11 +171,11 @@ const Podium = ({ top3 = [], leagueColor = "#FF9800" }) => {
   return (
     <View style={pod.container}>
       {/* 2nd place */}
-      <PodiumUser user={second} position={2} size={52} />
+      <PodiumUser user={second} position={2} size={52} onReport={onReport} />
       {/* 1st place (center, elevated) */}
-      <PodiumUser user={first} position={1} size={72} elevated />
+      <PodiumUser user={first} position={1} size={72} elevated onReport={onReport} />
       {/* 3rd place */}
-      <PodiumUser user={third} position={3} size={52} />
+      <PodiumUser user={third} position={3} size={52} onReport={onReport} />
     </View>
   );
 };
@@ -174,24 +187,13 @@ const FilterTabs = ({ active, onChange }) => {
   const { t } = useTranslation();
   const tabs = [
     { key: "all", label: t("common.total") },
-    { key: "month", label: t("common.thisMonth"), comingSoon: true },
-    { key: "week", label: t("common.currentWeek"), comingSoon: true },
   ];
   return (
     <View style={ft.container}>
       {tabs.map((tab) => (
         <TouchableOpacity
           key={tab.key}
-          onPress={() => {
-            if (tab.comingSoon) {
-              Alert.alert(
-                t("common.comingSoon", "Bientôt disponible"),
-                t("community.filterComingSoon", "Le filtrage par période sera disponible dans une prochaine mise à jour.")
-              );
-              return;
-            }
-            onChange(tab.key);
-          }}
+          onPress={() => onChange(tab.key)}
           activeOpacity={0.7}
           style={[ft.tab, active === tab.key && ft.tabActive]}
         >
@@ -215,7 +217,7 @@ const getRankTags = (t) => ({
   newcomer: { label: t("community.ranks.newcomer"), color: "#9C27B0" },
 });
 
-const RankRow = ({ item, isCurrentUser = false }) => {
+const RankRow = ({ item, isCurrentUser = false, onReport }) => {
   const { t } = useTranslation();
   const RANK_TAGS = getRankTags(t);
 
@@ -285,6 +287,17 @@ const RankRow = ({ item, isCurrentUser = false }) => {
             XP
           </Text>
         </View>
+
+        {/* Report Button (UGC Compliance) */}
+        {!isCurrentUser && (
+          <TouchableOpacity
+            style={rr.reportBtn}
+            onPress={() => onReport?.(item)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="flag-outline" size={18} color={Colors.textTertiary} />
+          </TouchableOpacity>
+        )}
       </View>
     </Animated.View>
   );
@@ -390,6 +403,15 @@ export default function CommunityScreen() {
 
   const [filter, setFilter] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
+
+  /* ── Reporting (UGC Compliance) ── */
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [selectedUserToReport, setSelectedUserToReport] = useState(null);
+
+  const handleOpenReport = (targetUser) => {
+    setSelectedUserToReport(targetUser);
+    setReportModalVisible(true);
+  };
 
   /* ── Drawer ── */
   const { width: SCREEN_W } = Dimensions.get("window");
@@ -513,7 +535,7 @@ export default function CommunityScreen() {
         />
 
         {/* ── Podium ── */}
-        <Podium top3={top3} leagueColor={league.color} />
+        <Podium top3={top3} leagueColor={league.color} onReport={handleOpenReport} />
 
         {/* ── Filter + Section label ── */}
         <View style={s.filterRow}>
@@ -549,6 +571,7 @@ export default function CommunityScreen() {
                 key={item.id}
                 item={item}
                 isCurrentUser={item.id === currentUserRank.id}
+                onReport={handleOpenReport}
               />
             ))}
             {ranking.length === 0 && !leaderboardError && !leaderboardLoading && (
@@ -606,6 +629,13 @@ export default function CommunityScreen() {
           onLogout={handleLogout}
         />
       </Animated.View>
+
+      {/* ══ REPORT MODAL ══ */}
+      <MReportModal
+        visible={reportModalVisible}
+        onClose={() => setReportModalVisible(false)}
+        reportedUser={selectedUserToReport}
+      />
     </SafeAreaView>
   );
 }

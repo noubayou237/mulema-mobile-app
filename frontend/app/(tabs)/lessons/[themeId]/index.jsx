@@ -4,7 +4,7 @@
  * Nœuds : cercle (leçon) · hexagone (défi) · étoile (bonus final)
  */
 
-import { useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity,
   Animated, StyleSheet, Platform, StatusBar,
@@ -22,8 +22,12 @@ import { useDashboardStore } from "../../../../src/stores/useDashboardStore";
 import { useLanguageStore }  from "../../../../src/stores/useLanguageStore";
 import { useTranslation } from "react-i18next";
 import { MLoader } from "../../../../src/components/ui/MComponents";
+import { getGhomalaVirtualData, getAllGhomalaVirtualData, isGhomalaVirtualId } from "../../../data/ghomalaLessonsData";
+import { getDualaVirtualData, getAllDualaVirtualData, isDualaVirtualId } from "../../../data/dualaLessonsData";
 
 const { width: SW } = Dimensions.get("window");
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /* ═══════════════════════════════════════════════════════════════
    THÈME IMMERSIF PAR LANGUE
@@ -215,6 +219,43 @@ const LessonNode = ({ lesson, index, onPress, lt, isLocked }) => {
 };
 
 
+const SyncBar = ({ loading, message, lt }) => {
+  if (!loading) return null;
+  return (
+    <View style={{
+      position: 'absolute',
+      bottom: 30,
+      left: 20,
+      right: 20,
+      backgroundColor: 'rgba(0,0,0,0.85)',
+      paddingVertical: 12,
+      paddingHorizontal: 20,
+      borderRadius: 16,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      borderWidth: 1,
+      borderColor: lt.accent + "40",
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4.65,
+      elevation: 8,
+    }}>
+      <ActivityIndicator size="small" color={lt.accent} style={{ marginRight: 12 }} />
+      <Text style={{ 
+        color: '#FFF', 
+        fontSize: 14, 
+        fontFamily: "Fredoka_600SemiBold",
+        letterSpacing: 0.3 
+      }}>
+        {message}
+      </Text>
+    </View>
+  );
+};
+
 /* ═══════════════════════════════════════════════════════════════
    ÉCRAN PRINCIPAL
    ═══════════════════════════════════════════════════════════════ */
@@ -223,24 +264,42 @@ export default function ThemeDetailScreen() {
   const { themeId, category, title: titleParam } = useLocalSearchParams();
   const { t }       = useTranslation();
 
-  const { fetchLessons, getThemeById, lessons, lessonsLoading, clearTheme, isLessonLocked, getExerciseAccess, error } = useThemeStore();
+  const { fetchLessons, getThemeById, lessons, lessonsLoading, clearTheme, isLessonLocked, getExerciseAccess, setVirtualData, error } = useThemeStore();
   const { data: dash } = useDashboardStore();
   const { activeLanguage } = useLanguageStore();
+
+  // Track whether we're actively loading for *this* themeId specifically
+  const [isInitializing, setIsInitializing] = useState(true);
 
   const lt = getLangTheme(activeLanguage?.name ?? "");
   const langName = activeLanguage?.name ?? "";
   const normalizedLang = langName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const isBassa = normalizedLang.includes("bassa") || normalizedLang.includes("basaa");
+  const isGhomalaLanguage = normalizedLang.includes("ghomala") || normalizedLang.includes("ghomal") || normalizedLang.includes("bamilek");
+  const isDualaLanguage = normalizedLang.includes("duala") || normalizedLang.includes("douala");
 
-  // Refetch every time this screen gains focus so that newly-unlocked lessons
-  // appear after returning from an exercise without needing a full remount.
+  // Detect non-UUID themeIds (hardcoded fallback IDs)
+  const isRealThemeId = themeId && (UUID_REGEX.test(themeId) || themeId.startsWith("virtual_"));
+
+  // Only show lessons that belong to *this* themeId (avoid stale data from previous theme)
+  const currentThemeId = useThemeStore((s) => s.currentThemeId);
+  const displayLessons = currentThemeId === themeId ? (lessons || []) : [];
+
+  // Load lessons — unified path for ALL languages (Bassa, Duala, Ghomala)
+  // Since themeId is now always a UUID from the theme list page,
+  // all languages use the same fetchLessons API call.
   useFocusEffect(
     useCallback(() => {
-      if (themeId) fetchLessons(themeId, true);
-    }, [themeId])
-  );
+      if (!themeId) return;
 
-  const displayLessons = lessons;
+      // Real UUID — fetch from API 
+      // Use cached data first for instant display, then sync in background
+      const hasLessons = displayLessons.length > 0;
+      if (!hasLessons) setIsInitializing(true);
+      
+      fetchLessons(themeId, false).finally(() => setIsInitializing(false));
+    }, [themeId, displayLessons.length])
+  );
 
   const theme     = getThemeById(themeId);
   const themeCode = (theme?.code ?? "").toLowerCase();
@@ -248,15 +307,26 @@ export default function ThemeDetailScreen() {
   // Clean up theme name: remove "Niveau 1 :" etc. 
   // For 'fondations' code, use localized "Foundations" / "Fondations"
   let themeName = (theme?.name_fr ?? theme?.name ?? titleParam ?? category ?? t("common.theme"));
-  if (themeCode === 'fondations') {
-    themeName = t("lessons.foundations");
+
+  // Language-specific "Lessons" title for foundations or generic theme
+  const isFoundations = 
+    themeCode === 'fondations' || 
+    themeName.toLowerCase().includes('fondation') ||
+    themeName.toLowerCase().includes('foundation') ||
+    themeName.toLowerCase().includes('mots de base') ||
+    themeName.toLowerCase().includes('basic words') ||
+    themeName === t("lessons.foundations") || 
+    themeName === t("common.theme");
+
+  if (isFoundations) {
+    if (isBassa) themeName = "Bassa Lessons";
+    else if (isDualaLanguage) themeName = "Duala Lessons";
+    else if (isGhomalaLanguage) themeName = "Ghomala Lessons";
+    else if (themeCode === 'fondations') {
+      themeName = t("lessons.foundations");
+    }
   } else {
     themeName = themeName.replace(/Niveau \d+\s*:\s*/gi, "");
-  }
-
-  // Bassa fallback
-  if (isBassa && themeName === t("common.theme")) {
-    themeName = "Bassa Lessons";
   }
   const emoji     = getEmoji(themeCode);
 
@@ -267,6 +337,13 @@ export default function ThemeDetailScreen() {
   return (
     <View style={[s.root, { backgroundColor: lt.bg }]}>
       <StatusBar barStyle="light-content" />
+
+      {/* Background sync loader */}
+      <SyncBar 
+        loading={lessonsLoading && displayLessons.length > 0} 
+        message={t("lessons.unlocking") || "Unlocking next level..."} 
+        lt={lt} 
+      />
 
       {/* ── Fond étoilé ── */}
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -351,7 +428,7 @@ export default function ThemeDetailScreen() {
         </LinearGradient>
 
         {/* ── Chemin de leçons ── */}
-        {lessonsLoading && displayLessons.length === 0 ? (
+        {(isInitializing || lessonsLoading) && displayLessons.length === 0 ? (
           <View style={{ marginTop: 60 }}>
             <MLoader message={t("common.loading") || "Loading lessons..."} fullScreen={false} />
           </View>

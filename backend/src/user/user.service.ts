@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../auth/prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { R2StorageService } from '../storage/r2-storage.service';
 
 @Injectable()
@@ -704,5 +705,59 @@ export class UserService {
       totalPoints: updatedStats.totalPrawns,
       nextRechargeIn: synced.nextRechargeIn,
     };
+  }
+
+  // =====================
+  // REPORT USER (UGC COMPLIANCE)
+  // =====================
+  async reportUser(
+    reporterId: string,
+    reportedId: string,
+    reason: string,
+    description?: string,
+  ) {
+    this.logger.log(
+      `User ${reporterId} reporting user ${reportedId} for: ${reason}`,
+    );
+
+    // 1. Validation: Prevent self-reporting
+    if (reporterId === reportedId) {
+      throw new BadRequestException('You cannot report yourself.');
+    }
+
+    // 2. Validation: Ensure reported user exists
+    const reportedUser = await this.prisma.user.findUnique({
+      where: { id: reportedId },
+    });
+
+    if (!reportedUser) {
+      throw new NotFoundException('User to report not found.');
+    }
+
+    // 3. Best Practice: Check if a pending report already exists to prevent spam
+    const existingReport = await this.prisma.report.findFirst({
+      where: {
+        reporterId,
+        reportedId,
+        status: 'PENDING',
+      },
+    });
+
+    if (existingReport) {
+      throw new BadRequestException(
+        'You have already submitted a report for this user which is still under review.',
+      );
+    }
+
+    // 4. Create report using Prisma's recommended 'connect' syntax for relations
+    // This ensures referential integrity at the application level
+    return this.prisma.report.create({
+      data: {
+        reason,
+        description,
+        reporter: { connect: { id: reporterId } },
+        reported: { connect: { id: reportedId } },
+      },
+    });
   }
 }

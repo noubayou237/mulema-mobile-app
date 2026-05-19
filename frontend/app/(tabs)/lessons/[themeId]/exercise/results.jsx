@@ -137,37 +137,58 @@ export default function ExerciseResults() {
     .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z]/g, "")
     .trim();
+  
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     if (!themeId || !success) return;
 
+    setIsSyncing(true);
+
     if (isFinal === "true") {
-      // Final Challenge successfully passed
+      // 1. Optimistic UI update
+      const { optimisticUnlockFinal } = useThemeStore.getState();
+      optimisticUnlockFinal(themeId);
+      
       completeTheme(themeId, score);
       setShowFinalAnim(true);
+
+      // 2. Background sync
       api.post(`/progress/unlock-final/${themeId}`)
         .then(() => {
-          Logger.info("[Unlock] Final challenge success - refreshing tree");
+          Logger.info(`[Unlock] Final challenge success on ${themeId} - syncing state`);
+          // Fetch in background without force=true to just sync cache
           useThemeStore.getState().fetchLessons(themeId, true);
           const langId = useLanguageStore.getState().getPatrimonialId();
           if (langId) useThemeStore.getState().fetchThemes(langId, true);
         })
-        .catch(err => Logger.warn("[Unlock] Final challenge error:", err?.message));
+        .catch(err => Logger.warn("[Unlock] Final challenge error:", err?.message))
+        .finally(() => setIsSyncing(false));
+
     } else if (lessonIdxParam != null) {
-      // Regular category node or gate passed
+      // 1. Optimistic UI update
+      const { optimisticUnlockCategory } = useThemeStore.getState();
+      optimisticUnlockCategory(themeId, lessonIdxParam);
+
+      // 2. Background sync
       api.post(`/progress/unlock-next-lesson/${themeId}`, {
         completedLessonOrder: lessonIdxParam,
       })
       .then(() => {
-        Logger.info(`[Unlock] Category ${lessonIdxParam} completed successfully`);
-        // Refresh lessons to update tree completion status (unlocks Final Challenge if all are done)
-        useThemeStore.getState().fetchLessons(themeId, true);
-        
-        // Also refresh themes to update total progress bars elsewhere
+        Logger.info(`[Unlock] Category ${lessonIdxParam} completed on theme ${themeId} - syncing state`);
+        // Parallel sync of data
+        const store = useThemeStore.getState();
         const langId = useLanguageStore.getState().getPatrimonialId();
-        if (langId) useThemeStore.getState().fetchThemes(langId, true);
+        
+        Promise.all([
+          store.fetchLessons(themeId, true),
+          langId ? store.fetchThemes(langId, true) : Promise.resolve()
+        ]);
       })
-      .catch((err) => Logger.warn("[Unlock] Next category error:", err?.message));
+      .catch((err) => Logger.warn("[Unlock] Next category error:", err?.message))
+      .finally(() => setIsSyncing(false));
+    } else {
+      setIsSyncing(false);
     }
   }, []);
 
@@ -271,11 +292,20 @@ export default function ExerciseResults() {
               <Ionicons name="play" size={16} color="#FFF" style={{ marginLeft: 4 }} />
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity onPress={handleContinue} style={s.primaryBtn} activeOpacity={0.85}>
+            <TouchableOpacity 
+              onPress={handleContinue} 
+              style={[s.primaryBtn, isSyncing && { opacity: 0.8 }]} 
+              activeOpacity={0.85}
+              disabled={isSyncing && success} // Still allow continue if failed or finished syncing
+            >
               <Text style={s.primaryTxt}>
-                {success ? t("exercises.continueAdventure") : t("exercises.reviewLessons")}
+                {isSyncing ? t("common.syncing", "Syncing...") : (success ? t("exercises.continueAdventure") : t("exercises.reviewLessons"))}
               </Text>
-              <Ionicons name="arrow-forward" size={18} color="#FFF" />
+              {isSyncing ? (
+                <ActivityIndicator size="small" color="#FFF" style={{ marginLeft: 6 }} />
+              ) : (
+                <Ionicons name="arrow-forward" size={18} color="#FFF" />
+              )}
             </TouchableOpacity>
           )}
 

@@ -33,7 +33,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
-import { MButton } from "../../src/components/ui/MComponents";
 import { VIDEOS_MAP, IMAGES_MAP } from "../../src/utils/AssetsMap";
 import {
   pauseBackgroundMusic,
@@ -208,28 +207,27 @@ export default function PageVideo() {
   const videoUri = VIDEO_BY_LANG[langResolved] ?? VIDEO_BY_LANG.default;
 
   // ── Persist & navigate ──
-  const persistAndGoHome = async () => {
-    const { languages, setActiveLanguage, setHasSeenIntro } =
-      useLanguageStore.getState();
+  // ── Reactive Navigation Trigger ──
+  // Instead of manual routing, we update the store. The AuthGate in _layout.jsx
+  // will detect hasSeenIntro=true and swap the navigator group instantly.
+  const persistAndGoHome = () => {
+    // 1. Immediately signal the store. This is a synchronous state update.
+    const { setHasSeenIntro } = useLanguageStore.getState();
+    setHasSeenIntro(true);
 
-    // Find the matching language in the store — use normalizeLangKey for robust matching
-    const lang = languages.find(
-      (l) =>
-        normalizeLangKey(l.code) === langResolved ||
-        normalizeLangKey(l.name) === langResolved
-    );
-    if (lang) {
-      await setActiveLanguage(lang);
-    } else {
-      await AsyncStorage.setItem(HAS_SELECTED_LANGUAGE, langResolved);
-    }
-
-    // 2. Marquer l'intro comme vue (déclenche la redirection dans RootLayout)
-    await setHasSeenIntro(true);
-
-    // 3. Navigation explicite au cas où
-    router.replace("/(tabs)/home");
+    // 2. The screen will be unmounted by the navigator in the next frame.
+    // We don't call router.replace() here to avoid transition conflicts.
   };
+
+  // ── Background Cleanup/Sync ──
+  // This runs after the user has "seen" the intro. Since the navigator swaps
+  // components, PageVideo will unmount.
+  useEffect(() => {
+    return () => {
+      // If we unmount before persistAndGoHome was called (rare but possible),
+      // we ensure the music is resumed. Logic already exists in the first useEffect.
+    };
+  }, []);
 
   // ── Play handler ──
   const handlePlay = async () => {
@@ -339,7 +337,7 @@ export default function PageVideo() {
         {/* ── Skip button (top right) ── */}
         <TouchableOpacity
           onPress={persistAndGoHome}
-          activeOpacity={0.7}
+          activeOpacity={0.8}
           style={s.skipBtn}
         >
           <Text style={s.skipText}>Skip</Text>
@@ -360,13 +358,29 @@ export default function PageVideo() {
           {/* Description */}
           <Text style={s.description}>{getDescription(langResolved)}</Text>
 
-          {/* Continue button */}
-          <MButton
-            title={t("common.continue")}
+          {/* Continue button — instant response, no animation delay */}
+          <TouchableOpacity
             onPress={persistAndGoHome}
-            // icon="arrow-forward"
+            activeOpacity={0.8}
             style={{ width: "100%" }}
-          />
+          >
+            <LinearGradient
+              colors={[Colors.primaryContainer, Colors.primary]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{
+                paddingVertical: 16,
+                borderRadius: 999,
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 54,
+              }}
+            >
+              <Text style={[{ color: Colors.onPrimary, fontSize: 18, fontWeight: "700", fontFamily: "Fredoka_600SemiBold" }]}>
+                {t("common.continue")}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -396,16 +410,14 @@ const s = StyleSheet.create({
     position: "absolute",
     right: Space["2xl"],
     top: Platform.OS === "ios" ? 58 : 40,
-    paddingHorizontal: Space.lg,
-    paddingVertical: Space.sm,
-    borderRadius: Radius.full,
-    backgroundColor: "rgba(255,255,255,0.12)",
-    zIndex: 10
+    backgroundColor: "rgba(255,255,255,0.92)",
+    paddingVertical: 10, paddingHorizontal: 18,
+    borderRadius: 24,
+    flexDirection: "row", alignItems: "center", gap: 6,
+    // Premium shadow for depth
+    shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 4
   },
-  skipText: {
-    color: Colors.onPrimary,
-    ...Typo.titleSm
-  },
+  skipText: { color: "#111", fontWeight: "700", fontSize: 13, textTransform: "uppercase", letterSpacing: 0.8 },
 
   // Play button center
   playCenterWrap: {

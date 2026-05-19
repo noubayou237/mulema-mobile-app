@@ -102,7 +102,7 @@ export default function SwiperRedirect() {
   }, [lessons, currentThemeId]);
 
   // Handle Error case
-  if (error && !lessons.length) {
+  if (error && (!lessons || !lessons.length)) {
     return (
       <View style={{ flex: 1, backgroundColor: Colors.surface, justifyContent: "center", alignItems: "center", padding: 20 }}>
         <Ionicons name="cloud-offline-outline" size={48} color={Colors.primary} style={{ marginBottom: 16 }} />
@@ -119,7 +119,7 @@ export default function SwiperRedirect() {
           onPress={() => router.back()}
           style={{ marginTop: 16 }}
         >
-          <Text style={{ color: Colors.textSub }}>{t("common.back") || "Back"}</Text>
+          <Text style={{ color: Colors.textTertiary }}>{t("common.back") || "Back"}</Text>
         </TouchableOpacity>
       </View>
     );

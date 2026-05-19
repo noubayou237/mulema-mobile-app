@@ -7,6 +7,7 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   private readonly logger = new Logger(PrismaService.name);
+  // Re-evaluation nudge after prisma generate (success)
 
   async onModuleInit() {
     const maxRetries = 5;

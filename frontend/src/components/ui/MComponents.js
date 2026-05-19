@@ -5,7 +5,7 @@
  * ╚══════════════════════════════════════════════════════════════╝
  *
  *  Usage:
- *    import { MInput, MButton, MDivider, MSocialButton, MChip }
+ *    import { MInput, MButton, MChip }
  *      from "@/components/ui/MComponents";
  */
 
@@ -114,6 +114,7 @@ export const MInput = ({
           autoCapitalize={autoCapitalize}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          accessibilityLabel={rest.accessibilityLabel || label || placeholder}
           {...rest}
         />
         {rightIcon && (
@@ -151,6 +152,7 @@ export const MButton = ({
   variant = "primary",    // "primary" | "secondary" | "tertiary"
   icon,
   style,
+  accessibilityLabel,
 }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -182,6 +184,9 @@ export const MButton = ({
         disabled={isDisabled}
         activeOpacity={0.7}
         style={[{ paddingVertical: Space.md }, style]}
+        accessibilityLabel={accessibilityLabel || title}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: isDisabled }}
       >
         <Text
           style={[
@@ -216,6 +221,9 @@ export const MButton = ({
         disabled={isDisabled}
         activeOpacity={0.9}
         style={{ borderRadius: Radius.full, overflow: "hidden" }}
+        accessibilityLabel={accessibilityLabel || title}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: isDisabled, busy: loading }}
       >
         <LinearGradient
           colors={gradientColors}
@@ -245,63 +253,10 @@ export const MButton = ({
 };
 
 
-/* ══════════════════════════════════════════════════════════════
-   MDivider — "OU CONTINUER AVEC" style
-   ══════════════════════════════════════════════════════════════ */
-
-export const MDivider = ({ text }) => (
-  <View style={styles.dividerRow}>
-    <View style={styles.dividerLine} />
-    <Text style={[Typo.labelSm, { marginHorizontal: Space.lg, color: Colors.textTertiary }]}>
-      {text}
-    </Text>
-    <View style={styles.dividerLine} />
-  </View>
-);
 
 
-/* ══════════════════════════════════════════════════════════════
-   MSocialButton — Google / Apple / Facebook
-   ══════════════════════════════════════════════════════════════ */
 
-export const MSocialButton = ({ provider, onPress, disabled = false }) => {
-  const config = {
-    google: {
-      label: "Google",
-      icon: "logo-google",
-      bg: Colors.surfaceContainerLowest,
-    },
-    apple: {
-      label: "Apple",
-      icon: "logo-apple",
-      bg: Colors.surfaceContainerLowest,
-    },
-    facebook: {
-      label: "Facebook",
-      icon: "logo-facebook",
-      bg: Colors.surfaceContainerLowest,
-    },
-  };
 
-  const c = config[provider] || config.google;
-
-  return (
-    <TouchableOpacity
-      onPress={() => {
-        try { Haptics.selectionAsync(); } catch {}
-        onPress?.();
-      }}
-      disabled={disabled}
-      activeOpacity={0.7}
-      style={[styles.socialBtn, { backgroundColor: c.bg }, Shadow.sm]}
-    >
-      <Ionicons name={c.icon} size={20} color={Colors.onSurface} />
-      <Text style={[Typo.titleSm, { marginLeft: Space.sm, color: Colors.onSurface }]}>
-        {c.label}
-      </Text>
-    </TouchableOpacity>
-  );
-};
 
 
 
@@ -310,7 +265,7 @@ export const MSocialButton = ({ provider, onPress, disabled = false }) => {
    MChip — Language chip / tag
    ══════════════════════════════════════════════════════════════ */
 
-export const MChip = ({ label, active = false, onPress }) => (
+export const MChip = ({ label, active = false, onPress, accessibilityLabel }) => (
   <TouchableOpacity
     onPress={onPress}
     activeOpacity={0.7}
@@ -318,6 +273,9 @@ export const MChip = ({ label, active = false, onPress }) => (
       styles.chip,
       active && { backgroundColor: Colors.primary + "15" },
     ]}
+    accessibilityLabel={accessibilityLabel || label}
+    accessibilityRole="button"
+    accessibilityState={{ selected: active }}
   >
     <Text
       style={[
@@ -336,7 +294,13 @@ export const MChip = ({ label, active = false, onPress }) => (
    ══════════════════════════════════════════════════════════════ */
 
 export const MLinkText = ({ text, linkText, onPress }) => (
-  <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={{ paddingVertical: Space.lg }}>
+  <TouchableOpacity 
+    onPress={onPress} 
+    activeOpacity={0.7} 
+    style={{ paddingVertical: Space.lg }}
+    accessibilityRole="link"
+    accessibilityLabel={`${text} ${linkText}`}
+  >
     <Text style={[Typo.bodyMd, { textAlign: "center", color: Colors.textSecondary }]}>
       {text}{" "}
       <Text style={{ color: Colors.primary, fontWeight: "700" }}>{linkText}</Text>
@@ -385,28 +349,7 @@ const styles = StyleSheet.create({
     minHeight: 54,
   },
 
-  // Divider
-  dividerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: Space["2xl"],
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: Colors.surfaceVariant,
-  },
 
-  // Social
-  socialBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 14,
-    paddingHorizontal: Space["2xl"],
-    borderRadius: Radius.full,
-    flex: 1,
-  },
 
 
   // Chip
@@ -423,11 +366,15 @@ const styles = StyleSheet.create({
    ══════════════════════════════════════════════════════════════ */
 
 export const MLoader = ({ message, fullScreen = true }) => (
-  <View style={[
-    styles.loaderContainer,
-    fullScreen && StyleSheet.absoluteFill,
-    fullScreen && { backgroundColor: "rgba(10, 10, 15, 0.85)", zIndex: 9999 }
-  ]}>
+  <View 
+    style={[
+      styles.loaderContainer,
+      fullScreen && StyleSheet.absoluteFill,
+      fullScreen && { backgroundColor: "rgba(10, 10, 15, 0.85)", zIndex: 9999 }
+    ]}
+    accessibilityRole="progressbar"
+    accessibilityLiveRegion="polite"
+  >
     <View style={styles.loaderContent}>
       <ActivityIndicator size="large" color={Colors.primary} />
       {message && (

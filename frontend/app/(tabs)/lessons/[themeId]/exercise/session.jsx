@@ -31,6 +31,7 @@ import { buildBassaSession, buildBassaMixedFoundationSession } from "../../../..
 
 const { width: SW } = Dimensions.get("window");
 const CARD_W = (SW - 40 - 12) / 2;
+const CARD_W_V2 = (SW - 40 - 16) / 2; // Premium spacing
 
 /* ── Palette ─────────────────────────────────────────────────── */
 const C = {
@@ -120,9 +121,9 @@ const hasValidImage = (w) =>
 const buildSession = (words) => {
   if (!words || words.length < 1) return [];
   const sw = shuffle(words);
-  const n  = sw.length;
+  const n = sw.length;
 
-  const wordsWithImg  = sw.filter(hasValidImage);
+  const wordsWithImg = sw.filter(hasValidImage);
   const canDoImageQCM = wordsWithImg.length >= 2;
 
   const makeQCM = (target) => {
@@ -156,12 +157,11 @@ const buildSession = (words) => {
     }
   }
 
-  // ── Write — word[2] and word[3] (two different words → each appears once in write)
+  // ── Listen & Write replaces Write for higher difficulty ──────────────────
   const wt1 = sw[2 % n];
   const wt2 = sw[3 % n];
-  questions.push({ type: "write", target: wt1 });
-  // Only push second write if it targets a genuinely different word
-  if (wt2.id !== wt1.id) questions.push({ type: "write", target: wt2 });
+  questions.push({ type: "listen_write", target: wt1 });
+  if (wt2.id !== wt1.id) questions.push({ type: "listen_write", target: wt2 });
 
   // ── Listen & Write — the "unknown/surprise" question ──────────────────
   // Prefer a word not yet used in QCM or Write, keeping this question fresh
@@ -337,7 +337,7 @@ const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr"
   useEffect(() => {
     Animated.parallel([
       Animated.timing(a1, { toValue: 1, duration: 400, useNativeDriver: true }),
-      Animated.stagger(100, anims.map(a => 
+      Animated.stagger(100, anims.map(a =>
         Animated.spring(a, { toValue: 1, tension: 50, friction: 7, useNativeDriver: true })
       ))
     ]).start();
@@ -353,12 +353,14 @@ const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr"
 
         <Text style={iq.title}>{t("exercises.pickImageFor")}</Text>
 
-        {/* Mot Duala + bouton audio */}
-        <View style={qx.wordRow}>
-          <View style={qx.wordPill}>
-            <Text style={qx.keyword}>"{q.target.subtitle}"</Text>
+        {/* Unified Word Row: [Global] | [Local + Audio] */}
+        <View style={qx.wordRowV2}>
+          <View style={qx.globalCol}>
+            <Text style={qx.globalWord}>"{getWordDisplay(q.target.title, uiLang)}"</Text>
+            <Text style={qx.subLabel}>{uiLang?.startsWith("en") ? "ENGLISH" : "FRANÇAIS"}</Text>
           </View>
-          <AudioBtn url={q.target.audioUrl} size={24} />
+
+          <AudioBtn url={q.target.audioUrl} size={28} style={qx.audioFixed} />
         </View>
 
         {/* Grille 2×2 */}
@@ -407,23 +409,12 @@ const ImageQCMScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr"
                   )}
                 </View>
 
-                {/* Audio par image */}
-                <View style={iq.labelRow}>
-                  <Text
-                    style={[
-                      iq.label,
-                      sel === opt.id && !feedback && { color: C.primary, fontWeight: "700" },
-                      feedback && opt.id === q.target.id && { color: C.correct, fontWeight: "700" },
-                      feedback && opt.id === sel && sel !== q.target.id && { color: C.primary, fontWeight: "700" },
-                    ]}
-                    numberOfLines={2}
-                  >
-                    {opt.title}
-                  </Text>
-                  {opt.audioUrl && (
-                    <AudioBtn url={opt.audioUrl} size={16} color={C.textSub} />
-                  )}
-                </View>
+                {/* Grid labels removed to force audio-visual reliance as requested */}
+                {opt.audioUrl && (
+                  <View style={iq.labelRow}>
+                    <AudioBtn url={opt.audioUrl} size={18} color={C.textSub} />
+                  </View>
+                )}
               </TouchableOpacity>
             </Animated.View>
           ))}
@@ -507,7 +498,7 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr" 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(a1, { toValue: 1, duration: 400, useNativeDriver: true }),
-      Animated.stagger(100, anims.map(a => 
+      Animated.stagger(100, anims.map(a =>
         Animated.spring(a, { toValue: 1, tension: 50, friction: 7, useNativeDriver: true })
       ))
     ]).start();
@@ -523,54 +514,51 @@ const TextQCMScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr" 
 
         <Text style={qx.title}>{t("exercises.howToSayIn", { lang: langName })}</Text>
 
-        {/* Source word in user's UI language + audio */}
-        <View style={qx.wordRow}>
-          <View style={qx.wordPill}>
-            <Text style={qx.keyword}>"{getWordDisplay(q.target.title, uiLang)}"</Text>
-          </View>
-          <AudioBtn url={q.target.audioUrl} size={22} />
+        {/* Simplified Target Word Card — translation (subtitle) removed to keep it challenging */}
+        <View style={qx.targetCard}>
+          <Text style={qx.targetLabel}>{uiLang?.startsWith("en") ? "ENGLISH" : "FRANÇAIS"}</Text>
+          <Text style={qx.targetWord}>{getWordDisplay(q.target.title, uiLang)}</Text>
+          <AudioBtn url={q.target.audioUrl} size={24} color={C.primary} />
         </View>
 
-        {/* Grille 2×2 */}
+        {/* Grille 2×2 (Image 2 style) */}
         <View style={qx.grid}>
           {q.options.map((opt, idx) => (
             <Animated.View
               key={opt.id}
               style={{
+                width: CARD_W_V2,
                 opacity: anims[idx] || 1,
                 transform: [{ scale: anims[idx] || 1 }]
               }}
             >
               <TouchableOpacity
                 onPress={() => !feedback && setSel(opt.id)}
-                activeOpacity={0.6}
+                activeOpacity={0.7}
                 style={cardStyle(opt)}
               >
-                {opt.imageUrl && typeof opt.imageUrl === 'string' && opt.imageUrl.trim() !== "" ? (
-                  <Image source={IMAGES_MAP[opt.imageUrl] ? IMAGES_MAP[opt.imageUrl] : { uri: opt.imageUrl }} style={qx.optImg} contentFit="cover" />
-                ) : (
-                  <View style={qx.optImgPlaceholder}>
-                    <Ionicons name="language" size={26} color={sel === opt.id ? C.primary : C.textFaint} />
-                  </View>
-                )}
-
-                {sel === opt.id && !feedback && (
-                  <View style={qx.badge}>
-                    <Ionicons name="checkmark-circle" size={20} color={C.primary} />
-                  </View>
-                )}
-                {feedback && opt.id === q.target.id && (
-                  <View style={qx.badge}>
-                    <Ionicons name="checkmark-circle" size={20} color={C.correct} />
-                  </View>
-                )}
-
-                <View style={qx.optBottom}>
-                  <Text style={labelStyle(opt)} numberOfLines={2}>{opt.subtitle}</Text>
-                  {opt.audioUrl && (
-                    <AudioBtn url={opt.audioUrl} size={15} color={C.textSub} style={{ marginTop: 4 }} />
-                  )}
+                <View style={qx.optTop}>
+                  <Ionicons
+                    name={opt.imageUrl ? "image" : "language"}
+                    size={28}
+                    color={sel === opt.id ? C.primary : "#BDBDBD"}
+                  />
                 </View>
+
+                <View style={qx.optBottomV2}>
+                  <Text style={labelStyle(opt)} numberOfLines={1}>{opt.subtitle}</Text>
+                  <Ionicons name="volume-medium" size={16} color={C.textSub} />
+                </View>
+
+                {(sel === opt.id || (feedback && opt.id === q.target.id)) && (
+                  <View style={qx.badgeV2}>
+                    <Ionicons
+                      name={feedback && opt.id === q.target.id ? "checkmark-circle" : "radio-button-on"}
+                      size={18}
+                      color={feedback && opt.id === q.target.id ? C.correct : C.primary}
+                    />
+                  </View>
+                )}
               </TouchableOpacity>
             </Animated.View>
           ))}
@@ -660,17 +648,22 @@ const WriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "fr" })
         {/* Titre */}
         <Text style={wx.title}>{t("exercises.translateTo", { lang: langName })}</Text>
 
-        {/* Carte mot + audio */}
-        <View style={[wx.hintCard, SHADOW]}>
-          <View style={wx.hintIcon}>
-            <Ionicons name="chatbubbles" size={24} color={C.primary} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={wx.hintLabel}>{t("exercises.howToSay")}</Text>
+        {/* Unified Hint Card: [Global] | [Local + Audio] */}
+        <View style={[wx.hintCardV2, SHADOW]}>
+          <View style={wx.globalCol}>
             <Text style={wx.hintWord}>"{displayTitle}"</Text>
+            <Text style={wx.hintLabel}>{uiLang?.startsWith("en") ? "ENGLISH" : "FRANÇAIS"}</Text>
           </View>
-          <AudioBtn url={q.target.audioUrl} size={28} />
-          <View style={wx.blob} />
+
+          <View style={wx.dividerVertical} />
+
+          <View style={wx.localCol}>
+            <View style={{ flex: 1 }}>
+              <Text style={wx.localWord}>{q.target.subtitle}</Text>
+              <Text style={wx.langLabel}>{langName}</Text>
+            </View>
+            <AudioBtn url={q.target.audioUrl} size={26} />
+          </View>
         </View>
 
         {/* Zone de saisie — showSoftInputOnFocus=false: patrimonial keyboard replaces system kb */}
@@ -747,7 +740,7 @@ const ListenWriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "
 
   useEffect(() => {
     Animated.timing(fadeIn, { toValue: 1, duration: 400, useNativeDriver: true }).start();
-    
+
     // Slight delay for auto-play to ensure audio engine is ready and user is focused
     const timer = setTimeout(() => {
       if (q.target.audioUrl) {
@@ -760,7 +753,7 @@ const ListenWriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "
     const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, { toValue: 1.14, duration: 650, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1,    duration: 650, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 650, useNativeDriver: true }),
       ])
     );
     pulse.start();
@@ -772,10 +765,10 @@ const ListenWriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "
 
   const shake = () =>
     Animated.sequence([
-      Animated.timing(shakeX, { toValue: 8,  duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue: 8, duration: 55, useNativeDriver: true }),
       Animated.timing(shakeX, { toValue: -8, duration: 55, useNativeDriver: true }),
-      Animated.timing(shakeX, { toValue: 4,  duration: 55, useNativeDriver: true }),
-      Animated.timing(shakeX, { toValue: 0,  duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue: 4, duration: 55, useNativeDriver: true }),
+      Animated.timing(shakeX, { toValue: 0, duration: 55, useNativeDriver: true }),
     ]).start();
 
   const verify = () => {
@@ -800,7 +793,7 @@ const ListenWriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "
       >
         <Text style={wx.title}>{t("exercises.listenAndWrite", { lang: langName })}</Text>
 
-        {/* Big pulsing speaker button */}
+        {/* Center Speaker Section (Image 1 style) */}
         <View style={lw.audioCenter}>
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
             <TouchableOpacity
@@ -808,24 +801,13 @@ const ListenWriteScreen = ({ q, onCorrect, onWrong, onNext, langName, uiLang = "
               activeOpacity={0.62}
               style={lw.bigSpeaker}
             >
-              <Ionicons name={played ? "volume-high" : "volume-medium"} size={46} color="#FFF" />
+              <Ionicons name="mic" size={48} color="#FFF" />
             </TouchableOpacity>
           </Animated.View>
           <Text style={lw.tapHint}>{t("exercises.tapToListen")}</Text>
         </View>
 
-        {/* After feedback: reveal the word in the user's UI language */}
-        {feedback && (
-          <View style={[wx.hintCard, SHADOW, { marginBottom: 16 }]}>
-            <View style={wx.hintIcon}>
-              <Ionicons name="language" size={22} color={C.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={wx.hintLabel}>{uiLang?.startsWith("en") ? "FRENCH" : "FRANÇAIS"}</Text>
-              <Text style={wx.hintWord}>"{getWordDisplay(q.target.title, uiLang)}"</Text>
-            </View>
-          </View>
-        )}
+        {/* Hint card removed to test listening recall as requested */}
 
         {/* Input field — showSoftInputOnFocus=false, patrimonial keyboard handles all input */}
         <Animated.View
@@ -905,6 +887,8 @@ export default function ExerciseSession() {
 
   // Resolve whether the active language is Bassa and the theme's numeric order.
   const isBassa = langName.toLowerCase().includes("bassa") || langName.toLowerCase().includes("basaa");
+  const isDuala = langName.toLowerCase().includes("duala") || langName.toLowerCase().includes("douala");
+  const isGhomala = langName.toLowerCase().includes("ghomala") || langName.toLowerCase().includes("ghomálá");
 
   // Robust mapping for Bassa themes since IDs can vary between environments
   const BASSA_CAT_MAP = {
@@ -954,31 +938,42 @@ export default function ExerciseSession() {
     });
   }, [themeId]);
 
-  // Slice lessons to cumulative word count (or all if no wordCount param)
-  const lessonsKey = lessons.map((l) => l.id).join(",");
   const wordsForSession = useMemo(() => {
-    let rawItems = [];
-    if (isDuala) {
-      const { getDualaThemeItems } = require("../../../../data/dualaLessonsData");
-      rawItems = getDualaThemeItems(themeId) || [];
-    } else if (isGhomala) {
-      const { getGhomalaThemeItems } = require("../../../../data/ghomalaLessonsData");
-      rawItems = getGhomalaThemeItems(themeId) || [];
+    let wordsToUse = [];
+
+    // The backend `lessons` array is actually an array of category groups.
+    // Each category has an array of `.words`.
+    if (isFinal === "true") {
+      // Final Challenge: pull words from ALL categories in the theme to test mastery
+      lessons.forEach(cat => {
+        if (cat.words) wordsToUse.push(...cat.words);
+      });
+    } else if (lessonIdxParam != null && lessons[lessonIdxParam]) {
+      // Routine exercise: pull words exclusively from the targeted category
+      const currentCat = lessons[lessonIdxParam];
+      if (currentCat.words) {
+        wordsToUse = currentCat.words;
+      }
+    } else if (lessons.length > 0 && lessons[0].words) {
+      // Fallback
+      wordsToUse = lessons[0].words;
     }
 
-    if (rawItems.length > 0) {
-      // Map to standard exercise item shape
-      return rawItems.map((item, idx) => ({
-        id: `virt_${themeId}_${idx}`,
-        title: item.sourceText,
-        subtitle: item.targetText,
-        audioUrl: item.audioKey ? `/audio/${themeId}/${item.audioKey}.mp3` : null,
-        imageUrl: item.imageUrl || null,
-        order: idx,
+    if (wordsToUse.length > 0) {
+      // Map backend MulemWord format to standard exercise item shape
+      return wordsToUse.map((w, idx) => ({
+        id: w.id,
+        title: w.word_fr,
+        subtitle: w.word_local,
+        audioUrl: w.audio_url || w.audio_key || null,
+        imageUrl: w.image_url || w.image_key || null,
+        order: w.order ?? idx,
       }));
     }
+
+    // Legacy structural fallback
     return wordCount ? lessons.slice(0, wordCount) : lessons;
-  }, [lessonsKey, wordCount, isDuala, isGhomala, themeId]);
+  }, [lessons, lessonIdxParam, isFinal, wordCount]);
 
   // For Bassa, use the fixed docx-driven exercise questions so the content
   // matches exactly what the docx files specify (match words from Ex 1, write
@@ -1087,7 +1082,7 @@ export default function ExerciseSession() {
             <Text style={{ textAlign: "center", color: C.text, fontSize: 16, marginBottom: 24, paddingHorizontal: 30 }}>
               {error}
             </Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => fetchLessons(themeId)}
               style={{ backgroundColor: C.primary, paddingVertical: 12, paddingHorizontal: 32, borderRadius: 12 }}
             >
@@ -1186,8 +1181,8 @@ export default function ExerciseSession() {
           />
         )}
         {curQ.type === "write" && (
-          <WriteScreen
-            key={`write-${dispIdx}`}
+          <ListenWriteScreen
+            key={`lw-write-${dispIdx}`}
             q={curQ}
             langName={langName}
             uiLang={uiLang}
@@ -1213,7 +1208,7 @@ export default function ExerciseSession() {
         visible={showRefill}
         transparent
         animationType="fade"
-        onRequestClose={() => {}}
+        onRequestClose={() => { }}
       >
         <View style={rm.overlay}>
           <View style={rm.card}>
@@ -1464,34 +1459,50 @@ const iq = StyleSheet.create({
 const qx = StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingTop: 16 },
   title: { fontSize: 18, fontWeight: "600", color: C.textSub, marginBottom: 12 },
-  wordRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 24 },
-  wordPill: {
-    flex: 1, backgroundColor: C.primaryLight,
-    borderRadius: 16, paddingHorizontal: 16, paddingVertical: 10,
-  },
-  keyword: { fontSize: 22, fontWeight: "800", color: C.primary },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 20 },
-  card: {
-    width: CARD_W, backgroundColor: C.card,
-    borderRadius: 24, overflow: "hidden",
-    borderWidth: 3, borderColor: C.border,
-    alignItems: "center", paddingBottom: 12,
+  targetCard: {
+    backgroundColor: C.card,
+    borderRadius: 24, padding: 22,
+    marginBottom: 28, borderWidth: 1.5, borderColor: C.border,
     ...SHADOW,
+    alignItems: "center",
+  },
+  targetLabel: { fontSize: 11, fontWeight: "800", color: C.textFaint, letterSpacing: 1, marginBottom: 4 },
+  targetWord: { fontSize: 26, fontWeight: "900", color: C.text, marginBottom: 8 },
+  targetAudioRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  targetSubtitle: { fontSize: 18, fontWeight: "700", color: C.primary },
+
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12, justifyContent: "center" },
+  card: {
+    backgroundColor: C.card,
+    borderRadius: 20, padding: 12,
+    borderWidth: 2, borderColor: C.border,
+    ...SHADOW,
+    minHeight: 110,
+    justifyContent: "space-between",
   },
   cardSel: { borderColor: C.primary, backgroundColor: C.primaryLight },
   cardCorrect: { borderColor: C.correct, backgroundColor: C.correctLight },
   cardWrong: { borderColor: C.primary, backgroundColor: C.primaryLight },
-  optImg: { width: "100%", height: CARD_W * 0.72 },
-  optImgPlaceholder: {
-    width: "100%", height: CARD_W * 0.72,
-    backgroundColor: "#F8EDED",
-    alignItems: "center", justifyContent: "center",
+  optTop: { alignItems: "center", paddingTop: 8 },
+  optBottomV2: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12 },
+  optTxt: { fontSize: 15, fontWeight: "700", color: C.text, flex: 1 },
+  badgeV2: { position: "absolute", top: 8, right: 8 },
+
+  wordRowV2: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    backgroundColor: C.card,
+    borderRadius: 20, padding: 18,
+    marginBottom: 28, borderWidth: 1.5, borderColor: C.border,
+    ...SHADOW,
   },
-  optTxt: {
-    fontSize: 15, fontWeight: "700", color: C.text,
-    textAlign: "center", marginTop: 8, paddingHorizontal: 8,
-  },
-  optBottom: { alignItems: "center", paddingHorizontal: 8 },
+  globalCol: { flex: 1, gap: 2 },
+  localCol: { flex: 1.4, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  divider: { width: 1.5, height: "60%", backgroundColor: C.border, marginHorizontal: 15 },
+  globalWord: { fontSize: 17, fontWeight: "700", color: C.text },
+  localWord: { fontSize: 18, fontWeight: "800", color: C.primary },
+  subLabel: { fontSize: 10, fontWeight: "800", color: C.textFaint, letterSpacing: 0.5, textTransform: "uppercase" },
+  langLabel: { fontSize: 10, fontWeight: "800", color: C.textFaint, letterSpacing: 0.5, textTransform: "uppercase" },
+  audioFixed: { marginLeft: 4 },
   badge: { position: "absolute", top: 8, right: 8 },
 });
 
@@ -1525,21 +1536,28 @@ const lw = StyleSheet.create({
 /* Écriture */
 const wx = StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingTop: 16 },
-  title: { fontSize: 22, fontWeight: "800", color: C.text, lineHeight: 30, marginBottom: 20 },
-  hintCard: {
-    flexDirection: "row", alignItems: "center", gap: 16,
-    backgroundColor: C.primaryLight,
+  hintCardV2: {
+    flexDirection: "row", alignItems: "center",
+    backgroundColor: C.card,
+    borderRadius: 24, padding: 18,
+    marginBottom: 24, borderWidth: 1.5, borderColor: C.border,
+    ...SHADOW,
+  },
+  hintCardV3: {
+    backgroundColor: C.card,
     borderRadius: 24, padding: 22,
-    marginBottom: 24, overflow: "hidden",
-    borderWidth: 1, borderColor: C.primary + "20",
+    marginBottom: 24, borderWidth: 1.5, borderColor: C.border,
+    ...SHADOW,
+    alignItems: "center",
+    marginHorizontal: 4,
   },
-  hintIcon: {
-    width: 52, height: 52, borderRadius: 26,
-    backgroundColor: C.primary + "20",
-    alignItems: "center", justifyContent: "center",
-  },
-  hintLabel: { fontSize: 13, fontWeight: "700", color: C.textSub, marginBottom: 4 },
-  hintWord: { fontSize: 22, fontWeight: "800", color: C.primary, letterSpacing: 0.5 },
+  globalCol: { flex: 1, gap: 2 },
+  localCol: { flex: 1.4, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  dividerVertical: { width: 1.5, height: "60%", backgroundColor: C.border, marginHorizontal: 15 },
+  hintLabel: { fontSize: 10, fontWeight: "800", color: C.textFaint, letterSpacing: 0.5, textTransform: "uppercase" },
+  hintWord: { fontSize: 18, fontWeight: "700", color: C.text },
+  localWord: { fontSize: 19, fontWeight: "800", color: C.primary },
+  langLabel: { fontSize: 10, fontWeight: "800", color: C.textFaint, letterSpacing: 0.5, textTransform: "uppercase" },
   blob: {
     position: "absolute", width: 120, height: 120, borderRadius: 60,
     backgroundColor: "rgba(183,28,28,0.08)", right: -30, top: -30,

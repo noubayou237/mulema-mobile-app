@@ -20,17 +20,8 @@ import { useTranslation } from "react-i18next";
 import { Colors, Typo, Space, Radius, Shadow } from "../../src/theme/tokens";
 
 
-const RED = Colors.primary;
-const RED_L = Colors.primary + "15";
-const BG = Colors.surface;
-const CARD_BG = Colors.surfaceContainerLowest;
-const TRACK = Colors.surfaceContainerHigh;
-const TEXT = Colors.onSurface;
-const TEXT_SUB = Colors.textTertiary;
-const FAINT = Colors.textTertiary + "80";
-const GREEN = Colors.success || "#2E7D32";
-const GREEN_L = (Colors.success || "#2E7D32") + "15";
-const GOLD = Colors.secondary || "#F9A825";
+// Legacy constants removed in favor of design tokens
+
 
 const ICONS = {
   salutation: "hand-left", salutations: "hand-left",
@@ -77,24 +68,22 @@ const ExerciseThemeCard = ({ theme, index, isCompleted, hasReward, onPress, onPr
         style={[s.exCard, locked && s.cardLocked, allDone && s.exCardDone]}
       >
         <View style={s.exCardTop}>
-          <View style={[s.exIconCircle, locked && s.iconCircleLocked, allDone && { backgroundColor: GREEN_L }]}>
+          <View style={[s.exIconCircle, locked && s.iconCircleLocked, allDone && { backgroundColor: Colors.successContainer }]}>
             {locked
-              ? <Ionicons name="lock-closed" size={20} color={FAINT} />
+              ? <Ionicons name="lock-closed" size={20} color={Colors.faint} />
               : allDone
-                ? <Ionicons name="checkmark-circle" size={24} color={GREEN} />
-                : <Ionicons name={icon(theme.code)} size={24} color={RED} />
+                ? <Ionicons name="checkmark-circle" size={24} color={Colors.success} />
+                : <Ionicons name={icon(theme.code)} size={24} color={Colors.primary} />
             }
           </View>
           <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={[s.exCardName, locked && { color: FAINT }]} numberOfLines={1}>
+            <Text style={[s.exCardName, locked && { color: Colors.faint }]} numberOfLines={1}>
               {i18n.language.startsWith("en") && theme.name_en ? theme.name_en : theme.name ?? "—"}
             </Text>
-            <Text style={[s.exCardSub, locked && { color: FAINT }]}>
+            <Text style={[s.exCardSub, locked && { color: Colors.faint }]}>
               {locked
                 ? (theme.lockHint || t("lessons.completeToUnlock"))
-                : allDone
-                  ? t("exercises.allDone")
-                  : t("exercises.count", { count: exercisesDone, total: exercisesTotal })
+                : t("lessons.unlocked") || "Unlocked"
               }
             </Text>
           </View>
@@ -108,18 +97,20 @@ const ExerciseThemeCard = ({ theme, index, isCompleted, hasReward, onPress, onPr
             <Ionicons
               name="chevron-forward"
               size={18}
-              color={allDone ? GREEN : TEXT_SUB}
+              color={allDone ? Colors.success : Colors.textTertiary}
               style={{ marginLeft: 8 }}
             />
           )}
         </View>
 
+
         {/* Progress bar */}
         {!locked && (
           <View style={s.exProgress}>
-            <View style={[s.exProgressFill, { width: `${Math.max(pct, 2)}%`, backgroundColor: allDone ? GREEN : RED }]} />
+            <View style={[s.exProgressFill, { width: `${Math.max(pct, 2)}%`, backgroundColor: allDone ? Colors.success : Colors.primary }]} />
           </View>
         )}
+
       </TouchableOpacity>
     </Animated.View>
   );
@@ -261,12 +252,12 @@ export default function ExercisesScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={["top"]}>
-      <StatusBar barStyle="dark-content" backgroundColor={BG} />
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
 
       <View style={s.header}>
         <View style={s.headerLeft}>
           <TouchableOpacity style={s.menuBtn} onPress={openDrawer}>
-            <Ionicons name="menu" size={24} color={TEXT} />
+            <Ionicons name="menu" size={24} color={Colors.onSurface} />
           </TouchableOpacity>
           <View>
             <Text style={s.headerTitle}>{t("nav.exercises", "Exercices")}</Text>
@@ -275,23 +266,24 @@ export default function ExercisesScreen() {
         </View>
 
         <View style={s.headerRight}>
-          <View style={[s.badge, { backgroundColor: RED_L }]}>
-            <Ionicons name="flash" size={13} color={RED} />
-            <Text style={[s.badgeXP, { color: RED }]}>{dash?.totalPoints ?? 0}</Text>
+          <View style={[s.badge, { backgroundColor: Colors.primary + "15" }]}>
+            <Ionicons name="flash" size={13} color={Colors.primary} />
+            <Text style={[s.badgeXP, { color: Colors.primary }]}>{dash?.totalPoints ?? 0}</Text>
           </View>
           <View style={[s.badge, s.badgeHeart]}>
-            <Ionicons name="heart" size={13} color={RED} />
-            <Text style={[s.badgeXP, { color: RED }]}>{dash?.hearts ?? 5}</Text>
+            <Ionicons name="heart" size={13} color={Colors.primary} />
+            <Text style={[s.badgeXP, { color: Colors.primary }]}>{dash?.hearts ?? 5}</Text>
           </View>
           <View style={s.avatar} />
         </View>
       </View>
 
+
       <ScrollView
         contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[RED]} tintColor={RED} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.primary]} tintColor={Colors.primary} />
         }
       >
         <View style={s.hero}>
@@ -303,18 +295,19 @@ export default function ExercisesScreen() {
             {t("exercises.introText", "Testez vos connaissances et\ndébloquez du contenu culturel.")}
           </Text>
           <View style={s.streakPill}>
-            <Text style={[s.streakIcon, { color: GREEN }]}>✦</Text>
+            <Text style={[s.streakIcon, { color: Colors.success }]}>✦</Text>
             <Text style={s.streakTxt}>
               {t("stats.streakDaysShort", { count: dash?.streakDays || 0 })}
             </Text>
           </View>
         </View>
 
+
         {isLoading && exerciseThemes.length === 0 ? (
-          <ActivityIndicator size="large" color={RED} style={{ marginVertical: 48 }} />
+          <ActivityIndicator size="large" color={Colors.primary} style={{ marginVertical: 48 }} />
         ) : !isLoading && exerciseThemes.length === 0 ? (
           <View style={s.empty}>
-            <Ionicons name="barbell-outline" size={44} color={FAINT} />
+            <Ionicons name="barbell-outline" size={44} color={Colors.outlineVariant} />
             <Text style={s.emptyTxt}>
               {t("errors.noThemesRefresh")}
             </Text>
@@ -322,9 +315,10 @@ export default function ExercisesScreen() {
         ) : (
           <View>
             <View style={s.sectionHeader}>
-              <Ionicons name="barbell" size={18} color={RED} />
+              <Ionicons name="barbell" size={18} color={Colors.primary} />
               <Text style={s.sectionTitle}>{t("exercises.byTheme")}</Text>
             </View>
+
             <Text style={s.sectionSubtitle}>
               {t("exercises.rewardHint")}
             </Text>
@@ -372,19 +366,19 @@ export default function ExercisesScreen() {
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BG },
+  safe: { flex: 1, backgroundColor: Colors.surface },
   scroll: { paddingHorizontal: 16, paddingTop: 8 },
 
   header: {
     flexDirection: "row", alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16, paddingVertical: 10,
-    backgroundColor: BG,
+    backgroundColor: Colors.surface,
   },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
   menuBtn: { padding: 4 },
-  headerTitle: { fontSize: 18, fontFamily: "Fredoka_600SemiBold", color: TEXT, lineHeight: 22 },
-  headerSub: { fontSize: 13, fontFamily: "Nunito-Regular", color: TEXT_SUB },
+  headerTitle: { fontSize: 18, fontFamily: "Fredoka_600SemiBold", color: Colors.onSurface, lineHeight: 22 },
+  headerSub: { fontSize: 13, fontFamily: "Nunito-Regular", color: Colors.textTertiary },
   headerRight: { flexDirection: "row", alignItems: "center", gap: 8 },
   badge: {
     flexDirection: "row", alignItems: "center", gap: 4,
@@ -395,11 +389,11 @@ const s = StyleSheet.create({
   badgeXP: { fontSize: 13, fontFamily: "Fredoka_600SemiBold", color: "#E8A020" },
   avatar: {
     width: 34, height: 34, borderRadius: 17,
-    backgroundColor: RED,
+    backgroundColor: Colors.primary,
   },
 
   hero: {
-    backgroundColor: RED,
+    backgroundColor: Colors.primary,
     borderRadius: 24, padding: 24,
     marginBottom: 20, overflow: "hidden",
   },
@@ -424,15 +418,15 @@ const s = StyleSheet.create({
     marginBottom: 6,
   },
   sectionTitle: {
-    fontSize: 16, fontFamily: "Fredoka_600SemiBold", color: TEXT,
+    fontSize: 16, fontFamily: "Fredoka_600SemiBold", color: Colors.onSurface,
   },
   sectionSubtitle: {
-    fontSize: 13, fontFamily: "Nunito-Regular", color: TEXT_SUB,
+    fontSize: 13, fontFamily: "Nunito-Regular", color: Colors.textTertiary,
     marginBottom: 16, lineHeight: 18,
   },
 
   exCard: {
-    backgroundColor: CARD_BG,
+    backgroundColor: Colors.surfaceContainerLowest,
     borderRadius: 16,
     paddingVertical: 16, paddingHorizontal: 16,
     marginBottom: 12,
@@ -440,25 +434,25 @@ const s = StyleSheet.create({
     shadowOpacity: 0.1, shadowRadius: 8, elevation: 2,
   },
   exCardDone: {
-    borderLeftWidth: 4, borderLeftColor: GREEN,
+    borderLeftWidth: 4, borderLeftColor: Colors.success,
   },
   exCardTop: {
     flexDirection: "row", alignItems: "center",
   },
   exIconCircle: {
     width: 48, height: 48, borderRadius: 24,
-    backgroundColor: RED_L,
+    backgroundColor: Colors.primary + "15",
     alignItems: "center", justifyContent: "center",
   },
   iconCircleLocked: { backgroundColor: "#EDEDF2" },
   exCardName: {
-    fontSize: 15, fontFamily: "Fredoka_600SemiBold", color: TEXT,
+    fontSize: 15, fontFamily: "Fredoka_600SemiBold", color: Colors.onSurface,
   },
   exCardSub: {
-    fontSize: 12, fontFamily: "Nunito-Regular", color: TEXT_SUB, marginTop: 2,
+    fontSize: 12, fontFamily: "Nunito-Regular", color: Colors.textTertiary, marginTop: 2,
   },
   exProgress: {
-    height: 6, backgroundColor: TRACK,
+    height: 6, backgroundColor: Colors.surfaceContainerHigh,
     borderRadius: 3, marginTop: 12, overflow: "hidden",
   },
   exProgressFill: {
@@ -466,13 +460,13 @@ const s = StyleSheet.create({
   },
   rewardBadge: {
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: GOLD,
+    backgroundColor: Colors.secondary,
     alignItems: "center", justifyContent: "center",
     marginLeft: 8,
   },
 
   empty: { alignItems: "center", paddingVertical: 48 },
-  emptyTxt: { fontSize: 14, fontFamily: "Nunito-Regular", color: FAINT, textAlign: "center", marginTop: 12, lineHeight: 20 },
+  emptyTxt: { fontSize: 14, fontFamily: "Nunito-Regular", color: Colors.faint, textAlign: "center", marginTop: 12, lineHeight: 20 },
   drawerPanel: {
     position: "absolute",
     top: 0, bottom: 0, left: 0,

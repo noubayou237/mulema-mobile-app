@@ -11,27 +11,16 @@ import { useRouter, usePathname } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTranslation } from "react-i18next";
 import "../../src/i18n";
+import { Colors, Typo, Space, Radius, Shadow, Fonts } from "../../src/theme/tokens";
+import { IMAGES_MAP } from "../../src/utils/AssetsMap";
+
 
 const { width, height } = Dimensions.get("window");
 const STREAK_KEY = "@mulema_streak_data";
 const LANG_KEY = "@mulema_learning_lang";
 
-// ── Design tokens ──────────────────────────────────────────────────────────
-const BG = "#F0EDE6";
-const CARD_BG = "#FFFFFF";
-const RED = "#D32F2F";
-const RED_LIGHT = "#FFEBEE";
-const TEXT_DARK = "#2C2C2C";
-const TEXT_MID = "#6B6B6B";
-const TEXT_LIGHT = "#AAAAAA";
-const BORDER = "#E5E0D8";
-const CARD_SHADOW = {
-  shadowColor: "#000",
-  shadowOpacity: 0.07,
-  shadowRadius: 8,
-  shadowOffset: { width: 0, height: 2 },
-  elevation: 3,
-};
+// Legacy constants removed in favor of design tokens
+
 
 // ── Learning languages available ───────────────────────────────────────────
 // Route pattern: /home?lang=bassa  |  /home?lang=duala  |  /home?lang=ghomala
@@ -110,12 +99,14 @@ const StreakModal = ({ visible, onClose, days }) => {
                     <View style={[sm.dayCircle, isToday && sm.dayCircleToday, isPast && sm.dayCirclePast]}>
                       <Text style={sm.dayEmoji}>{isPast || isToday ? "🔥" : "·"}</Text>
                     </View>
-                    <Text style={[sm.dayLabel, isToday && { color: RED }]}>{d}</Text>
+                    <Text style={[sm.dayLabel, isToday && { color: Colors.primary }]}>{d}</Text>
+
                   </View>
                 );
               })}
             </View>
-            <TouchableOpacity onPress={onClose} style={[sm.closeBtn, { backgroundColor: RED }]}>
+            <TouchableOpacity onPress={onClose} style={[sm.closeBtn, { backgroundColor: Colors.primary }]}>
+
               <Text style={sm.closeBtnText}>Continuer à apprendre</Text>
               <Ionicons name="arrow-forward" size={16} color="#fff" />
             </TouchableOpacity>
@@ -176,14 +167,16 @@ const CorisModal = ({ visible, onClose, coris }) => {
               {tips.map((tip, i) => (
                 <View key={i} style={sm.tipCard}>
                   <View style={sm.tipIconWrap}>
-                    <Ionicons name={tip.icon} size={20} color={RED} />
+                    <Ionicons name={tip.icon} size={20} color={Colors.primary} />
+
                   </View>
                   <Text style={sm.tipText}>{tip.text}</Text>
                   <Text style={sm.tipReward}>{tip.reward}</Text>
                 </View>
               ))}
             </View>
-            <TouchableOpacity onPress={onClose} style={[sm.closeBtn, { backgroundColor: RED }]}>
+            <TouchableOpacity onPress={onClose} style={[sm.closeBtn, { backgroundColor: Colors.primary }]}>
+
               <Text style={sm.closeBtnText}>Gagner plus de Coris</Text>
               <Ionicons name="arrow-forward" size={16} color="#fff" />
             </TouchableOpacity>
@@ -221,7 +214,8 @@ const NotifModal = ({ visible, onClose }) => {
     { icon: "🎯", title: "Défi disponible", body: "Un nouveau défi Ewondo t'attend.", time: "Il y a 1j", type: "info" },
     { icon: "💬", title: "Conseil du jour", body: "Répète 10 min chaque matin pour mémoriser vite.", time: "Il y a 2j", type: "tip" },
   ];
-  const typeColors = { warning: "#EF5350", success: RED, info: "#C62828", tip: "#B71C1C" };
+  const typeColors = { warning: "#EF5350", success: Colors.primary, info: "#C62828", tip: Colors.primary };
+
 
   return (
     <Modal transparent visible={visible} onRequestClose={onClose} statusBarTranslucent>
@@ -233,7 +227,8 @@ const NotifModal = ({ visible, onClose }) => {
             <View style={sm.notifHeader}>
               <Text style={sm.notifHeaderTitle}>Notifications</Text>
               <TouchableOpacity onPress={onClose}>
-                <Text style={[sm.notifMarkAll, { color: RED }]}>Tout lire</Text>
+                <Text style={[sm.notifMarkAll, { color: Colors.primary }]}>Tout lire</Text>
+
               </TouchableOpacity>
             </View>
             <ScrollView showsVerticalScrollIndicator={false} style={{ width: "100%" }}>
@@ -291,7 +286,8 @@ const LangSwitcherModal = ({ visible, onClose, currentLang, onSelect }) => {
             <View style={ls.titleRow}>
               <Text style={ls.title}>Langue d'apprentissage</Text>
               <TouchableOpacity onPress={onClose} style={ls.closeBtn}>
-                <Ionicons name="close" size={18} color={TEXT_MID} />
+                <Ionicons name="close" size={18} color={Colors.outline} />
+
               </TouchableOpacity>
             </View>
             <Text style={ls.subtitle}>Choisis la langue camerounaise que tu veux apprendre</Text>
@@ -324,18 +320,15 @@ const LangSwitcherModal = ({ visible, onClose, currentLang, onSelect }) => {
                         <Ionicons name="checkmark" size={13} color="#fff" />
                       </View>
                     ) : (
-                      <Ionicons name="chevron-forward" size={15} color={TEXT_LIGHT} style={{ marginRight: 14 }} />
+                      <Ionicons name="chevron-forward" size={15} color={Colors.outline} style={{ marginRight: 14 }} />
+
                     )}
                   </TouchableOpacity>
                 );
               })}
             </View>
 
-            {/* Coming soon note */}
-            <View style={ls.comingSoonRow}>
-              <Ionicons name="sparkles-outline" size={13} color={TEXT_LIGHT} />
-              <Text style={ls.comingSoonText}>Plus de langues bientôt disponibles !</Text>
-            </View>
+
           </View>
         </Animated.View>
       </Animated.View>
@@ -371,7 +364,8 @@ const FlameChip = ({ days, onPress }) => {
     onPress?.();
   };
 
-  const numColor = days === 0 ? TEXT_LIGHT : days < 3 ? "#EF5350" : days < 7 ? "#E53935" : RED;
+  const numColor = days === 0 ? Colors.outline : days < 3 ? "#EF5350" : days < 7 ? "#E53935" : Colors.primary;
+
 
   return (
     <Animated.View style={{ transform: [{ scale: mount }] }}>
@@ -466,7 +460,8 @@ const NotifBtn = ({ count, onPress }) => {
           <Ionicons
             name={count > 0 ? "notifications" : "notifications-outline"}
             size={22}
-            color={count > 0 ? TEXT_DARK : TEXT_LIGHT}
+            color={count > 0 ? Colors.onSurface : Colors.outline}
+
           />
         </Animated.View>
         {count > 0 && (
@@ -506,7 +501,7 @@ const AvatarBtn = ({ username, avatarSource, onPress }) => {
           {avatarSource && (typeof avatarSource === 'number' || (typeof avatarSource === 'object' && avatarSource.uri && typeof avatarSource.uri === 'string' && avatarSource.uri.trim() !== "")) ? (
             <Image source={avatarSource} style={s.avatarImg} />
           ) : (
-            <LinearGradient colors={["#E53935", "#B71C1C"]} style={s.avatarGrad}>
+            <LinearGradient colors={[Colors.primaryContainer, Colors.primary]} style={s.avatarGrad}>
               <Text style={s.avatarInitial}>{initial}</Text>
             </LinearGradient>
           )}
@@ -528,7 +523,8 @@ const getGreeting = () => {
 // ─────────────────────────────────────────────
 // MAIN HEADER
 // ─────────────────────────────────────────────
-import { IMAGES_MAP } from "../../src/utils/AssetsMap";
+// Legacy import removed
+
 
 export default function Header({
   pageName,
@@ -658,8 +654,9 @@ export default function Header({
       />
 
       <Animated.View style={[s.wrapper, style, { transform: [{ translateY: slideDown }], opacity: fadeIn }]}>
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: BG }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: Colors.surface }]} />
         <View style={s.bottomBorder} />
+
 
         <View style={s.row}>
           {/* LEFT */}
@@ -715,11 +712,12 @@ const s = StyleSheet.create({
     paddingBottom: 12,
     zIndex: 100,
     elevation: 4,
-    ...CARD_SHADOW,
+    ...Shadow.sm,
   },
   bottomBorder: {
     position: "absolute", bottom: 0, left: 0, right: 0,
-    height: 1, backgroundColor: BORDER,
+    height: 1, backgroundColor: Colors.outlineVariant,
+
   },
   row: {
     flexDirection: "row", alignItems: "center",
@@ -742,38 +740,43 @@ const s = StyleSheet.create({
 
   greetRow: { flexDirection: "row", alignItems: "center", gap: 4 },
   greetEmoji: { fontSize: 13 },
-  greetText: { fontSize: 12, color: TEXT_MID, fontFamily: "Nunito-Regular" },
-  nameInline: { fontWeight: "700", color: TEXT_DARK, fontFamily: "Nunito-Bold" },
+  greetText: { fontSize: 12, color: Colors.onSurfaceVariant, fontFamily: "Nunito-Regular" },
+  nameInline: { fontWeight: "700", color: Colors.onSurface, fontFamily: "Nunito-Bold" },
+
 
   right: { flexDirection: "row", alignItems: "center", gap: 6 },
 
   // Chips
   chip: {
     flexDirection: "row", alignItems: "center", gap: 5,
-    backgroundColor: CARD_BG,
-    borderRadius: 12, borderWidth: 1, borderColor: BORDER,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md, borderWidth: 1, borderColor: Colors.outlineVariant,
     paddingHorizontal: 8, paddingVertical: 6,
-    ...CARD_SHADOW,
+    ...Shadow.sm,
+
   },
   chipEmoji: { fontSize: 17, lineHeight: 21 },
   chipNum: { fontSize: 14, fontWeight: "800", lineHeight: 16, fontFamily: "Nunito-ExtraBold" },
-  chipSub: { fontSize: 8, color: TEXT_LIGHT, fontWeight: "600", letterSpacing: 0.3, lineHeight: 10 },
+  chipSub: { fontSize: 8, color: Colors.outline, fontWeight: "600", letterSpacing: 0.3, lineHeight: 10 },
+
   coinImg: { width: 18, height: 18, resizeMode: "contain" },
   corisNum: { fontSize: 14, fontWeight: "800", color: "#E8A000", lineHeight: 16, fontFamily: "Nunito-ExtraBold" },
 
   // Notif
   notifBtn: {
     width: 38, height: 38, borderRadius: 19,
-    backgroundColor: CARD_BG, borderWidth: 1, borderColor: BORDER,
+    backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.outlineVariant,
     alignItems: "center", justifyContent: "center", position: "relative",
-    ...CARD_SHADOW,
+    ...Shadow.sm,
   },
+
   badge: {
     position: "absolute", top: 2, right: 2,
     minWidth: 15, height: 15, borderRadius: 8,
-    backgroundColor: RED,
+    backgroundColor: Colors.primary,
     alignItems: "center", justifyContent: "center",
-    borderWidth: 1.5, borderColor: BG, paddingHorizontal: 2,
+    borderWidth: 1.5, borderColor: Colors.surface, paddingHorizontal: 2,
+
   },
   badgeText: { fontSize: 7, color: "#fff", fontWeight: "800" },
 
@@ -790,8 +793,9 @@ const s = StyleSheet.create({
     position: "absolute", bottom: 0, right: 0,
     width: 10, height: 10, borderRadius: 5,
     backgroundColor: "#4CAF50",
-    borderWidth: 2, borderColor: BG,
+    borderWidth: 2, borderColor: Colors.surface,
   },
+
 });
 
 // ─────────────────────────────────────────────
@@ -802,32 +806,36 @@ const sm = StyleSheet.create({
   sheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: "hidden" },
   sheetTall: { maxHeight: height * 0.72 },
   sheetInner: {
-    backgroundColor: CARD_BG,
+    backgroundColor: Colors.surface,
     paddingTop: 12, paddingHorizontal: 24, paddingBottom: 44, alignItems: "center",
   },
+
   handle: { width: 44, height: 5, borderRadius: 3, backgroundColor: "#DDD", marginBottom: 24 },
 
   bigFlame: { fontSize: 72, marginBottom: 4 },
   bigCoin: { width: 72, height: 72, resizeMode: "contain", marginBottom: 4 },
 
-  streakCount: { fontSize: 52, fontWeight: "900", color: TEXT_DARK, fontFamily: "Nunito-ExtraBold", lineHeight: 60 },
-  streakTitle: { fontSize: 20, fontWeight: "800", color: TEXT_DARK, fontFamily: "Nunito-ExtraBold", marginTop: 6, marginBottom: 8, textAlign: "center" },
-  streakSub: { fontSize: 14, color: TEXT_MID, fontFamily: "Nunito-Regular", textAlign: "center", lineHeight: 21, marginBottom: 24, paddingHorizontal: 8 },
+  streakCount: { fontSize: 52, fontWeight: "900", color: Colors.onSurface, fontFamily: "Nunito-ExtraBold", lineHeight: 60 },
+  streakTitle: { fontSize: 20, fontWeight: "800", color: Colors.onSurface, fontFamily: "Nunito-ExtraBold", marginTop: 6, marginBottom: 8, textAlign: "center" },
+  streakSub: { fontSize: 14, color: Colors.onSurfaceVariant, fontFamily: "Nunito-Regular", textAlign: "center", lineHeight: 21, marginBottom: 24, paddingHorizontal: 8 },
 
   weekRow: { flexDirection: "row", gap: 8, marginBottom: 28, justifyContent: "center" },
   dayCol: { alignItems: "center", gap: 6 },
   dayCircle: {
     width: 38, height: 38, borderRadius: 19,
-    backgroundColor: "#F5F3F0", borderWidth: 1.5, borderColor: BORDER,
+    backgroundColor: Colors.surfaceVariant, borderWidth: 1.5, borderColor: Colors.outlineVariant,
     alignItems: "center", justifyContent: "center",
+
   },
   dayCircleToday: {
-    borderColor: RED, backgroundColor: RED_LIGHT,
-    shadowColor: RED, shadowOpacity: 0.25, shadowRadius: 6, elevation: 3,
+    borderColor: Colors.primary, backgroundColor: Colors.primary + "15",
+    shadowColor: Colors.primary, shadowOpacity: 0.25, shadowRadius: 6, elevation: 3,
   },
+
   dayCirclePast: { borderColor: "#FFCDD2", backgroundColor: "#FFF3F3" },
   dayEmoji: { fontSize: 15 },
-  dayLabel: { fontSize: 10, color: TEXT_LIGHT, fontWeight: "700", fontFamily: "Nunito-Bold" },
+  dayLabel: { fontSize: 10, color: Colors.outline, fontWeight: "700", fontFamily: "Nunito-Bold" },
+
 
   tipsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, width: "100%", marginBottom: 24 },
   tipCard: {
@@ -837,24 +845,28 @@ const sm = StyleSheet.create({
   },
   tipIconWrap: {
     width: 34, height: 34, borderRadius: 17,
-    backgroundColor: RED_LIGHT, borderWidth: 1, borderColor: "#FFCDD2",
+    backgroundColor: Colors.primary + "15", borderWidth: 1, borderColor: "#FFCDD2",
+
     alignItems: "center", justifyContent: "center",
   },
-  tipText: { fontSize: 12, color: TEXT_MID, fontFamily: "Nunito-Regular", lineHeight: 16 },
-  tipReward: { fontSize: 13, color: RED, fontWeight: "800", fontFamily: "Nunito-Bold" },
+  tipText: { fontSize: 12, color: Colors.onSurfaceVariant, fontFamily: "Nunito-Regular", lineHeight: 16 },
+  tipReward: { fontSize: 13, color: Colors.primary, fontWeight: "800", fontFamily: "Nunito-Bold" },
+
 
   notifHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: "100%", marginBottom: 16 },
-  notifHeaderTitle: { fontSize: 20, fontWeight: "800", color: TEXT_DARK, fontFamily: "Nunito-ExtraBold" },
+  notifHeaderTitle: { fontSize: 20, fontWeight: "800", color: Colors.onSurface, fontFamily: "Nunito-ExtraBold" },
   notifMarkAll: { fontSize: 13, fontWeight: "600", fontFamily: "Nunito-SemiBold" },
+
   notifItem: {
     flexDirection: "row", alignItems: "flex-start", gap: 12,
     backgroundColor: "#F7F5F2", borderRadius: 14, borderWidth: 1, borderColor: "#EEE",
     borderLeftWidth: 3, padding: 12, marginBottom: 10, width: "100%", position: "relative",
   },
   notifIcon: { fontSize: 24, marginTop: 1 },
-  notifTitle: { fontSize: 14, fontWeight: "700", color: TEXT_DARK, fontFamily: "Nunito-Bold", marginBottom: 3 },
-  notifBody: { fontSize: 12, color: TEXT_MID, fontFamily: "Nunito-Regular", lineHeight: 17, marginBottom: 4 },
-  notifTime: { fontSize: 10, color: TEXT_LIGHT, fontWeight: "600", fontFamily: "Nunito-SemiBold" },
+  notifTitle: { fontSize: 14, fontWeight: "700", color: Colors.onSurface, fontFamily: "Nunito-Bold", marginBottom: 3 },
+  notifBody: { fontSize: 12, color: Colors.onSurfaceVariant, fontFamily: "Nunito-Regular", lineHeight: 17, marginBottom: 4 },
+  notifTime: { fontSize: 10, color: Colors.outline, fontWeight: "600", fontFamily: "Nunito-SemiBold" },
+
   unreadDot: { width: 8, height: 8, borderRadius: 4, position: "absolute", top: 12, right: 12 },
 
   closeBtn: { width: "100%", borderRadius: 14, paddingVertical: 15, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
@@ -868,39 +880,42 @@ const LANG_CARD_W = (width - 40); // full-width single column for 3 langs
 
 const ls = StyleSheet.create({
   sheetInner: {
-    backgroundColor: CARD_BG,
+    backgroundColor: Colors.surface,
     paddingTop: 12, paddingHorizontal: 20,
     paddingBottom: 36,
   },
+
   titleRow: {
     flexDirection: "row", alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 6, paddingHorizontal: 4,
   },
-  title: { fontSize: 19, fontWeight: "800", color: TEXT_DARK, fontFamily: "Nunito-ExtraBold" },
+  title: { fontSize: 19, fontWeight: "800", color: Colors.onSurface, fontFamily: "Nunito-ExtraBold" },
   closeBtn: {
     width: 32, height: 32, borderRadius: 16,
-    backgroundColor: "#F5F3F0", borderWidth: 1, borderColor: BORDER,
+    backgroundColor: Colors.surfaceVariant, borderWidth: 1, borderColor: Colors.outlineVariant,
     alignItems: "center", justifyContent: "center",
   },
+
   subtitle: {
-    fontSize: 12, color: TEXT_MID, fontFamily: "Nunito-Regular",
+    fontSize: 12, color: Colors.onSurfaceVariant, fontFamily: "Nunito-Regular",
     marginBottom: 18, paddingHorizontal: 4,
   },
+
 
   // Single column list
   grid: { gap: 10 },
 
   langCard: {
     width: "100%",
-    backgroundColor: CARD_BG,
-    borderRadius: 16, overflow: "hidden",
-    borderWidth: 1.5, borderColor: BORDER,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg, overflow: "hidden",
+    borderWidth: 1.5, borderColor: Colors.outlineVariant,
     flexDirection: "row", alignItems: "center",
-    shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 }, elevation: 2,
+    ...Shadow.sm,
     position: "relative",
   },
+
   langAccentBar: {
     width: 5, alignSelf: "stretch",
   },
@@ -911,13 +926,15 @@ const ls = StyleSheet.create({
   langEmoji: { fontSize: 28 },
   langTextGroup: { flex: 1 },
   langName: {
-    fontSize: 15, fontWeight: "800", color: TEXT_DARK,
+    fontSize: 15, fontWeight: "800", color: Colors.onSurface,
     fontFamily: "Nunito-ExtraBold", marginBottom: 2,
   },
+
   langRegion: {
-    fontSize: 11, color: TEXT_LIGHT,
+    fontSize: 11, color: Colors.outline,
     fontFamily: "Nunito-Regular",
   },
+
 
   checkBadge: {
     width: 26, height: 26, borderRadius: 13,
@@ -930,6 +947,7 @@ const ls = StyleSheet.create({
     marginTop: 16, paddingHorizontal: 4,
   },
   comingSoonText: {
-    fontSize: 11, color: TEXT_LIGHT, fontFamily: "Nunito-Regular",
+    fontSize: 11, color: Colors.outline, fontFamily: "Nunito-Regular",
   },
+
 });

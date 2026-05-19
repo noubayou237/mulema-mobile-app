@@ -173,16 +173,16 @@ export default function LessonScreen() {
   const langCode = (activeLanguage?.name ?? activeLanguage?.code ?? "duala")
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z]/g, "")
     .trim();
 
   // Flag to identify if we just unlocked the final challenge gate
   const isGateUnlock = lessonIdx != null && lessons && lessonIdx === lessons.length - 1;
 
-  const isBassa = (activeLanguage?.name ?? "").toLowerCase().includes("bassa");
-  const isDuala = (activeLanguage?.name ?? "").toLowerCase().includes("duala");
-  const isGhomala = (activeLanguage?.name ?? "").toLowerCase().includes("ghomala");
+  const isBassa = langCode.includes("bassa");
+  const isDuala = langCode.includes("duala");
+  const isGhomala = langCode.includes("ghomala");
 
   let enrichment = null;
   if (isBassa) enrichment = getBassaEnrichment(lesson?.title ?? "");
@@ -376,10 +376,28 @@ export default function LessonScreen() {
               uiLang={uiLang}
               t={t}
             />
-          ) : isDuala && getDualaThemeItems(themeId).length > 0 ? (
-            <DualaSpecialView themeId={themeId} uiLang={uiLang} t={t} />
-          ) : isGhomala && getGhomalaThemeItems(themeId).length > 0 ? (
-            <GhomalaSpecialView themeId={themeId} uiLang={uiLang} t={t} />
+          ) : isDuala && (
+            lesson.title?.toLowerCase().includes("jour") ||
+            lesson.title?.toLowerCase().includes("pronom") ||
+            lesson.title?.toLowerCase().includes("avoir") ||
+            lesson.title?.toLowerCase().includes("etre") ||
+            lesson.title?.toLowerCase().includes("être") ||
+            lesson.title?.toLowerCase().includes("chiffre") ||
+            lesson.title?.toLowerCase().includes("couleur")
+          ) ? (
+            <DualaSpecialView lessonTitle={lesson.title} uiLang={uiLang} t={t} />
+          ) : isGhomala && (
+            lesson.title?.toLowerCase().includes("jour") ||
+            lesson.title?.toLowerCase().includes("etre") ||
+            lesson.title?.toLowerCase().includes("être") ||
+            lesson.title?.toLowerCase().includes("avoir") ||
+            lesson.title?.toLowerCase().includes("manger") ||
+            lesson.title?.toLowerCase().includes("marcher") ||
+            lesson.title?.toLowerCase().includes("acheter") ||
+            lesson.title?.toLowerCase().includes("chiffre") ||
+            lesson.title?.toLowerCase().includes("couleur")
+          ) ? (
+            <GhomalaSpecialView lessonTitle={lesson.title} uiLang={uiLang} t={t} />
           ) : (
             <>
               {/* ── Category context pill (Bassa only) ── */}
@@ -769,7 +787,7 @@ const BassaSpecialView = ({ lessonTitle, uiLang, t }) => {
             <View style={special.wordPairInner}>
               <View style={special.col}>
                 <Text style={special.sourceWord}>
-                  {uiLang.startsWith("en") ? (item.en || item.fr) : item.fr}
+                  {getWordDisplay(item.fr, uiLang)}
                 </Text>
                 <Text style={special.langLabel}>{uiLang.startsWith("en") ? "ENGLISH" : "FRANÇAIS"}</Text>
               </View>
@@ -796,22 +814,44 @@ const BassaSpecialView = ({ lessonTitle, uiLang, t }) => {
   );
 };
 
-const DualaSpecialView = ({ themeId, uiLang, t }) => {
+const DualaSpecialView = ({ lessonTitle, uiLang, t }) => {
+  const lowTitle = lessonTitle?.toLowerCase() || "";
+  let themeId = "";
+  let topicText = "";
+
+  if (lowTitle.includes("jour")) {
+    themeId = "duala_jour";
+    topicText = uiLang.startsWith("en") ? "Learn the 7 days of the Week in Duala" : "Apprenez les 7 jours de la semaine en Duala";
+  } else if (lowTitle.includes("pronom")) {
+    themeId = "duala_pronoms";
+    topicText = uiLang.startsWith("en") ? "Personal Pronouns" : "Les pronoms personnels";
+  } else if (lowTitle.includes("etre") || lowTitle.includes("être")) {
+    themeId = "duala_etre";
+    topicText = uiLang.startsWith("en") ? "Conjugation of the verb Être (to be)" : "Conjugaison du verbe ÊTRE";
+  } else if (lowTitle.includes("avoir")) {
+    themeId = "duala_avoir";
+    topicText = uiLang.startsWith("en") ? "Conjugation of the verb Avoir (to have)" : "Conjugaison du verbe AVOIR";
+  } else if (lowTitle.includes("chiffre")) {
+    themeId = "duala_chiffres";
+    topicText = uiLang.startsWith("en") ? "Numbers 1-9 in Duala" : "Les chiffres 1-9 en Duala";
+  } else if (lowTitle.includes("couleur")) {
+    themeId = "duala_couleurs";
+    topicText = uiLang.startsWith("en") ? "Colors" : "Les couleurs";
+  }
+
   const data = getDualaThemeItems(themeId);
   if (!data || data.length === 0) return null;
 
   return (
     <View style={special.container}>
-      <Text style={special.topic}>
-        {uiLang.startsWith("en") ? "Learn in Duala" : "Apprenez en Duala"}
-      </Text>
+      <Text style={special.topic}>{topicText}</Text>
 
       {data.map((item, idx) => (
         <View key={idx} style={[special.card, Shadow.sm]}>
           <View style={special.row}>
             <View style={special.wordPairInner}>
               <View style={special.col}>
-                <Text style={special.sourceWord}>{item.sourceText}</Text>
+                <Text style={special.sourceWord}>{getWordDisplay(item.sourceText, uiLang)}</Text>
                 <Text style={special.langLabel}>{uiLang.startsWith("en") ? "ENGLISH" : "FRANÇAIS"}</Text>
               </View>
 
@@ -837,22 +877,50 @@ const DualaSpecialView = ({ themeId, uiLang, t }) => {
   );
 };
 
-const GhomalaSpecialView = ({ themeId, uiLang, t }) => {
+const GhomalaSpecialView = ({ lessonTitle, uiLang, t }) => {
+  const lowTitle = lessonTitle?.toLowerCase() || "";
+  let themeId = "";
+  let topicText = "";
+
+  if (lowTitle.includes("jour")) {
+    themeId = "ghomala_jour";
+    topicText = uiLang.startsWith("en") ? "Learn the days of the Week in Ghomálá'" : "Apprenez les jours de la semaine en Ghomálá'";
+  } else if (lowTitle.includes("etre") || lowTitle.includes("être")) {
+    themeId = "ghomala_etre";
+    topicText = uiLang.startsWith("en") ? "Conjugation of the verb Être (to be)" : "Conjugaison du verbe ÊTRE";
+  } else if (lowTitle.includes("avoir")) {
+    themeId = "ghomala_avoir";
+    topicText = uiLang.startsWith("en") ? "Conjugation of the verb Avoir (to have)" : "Conjugaison du verbe AVOIR";
+  } else if (lowTitle.includes("manger")) {
+    themeId = "ghomala_manger";
+    topicText = uiLang.startsWith("en") ? "Conjugation of the verb Manger (to eat)" : "Conjugaison du verbe MANGER";
+  } else if (lowTitle.includes("marcher")) {
+    themeId = "ghomala_marcher";
+    topicText = uiLang.startsWith("en") ? "Conjugation of the verb Marcher (to walk)" : "Conjugaison du verbe MARCHER";
+  } else if (lowTitle.includes("acheter")) {
+    themeId = "ghomala_acheter";
+    topicText = uiLang.startsWith("en") ? "Conjugation of the verb Acheter (to buy)" : "Conjugaison du verbe ACHETER";
+  } else if (lowTitle.includes("chiffre")) {
+    themeId = "ghomala_chiffres";
+    topicText = uiLang.startsWith("en") ? "Numbers 1-9 in Ghomálá'" : "Les chiffres de 1 à 9 en Ghomálá'";
+  } else if (lowTitle.includes("couleur")) {
+    themeId = "ghomala_couleurs";
+    topicText = uiLang.startsWith("en") ? "Colors" : "Les couleurs";
+  }
+
   const data = getGhomalaThemeItems(themeId);
   if (!data || data.length === 0) return null;
 
   return (
     <View style={special.container}>
-      <Text style={special.topic}>
-        {uiLang.startsWith("en") ? "Learn in Ghomálá'" : "Apprenez en Ghomálá'"}
-      </Text>
+      <Text style={special.topic}>{topicText}</Text>
 
       {data.map((item, idx) => (
         <View key={idx} style={[special.card, Shadow.sm]}>
           <View style={special.row}>
             <View style={special.wordPairInner}>
               <View style={special.col}>
-                <Text style={special.sourceWord}>{item.sourceText}</Text>
+                <Text style={special.sourceWord}>{getWordDisplay(item.sourceText, uiLang)}</Text>
                 <Text style={special.langLabel}>{uiLang.startsWith("en") ? "ENGLISH" : "FRANÇAIS"}</Text>
               </View>
 

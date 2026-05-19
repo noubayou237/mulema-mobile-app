@@ -29,6 +29,30 @@ export const useThemeStore = create((set, get) => ({
   // Cache pour les mots (pour éviter de re-fetcher en boucle)
   wordsCache: {},            // { [lessonId]: Word[] }
 
+  // ── Helper ──
+  getRealThemeId: (id) => {
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    // Check if it's already a UUID or look-alike
+    if (!id || id.toString().length > 20 || UUID_REGEX.test(id)) return id;
+
+    const themes = get().themes;
+    const lowerId = id.toString().toLowerCase();
+
+    // Logic for Duala/Ghomala virtual IDs
+    if (lowerId.includes("duala")) {
+      return themes.find(t => t.name.toLowerCase().includes("duala"))?.id || id;
+    }
+    if (lowerId.includes("ghomala")) {
+      return themes.find(t => t.name.toLowerCase().includes("ghomala"))?.id || id;
+    }
+
+    // For Bassa or generic codes
+    const foundByCode = themes.find(t => t.code === id || (t.name && t.name.toLowerCase().includes(id)));
+    if (foundByCode) return foundByCode.id;
+
+    return id;
+  },
+
   // ═════════════════════════════════════════════════════════════
   // fetchThemes — Charge les thèmes d'une langue
   // ═════════════════════════════════════════════════════════════
@@ -84,7 +108,8 @@ export const useThemeStore = create((set, get) => ({
     const reqKey = `lessons_${themeId}`;
     if (!force && inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
 
-    const now = Date.now();
+    const startTime = Date.now();
+    const now = startTime;
     const lastFetch = lastFetchTime.get(reqKey) || 0;
     const state = get();
     const currentThemeId = state.currentThemeId;
@@ -104,12 +129,25 @@ export const useThemeStore = create((set, get) => ({
       return cached;
     }
 
-    const hasCache = currentThemeId === themeId && cached.length > 0;
-    set({ currentThemeId: themeId, lessonsLoading: !hasCache });
+    // When switching to a different theme, clear stale lessons so the UI
+    // doesn't flash old data while the new theme's lessons are loading.
+    set({
+      currentThemeId: themeId,
+      lessonsLoading: true,
+      error: null,
+      ...(currentThemeId !== themeId ? { lessons: [] } : {}),
+    });
 
     const fetchPromise = (async () => {
       try {
         const lessons = await themesService.getLessons(themeId);
+        
+        // Race condition: If state was updated (e.g., setVirtualData) while we were fetching, ignore this result.
+        if (lastFetchTime.get(reqKey) > startTime) {
+          Logger.log(`[ThemeStore] fetchLessons(${themeId}) result ignored: newer data present.`);
+          return get().lessons;
+        }
+
         set({ lessons, lessonsLoading: false });
         lastFetchTime.set(reqKey, Date.now());
 
@@ -125,6 +163,11 @@ export const useThemeStore = create((set, get) => ({
 
         return lessons;
       } catch (error) {
+        // If state was updated while we were fetching, don't set error/empty lessons.
+        if (lastFetchTime.get(reqKey) > startTime) {
+          return get().lessons;
+        }
+
         const msg = getFriendlyErrorMessage(error);
         set({ lessonsLoading: false, error: msg });
         if (error?.response?.status !== 401 && !isNetworkError(error)) {
@@ -368,6 +411,41 @@ export const useThemeStore = create((set, get) => ({
     const updated = themes.map((t) => {
       if (t.id === themeId) return { ...t, videoWatched: true };
       if (t.order === nextOrder) return { ...t, locked: false };
+      return t;
+    });
+    set({ themes: updated });
+  },
+
+  // ═════════════════════════════════════════════════════════════
+  // Optimistic Updates — Pour un déblocage instantané côté UI
+  // ═════════════════════════════════════════════════════════════
+
+  /**
+   * Marque une catégorie comme terminée et débloque la suivante
+   * sans attendre la réponse de l'API.
+   */
+  optimisticUnlockCategory: (themeId, currentOrder) => {
+    const { lessons, currentThemeId } = get();
+    if (currentThemeId !== themeId || !lessons.length) return;
+
+    const updated = lessons.map(l => {
+      // Mark current as completed
+      if (l.order === currentOrder) return { ...l, isCompleted: true };
+      // Unlock next one
+      if (l.order === currentOrder + 1) return { ...l, isUnlocked: true };
+      return l;
+    });
+
+    set({ lessons: updated });
+  },
+
+  /**
+   * Marque le défi final comme réussi et prépare l'accès vidéo.
+   */
+  optimisticUnlockFinal: (themeId) => {
+    const { themes } = get();
+    const updated = themes.map(t => {
+      if (t.id === themeId) return { ...t, e3Completed: true };
       return t;
     });
     set({ themes: updated });
