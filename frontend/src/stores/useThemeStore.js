@@ -106,7 +106,8 @@ export const useThemeStore = create((set, get) => ({
     if (!themeId || themeId === "undefined" || themeId === "null" || !isSessionActive()) return [];
 
     const reqKey = `lessons_${themeId}`;
-    if (!force && inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
+    // Always deduplicate in-flight requests — even forced ones — to avoid double network calls.
+    if (inflightRequests.has(reqKey)) return inflightRequests.get(reqKey);
 
     const startTime = Date.now();
     const now = startTime;
@@ -418,16 +419,17 @@ export const useThemeStore = create((set, get) => ({
    * sans attendre la réponse de l'API.
    */
   optimisticUnlockCategory: (themeId, currentOrder) => {
-    const { lessons, currentThemeId, themes } = get();
+    const { lessons, themes } = get();
     
-    // 1. Update lessons if we are currently looking at this theme's adventure tree
-    if (currentThemeId === themeId && lessons.length > 0) {
+    // 1. Always update lessons for this themeId (not gated on currentThemeId,
+    //    because results.jsx fires before the user navigates back to the lesson page).
+    if (lessons.length > 0) {
       const updatedLessons = lessons.map(l => {
         if (l.order === currentOrder) return { ...l, isCompleted: true };
         if (l.order === currentOrder + 1) return { ...l, isUnlocked: true };
         return l;
       });
-      set({ lessons: updatedLessons });
+      set({ lessons: updatedLessons, currentThemeId: themeId });
     }
 
     // 2. Update themes list (used by home screen cards)
@@ -444,6 +446,10 @@ export const useThemeStore = create((set, get) => ({
     });
 
     set({ themes: updatedThemes });
+
+    // 3. Invalidate the lessons cache for this theme so the next focus on
+    //    the lesson page triggers a fresh network fetch (not stale cached data).
+    lastFetchTime.delete(`lessons_${themeId}`);
   },
 
   /**

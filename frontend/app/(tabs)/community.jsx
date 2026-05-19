@@ -117,7 +117,7 @@ const Avatar = ({ uri, size = 48, rank, borderColor = Colors.primary }) => (
 /* ══════════════════════════════════════════════════════════════
    PODIUM (Top 3)
    ══════════════════════════════════════════════════════════════ */
-const Podium = ({ top3 = [], leagueColor = "#FF9800" }) => {
+const Podium = ({ top3 = [], leagueColor = "#FF9800", onReport }) => {
   const first = top3[0];
   const second = top3[1];
   const third = top3[2];
@@ -132,7 +132,7 @@ const Podium = ({ top3 = [], leagueColor = "#FF9800" }) => {
     }).start();
   }, []);
 
-  const PodiumUser = ({ user, position, size = 56, elevated = false }) => {
+  const PodiumUser = ({ user, position, size = 56, elevated = false, onReport: onReportProp }) => {
     if (!user) return <View style={{ width: size + 20, height: elevated ? 160 : 130 }} />;
     return (
       <Animated.View
@@ -158,7 +158,7 @@ const Podium = ({ top3 = [], leagueColor = "#FF9800" }) => {
         {!user.isCurrentUser && user.id !== "me" && (
           <TouchableOpacity
             style={pod.reportBtn}
-            onPress={() => onReport?.(user)}
+            onPress={() => onReportProp?.(user)}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Ionicons name="flag-outline" size={14} color={Colors.textTertiary} />

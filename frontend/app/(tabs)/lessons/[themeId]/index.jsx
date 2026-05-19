@@ -285,20 +285,20 @@ export default function ThemeDetailScreen() {
   const currentThemeId = useThemeStore((s) => s.currentThemeId);
   const displayLessons = currentThemeId === themeId ? (lessons || []) : [];
 
-  // Load lessons — unified path for ALL languages (Bassa, Duala, Ghomala)
-  // Since themeId is now always a UUID from the theme list page,
-  // all languages use the same fetchLessons API call.
+  // Load lessons on every focus — unified path for ALL languages (Bassa, Duala, Ghomala).
+  // Always force-refresh so returning from an exercise shows newly unlocked categories
+  // immediately. The optimistic update in results.jsx already updated the in-memory state;
+  // this fetch syncs the confirmed backend state.
   useFocusEffect(
     useCallback(() => {
       if (!themeId) return;
 
-      // Real UUID — fetch from API 
-      // Use cached data first for instant display, then sync in background
       const hasLessons = displayLessons.length > 0;
       if (!hasLessons) setIsInitializing(true);
-      
-      fetchLessons(themeId, false).finally(() => setIsInitializing(false));
-    }, [themeId, displayLessons.length])
+
+      // force=true: bypass cache so we always get fresh unlock status from the backend
+      fetchLessons(themeId, true).finally(() => setIsInitializing(false));
+    }, [themeId])
   );
 
   const theme     = getThemeById(themeId);
