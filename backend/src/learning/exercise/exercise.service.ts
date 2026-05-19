@@ -56,9 +56,11 @@ export class ExerciseService {
   ) {
     const scoreValue = this.calculateScore(accuracy, timeSpent);
 
-    // Si c'est un thème Mulem et que le score est suffisant, on débloque la suite
+    // Si c'est un thème Mulem et que le score est suffisant
     if (themeId && accuracy >= 60) {
-      await this.progressService.unlockLessonsAfterExercise(userId, themeId);
+      // Sequential unlocking is now handled by progress.service's unlockNextLessonAfterExercise
+      // which is called by the frontend after results are shown.
+      // await this.progressService.unlockLessonsAfterExercise(userId, themeId);
     }
 
     // Récupérer l'exercice pour vérifier s'il est lié à une leçon (Legacy)
