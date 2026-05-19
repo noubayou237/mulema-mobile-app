@@ -8,6 +8,7 @@ import {
   UseInterceptors,
   UploadedFile,
   Logger,
+  Post,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UserService } from './user.service';
@@ -179,5 +180,22 @@ export class UserController {
   ) {
     this.logger.log(`Purchase heart request for user: ${user.userId}`);
     return this.userService.purchaseHearts(user.userId, body.count || 1);
+  }
+
+  // =====================
+  // REPORT USER (UGC COMPLIANCE)
+  // =====================
+  @Post('report')
+  async reportUser(
+    @CurrentUser() user: AuthUser,
+    @Body() body: { reportedId: string; reason: string; description?: string },
+  ) {
+    this.logger.log(`Report user request from: ${user.userId}`);
+    return this.userService.reportUser(
+      user.userId,
+      body.reportedId,
+      body.reason,
+      body.description,
+    );
   }
 }

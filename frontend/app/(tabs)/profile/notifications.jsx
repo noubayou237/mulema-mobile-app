@@ -88,13 +88,7 @@ export default function NotificationsScreen() {
           )}
         </View>
 
-        {/* ── Push notifications coming soon banner ── */}
-        <View style={s.comingSoonBanner}>
-          <Ionicons name="notifications-outline" size={18} color={Colors.primary} />
-          <Text style={[Typo.bodySm, { color: Colors.primary, marginLeft: Space.sm, flex: 1 }]}>
-            {t("notifications.pushComingSoon", "Push notifications are coming in a future update. These are your current reminders.")}
-          </Text>
-        </View>
+
 
         {/* ── Empty state ── */}
         {allDismissed && (
@@ -234,15 +228,7 @@ const s = StyleSheet.create({
     paddingBottom: Space.xl,
   },
 
-  comingSoonBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.primary + "10",
-    borderRadius: Radius.lg,
-    padding: Space.lg,
-    marginBottom: Space.xl,
-    marginTop: Space.md,
-  },
+
 
   emptyState: {
     alignItems: "center",

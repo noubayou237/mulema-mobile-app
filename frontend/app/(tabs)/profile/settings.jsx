@@ -56,19 +56,6 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
 
-  const [notificationsOn, setNotificationsOn] = useState(false);
-
-  const handleNotificationsToggle = (value) => {
-    if (value) {
-      Alert.alert(
-        t("common.comingSoon", "Bientôt disponible"),
-        t("settings.notificationsComingSoon", "Les notifications push seront disponibles dans une prochaine mise à jour.")
-      );
-      return;
-    }
-    setNotificationsOn(false);
-  };
-
   const { t, i18n } = useTranslation();
   const [appLang, setAppLang] = useState(i18n.language || 'fr');
 
@@ -184,23 +171,7 @@ export default function SettingsScreen() {
           />
         </View>
 
-        {/* ── APPRENTISSAGE ── */}
-        <SectionHeader title={t("nav.lessons", "APPRENTISSAGE").toUpperCase()} />
-        <View style={[s.sectionCard, Shadow.sm]}>
-          <SettingRow
-            icon="notifications"
-            iconColor={Colors.primary}
-            label={t("settings.notifications", "Notifications")}
-            right={
-              <Switch
-                value={notificationsOn}
-                onValueChange={handleNotificationsToggle}
-                trackColor={{ false: Colors.surfaceVariant, true: Colors.primary + "60" }}
-                thumbColor={notificationsOn ? Colors.primary : Colors.surfaceContainerHigh}
-              />
-            }
-          />
-        </View>
+
 
         {/* ── PRÉFÉRENCES ── */}
         <SectionHeader title={t("settings.preferences")} />

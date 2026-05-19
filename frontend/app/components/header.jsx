@@ -328,11 +328,7 @@ const LangSwitcherModal = ({ visible, onClose, currentLang, onSelect }) => {
               })}
             </View>
 
-            {/* Coming soon note */}
-            <View style={ls.comingSoonRow}>
-              <Text style={ls.comingSoonText}>Plus de langues bientôt disponibles !</Text>
 
-            </View>
           </View>
         </Animated.View>
       </Animated.View>

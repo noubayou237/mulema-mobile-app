@@ -35,6 +35,8 @@ model User {
   mulemThemeProgress UserMulemThemeProgress[]
   progress           UserProgress[]
   communities        Community[]              @relation("CommunityToUser")
+  reportsMade        Report[]                 @relation("ReportedByUser")
+  reportsAgainst     Report[]                 @relation("UserReported")
 }
 
 model RefreshToken {
@@ -373,4 +375,23 @@ enum SocialProvider {
   GOOGLE
   FACEBOOK
   APPLE
+}
+
+model Report {
+  id          String   @id @default(uuid())
+  reporterId  String
+  reportedId  String
+  reason      String
+  description String?
+  status      ReportStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  reporter    User     @relation("ReportedByUser", fields: [reporterId], references: [id], onDelete: Cascade)
+  reported    User     @relation("UserReported", fields: [reportedId], references: [id], onDelete: Cascade)
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  DISMISSED
 }

@@ -2,7 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { APP_GUARD } from '@nestjs/core';
+import { join } from 'path';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -24,6 +26,12 @@ import { StorageModule } from './storage/storage.module';
 
     // ⏱️ Tâches planifiées
     ScheduleModule.forRoot(),
+
+    // 📄 Serve static legal pages (UGC Compliance)
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public'),
+      serveRoot: '/legal',
+    }),
 
     // 🛡️ Rate Limiting (Global: 60 requests per minute per IP)
     ThrottlerModule.forRoot([{
