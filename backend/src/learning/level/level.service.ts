@@ -4,7 +4,7 @@ import { CreateLevelDto } from './dto/create-level.dto';
 
 @Injectable()
 export class LevelService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(dto: CreateLevelDto) {
     return this.prisma.level.create({
@@ -30,7 +30,7 @@ export class LevelService {
 
   async getThemeWords(themeId: string, userId: string) {
     if (!themeId || themeId === 'undefined') return [];
-    
+
     // Basic UUID format check to avoid unnecessary DB searches for malformed IDs
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(themeId) && !themeId.startsWith('virtual_')) {
