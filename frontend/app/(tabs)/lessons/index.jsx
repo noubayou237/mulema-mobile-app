@@ -319,27 +319,26 @@ export default function ThemesScreen() {
       });
     });
 
-    // Use per-theme counters from backend
-    const counts = {};
     return res.map((item, idx) => {
       const code = item.code;
-      if (counts[code] === undefined) counts[code] = 0;
-      const themeIdx = counts[code]++;
+      const themeIdx = idx;
 
       const theme = code === "jours" ? joursTheme : verbesTheme;
       const isThemeLocked = theme ? theme.locked : idx >= 2;
       const lessonsCompletedCount = theme ? theme.lessonsCompleted : 0;
       const categoryStatus = theme?.categories?.[themeIdx];
+
       // Mirror the adventure tree: first 2 always unlocked, then use per-category DB flags
       const isUnlocked = !isThemeLocked && (
         themeIdx < 2 ||
         categoryStatus?.isUnlocked ||
         categoryStatus?.isCompleted
       );
+
       return {
         ...item,
-        lessonsCompleted: themeIdx < lessonsCompletedCount ? item.lessonsCount : 0,
         locked: !isUnlocked,
+        lessonsCompleted: lessonsCompletedCount,
       };
     });
   };
