@@ -11,7 +11,8 @@
  *  If missing, a dark gradient is shown until the video loads.
  */
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
+import { Asset } from "expo-asset";
 import { useLanguageStore } from "../../src/stores/useLanguageStore";
 import Logger from "../../src/utils/logger";
 import {
@@ -146,6 +147,7 @@ export default function PageVideo() {
   const [resolving, setResolving] = useState(true);
   const [videoLoading, setVideoLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [resolvedVideoUri, setResolvedVideoUri] = useState(null);
 
   // ── Pause background music while intro video plays ──
   useEffect(() => {
@@ -204,7 +206,33 @@ export default function PageVideo() {
     };
   }, [paramLang]);
 
-  const videoUri = VIDEO_BY_LANG[langResolved] ?? VIDEO_BY_LANG.default;
+  const videoModule = VIDEO_BY_LANG[langResolved] ?? VIDEO_BY_LANG.default;
+
+  // ── Resolve the bundled video asset to a local file URI ──
+  // On Android APK builds, require() returns a numeric ID that expo-av
+  // cannot reliably play. Asset.fromModule() extracts it to a real
+  // file:// URI that the native player can handle.
+  useEffect(() => {
+    if (!videoModule) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const asset = Asset.fromModule(videoModule);
+        if (!asset.localUri) {
+          await asset.downloadAsync();
+        }
+        if (!cancelled && asset.localUri) {
+          Logger.info(`[PageVideo] Video asset resolved: ${asset.localUri}`);
+          setResolvedVideoUri(asset.localUri);
+        }
+      } catch (err) {
+        Logger.error("[PageVideo] Failed to resolve video asset:", err);
+        // Fallback: try the raw module anyway (works on iOS / dev)
+        if (!cancelled) setResolvedVideoUri(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [videoModule]);
 
   // ── Persist & navigate ──
   // ── Reactive Navigation Trigger ──
@@ -309,9 +337,9 @@ export default function PageVideo() {
         <Video
           key={langResolved}
           ref={videoRef}
-          source={videoUri}
+          source={resolvedVideoUri ? { uri: resolvedVideoUri } : videoModule}
           resizeMode='cover'
-          shouldPlay={true}
+          shouldPlay={!!resolvedVideoUri}
           isLooping={false}
           style={StyleSheet.absoluteFill}
           onPlaybackStatusUpdate={(status) => {

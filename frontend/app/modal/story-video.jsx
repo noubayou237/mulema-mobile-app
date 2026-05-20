@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
+import { Asset } from "expo-asset";
 import {
   View,
   StyleSheet,
@@ -45,6 +46,7 @@ export default function OnboardingVideoScreen() {
   const { langCode, themeId } = useLocalSearchParams();
   const videoRef = useRef(null);
   const [loading, setLoading] = useState(true);
+  const [resolvedUri, setResolvedUri] = useState(null);
   const watchVideo = useThemeStore((s) => s.watchVideo);
   const fetchThemes = useThemeStore((s) => s.fetchThemes);
   const getThemeById = useThemeStore((s) => s.getThemeById);
@@ -86,14 +88,35 @@ export default function OnboardingVideoScreen() {
     return () => { resumeBackgroundMusic(); };
   }, []);
 
-  // No video available for this theme — mark watched and move on immediately.
+  // ── Resolve the bundled video asset to a local file URI ──
+  // On Android APK builds, require() returns a numeric ID that expo-av
+  // cannot reliably play. Asset.fromModule() extracts it to a real
+  // file:// URI that works.
   useEffect(() => {
     if (source === null) {
+      // No video available for this theme — mark watched and move on.
       handleFinished();
+      return;
     }
+    let cancelled = false;
+    (async () => {
+      try {
+        const asset = Asset.fromModule(source);
+        if (!asset.localUri) {
+          await asset.downloadAsync();
+        }
+        if (!cancelled && asset.localUri) {
+          setResolvedUri(asset.localUri);
+        }
+      } catch (err) {
+        // Fallback: use raw module (works in dev / iOS)
+        if (!cancelled) setResolvedUri(null);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [source]);
 
-  if (source === null) {
+  if (source === null || (source !== null && !resolvedUri)) {
     return (
       <View style={s.root}>
         <StatusBar barStyle="light-content" backgroundColor="#000" />
@@ -115,7 +138,7 @@ export default function OnboardingVideoScreen() {
 
       <Video
         ref={videoRef}
-        source={source}
+        source={{ uri: resolvedUri }}
         style={s.video}
         resizeMode={ResizeMode.CONTAIN}
         shouldPlay
