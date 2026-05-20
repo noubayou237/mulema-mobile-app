@@ -23,7 +23,13 @@ import { initializeLanguage } from "../src/i18n";
 import { useAuthStore } from "../src/stores/useAuthStore";
 import { useLanguageStore } from "../src/stores/useLanguageStore";
 import api from "../src/services/api";
-import SplashScreen from "../src/components/ui/SplashScreen";
+import * as ExpoSplashScreen from "expo-splash-screen";
+import Logger from "../src/utils/logger";
+import { useDashboardStore } from "../src/stores/useDashboardStore";
+import { useThemeStore } from "../src/stores/useThemeStore";
+
+// Keep the native splash (Mulema logo) visible until the app is fully ready
+ExpoSplashScreen.preventAutoHideAsync();
 
 // Tokens
 import { Colors } from "../src/theme/tokens";
@@ -45,7 +51,8 @@ function AuthGate({ children }) {
   useBackgroundMusic();
 
   useEffect(() => {
-    initializeLanguage().then(() => loadSession());
+    // Run i18n init and session restore in parallel — they are independent
+    Promise.all([initializeLanguage(), loadSession()]);
   }, []);
 
   // Ping Railway every 4 minutes so it never cold-starts mid-session
@@ -60,24 +67,41 @@ function AuthGate({ children }) {
     if (isAuthenticated) {
       const { user } = useAuthStore.getState();
 
-      // Ensure stable state before setting ready
-      (async () => {
+      // Hard ceiling — user must never wait more than 8 s on the splash
+      const MAX_BOOT_MS = 8000;
+
+      const boot = async () => {
         try {
-          // 1. Initial local load
-          await loadActiveLanguage();
-          
-          // 2. Fetch fresh languages and sync
-          await fetchLanguages();
+          // Phase 1 — parallel: restore local language + fetch fresh list
+          await Promise.all([
+            loadActiveLanguage(),
+            fetchLanguages(),
+          ]);
+          // Phase 2 — sync with backend (depends on fetchLanguages)
           await syncWithUser(user);
-          
-          // 3. Final reload to pick up synced state
+          // Phase 3 — reload language with full data from fetch
           await loadActiveLanguage();
         } catch (err) {
           Logger.warn("[AuthGate] Sync error:", err);
-        } finally {
-          setIsReady(true);
         }
-      })();
+
+        // Non-blocking warm-up so home screen data is ready
+        try {
+          useDashboardStore.getState().fetchDashboard();
+          const lang = useLanguageStore.getState().activeLanguage;
+          if (lang) {
+            useThemeStore.getState().fetchThemes(lang.id);
+          }
+        } catch (e) {
+          Logger.warn("[AuthGate] Warm-up error:", e);
+        }
+      };
+
+      // Race the boot against the hard timeout
+      Promise.race([
+        boot(),
+        new Promise((r) => setTimeout(r, MAX_BOOT_MS)),
+      ]).finally(() => setIsReady(true));
     } else {
       setIsReady(true);
     }
@@ -107,8 +131,15 @@ function AuthGate({ children }) {
     }
   }, [isReady, isAuthenticated, activeLanguage, hasSeenIntro, segments]);
 
+  // Hide the native splash once everything is ready
+  useEffect(() => {
+    if (isReady) {
+      ExpoSplashScreen.hideAsync();
+    }
+  }, [isReady]);
+
   if (!isReady) {
-    return <SplashScreen />;
+    return null; // Native splash stays visible
   }
 
   return children;
@@ -128,7 +159,7 @@ export default function RootLayout() {
 
   // Attendre que les polices soient chargées
   if (!fontsLoaded) {
-    return <SplashScreen />;
+    return null; // Native splash stays visible while fonts load
   }
 
   return (

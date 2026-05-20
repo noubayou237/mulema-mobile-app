@@ -377,13 +377,13 @@ const MOCK_RANKING = [
 
 // Normalise a raw leaderboard entry from the API into the shape this UI expects
 const normaliseEntry = (entry, index) => ({
-  id:          entry.id ?? String(index),
-  rank:        entry.rank ?? index + 1,
-  name:        entry.name ?? entry.username ?? "—",
-  totalXP:     entry.totalXP ?? entry.totalPoints ?? entry.xp ?? 0,
-  avatar:      entry.avatarUrl ?? entry.avatar ?? null,
-  streakDays:  entry.streakDays ?? 0,
-  tag:         entry.tag ?? null,
+  id: entry.id ?? String(index),
+  rank: entry.rank ?? index + 1,
+  name: entry.name ?? entry.username ?? "—",
+  totalXP: entry.totalXP ?? entry.totalPoints ?? entry.xp ?? 0,
+  avatar: entry.avatarUrl ?? entry.avatar ?? null,
+  streakDays: entry.streakDays ?? 0,
+  tag: entry.tag ?? null,
   xpToNextRank: entry.xpToNextRank ?? 50,
 });
 
@@ -468,33 +468,33 @@ export default function CommunityScreen() {
   }, []);
 
   const userXP = dashData?.totalPoints ?? dashData?.xp ?? 0;
-  const streak = dashData?.streakDays  ?? 0;
-  const hearts = dashData?.hearts      ?? 5;
+  const streak = dashData?.streakDays ?? 0;
+  const hearts = dashData?.hearts ?? 5;
 
   // Use real data when available, fall back to mock only if there's no error
   const hasRealData = rawLeaderboard.length > 0;
-  const showMock    = !hasRealData && !leaderboardError;
-  const ranking     = hasRealData
+  const showMock = !hasRealData && !leaderboardError;
+  const ranking = hasRealData
     ? rawLeaderboard.map(normaliseEntry)
     : showMock ? MOCK_RANKING : [];
 
   // Find current user's entry from the API response (backend sets isCurrentUser flag)
-  const myRawEntry   = hasRealData ? rawLeaderboard.find((e) => e.isCurrentUser) : null;
+  const myRawEntry = hasRealData ? rawLeaderboard.find((e) => e.isCurrentUser) : null;
   const myRankInList = hasRealData
     ? rawLeaderboard.findIndex((e) => e.isCurrentUser)
     : -1;
 
   const currentUserRank = {
-    id:           user?.id ?? "me",
-    rank:         myRankInList >= 0 ? myRankInList + 1 : "—",
-    name:         user?.name || t("community.isYou"),
+    id: user?.id ?? "me",
+    rank: myRankInList >= 0 ? myRankInList + 1 : "—",
+    name: user?.name || t("community.isYou"),
     // Normalise field names from the raw leaderboard entry (backend may use
     // totalXP, totalPoints, or xp) before falling back to the dashboard value.
-    totalXP:      myRawEntry?.totalXP ?? myRawEntry?.totalPoints ?? myRawEntry?.xp ?? userXP,
-    avatar:       myRawEntry?.avatar ?? myRawEntry?.avatarUrl ?? user?.avatar ?? null,
-    streakDays:   myRawEntry?.streakDays ?? streak,
+    totalXP: myRawEntry?.totalXP ?? myRawEntry?.totalPoints ?? myRawEntry?.xp ?? userXP,
+    avatar: myRawEntry?.avatar ?? myRawEntry?.avatarUrl ?? user?.avatar ?? null,
+    streakDays: myRawEntry?.streakDays ?? streak,
     xpToNextRank: myRawEntry?.xpToNextRank ?? 50,
-    tag:          null,
+    tag: null,
   };
 
   const onRefresh = useCallback(async () => {
@@ -506,8 +506,8 @@ export default function CommunityScreen() {
     }
   }, [fetchLeaderboard, fetchDashboard]);
 
-  const top3  = ranking.slice(0, 3);
-  const rest  = ranking.slice(3);
+  const top3 = ranking.slice(0, 3);
+  const rest = ranking.slice(3);
   const league = getLeagueTier(currentUserRank.totalXP, t);
 
   return (
