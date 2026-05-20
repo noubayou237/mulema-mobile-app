@@ -37,6 +37,7 @@ import { Colors } from "../src/theme/tokens";
 // Background music
 import { useBackgroundMusic } from "../src/hooks/useBackgroundMusic";
 import OfflineBanner from "../src/components/ui/OfflineBanner";
+import SplashScreen from "../src/components/ui/SplashScreen";
 
 function AuthGate({ children }) {
   const router = useRouter();
@@ -131,15 +132,14 @@ function AuthGate({ children }) {
     }
   }, [isReady, isAuthenticated, activeLanguage, hasSeenIntro, segments]);
 
-  // Hide the native splash once everything is ready
+  // Immediately hide the native static splash so the animated JS splash takes over
   useEffect(() => {
-    if (isReady) {
-      ExpoSplashScreen.hideAsync();
-    }
-  }, [isReady]);
+    ExpoSplashScreen.hideAsync();
+  }, []);
 
   if (!isReady) {
-    return null; // Native splash stays visible
+    // Show the animated splash screen while data loads
+    return <SplashScreen />;
   }
 
   return children;
